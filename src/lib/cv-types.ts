@@ -19,6 +19,7 @@ export interface CvExperience {
   endDate: string;
   current?: boolean;
   description: string;
+  descriptionAlign?: "left" | "center" | "right" | "justify";
 }
 
 export interface CvEducation {
@@ -29,6 +30,7 @@ export interface CvEducation {
   startDate: string;
   endDate: string;
   description?: string;
+  descriptionAlign?: "left" | "center" | "right" | "justify";
 }
 
 export interface CvSkill {

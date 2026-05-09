@@ -57,7 +57,7 @@ export function JakartaTemplate({ data, showHeader = true, sectionOrder }: Props
                   {e.location && (
                     <div style={{ fontSize: "9.5pt", color: "#555" }}>{e.location}</div>
                   )}
-                  <p style={{ whiteSpace: "pre-wrap", marginTop: 4 }}>{e.description}</p>
+                  <p style={{ whiteSpace: "pre-wrap", marginTop: 4, textAlign: e.descriptionAlign || "left" }}>{e.description}</p>
                 </div>
               ))}
             </Section>
@@ -81,7 +81,7 @@ export function JakartaTemplate({ data, showHeader = true, sectionOrder }: Props
                     </span>
                   </div>
                   <div style={{ fontSize: "10pt" }}>{ed.school}</div>
-                  {ed.description && <p style={{ marginTop: 2 }}>{ed.description}</p>}
+                  {ed.description && <p style={{ marginTop: 2, textAlign: ed.descriptionAlign || "left" }}>{ed.description}</p>}
                 </div>
               ))}
             </Section>

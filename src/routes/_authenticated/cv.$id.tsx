@@ -620,46 +620,7 @@ function EditorForm({
               <Textarea rows={4} maxLength={1000} value={data.personal.summary}
                 onChange={(e) => updatePersonal("summary", e.target.value)}
                 placeholder="2-4 kalimat ringkas tentang dirimu..." />
-              <div className="flex items-center gap-4">
-                <Label className="text-xs text-muted-foreground">Rata teks:</Label>
-                <div className="flex gap-1">
-                  {(["left", "center", "right", "justify"] as const).map((align) => (
-                    <button
-                      key={align}
-                      type="button"
-                      onClick={() => updatePersonal("summaryAlign", align)}
-                      className={cn(
-                        "px-2 py-1 text-xs rounded border transition-colors",
-                        data.personal.summaryAlign === align
-                          ? "bg-primary text-primary-foreground border-primary"
-                          : "bg-background border-border hover:bg-muted"
-                      )}
-                      title={align === "left" ? "Kiri" : align === "center" ? "Tengah" : align === "right" ? "Kanan" : "Rata Kiri-Kanan"}
-                    >
-                      {align === "left" && (
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="15" y2="12" /><line x1="3" y1="18" x2="18" y2="18" />
-                        </svg>
-                      )}
-                      {align === "center" && (
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <line x1="3" y1="6" x2="21" y2="6" /><line x1="6" y1="12" x2="18" y2="12" /><line x1="4" y1="18" x2="20" y2="18" />
-                        </svg>
-                      )}
-                      {align === "right" && (
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <line x1="3" y1="6" x2="21" y2="6" /><line x1="9" y1="12" x2="21" y2="12" /><line x1="6" y1="18" x2="21" y2="18" />
-                        </svg>
-                      )}
-                      {align === "justify" && (
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
-                        </svg>
-                      )}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              <TextAlignPicker value={data.personal.summaryAlign} onChange={(v) => updatePersonal("summaryAlign", v)} />
               {suggestionPanel.section === "summary" && (
                 <SuggestionPanel
                   open={suggestionPanel.suggestions !== null}
@@ -701,7 +662,7 @@ function EditorForm({
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-6 text-[10px] gap-1 text-muted-foreground hover:text-primary"
+                      className="h-6 text-xs gap-1 text-secondary-foreground hover:text-primary"
                       disabled={polishingField === `exp-${i}`}
                       onClick={async () => {
                         const result = await handlePolishText(`exp-${i}`, item.description, `Posisi: ${item.position} di ${item.company}`);
@@ -719,6 +680,7 @@ function EditorForm({
                   </div>
                 </div>
                 <Textarea rows={3} value={item.description} onChange={(e) => mutate(setData, "experiences", i, "description", e.target.value)} placeholder="Deskripsikan pencapaian dengan metrik..." />
+                <TextAlignPicker value={item.descriptionAlign} onChange={(v) => mutate(setData, "experiences", i, "descriptionAlign", v)} />
                 {suggestionPanel.section === "experience" && (
                   <SuggestionPanel
                     open={suggestionPanel.suggestions !== null}
@@ -761,7 +723,7 @@ function EditorForm({
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-6 text-[10px] gap-1 text-muted-foreground hover:text-primary"
+                      className="h-6 text-xs gap-1 text-secondary-foreground hover:text-primary"
                       disabled={polishingField === `edu-${i}`}
                       onClick={async () => {
                         const result = await handlePolishText(`edu-${i}`, item.description || "", `${item.degree} ${item.field || ""} di ${item.school}`);
@@ -779,6 +741,7 @@ function EditorForm({
                   </div>
                 </div>
                 <Textarea rows={2} value={item.description ?? ""} onChange={(e) => mutate(setData, "educations", i, "description", e.target.value)} />
+                <TextAlignPicker value={item.descriptionAlign} onChange={(v) => mutate(setData, "educations", i, "descriptionAlign", v)} />
                 {suggestionPanel.section === "education" && (
                   <SuggestionPanel
                     open={suggestionPanel.suggestions !== null}
@@ -887,6 +850,46 @@ function AiSuggestBtn({ loading, onClick }: { loading: boolean; onClick: () => v
       className="h-7 gap-1 text-xs text-secondary-foreground hover:text-primary">
       {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />} Sarankan AI
     </Button>
+  );
+}
+
+type TextAlign = "left" | "center" | "right" | "justify";
+
+function TextAlignPicker({ value, onChange }: { value?: TextAlign; onChange: (v: TextAlign) => void }) {
+  const options: { value: TextAlign; label: string }[] = [
+    { value: "left", label: "Kiri" },
+    { value: "center", label: "Tengah" },
+    { value: "right", label: "Kanan" },
+    { value: "justify", label: "Rata" },
+  ];
+  return (
+    <div className="flex items-center gap-1">
+      <Label className="text-xs text-muted-foreground mr-1">Rata teks:</Label>
+      <div className="flex gap-0.5">
+        {options.map((opt) => (
+          <button
+            key={opt.value}
+            type="button"
+            onClick={() => onChange(opt.value)}
+            className={cn(
+              "px-1.5 py-0.5 text-[11px] rounded border transition-colors font-medium",
+              value === opt.value
+                ? "bg-primary text-primary-foreground border-primary"
+                : "bg-background border-border hover:bg-muted text-muted-foreground"
+            )}
+            title={opt.label}
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="inline-block align-middle mr-0.5">
+              {opt.value === "left" && <><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="15" y2="12" /><line x1="3" y1="18" x2="18" y2="18" /></>}
+              {opt.value === "center" && <><line x1="3" y1="6" x2="21" y2="6" /><line x1="6" y1="12" x2="18" y2="12" /><line x1="4" y1="18" x2="20" y2="18" /></>}
+              {opt.value === "right" && <><line x1="3" y1="6" x2="21" y2="6" /><line x1="9" y1="12" x2="21" y2="12" /><line x1="6" y1="18" x2="21" y2="18" /></>}
+              {opt.value === "justify" && <><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" /></>}
+            </svg>
+            {opt.label}
+          </button>
+        ))}
+      </div>
+    </div>
   );
 }
 

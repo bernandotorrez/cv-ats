@@ -105,7 +105,7 @@ export function MakassarTemplate({ data, showHeader = true, sectionOrder }: Prop
                     <span style={{ fontSize: "8.5pt", color: "#666" }}>{e.startDate} – {e.current ? "Sekarang" : e.endDate}</span>
                   </div>
                   <div style={{ fontSize: "9.5pt", color: "#444", marginBottom: 2 }}>{e.company}{e.location ? ` • ${e.location}` : ""}</div>
-                  <p style={{ fontSize: "9pt", whiteSpace: "pre-wrap", lineHeight: 1.5, color: "#333", margin: 0 }}>{e.description}</p>
+                  <p style={{ fontSize: "9pt", whiteSpace: "pre-wrap", lineHeight: 1.5, color: "#333", margin: 0, textAlign: e.descriptionAlign || "left" }}>{e.description}</p>
                 </div>
               ))}
             </Section>

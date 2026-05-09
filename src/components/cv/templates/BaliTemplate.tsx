@@ -52,7 +52,7 @@ export function BaliTemplate({ data, showHeader = true, sectionOrder }: Props) {
                   {e.location && (
                     <div style={{ fontSize: "9pt", color: "#94a3b8", marginBottom: 3 }}>{e.location}</div>
                   )}
-                  <p style={{ fontSize: "9.5pt", whiteSpace: "pre-wrap", color: "#475569", lineHeight: 1.6, margin: 0 }}>
+                  <p style={{ fontSize: "9.5pt", whiteSpace: "pre-wrap", color: "#475569", lineHeight: 1.6, margin: 0, textAlign: e.descriptionAlign || "left" }}>
                     {e.description}
                   </p>
                 </div>
@@ -76,7 +76,7 @@ export function BaliTemplate({ data, showHeader = true, sectionOrder }: Props) {
                   </div>
                   <div style={{ fontSize: "10pt", color: "#64748b" }}>{ed.school}</div>
                   {ed.description && (
-                    <p style={{ fontSize: "9pt", color: "#94a3b8", marginTop: 2 }}>{ed.description}</p>
+                    <p style={{ fontSize: "9pt", color: "#94a3b8", marginTop: 2, textAlign: ed.descriptionAlign || "left" }}>{ed.description}</p>
                   )}
                 </div>
               ))}

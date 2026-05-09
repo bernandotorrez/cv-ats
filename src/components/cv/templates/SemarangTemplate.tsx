@@ -46,7 +46,7 @@ export function SemarangTemplate({ data, showHeader = true, sectionOrder }: Prop
                   </div>
                   <div style={{ fontSize: "10pt", color: "#333", fontWeight: 500, marginBottom: 2 }}>{e.company}</div>
                   {e.location && <div style={{ fontSize: "9pt", color: "#888", marginBottom: 3 }}>{e.location}</div>}
-                  <p style={{ fontSize: "9.5pt", whiteSpace: "pre-wrap", color: "#444", lineHeight: 1.5, margin: 0 }}>{e.description}</p>
+                  <p style={{ fontSize: "9.5pt", whiteSpace: "pre-wrap", color: "#444", lineHeight: 1.5, margin: 0, textAlign: e.descriptionAlign || "left" }}>{e.description}</p>
                 </div>
               ))}
             </Section>
@@ -65,7 +65,7 @@ export function SemarangTemplate({ data, showHeader = true, sectionOrder }: Prop
                     <span style={{ fontSize: "9pt", color: "#666" }}>{ed.startDate} – {ed.endDate}</span>
                   </div>
                   <div style={{ fontSize: "10pt", color: "#444" }}>{ed.school}</div>
-                  {ed.description && <p style={{ fontSize: "9pt", color: "#666", marginTop: 2, fontStyle: "italic" }}>{ed.description}</p>}
+                  {ed.description && <p style={{ fontSize: "9pt", color: "#666", marginTop: 2, fontStyle: "italic", textAlign: ed.descriptionAlign || "left" }}>{ed.description}</p>}
                 </div>
               ))}
             </Section>
