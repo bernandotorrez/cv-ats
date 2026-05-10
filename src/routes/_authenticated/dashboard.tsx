@@ -125,6 +125,7 @@ function DashboardPage() {
           quota_ai_polish,
           enable_cv_review,
           enable_cover_letter,
+          enable_keyword_extractor,
           enable_text_polish
         )`,
       )
@@ -263,7 +264,7 @@ function DashboardPage() {
       used: keywordExtractUsageCount,
       max: tierQuotas?.quota_ai_keyword_extract ?? (tier === "free" ? 2 : tier === "starter" ? 10 : null),
       color: "bg-blue-500",
-      visible: tier !== "free",
+      visible: tierQuotas?.enable_keyword_extractor ?? limits.canKeywordExtract,
     },
     {
       icon: Type,
@@ -316,6 +317,14 @@ function DashboardPage() {
       badge: "✨ Baru",
       visible: limits.canCoverLetter,
     },
+    {
+      icon: Key,
+      label: "Keyword Extractor",
+      desc: "Ekstrak keyword dari job description untuk optimasi CV ATS. Auto-suggest keyword berdasarkan posisi target.",
+      action: "keyword-extractor",
+      badge: "🔑 ATS",
+      visible: limits.canKeywordExtract,
+    },
   ];
 
   const quickActions: { icon: React.ComponentType<{ className?: string }>; label: string; action: string; color: string; visible: boolean }[] = [
@@ -325,6 +334,7 @@ function DashboardPage() {
     { icon: Briefcase, label: "Pelacak Lamaran", action: "lamaran", color: "bg-blue-500/10 text-blue-600", visible: true },
     { icon: Mic, label: "Simulasi Wawancara", action: "simulasi", color: "bg-rose-500/10 text-rose-600", visible: limits.canInterviewSimulator },
     { icon: FileCheck, label: "Cover Letter", action: "cover-letter", color: "bg-teal-500/10 text-teal-600", visible: limits.canCoverLetter },
+    { icon: Key, label: "Keyword Extract", action: "keyword-extractor", color: "bg-blue-500/10 text-blue-600", visible: limits.canKeywordExtract },
     { icon: Gift, label: "Referral", action: "referral", color: "bg-pink-500/10 text-pink-600", visible: true },
     { icon: TrendingUp, label: "Analitik CV", action: "analitik", color: "bg-indigo-500/10 text-indigo-600", visible: limits.canAnalytics },
     ...(admin ? [{ icon: Shield, label: "Admin Panel", action: "admin" as const, color: "bg-red-500/10 text-red-600", visible: true }] : []),
@@ -333,7 +343,7 @@ function DashboardPage() {
   const tierName = tier === "free" ? "Free" : tier === "starter" ? "Starter" : tier === "pro" ? "Pro" : "Pro+";
 
   // Actions that need a CV picker (CV-specific features)
-  const CV_PICKER_ACTIONS = ["cv-review", "score", "ai-suggest", "cover-letter"];
+  const CV_PICKER_ACTIONS = ["cv-review", "score", "ai-suggest", "cover-letter", "keyword-extractor"];
 
   const handleFeatureClick = (action: string) => {
     if (CV_PICKER_ACTIONS.includes(action)) {
@@ -363,6 +373,7 @@ function DashboardPage() {
       score: "/score/$cvId",
       "ai-suggest": "/cv/$id",
       "cover-letter": "/tools/cover-letter/$cvId",
+      "keyword-extractor": "/tools/keyword/$cvId",
     };
     const route = routes[showCvPicker.action];
     if (route) {

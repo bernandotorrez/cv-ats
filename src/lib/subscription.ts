@@ -27,6 +27,7 @@ export interface TierLimits {
   maxTextPolish: number | null; // null = unlimited
   canDownloadDocx: boolean;
   canCoverLetter: boolean; // ai-cover-letter: free=❌
+  canKeywordExtract: boolean; // ai-keywords: free=❌
   canCompare: boolean;
   canLinkedInOptimize: boolean;
   canAnalytics: boolean;
@@ -54,6 +55,7 @@ type DbSubscriptionRow = {
     template_access: string;
     enable_cv_review: boolean;
     enable_cover_letter: boolean;
+    enable_keyword_extractor: boolean;
     enable_cv_comparison: boolean;
     enable_interview_simulator: boolean;
     enable_analytics: boolean;
@@ -83,6 +85,7 @@ const TIER_LIMITS: Record<Tier, TierLimits> = {
     maxTextPolish: 10,
     canDownloadDocx: false,
     canCoverLetter: false,
+    canKeywordExtract: false,
     canCompare: false,
     canLinkedInOptimize: false,
     canAnalytics: false,
@@ -105,6 +108,7 @@ const TIER_LIMITS: Record<Tier, TierLimits> = {
     maxTextPolish: 50,
     canDownloadDocx: true,
     canCoverLetter: true,
+    canKeywordExtract: true,
     canCompare: false,
     canLinkedInOptimize: false,
     canAnalytics: false,
@@ -127,6 +131,7 @@ const TIER_LIMITS: Record<Tier, TierLimits> = {
     maxTextPolish: null,
     canDownloadDocx: true,
     canCoverLetter: true,
+    canKeywordExtract: true,
     canCompare: true,
     canLinkedInOptimize: false,
     canAnalytics: false,
@@ -149,6 +154,7 @@ const TIER_LIMITS: Record<Tier, TierLimits> = {
     maxTextPolish: null,
     canDownloadDocx: true,
     canCoverLetter: true,
+    canKeywordExtract: true,
     canCompare: true,
     canLinkedInOptimize: true,
     canAnalytics: true,
@@ -173,7 +179,7 @@ export async function getUserTierConfig(userId: string): Promise<TierLimits> {
           max_cvs, quota_ai_suggest, quota_ai_score,
           quota_ai_chat, quota_ai_cover_letter, quota_ai_keyword_extract,
           template_access,
-          enable_cv_review, enable_cover_letter,
+          enable_cv_review, enable_cover_letter, enable_keyword_extractor,
           enable_cv_comparison, enable_interview_simulator,
           enable_analytics, enable_linkedin_optimize,
           enable_text_polish, quota_ai_polish
@@ -203,6 +209,7 @@ export async function getUserTierConfig(userId: string): Promise<TierLimits> {
         // DB is the source of truth; hardcoded base is fallback only.
         enableCvReview: t.enable_cv_review ?? base.enableCvReview,
         canCoverLetter: t.enable_cover_letter ?? base.canCoverLetter,
+        canKeywordExtract: t.enable_keyword_extractor ?? base.canKeywordExtract,
         canCompare: t.enable_cv_comparison ?? base.canCompare,
         canInterviewSimulator: t.enable_interview_simulator ?? base.canInterviewSimulator,
         canAnalytics: t.enable_analytics ?? base.canAnalytics,

@@ -15,6 +15,19 @@ Deno.serve(async (req: Request) => {
 
     if (!jobDescription) throw new Error("jobDescription diperlukan");
 
+    // Check feature flag before processing
+    const { data: userSub } = await admin
+      .from("user_subscriptions")
+      .select(`subscription_tiers!inner(enable_keyword_extractor)`)
+      .eq("user_id", userId)
+      .eq("status", "active")
+      .single();
+
+    const enabled = (userSub as any)?.subscription_tiers?.enable_keyword_extractor ?? false;
+    if (!enabled) {
+      throw new Error("Keyword Extractor tidak tersedia di paket kamu. Silakan upgrade.");
+    }
+
     const prompt = `Analisis deskripsi pekerjaan berikut dan ekstrak keyword. Output HARUS JSON valid (tanpa markdown wrapper).
 
 DESKRIPSI:
