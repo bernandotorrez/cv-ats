@@ -1,5 +1,5 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState, type FormEvent } from "react";
+import { createFileRoute, Link, useNavigate, redirect } from "@tanstack/react-router";
+import { useState, type FormEvent, useEffect } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
 import { buildSeo } from "@/lib/seo";
@@ -15,6 +15,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/auth-context";
 import { PasswordStrength } from "@/components/ui/password-strength";
 import { Loader2, Eye, EyeOff } from "lucide-react";
 
@@ -34,6 +35,12 @@ const schema = z.object({
 });
 
 export const Route = createFileRoute("/register")({
+  beforeLoad: async () => {
+    const { data } = await supabase.auth.getSession();
+    if (data.session) {
+      throw redirect({ to: "/dashboard" });
+    }
+  },
   head: () =>
     buildSeo({
       title: "Daftar Gratis — CV ATS Indonesia",
@@ -46,12 +53,38 @@ export const Route = createFileRoute("/register")({
 
 function RegisterPage() {
   const navigate = useNavigate();
+  const { user: authUser, loading: authLoading } = useAuth();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  // Redirect already-logged-in users on client side (fallback for SSR)
+  useEffect(() => {
+    if (!authLoading && authUser) {
+      navigate({ to: "/dashboard", replace: true });
+    }
+  }, [authUser, authLoading, navigate]);
+
+  // Show loading indicator while checking auth state
+  if (authLoading) {
+    return (
+      <div className="container-page flex min-h-[80vh] items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="flex gap-1.5">
+            <div className="h-3 w-3 animate-pulse rounded-full bg-muted-foreground/30" />
+            <div className="h-3 w-3 animate-pulse rounded-full bg-muted-foreground/30" />
+            <div className="h-3 w-3 animate-pulse rounded-full bg-muted-foreground/30" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Don't render form if user is already logged in (redirect happens via useEffect)
+  if (authUser) return null;
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();

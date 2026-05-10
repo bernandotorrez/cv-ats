@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, redirect } from "@tanstack/react-router";
 import { useState, type FormEvent, useEffect } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
@@ -15,6 +15,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/auth-context";
 import { Loader2, Eye, EyeOff, ShieldAlert } from "lucide-react";
 
 const schema = z.object({
@@ -27,6 +28,12 @@ const MAX_ATTEMPTS = 5;
 const ATTEMPT_WINDOW = 15 * 60 * 1000; // 15 menit
 
 export const Route = createFileRoute("/login")({
+  beforeLoad: async () => {
+    const { data } = await supabase.auth.getSession();
+    if (data.session) {
+      throw redirect({ to: "/dashboard" });
+    }
+  },
   head: () =>
     buildSeo({
       title: "Masuk — CV ATS Indonesia",
@@ -82,12 +89,20 @@ function clearAttempts() {
 function LoginPage() {
   const navigate = useNavigate();
   const { redirect } = Route.useSearch();
+  const { user: authUser, loading: authLoading } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
   const [lockout, setLockout] = useState(getLockoutState);
+
+  // Redirect already-logged-in users on client side (fallback for SSR)
+  useEffect(() => {
+    if (!authLoading && authUser) {
+      navigate({ to: "/dashboard", replace: true });
+    }
+  }, [authUser, authLoading, navigate]);
 
   // Countdown timer for lockout
   useEffect(() => {
@@ -99,6 +114,24 @@ function LoginPage() {
     }, 1000);
     return () => clearInterval(interval);
   }, [lockout.locked]);
+
+  // Show loading indicator while checking auth state
+  if (authLoading) {
+    return (
+      <div className="container-page flex min-h-[80vh] items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="flex gap-1.5">
+            <div className="h-3 w-3 animate-pulse rounded-full bg-muted-foreground/30" />
+            <div className="h-3 w-3 animate-pulse rounded-full bg-muted-foreground/30" />
+            <div className="h-3 w-3 animate-pulse rounded-full bg-muted-foreground/30" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Don't render form if user is already logged in (redirect happens via useEffect)
+  if (authUser) return null;
 
   const formatCountdown = (ms: number) => {
     const mins = Math.floor(ms / 60000);
