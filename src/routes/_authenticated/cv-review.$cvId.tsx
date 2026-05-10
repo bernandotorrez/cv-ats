@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { buildSeo } from "@/lib/seo";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { getUserTierConfig } from "@/lib/subscription";
@@ -29,6 +30,11 @@ import {
   TrendingUp,
   Shield,
   User,
+  Sparkles,
+  History,
+  ChevronRight,
+  Clock,
+  BarChart3,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -55,6 +61,9 @@ function CvReviewPage() {
   const [targetRole, setTargetRole] = useState("");
   const [result, setResult] = useState<CvReviewResult | null>(null);
   const [tierOk, setTierOk] = useState(false);
+  const [reviewHistory, setReviewHistory] = useState<any[]>([]);
+  const [selectedHistoryId, setSelectedHistoryId] = useState<string | null>(null);
+  const [showHistory, setShowHistory] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -82,13 +91,92 @@ function CvReviewPage() {
       const d = { ...emptyCv, ...(row.data as unknown as CvData) };
       setCvData(d);
       setTargetRole(d.personal.headline || "");
+
+      // Load review history
+      await loadHistory();
       setLoading(false);
     })();
   }, [cvId, user?.id]);
 
+  const loadHistory = async () => {
+    if (!user?.id) return;
+    const { data, error } = await (supabase as any)
+      .from("cv_reviews")
+      .select("id, target_role, overall_score, created_at")
+      .eq("user_id", user.id)
+      .eq("cv_id", cvId)
+      .order("created_at", { ascending: false });
+    if (!error && data) {
+      setReviewHistory(data);
+    }
+  };
+
+  const loadReviewDetail = async (reviewId: string) => {
+    const { data, error } = await (supabase as any)
+      .from("cv_reviews")
+      .select("*")
+      .eq("id", reviewId)
+      .single();
+    if (!error && data) {
+      // Reconstruct CvReviewResult from DB row
+      const restored: CvReviewResult = {
+        success: true,
+        review: {
+          reviewer: { name: "", title: "", experience: "" },
+          scores: {
+            overall: data.overall_score,
+            firstImpression: data.scores?.firstImpression ?? 0,
+            format: data.scores?.format ?? 0,
+            content: data.scores?.content ?? 0,
+            achievement: data.scores?.achievement ?? 0,
+            presentation: data.scores?.presentation ?? 0,
+          },
+          strengths: data.strengths ?? [],
+          weaknesses: data.weaknesses ?? [],
+          suggestions: data.suggestions ?? [],
+          industryBenchmark: data.industry_benchmark ?? { level: "", comparison: "", percentile: "" },
+          hrVerdict: data.hr_verdict ?? { verdict: "", reason: "", nextSteps: [] },
+          quickWins: data.quick_wins ?? [],
+        },
+        tier: "",
+        isHrPersona: true,
+      };
+      setResult(restored);
+      setSelectedHistoryId(reviewId);
+      setShowHistory(false);
+      toast.success("Melihat review sebelumnya");
+    }
+  };
+
+  const saveReviewResult = async (res: CvReviewResult) => {
+    if (!user?.id) return;
+    const { error } = await (supabase as any)
+      .from("cv_reviews")
+      .insert({
+        user_id: user.id,
+        cv_id: cvId,
+        target_role: targetRole || null,
+        job_description: jobDescription.trim() || null,
+        overall_score: res.review.scores.overall,
+        scores: res.review.scores,
+        strengths: res.review.strengths,
+        weaknesses: res.review.weaknesses,
+        suggestions: res.review.suggestions,
+        industry_benchmark: res.review.industryBenchmark,
+        hr_verdict: res.review.hrVerdict,
+        quick_wins: res.review.quickWins,
+      });
+    if (error) {
+      console.warn("[Review Save] Gagal menyimpan history:", error);
+    } else {
+      await loadHistory();
+    }
+  };
+
   const handleReview = async () => {
     setReviewing(true);
     setResult(null);
+    setSelectedHistoryId(null);
     try {
       const res = await reviewCv({
         data: {
@@ -99,6 +187,7 @@ function CvReviewPage() {
         },
       });
       setResult(res);
+      await saveReviewResult(res);
       toast.success("Review CV berhasil!");
     } catch (e: any) {
       toast.error(e.message || "Gagal mereview CV");
@@ -162,7 +251,73 @@ function CvReviewPage() {
             tahun.
           </p>
         </div>
+        {reviewHistory.length > 0 && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2"
+            onClick={() => setShowHistory(!showHistory)}
+          >
+            <History className="h-4 w-4" />
+            Riwayat Review ({reviewHistory.length})
+          </Button>
+        )}
       </div>
+
+      {/* History Panel */}
+      {showHistory && reviewHistory.length > 0 && (
+        <Card className="mb-8">
+          <CardHeader className="py-3">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <History className="h-4 w-4" /> Riwayat Review CV Ini
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="py-2">
+            <div className="space-y-1">
+              {reviewHistory.map((h: any) => (
+                <button
+                  key={h.id}
+                  type="button"
+                  onClick={() => loadReviewDetail(h.id)}
+                  className={cn(
+                    "w-full flex items-center gap-3 px-3 py-2 rounded-md text-left text-sm transition-colors",
+                    selectedHistoryId === h.id
+                      ? "bg-primary/10 text-primary"
+                      : "hover:bg-muted"
+                  )}
+                >
+                  <Clock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                  <div className="flex-1 min-w-0">
+                    <p className="truncate font-medium">
+                      {h.target_role || "Tanpa target"}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(h.created_at).toLocaleDateString("id-ID", {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span
+                      className={cn(
+                        "text-sm font-bold",
+                        scoreColor(h.overall_score),
+                      )}
+                    >
+                      {h.overall_score}
+                    </span>
+                    <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+                  </div>
+                </button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid gap-8 lg:grid-cols-3">
         {/* Left: Input + Results */}
@@ -197,28 +352,62 @@ function CvReviewPage() {
                   maxLength={10000}
                 />
               </div>
-              <Button
-                onClick={handleReview}
-                disabled={reviewing}
-                size="lg"
-                className="gap-2 w-full sm:w-auto"
-              >
-                {reviewing ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" /> Menganalisis CV...
-                  </>
-                ) : (
-                  <>
-                    <Brain className="h-4 w-4" /> Review CV dengan AI HR
-                  </>
+              <div className="flex items-center gap-2 flex-wrap">
+                <Button
+                  onClick={handleReview}
+                  disabled={reviewing}
+                  size="lg"
+                  className="gap-2"
+                >
+                  {reviewing ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" /> Menganalisis CV...
+                    </>
+                  ) : (
+                    <>
+                      <Brain className="h-4 w-4" /> Review CV dengan AI HR
+                    </>
+                  )}
+                </Button>
+                {selectedHistoryId && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setResult(null);
+                      setSelectedHistoryId(null);
+                    }}
+                    className="gap-1.5 text-xs"
+                  >
+                    + Review Baru
+                  </Button>
                 )}
-              </Button>
+              </div>
             </CardContent>
           </Card>
 
           {/* Results */}
           {result && (
             <div className="space-y-6">
+              {/* History badge */}
+              {selectedHistoryId && (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/50 px-3 py-1.5 rounded-md">
+                  <Clock className="h-3.5 w-3.5" />
+                  <span>Menampilkan review sebelumnya</span>
+                  <Button
+                    variant="link"
+                    size="sm"
+                    className="h-auto p-0 text-xs"
+                    onClick={() => {
+                      setResult(null);
+                      setSelectedHistoryId(null);
+                    }}
+                  >
+                    Tutup
+                  </Button>
+                </div>
+              )}
+
               {/* Reviewer Card */}
               <Card className="border-2 border-primary/20 bg-gradient-to-r from-primary/5 to-card">
                 <CardContent className="p-5 flex items-center gap-4">

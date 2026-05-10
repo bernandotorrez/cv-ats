@@ -172,7 +172,7 @@ export async function getUserTierConfig(userId: string): Promise<TierLimits> {
           slug, name, price_monthly,
           max_cvs, quota_ai_suggest, quota_ai_score,
           quota_ai_chat, quota_ai_cover_letter, quota_ai_keyword_extract,
-          quota_guided_sessions, template_access,
+          template_access,
           enable_cv_review, enable_cover_letter,
           enable_cv_comparison, enable_interview_simulator,
           enable_analytics, enable_linkedin_optimize,

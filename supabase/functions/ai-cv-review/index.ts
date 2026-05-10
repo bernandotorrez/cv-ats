@@ -196,7 +196,7 @@ ${hrPersonaPrompt}`;
       success: true,
       review: {
         reviewer: parsed.reviewer || {
-          name: "Sari Dewi Lakshmana",
+          name: "Hira AI",
           title: "Senior HR Recruitment Consultant",
           experience: "20+ tahun"
         },
