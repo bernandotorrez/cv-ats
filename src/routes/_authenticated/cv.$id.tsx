@@ -352,7 +352,7 @@ function CvEditorPage() {
             </Button>
             
             <Button asChild variant="ghost" size="sm" className="h-8 text-xs">
-              <Link to="/tools/$cvId" params={{ cvId: id }}><Wrench className="h-3.5 w-3.5" /></Link>
+              <Link to="/tools" search={{ cvId: id }}><Wrench className="h-3.5 w-3.5" /></Link>
             </Button>
             <Button asChild variant="ghost" size="sm" className="h-8 text-xs">
               <Link to="/score/$cvId" params={{ cvId: id }}><BarChart3 className="h-3.5 w-3.5" /></Link>

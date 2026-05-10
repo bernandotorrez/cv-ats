@@ -371,13 +371,13 @@ function CvListPage() {
                         </Button>
                       )}
                       <Button asChild size="sm" variant="outline" className="gap-1 text-xs h-7">
-                        <Link to="/tools/$cvId" params={{ cvId: cv.id }}>
+                        <Link to="/tools" search={{ cvId: cv.id }}>
                           <Wrench className="h-3 w-3" /> AI Tools
                         </Link>
                       </Button>
                       {limits.canCoverLetter && (
                         <Button asChild size="sm" variant="outline" className="gap-1 text-xs h-7">
-                          <Link to="/tools/$cvId" params={{ cvId: cv.id }}>
+                          <Link to="/tools/cover-letter/$cvId" params={{ cvId: cv.id }}>
                             <FileCheck className="h-3 w-3" /> Cover Letter
                           </Link>
                         </Button>

@@ -44,6 +44,7 @@ import { Route as AuthenticatedCompareRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedAnalitikRouteImport } from './routes/_authenticated/analitik'
 import { Route as AuthenticatedAkunRouteImport } from './routes/_authenticated/akun'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedToolsIndexRouteImport } from './routes/_authenticated/tools.index'
 import { Route as AuthenticatedCvIndexRouteImport } from './routes/_authenticated/cv.index'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
 import { Route as AuthenticatedToolsCvIdRouteImport } from './routes/_authenticated/tools.$cvId'
@@ -53,6 +54,8 @@ import { Route as AuthenticatedCvIdRouteImport } from './routes/_authenticated/c
 import { Route as AuthenticatedCvReviewCvIdRouteImport } from './routes/_authenticated/cv-review.$cvId'
 import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin/users'
 import { Route as AuthenticatedAdminTemplatesRouteImport } from './routes/_authenticated/admin/templates'
+import { Route as AuthenticatedToolsKeywordCvIdRouteImport } from './routes/_authenticated/tools.keyword.$cvId'
+import { Route as AuthenticatedToolsCoverLetterCvIdRouteImport } from './routes/_authenticated/tools.cover-letter.$cvId'
 
 const VerifyEmailRoute = VerifyEmailRouteImport.update({
   id: '/verify-email',
@@ -229,6 +232,11 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedToolsIndexRoute = AuthenticatedToolsIndexRouteImport.update({
+  id: '/tools/',
+  path: '/tools/',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedCvIndexRoute = AuthenticatedCvIndexRouteImport.update({
   id: '/cv/',
   path: '/cv/',
@@ -277,6 +285,18 @@ const AuthenticatedAdminTemplatesRoute =
     path: '/templates',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedToolsKeywordCvIdRoute =
+  AuthenticatedToolsKeywordCvIdRouteImport.update({
+    id: '/tools/keyword/$cvId',
+    path: '/tools/keyword/$cvId',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedToolsCoverLetterCvIdRoute =
+  AuthenticatedToolsCoverLetterCvIdRouteImport.update({
+    id: '/tools/cover-letter/$cvId',
+    path: '/tools/cover-letter/$cvId',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -322,6 +342,9 @@ export interface FileRoutesByFullPath {
   '/tools/$cvId': typeof AuthenticatedToolsCvIdRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/cv/': typeof AuthenticatedCvIndexRoute
+  '/tools/': typeof AuthenticatedToolsIndexRoute
+  '/tools/cover-letter/$cvId': typeof AuthenticatedToolsCoverLetterCvIdRoute
+  '/tools/keyword/$cvId': typeof AuthenticatedToolsKeywordCvIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -366,6 +389,9 @@ export interface FileRoutesByTo {
   '/tools/$cvId': typeof AuthenticatedToolsCvIdRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/cv': typeof AuthenticatedCvIndexRoute
+  '/tools': typeof AuthenticatedToolsIndexRoute
+  '/tools/cover-letter/$cvId': typeof AuthenticatedToolsCoverLetterCvIdRoute
+  '/tools/keyword/$cvId': typeof AuthenticatedToolsKeywordCvIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -413,6 +439,9 @@ export interface FileRoutesById {
   '/_authenticated/tools/$cvId': typeof AuthenticatedToolsCvIdRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/cv/': typeof AuthenticatedCvIndexRoute
+  '/_authenticated/tools/': typeof AuthenticatedToolsIndexRoute
+  '/_authenticated/tools/cover-letter/$cvId': typeof AuthenticatedToolsCoverLetterCvIdRoute
+  '/_authenticated/tools/keyword/$cvId': typeof AuthenticatedToolsKeywordCvIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -460,6 +489,9 @@ export interface FileRouteTypes {
     | '/tools/$cvId'
     | '/admin/'
     | '/cv/'
+    | '/tools/'
+    | '/tools/cover-letter/$cvId'
+    | '/tools/keyword/$cvId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -504,6 +536,9 @@ export interface FileRouteTypes {
     | '/tools/$cvId'
     | '/admin'
     | '/cv'
+    | '/tools'
+    | '/tools/cover-letter/$cvId'
+    | '/tools/keyword/$cvId'
   id:
     | '__root__'
     | '/'
@@ -550,6 +585,9 @@ export interface FileRouteTypes {
     | '/_authenticated/tools/$cvId'
     | '/_authenticated/admin/'
     | '/_authenticated/cv/'
+    | '/_authenticated/tools/'
+    | '/_authenticated/tools/cover-letter/$cvId'
+    | '/_authenticated/tools/keyword/$cvId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -826,6 +864,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/tools/': {
+      id: '/_authenticated/tools/'
+      path: '/tools'
+      fullPath: '/tools/'
+      preLoaderRoute: typeof AuthenticatedToolsIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/cv/': {
       id: '/_authenticated/cv/'
       path: '/cv'
@@ -889,6 +934,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminTemplatesRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/tools/keyword/$cvId': {
+      id: '/_authenticated/tools/keyword/$cvId'
+      path: '/tools/keyword/$cvId'
+      fullPath: '/tools/keyword/$cvId'
+      preLoaderRoute: typeof AuthenticatedToolsKeywordCvIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/tools/cover-letter/$cvId': {
+      id: '/_authenticated/tools/cover-letter/$cvId'
+      path: '/tools/cover-letter/$cvId'
+      fullPath: '/tools/cover-letter/$cvId'
+      preLoaderRoute: typeof AuthenticatedToolsCoverLetterCvIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
   }
 }
 
@@ -936,6 +995,9 @@ interface AuthenticatedRouteChildren {
   AuthenticatedScoreCvIdRoute: typeof AuthenticatedScoreCvIdRoute
   AuthenticatedToolsCvIdRoute: typeof AuthenticatedToolsCvIdRoute
   AuthenticatedCvIndexRoute: typeof AuthenticatedCvIndexRoute
+  AuthenticatedToolsIndexRoute: typeof AuthenticatedToolsIndexRoute
+  AuthenticatedToolsCoverLetterCvIdRoute: typeof AuthenticatedToolsCoverLetterCvIdRoute
+  AuthenticatedToolsKeywordCvIdRoute: typeof AuthenticatedToolsKeywordCvIdRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -953,6 +1015,10 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedScoreCvIdRoute: AuthenticatedScoreCvIdRoute,
   AuthenticatedToolsCvIdRoute: AuthenticatedToolsCvIdRoute,
   AuthenticatedCvIndexRoute: AuthenticatedCvIndexRoute,
+  AuthenticatedToolsIndexRoute: AuthenticatedToolsIndexRoute,
+  AuthenticatedToolsCoverLetterCvIdRoute:
+    AuthenticatedToolsCoverLetterCvIdRoute,
+  AuthenticatedToolsKeywordCvIdRoute: AuthenticatedToolsKeywordCvIdRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
