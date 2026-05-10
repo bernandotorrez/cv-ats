@@ -362,7 +362,7 @@ function DashboardPage() {
       "cv-review": "/cv-review/$cvId",
       score: "/score/$cvId",
       "ai-suggest": "/cv/$id",
-      "cover-letter": "/tools/$cvId",
+      "cover-letter": "/tools/cover-letter/$cvId",
     };
     const route = routes[showCvPicker.action];
     if (route) {
