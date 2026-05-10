@@ -46,6 +46,7 @@ import {
   Type,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { DashboardSkeleton } from "@/components/ui/dashboard-skeleton";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () =>
@@ -369,6 +370,10 @@ function DashboardPage() {
     }
     setShowCvPicker(null);
   };
+
+  if (loading) {
+    return <DashboardSkeleton />;
+  }
 
   return (
     <div className="container-page py-8 md:py-10">

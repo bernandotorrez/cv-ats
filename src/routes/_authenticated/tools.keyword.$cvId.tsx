@@ -32,6 +32,8 @@ function KeywordExtractorPage() {
   const [cvData, setCvData] = useState<CvData>(emptyCv);
   const [cvTitle, setCvTitle] = useState("");
 
+  // Mode: "specific" or "general"
+  const [mode, setMode] = useState<"specific" | "general">("specific");
   // Keyword state
   const [kwJobDesc, setKwJobDesc] = useState("");
   const [kwTargetRole, setKwTargetRole] = useState("");
@@ -62,15 +64,27 @@ function KeywordExtractorPage() {
   }, [cvId]);
 
   const handleExtractKeywords = async () => {
-    if (!kwJobDesc.trim()) { 
-      toast.error("Deskripsi pekerjaan wajib diisi"); 
+    // Validation based on mode
+    if (mode === "specific" && !kwJobDesc.trim()) { 
+      toast.error("Deskripsi pekerjaan wajib diisi untuk mode spesifik"); 
       return; 
     }
+    if (mode === "general" && !kwTargetRole.trim()) {
+      toast.error("Target posisi wajib diisi");
+      return;
+    }
+
     setKwLoading(true);
     try {
+      // For general mode, generate generic job description from target role
+      let finalJobDesc = kwJobDesc.trim();
+      if (mode === "general") {
+        finalJobDesc = `Posisi: ${kwTargetRole.trim()}\n\nGenerate keyword umum untuk posisi ini berdasarkan industry standard dan best practices.`;
+      }
+
       const res = await extractKeywords({
         data: {
-          jobDescription: kwJobDesc.trim(),
+          jobDescription: finalJobDesc,
           targetRole: kwTargetRole.trim() || undefined,
         },
       });
@@ -126,12 +140,44 @@ function KeywordExtractorPage() {
           <CardHeader>
             <CardTitle className="text-base">Input Job Description</CardTitle>
             <CardDescription>
-              Masukkan deskripsi pekerjaan untuk mengekstrak keyword yang relevan
+              Pilih mode ekstraksi keyword sesuai kebutuhanmu
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* Mode Selector */}
+            <div className="space-y-2">
+              <Label>Mode Ekstraksi</Label>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant={mode === "specific" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setMode("specific")}
+                  className="flex-1"
+                >
+                  📋 Spesifik
+                </Button>
+                <Button
+                  type="button"
+                  variant={mode === "general" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setMode("general")}
+                  className="flex-1"
+                >
+                  ✨ Umum
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {mode === "specific" 
+                  ? "Ekstrak keyword dari job description spesifik (lebih akurat untuk lamaran)"
+                  : "AI suggest keyword umum berdasarkan posisi target (untuk optimasi CV umum)"}
+              </p>
+            </div>
+
             <div className="space-y-1.5">
-              <Label htmlFor="targetRole">Target Posisi</Label>
+              <Label htmlFor="targetRole">
+                Target Posisi {mode === "general" && <span className="text-destructive">*</span>}
+              </Label>
               <Input
                 id="targetRole"
                 value={kwTargetRole}
@@ -139,11 +185,13 @@ function KeywordExtractorPage() {
                 placeholder="Frontend Developer"
               />
               <p className="text-xs text-muted-foreground">
-                Opsional: Posisi yang kamu targetkan
+                {mode === "specific" ? "Opsional: Posisi yang kamu targetkan" : "Wajib: Posisi yang kamu targetkan"}
               </p>
             </div>
 
-            <div className="space-y-1.5">
+            {/* Conditional: Show textarea only in specific mode */}
+            {mode === "specific" && (
+              <div className="space-y-1.5">
               <Label htmlFor="jobDesc">Deskripsi Pekerjaan *</Label>
               <Textarea
                 id="jobDesc"
@@ -158,11 +206,30 @@ function KeywordExtractorPage() {
                 {kwJobDesc.length}/10000 karakter
               </p>
             </div>
+            )}
+
+            {/* Info for general mode */}
+            {mode === "general" && (
+              <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
+                <p className="text-sm text-muted-foreground">
+                  <strong className="text-foreground">Mode Umum:</strong> AI akan suggest keyword berdasarkan:
+                </p>
+                <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
+                  <li>• Industry standard untuk posisi target</li>
+                  <li>• Best practices keyword ATS</li>
+                  <li>• Skills yang umum dicari recruiter</li>
+                  <li>• Action verbs yang efektif</li>
+                </ul>
+                <p className="mt-3 text-xs text-muted-foreground">
+                  💡 Untuk hasil lebih spesifik, gunakan <strong>Mode Spesifik</strong> dengan job description asli.
+                </p>
+              </div>
+            )}
 
             <div className="flex gap-2">
               <Button 
                 onClick={handleExtractKeywords} 
-                disabled={kwLoading || !kwJobDesc.trim()} 
+                disabled={kwLoading || (mode === "specific" && !kwJobDesc.trim()) || (mode === "general" && !kwTargetRole.trim())} 
                 className="gap-2 flex-1"
               >
                 {kwLoading ? (

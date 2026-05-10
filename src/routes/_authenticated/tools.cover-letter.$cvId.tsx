@@ -38,6 +38,8 @@ function CoverLetterPage() {
   const [cvData, setCvData] = useState<CvData>(emptyCv);
   const [cvTitle, setCvTitle] = useState("");
 
+  // Mode: "specific" or "general"
+  const [mode, setMode] = useState<"specific" | "general">("specific");
   const [jobDesc, setJobDesc] = useState("");
   const [company, setCompany] = useState("");
   const [position, setPosition] = useState("");
@@ -66,17 +68,29 @@ function CoverLetterPage() {
   }, [cvId]);
 
   const handleGenerate = async () => {
-    if (!jobDesc.trim()) {
-      toast.error("Deskripsi pekerjaan wajib diisi");
+    // Validation based on mode
+    if (mode === "specific" && !jobDesc.trim()) {
+      toast.error("Deskripsi pekerjaan wajib diisi untuk mode spesifik");
       return;
     }
+    if (mode === "general" && !position.trim()) {
+      toast.error("Posisi yang dilamar wajib diisi");
+      return;
+    }
+
     setGenerating(true);
     try {
+      // For general mode, generate a generic job description from position
+      let finalJobDesc = jobDesc.trim();
+      if (mode === "general") {
+        finalJobDesc = `Posisi: ${position.trim()}${company.trim() ? `\nPerusahaan: ${company.trim()}` : ""}\n\nGenerate cover letter umum berdasarkan CV dan posisi yang dilamar.`;
+      }
+
       const res = await generateCoverLetter({
         data: {
           cvId,
           cvData: cvData as unknown as Record<string, unknown>,
-          jobDescription: jobDesc.trim(),
+          jobDescription: finalJobDesc,
           companyName: company.trim() || undefined,
           positionName: position.trim() || undefined,
         },
@@ -112,6 +126,135 @@ function CoverLetterPage() {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
     toast.success("Cover letter berhasil didownload!");
+  };
+
+  const handleDownloadPdf = async () => {
+    try {
+      toast.loading("Membuat PDF...");
+      
+      // Create HTML content for PDF
+      const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    @page {
+      size: A4;
+      margin: 2.5cm;
+    }
+    body {
+      font-family: 'Times New Roman', Times, serif;
+      font-size: 12pt;
+      line-height: 1.6;
+      color: #000;
+      max-width: 21cm;
+      margin: 0 auto;
+    }
+    .header {
+      margin-bottom: 2em;
+    }
+    .sender-info {
+      margin-bottom: 1.5em;
+    }
+    .sender-info p {
+      margin: 0.2em 0;
+    }
+    .date {
+      margin-bottom: 1.5em;
+    }
+    .recipient {
+      margin-bottom: 1.5em;
+    }
+    .recipient p {
+      margin: 0.2em 0;
+    }
+    .salutation {
+      margin-bottom: 1em;
+    }
+    .body-text {
+      text-align: justify;
+      margin-bottom: 1em;
+    }
+    .closing {
+      margin-top: 2em;
+    }
+    .signature {
+      margin-top: 3em;
+    }
+    @media print {
+      body {
+        margin: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="sender-info">
+      <p><strong>${cvData.personal.fullName || "Nama Anda"}</strong></p>
+      ${cvData.personal.email ? `<p>${cvData.personal.email}</p>` : ""}
+      ${cvData.personal.phone ? `<p>${cvData.personal.phone}</p>` : ""}
+      ${cvData.personal.location ? `<p>${cvData.personal.location}</p>` : ""}
+    </div>
+    
+    <div class="date">
+      <p>${new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}</p>
+    </div>
+    
+    ${company ? `
+    <div class="recipient">
+      <p>Kepada Yth.</p>
+      <p><strong>HRD ${company}</strong></p>
+      ${position ? `<p>Posisi: ${position}</p>` : ""}
+    </div>
+    ` : ""}
+  </div>
+  
+  <div class="body-text">
+    ${result.split("\n\n").map(para => `<p>${para.replace(/\n/g, "<br>")}</p>`).join("\n")}
+  </div>
+  
+  <div class="closing">
+    <p>Hormat saya,</p>
+  </div>
+  
+  <div class="signature">
+    <p><strong>${cvData.personal.fullName || "Nama Anda"}</strong></p>
+  </div>
+</body>
+</html>`;
+
+      // Call edge function to generate PDF
+      const { data, error } = await supabase.functions.invoke("generate-pdf", {
+        body: {
+          html: htmlContent,
+          filename: `cover-letter-${cvTitle}`,
+        },
+      });
+
+      toast.dismiss();
+
+      if (error) throw error;
+
+      // Download the PDF
+      const blob = new Blob([Uint8Array.from(atob(data.pdf), c => c.charCodeAt(0))], {
+        type: "application/pdf",
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `cover-letter-${cvTitle}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      toast.success("PDF berhasil didownload!");
+    } catch (e: any) {
+      toast.dismiss();
+      toast.error(e.message || "Gagal membuat PDF");
+    }
   };
 
   const handleReset = () => {
@@ -158,10 +301,40 @@ function CoverLetterPage() {
           <CardHeader>
             <CardTitle className="text-lg">Informasi Lamaran</CardTitle>
             <CardDescription>
-              Isi informasi pekerjaan yang kamu lamar untuk generate cover letter
+              Pilih mode generate cover letter sesuai kebutuhanmu
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* Mode Selector */}
+            <div className="space-y-2">
+              <Label>Mode Generate</Label>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant={mode === "specific" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setMode("specific")}
+                  className="flex-1"
+                >
+                  📋 Spesifik
+                </Button>
+                <Button
+                  type="button"
+                  variant={mode === "general" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setMode("general")}
+                  className="flex-1"
+                >
+                  ✨ Umum
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {mode === "specific" 
+                  ? "Paste job description dari posting pekerjaan yang kamu lamar (lebih akurat)"
+                  : "AI generate cover letter umum berdasarkan posisi dan CV-mu (untuk latihan/template)"}
+              </p>
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="company">Nama Perusahaan</Label>
               <Input
@@ -173,7 +346,9 @@ function CoverLetterPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="position">Posisi yang Dilamar</Label>
+              <Label htmlFor="position">
+                Posisi yang Dilamar {mode === "general" && <span className="text-destructive">*</span>}
+              </Label>
               <Input
                 id="position"
                 value={position}
@@ -182,28 +357,49 @@ function CoverLetterPage() {
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="jobdesc">
-                Deskripsi Pekerjaan <span className="text-destructive">*</span>
-              </Label>
-              <Textarea
-                id="jobdesc"
-                value={jobDesc}
-                onChange={(e) => setJobDesc(e.target.value)}
-                placeholder="Paste job description lengkap di sini...&#10;&#10;Contoh:&#10;- Requirements: Bachelor degree in Computer Science&#10;- Experience: 2+ years in React development&#10;- Skills: JavaScript, TypeScript, React, Node.js&#10;- Responsibilities: Develop and maintain web applications..."
-                rows={12}
-                maxLength={10000}
-                className="font-mono text-sm"
-              />
-              <p className="text-xs text-muted-foreground">
-                {jobDesc.length}/10,000 karakter
-              </p>
-            </div>
+            {/* Conditional: Show textarea only in specific mode */}
+            {mode === "specific" && (
+              <div className="space-y-2">
+                <Label htmlFor="jobdesc">
+                  Deskripsi Pekerjaan <span className="text-destructive">*</span>
+                </Label>
+                <Textarea
+                  id="jobdesc"
+                  value={jobDesc}
+                  onChange={(e) => setJobDesc(e.target.value)}
+                  placeholder="Paste job description lengkap di sini...&#10;&#10;Contoh:&#10;- Requirements: Bachelor degree in Computer Science&#10;- Experience: 2+ years in React development&#10;- Skills: JavaScript, TypeScript, React, Node.js&#10;- Responsibilities: Develop and maintain web applications..."
+                  rows={12}
+                  maxLength={10000}
+                  className="font-mono text-sm resize-none"
+                />
+                <p className="text-xs text-muted-foreground">
+                  {jobDesc.length}/10,000 karakter
+                </p>
+              </div>
+            )}
+
+            {/* Info for general mode */}
+            {mode === "general" && (
+              <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
+                <p className="text-sm text-muted-foreground">
+                  <strong className="text-foreground">Mode Umum:</strong> AI akan generate cover letter berdasarkan:
+                </p>
+                <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
+                  <li>• Data dari CV-mu ({cvData.personal.fullName})</li>
+                  <li>• Posisi yang kamu lamar</li>
+                  <li>• Pengalaman dan skills dari CV</li>
+                  <li>• Template cover letter profesional</li>
+                </ul>
+                <p className="mt-3 text-xs text-muted-foreground">
+                  💡 Untuk hasil lebih akurat, gunakan <strong>Mode Spesifik</strong> dengan job description asli.
+                </p>
+              </div>
+            )}
 
             <div className="flex gap-2">
               <Button
                 onClick={handleGenerate}
-                disabled={generating || !jobDesc.trim()}
+                disabled={generating || (mode === "specific" && !jobDesc.trim()) || (mode === "general" && !position.trim())}
                 className="flex-1 gap-2"
               >
                 {generating ? (
@@ -266,7 +462,15 @@ function CoverLetterPage() {
                     onClick={handleDownload}
                     className="gap-1"
                   >
-                    <Download className="h-3 w-3" /> Download
+                    <Download className="h-3 w-3" /> TXT
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleDownloadPdf}
+                    className="gap-1"
+                  >
+                    <Download className="h-3 w-3" /> PDF
                   </Button>
                 </div>
               )}

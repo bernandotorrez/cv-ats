@@ -47,7 +47,6 @@ import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedToolsIndexRouteImport } from './routes/_authenticated/tools.index'
 import { Route as AuthenticatedCvIndexRouteImport } from './routes/_authenticated/cv.index'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
-import { Route as AuthenticatedToolsCvIdRouteImport } from './routes/_authenticated/tools.$cvId'
 import { Route as AuthenticatedSimulasiWawancaraIdRouteImport } from './routes/_authenticated/simulasi-wawancara./$id'
 import { Route as AuthenticatedScoreCvIdRouteImport } from './routes/_authenticated/score.$cvId'
 import { Route as AuthenticatedCvIdRouteImport } from './routes/_authenticated/cv.$id'
@@ -247,11 +246,6 @@ const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
-const AuthenticatedToolsCvIdRoute = AuthenticatedToolsCvIdRouteImport.update({
-  id: '/tools/$cvId',
-  path: '/tools/$cvId',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
 const AuthenticatedSimulasiWawancaraIdRoute =
   AuthenticatedSimulasiWawancaraIdRouteImport.update({
     id: '/$id',
@@ -339,7 +333,6 @@ export interface FileRoutesByFullPath {
   '/cv/$id': typeof AuthenticatedCvIdRoute
   '/score/$cvId': typeof AuthenticatedScoreCvIdRoute
   '/simulasi-wawancara/$id': typeof AuthenticatedSimulasiWawancaraIdRoute
-  '/tools/$cvId': typeof AuthenticatedToolsCvIdRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/cv/': typeof AuthenticatedCvIndexRoute
   '/tools/': typeof AuthenticatedToolsIndexRoute
@@ -386,7 +379,6 @@ export interface FileRoutesByTo {
   '/cv/$id': typeof AuthenticatedCvIdRoute
   '/score/$cvId': typeof AuthenticatedScoreCvIdRoute
   '/simulasi-wawancara/$id': typeof AuthenticatedSimulasiWawancaraIdRoute
-  '/tools/$cvId': typeof AuthenticatedToolsCvIdRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/cv': typeof AuthenticatedCvIndexRoute
   '/tools': typeof AuthenticatedToolsIndexRoute
@@ -436,7 +428,6 @@ export interface FileRoutesById {
   '/_authenticated/cv/$id': typeof AuthenticatedCvIdRoute
   '/_authenticated/score/$cvId': typeof AuthenticatedScoreCvIdRoute
   '/_authenticated/simulasi-wawancara/$id': typeof AuthenticatedSimulasiWawancaraIdRoute
-  '/_authenticated/tools/$cvId': typeof AuthenticatedToolsCvIdRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/cv/': typeof AuthenticatedCvIndexRoute
   '/_authenticated/tools/': typeof AuthenticatedToolsIndexRoute
@@ -486,7 +477,6 @@ export interface FileRouteTypes {
     | '/cv/$id'
     | '/score/$cvId'
     | '/simulasi-wawancara/$id'
-    | '/tools/$cvId'
     | '/admin/'
     | '/cv/'
     | '/tools/'
@@ -533,7 +523,6 @@ export interface FileRouteTypes {
     | '/cv/$id'
     | '/score/$cvId'
     | '/simulasi-wawancara/$id'
-    | '/tools/$cvId'
     | '/admin'
     | '/cv'
     | '/tools'
@@ -582,7 +571,6 @@ export interface FileRouteTypes {
     | '/_authenticated/cv/$id'
     | '/_authenticated/score/$cvId'
     | '/_authenticated/simulasi-wawancara/$id'
-    | '/_authenticated/tools/$cvId'
     | '/_authenticated/admin/'
     | '/_authenticated/cv/'
     | '/_authenticated/tools/'
@@ -885,13 +873,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
-    '/_authenticated/tools/$cvId': {
-      id: '/_authenticated/tools/$cvId'
-      path: '/tools/$cvId'
-      fullPath: '/tools/$cvId'
-      preLoaderRoute: typeof AuthenticatedToolsCvIdRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
     '/_authenticated/simulasi-wawancara/$id': {
       id: '/_authenticated/simulasi-wawancara/$id'
       path: '/$id'
@@ -993,7 +974,6 @@ interface AuthenticatedRouteChildren {
   AuthenticatedCvReviewCvIdRoute: typeof AuthenticatedCvReviewCvIdRoute
   AuthenticatedCvIdRoute: typeof AuthenticatedCvIdRoute
   AuthenticatedScoreCvIdRoute: typeof AuthenticatedScoreCvIdRoute
-  AuthenticatedToolsCvIdRoute: typeof AuthenticatedToolsCvIdRoute
   AuthenticatedCvIndexRoute: typeof AuthenticatedCvIndexRoute
   AuthenticatedToolsIndexRoute: typeof AuthenticatedToolsIndexRoute
   AuthenticatedToolsCoverLetterCvIdRoute: typeof AuthenticatedToolsCoverLetterCvIdRoute
@@ -1013,7 +993,6 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedCvReviewCvIdRoute: AuthenticatedCvReviewCvIdRoute,
   AuthenticatedCvIdRoute: AuthenticatedCvIdRoute,
   AuthenticatedScoreCvIdRoute: AuthenticatedScoreCvIdRoute,
-  AuthenticatedToolsCvIdRoute: AuthenticatedToolsCvIdRoute,
   AuthenticatedCvIndexRoute: AuthenticatedCvIndexRoute,
   AuthenticatedToolsIndexRoute: AuthenticatedToolsIndexRoute,
   AuthenticatedToolsCoverLetterCvIdRoute:
