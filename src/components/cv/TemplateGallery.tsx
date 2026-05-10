@@ -45,13 +45,17 @@ interface Props {
 // Free templates: jakarta, bandung (tanpa badge)
 const FREE_TEMPLATES = ["jakarta", "bandung"];
 
-// Pro templates: semarang, surabaya
-const PRO_TEMPLATES = ["semarang", "surabaya"];
+// Starter+ templates: medan, makassar, surabaya, yogya (badge "Starter")
+const STARTER_TEMPLATES = ["medan", "makassar", "surabaya", "yogya"];
+
+// Pro templates: semarang, bali (badge "Pro")
+const PRO_TEMPLATES = ["semarang", "bali"];
 
 export function TemplateGallery({ selected, onSelect, tier = "free", templates, allowedTemplates }: Props) {
   const displayTemplates = templates?.length
     ? templates.map((t) => {
         const isPro = PRO_TEMPLATES.includes(t.slug);
+        const isStarter = STARTER_TEMPLATES.includes(t.slug);
         // Check if template is allowed based on allowedTemplates array
         const isAllowed = allowedTemplates === null || allowedTemplates === undefined || allowedTemplates.includes(t.slug);
         const isLocked = !isAllowed;
@@ -60,11 +64,13 @@ export function TemplateGallery({ selected, onSelect, tier = "free", templates, 
           name: t.name, 
           description: t.description, 
           isLocked,
-          isPro
+          isPro,
+          isStarter
         };
       })
     : TEMPLATES.map((t) => {
         const isPro = PRO_TEMPLATES.includes(t.id);
+        const isStarter = STARTER_TEMPLATES.includes(t.id);
         // Check if template is allowed based on allowedTemplates array
         const isAllowed = allowedTemplates === null || allowedTemplates === undefined || allowedTemplates.includes(t.id);
         const isLocked = !isAllowed;
@@ -73,7 +79,8 @@ export function TemplateGallery({ selected, onSelect, tier = "free", templates, 
           name: t.name,
           description: t.description,
           isLocked,
-          isPro
+          isPro,
+          isStarter
         };
       });
 
@@ -127,7 +134,7 @@ export function TemplateGallery({ selected, onSelect, tier = "free", templates, 
               {!isFree && (
                 <Badge variant="secondary" className="mt-2 text-xs gap-1">
                   {t.isLocked ? <Lock className="h-3 w-3" /> : <Palette className="h-3 w-3" />}
-                  {t.isPro ? "Pro" : "Starter"}
+                  {t.isPro ? "Pro" : t.isStarter ? "Starter" : "Premium"}
                 </Badge>
               )}
             </div>

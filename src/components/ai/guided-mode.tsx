@@ -168,17 +168,27 @@ Format respons JSON:
 }
 
 Panduan ekstraksi per step:
-- greeting/headline: { "personal": { "headline": "posisi yang dilamar" } }
-- summary: { "personal": { "summary": "ringkasan profesional" } }
+- greeting/headline: { "personal": { "headline": "posisi yang dilamar DALAM BAHASA INGGRIS yang profesional" } }
+- summary: { "personal": { "summary": "ringkasan profesional 2-3 kalimat yang menarik dan ATS-friendly" } }
 - experience_count: { "experience_count": jumlah }
-- experience_detail: { "experiences": [{ "id": "exp-1", "company": "", "position": "", "startDate": "2020-01", "endDate": "2023-12", "description": "" }] }
-- education: { "educations": [{ "id": "edu-1", "school": "", "degree": "", "field": "", "startDate": "2016-08", "endDate": "2020-06" }] }
-- skills: { "skills": [{ "id": "skill-1", "name": "skill1", "level": "Intermediate" }] }
+- experience_detail: { "experiences": [{ "id": "exp-1", "company": "nama perusahaan", "position": "jabatan dalam Bahasa Inggris", "startDate": "2020-01", "endDate": "2023-12", "description": "3-5 bullet points dengan kata kerja aktif, metrik kuantitatif, dan pencapaian konkret. Format: • Poin 1\\n• Poin 2\\n• Poin 3" }] }
+- education: { "educations": [{ "id": "edu-1", "school": "nama institusi lengkap", "degree": "gelar (S1/S2/D3/dll)", "field": "jurusan", "startDate": "2016-08", "endDate": "2020-06" }] }
+- skills: { "skills": [{ "id": "skill-1", "name": "nama skill yang spesifik dan profesional", "level": "Intermediate" }] }
 
-PENTING: 
-- Untuk experiences, educations, dan skills, WAJIB generate ID unik (exp-1, edu-1, skill-1, dst)
-- Untuk tanggal gunakan format YYYY-MM atau YYYY
-- Untuk level skill gunakan: Beginner, Intermediate, Advanced, atau Expert
+PENTING - POLES KONTEN:
+1. Headline: Ubah ke Bahasa Inggris profesional (contoh: "Software Engineer" bukan "programmer")
+2. Summary: Buat ringkasan 2-3 kalimat yang menarik, highlight keahlian utama dan value proposition
+3. Job Description: 
+   - Gunakan kata kerja aktif (Led, Developed, Managed, Increased, Implemented)
+   - Tambahkan metrik kuantitatif jika memungkinkan (contoh: "Increased sales by 30%")
+   - Format bullet points dengan • di awal
+   - 3-5 poin per pengalaman
+4. Skills: Gunakan nama skill yang spesifik dan industri-standard
+5. Untuk experiences, educations, dan skills, WAJIB generate ID unik (exp-1, edu-1, skill-1, dst)
+6. Untuk tanggal gunakan format YYYY-MM atau YYYY
+7. Untuk level skill gunakan: Beginner, Intermediate, Advanced, atau Expert
+
+JANGAN hanya copy-paste jawaban user. POLES dan PROFESIONALKAN kontennya!
 
 Jika ini step terakhir, beri rangkuman dan katakan CV sudah siap.` },
       ];
@@ -313,8 +323,8 @@ Jika ini step terakhir, beri rangkuman dan katakan CV sudah siap.` },
   };
 
   return (
-    <Card className="flex flex-col h-[600px]">
-      <CardHeader className="shrink-0">
+    <Card className="flex flex-col max-h-[85vh] h-full">
+      <CardHeader className="shrink-0 pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <CardTitle className="text-base flex items-center gap-2">
@@ -331,14 +341,14 @@ Jika ini step terakhir, beri rangkuman dan katakan CV sudah siap.` },
             Langkah {currentStep + 1} dari {GUIDED_STEPS.length}
           </Badge>
         </div>
-        <Progress value={progress} className="h-1.5" />
+        <Progress value={progress} className="h-1.5 mt-2" />
       </CardHeader>
 
       <CardContent className="flex-1 flex flex-col min-h-0 p-0">
         {/* Messages */}
         <div
           ref={scrollRef}
-          className="flex-1 overflow-y-auto px-6 py-4 space-y-4"
+          className="flex-1 overflow-y-auto px-6 py-4 space-y-4 min-h-[200px]"
         >
           {messages.map((msg, i) => (
             <div
@@ -371,17 +381,17 @@ Jika ini step terakhir, beri rangkuman dan katakan CV sudah siap.` },
 
         {/* Input Area */}
         {step.key !== "complete" && !paused && (
-          <div className="shrink-0 border-t border-border p-4 space-y-3">
+          <div className="shrink-0 border-t border-border p-4 space-y-3 bg-background">
             <Textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Ketik jawabanmu di sini..."
-              rows={3}
+              rows={2}
               className="min-h-0 resize-none text-sm"
               disabled={loading}
             />
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Button
                 variant="outline"
                 size="sm"
@@ -398,7 +408,7 @@ Jika ini step terakhir, beri rangkuman dan katakan CV sudah siap.` },
               >
                 Lewati
               </Button>
-              <div className="flex-1" />
+              <div className="flex-1 min-w-[20px]" />
               <Button
                 variant="ghost"
                 size="sm"
@@ -411,7 +421,8 @@ Jika ini step terakhir, beri rangkuman dan katakan CV sudah siap.` },
                 ) : (
                   <Pause className="h-4 w-4" />
                 )}
-                Simpan & Lanjut Nanti
+                <span className="hidden sm:inline">Simpan & Lanjut Nanti</span>
+                <span className="sm:hidden">Simpan</span>
               </Button>
               <Button
                 variant="outline"
@@ -435,7 +446,7 @@ Jika ini step terakhir, beri rangkuman dan katakan CV sudah siap.` },
 
         {/* Paused State */}
         {paused && step.key !== "complete" && (
-          <div className="shrink-0 border-t border-border p-6 text-center space-y-3">
+          <div className="shrink-0 border-t border-border p-6 text-center space-y-3 bg-background">
             <div className="grid h-12 w-12 place-items-center rounded-full bg-primary/10 text-primary mx-auto">
               <Save className="h-6 w-6" />
             </div>
@@ -456,7 +467,7 @@ Jika ini step terakhir, beri rangkuman dan katakan CV sudah siap.` },
 
         {/* Complete step */}
         {step.key === "complete" && (
-          <div className="shrink-0 border-t border-border p-4 space-y-3 text-center">
+          <div className="shrink-0 border-t border-border p-6 space-y-3 text-center bg-background">
             <CheckCircle2 className="h-10 w-10 text-primary mx-auto" />
             <h3 className="font-display text-lg font-semibold">CV Siap Direview!</h3>
             <p className="text-sm text-muted-foreground">

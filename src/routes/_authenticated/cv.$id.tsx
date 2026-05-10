@@ -536,7 +536,7 @@ function CvEditorPage() {
 
       {/* Guided Mode Dialog */}
       <Dialog open={showGuidedMode} onOpenChange={setShowGuidedMode}>
-        <DialogContent className="sm:max-w-lg p-0 max-h-[90vh] overflow-hidden [&>button]:hidden">
+        <DialogContent className="sm:max-w-2xl p-0 max-h-[90vh] overflow-hidden [&>button]:hidden">
           <GuidedMode
             cvId={id}
             cvData={data}
