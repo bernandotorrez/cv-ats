@@ -12,13 +12,14 @@ Deno.serve(async (req: Request) => {
   try {
     const userId = await getUserId(req);
     const admin = getAdminClient();
-    const { messages } = await req.json();
+    const { messages, jsonMode } = await req.json();
 
     if (!messages || !Array.isArray(messages)) throw new Error("messages diperlukan");
 
     const result = await aiComplete(messages as AiMessage[], {
       temperature: 0.7,
       maxTokens: 2000,
+      jsonMode: jsonMode || false,
     });
 
     await checkAndTrackQuota(admin, userId, "chat", result.length);

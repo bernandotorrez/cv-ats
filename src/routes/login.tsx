@@ -29,6 +29,7 @@ const ATTEMPT_WINDOW = 15 * 60 * 1000; // 15 menit
 
 export const Route = createFileRoute("/login")({
   beforeLoad: async () => {
+    // Check session (works on client-side navigation)
     const { data } = await supabase.auth.getSession();
     if (data.session) {
       throw redirect({ to: "/dashboard" });
@@ -96,13 +97,19 @@ function LoginPage() {
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
   const [lockout, setLockout] = useState(getLockoutState);
+  const [hydrated, setHydrated] = useState(false);
+
+  // Mark as hydrated after first client-side render
+  useEffect(() => {
+    setHydrated(true);
+  }, []);
 
   // Redirect already-logged-in users on client side (fallback for SSR)
   useEffect(() => {
-    if (!authLoading && authUser) {
+    if (hydrated && !authLoading && authUser) {
       navigate({ to: "/dashboard", replace: true });
     }
-  }, [authUser, authLoading, navigate]);
+  }, [hydrated, authUser, authLoading, navigate]);
 
   // Countdown timer for lockout
   useEffect(() => {
@@ -115,8 +122,8 @@ function LoginPage() {
     return () => clearInterval(interval);
   }, [lockout.locked]);
 
-  // Show loading indicator while checking auth state
-  if (authLoading) {
+  // During SSR or initial client render, show loading state to prevent flash of form
+  if (!hydrated || authLoading) {
     return (
       <div className="container-page flex min-h-[80vh] items-center justify-center">
         <div className="flex flex-col items-center gap-3">

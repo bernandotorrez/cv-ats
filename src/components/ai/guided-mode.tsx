@@ -56,12 +56,12 @@ const GUIDED_STEPS: Step[] = [
   {
     key: "experience_detail",
     question: "Ceritakan pengalaman kerjamu yang paling relevan. Sebutkan: nama perusahaan, posisi, dan apa pencapaian terbesarmu di sana.",
-    field: "experience",
+    field: "experiences",
   },
   {
     key: "education",
     question: "Apa pendidikan terakhirmu? Sebutkan: universitas/sekolah, jurusan, dan tahun lulus.",
-    field: "education",
+    field: "educations",
   },
   {
     key: "skills",
@@ -157,14 +157,60 @@ export function GuidedMode({ cvId, cvData, onComplete, onCancel }: Props) {
       // Parse user's response with AI
       const context = `Sedang dalam mode panduan step-by-step CV. Step: ${step.key}. Data CV yang sudah terkumpul: ${JSON.stringify(draftData)}.`;
       const msgs = [
-        { role: "user" as const, content: `${context}\n\nJawaban pengguna untuk step "${step.key}": ${userInput}\n\nEkstrak informasi relevan dan berikan respons dalam Bahasa Indonesia yang mendorong dan natural. Jika ini step terakhir, beri rangkuman dan katakan CV sudah siap.` },
+        { role: "user" as const, content: `${context}\n\nJawaban pengguna untuk step "${step.key}": ${userInput}\n\nEkstrak informasi relevan dalam format JSON dan berikan respons dalam Bahasa Indonesia yang mendorong dan natural. 
+
+Format respons JSON:
+{
+  "reply": "respons natural dalam Bahasa Indonesia",
+  "extracted": {
+    // data yang diekstrak sesuai step
+  }
+}
+
+Panduan ekstraksi per step:
+- greeting/headline: { "personal": { "headline": "posisi yang dilamar" } }
+- summary: { "personal": { "summary": "ringkasan profesional" } }
+- experience_count: { "experience_count": jumlah }
+- experience_detail: { "experiences": [{ "id": "exp-1", "company": "", "position": "", "startDate": "2020-01", "endDate": "2023-12", "description": "" }] }
+- education: { "educations": [{ "id": "edu-1", "school": "", "degree": "", "field": "", "startDate": "2016-08", "endDate": "2020-06" }] }
+- skills: { "skills": [{ "id": "skill-1", "name": "skill1", "level": "Intermediate" }] }
+
+PENTING: 
+- Untuk experiences, educations, dan skills, WAJIB generate ID unik (exp-1, edu-1, skill-1, dst)
+- Untuk tanggal gunakan format YYYY-MM atau YYYY
+- Untuk level skill gunakan: Beginner, Intermediate, Advanced, atau Expert
+
+Jika ini step terakhir, beri rangkuman dan katakan CV sudah siap.` },
       ];
 
       const result = await chatWithAi({
-        data: { cvId, messages: msgs },
+        data: { cvId, messages: msgs, jsonMode: true },
       });
 
-      return result.reply;
+      // Parse JSON response
+      let reply = result.reply;
+      let extracted: any = {};
+      
+      try {
+        const parsed = JSON.parse(result.reply);
+        reply = parsed.reply || result.reply;
+        extracted = parsed.extracted || {};
+      } catch (parseError) {
+        console.error("Failed to parse AI response as JSON:", parseError);
+        // Fallback: try to extract JSON from text
+        const jsonMatch = result.reply.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          try {
+            const parsed = JSON.parse(jsonMatch[0]);
+            reply = parsed.reply || result.reply;
+            extracted = parsed.extracted || {};
+          } catch {
+            // Use reply as-is if all parsing fails
+          }
+        }
+      }
+
+      return { reply, extracted };
     } catch (e: any) {
       throw e;
     } finally {
@@ -197,9 +243,33 @@ export function GuidedMode({ cvId, cvData, onComplete, onCancel }: Props) {
 
     // Process with AI
     try {
-      const reply = await aiSend(userInput);
+      const { reply, extracted } = await aiSend(userInput);
       newMessages.push({ role: "ai", content: reply });
       setMessages(newMessages);
+
+      // Update draft data with extracted information
+      if (extracted && Object.keys(extracted).length > 0) {
+        setDraftData((prev) => {
+          const updated: any = { ...prev };
+          
+          // Merge extracted data
+          Object.keys(extracted).forEach((key) => {
+            if (key === 'personal') {
+              updated.personal = { ...updated.personal, ...extracted[key] };
+            } else if (key === 'experiences' && Array.isArray(extracted[key])) {
+              updated.experiences = [...(updated.experiences || []), ...extracted[key]];
+            } else if (key === 'educations' && Array.isArray(extracted[key])) {
+              updated.educations = [...(updated.educations || []), ...extracted[key]];
+            } else if (key === 'skills' && Array.isArray(extracted[key])) {
+              updated.skills = [...(updated.skills || []), ...extracted[key]];
+            } else {
+              updated[key] = extracted[key];
+            }
+          });
+          
+          return updated;
+        });
+      }
 
       // Move to next step
       const nextStep = currentStep + 1;

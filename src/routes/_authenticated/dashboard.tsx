@@ -41,6 +41,9 @@ import {
   Activity,
   FileCheck,
   Briefcase,
+  MessageSquare,
+  Key,
+  Type,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -77,11 +80,17 @@ function DashboardPage() {
   const [admin, setAdmin] = useState(false);
   const [tier, setTier] = useState<Tier>("free");
   const [limits, setLimits] = useState<TierLimits>(getTierLimits("free"));
+  const [tierQuotas, setTierQuotas] = useState<any>(null);
   const [cvs, setCvs] = useState<CvRow[]>([]);
   const [cvCount, setCvCount] = useState(0);
   const [aiUsageCount, setAiUsageCount] = useState(0);
   const [scoreUsageCount, setScoreUsageCount] = useState(0);
   const [guidedUsageCount, setGuidedUsageCount] = useState(0);
+  const [coverLetterUsageCount, setCoverLetterUsageCount] = useState(0);
+  const [cvReviewUsageCount, setCvReviewUsageCount] = useState(0);
+  const [keywordExtractUsageCount, setKeywordExtractUsageCount] = useState(0);
+  const [textPolishUsageCount, setTextPolishUsageCount] = useState(0);
+  const [chatUsageCount, setChatUsageCount] = useState(0);
   const [showCvPicker, setShowCvPicker] = useState<{ action: string } | null>(null);
   const [activities, setActivities] = useState<ActivityItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -94,11 +103,38 @@ function DashboardPage() {
         setTier(t);
         setLimits(getTierLimits(t));
       }),
+      loadTierQuotas(user.id),
       loadCvs(user.id),
       loadUsageStats(user.id),
       loadActivities(user.id),
     ]).finally(() => setLoading(false));
   }, [user?.id]);
+
+  const loadTierQuotas = async (userId: string) => {
+    const { data } = await (supabase as any)
+      .from("user_subscriptions")
+      .select(
+        `subscription_tiers!inner(
+          quota_ai_suggest,
+          quota_ai_score,
+          quota_ai_chat,
+          quota_ai_cover_letter,
+          quota_ai_keyword_extract,
+          quota_cv_review,
+          quota_ai_polish,
+          enable_cv_review,
+          enable_cover_letter,
+          enable_text_polish
+        )`,
+      )
+      .eq("user_id", userId)
+      .eq("status", "active")
+      .single();
+
+    if (data?.subscription_tiers) {
+      setTierQuotas(data.subscription_tiers);
+    }
+  };
 
   const loadCvs = async (userId: string) => {
     const { data, count } = await supabase
@@ -117,15 +153,34 @@ function DashboardPage() {
     monthStart.setHours(0, 0, 0, 0);
     const iso = monthStart.toISOString();
 
-    const [aiRes, scoreRes, guidedRes] = await Promise.all([
-      supabase.from("ai_usage").select("*", { count: "exact", head: true }).eq("user_id", userId).gte("created_at", iso) as any,
+    const [
+      aiRes,
+      scoreRes,
+      guidedRes,
+      coverLetterRes,
+      cvReviewRes,
+      keywordRes,
+      polishRes,
+      chatRes,
+    ] = await Promise.all([
+      supabase.from("ai_usage").select("*", { count: "exact", head: true }).eq("user_id", userId).eq("feature", "suggest").gte("created_at", iso) as any,
       supabase.from("ai_usage").select("*", { count: "exact", head: true }).eq("user_id", userId).eq("feature", "score").gte("created_at", iso) as any,
-      supabase.from("ai_usage").select("*", { count: "exact", head: true }).eq("user_id", userId).eq("feature", "guided").gte("created_at", iso) as any,
+      supabase.from("ai_usage").select("*", { count: "exact", head: true }).eq("user_id", userId).eq("feature", "chat").gte("created_at", iso) as any,
+      supabase.from("ai_usage").select("*", { count: "exact", head: true }).eq("user_id", userId).eq("feature", "cover_letter").gte("created_at", iso) as any,
+      supabase.from("ai_usage").select("*", { count: "exact", head: true }).eq("user_id", userId).eq("feature", "cv_review").gte("created_at", iso) as any,
+      supabase.from("ai_usage").select("*", { count: "exact", head: true }).eq("user_id", userId).eq("feature", "keyword_extract").gte("created_at", iso) as any,
+      supabase.from("ai_usage").select("*", { count: "exact", head: true }).eq("user_id", userId).eq("feature", "polish").gte("created_at", iso) as any,
+      supabase.from("ai_usage").select("*", { count: "exact", head: true }).eq("user_id", userId).eq("feature", "chat").gte("created_at", iso) as any,
     ]);
 
     setAiUsageCount(aiRes.count ?? 0);
     setScoreUsageCount(scoreRes.count ?? 0);
     setGuidedUsageCount(guidedRes.count ?? 0);
+    setCoverLetterUsageCount(coverLetterRes.count ?? 0);
+    setCvReviewUsageCount(cvReviewRes.count ?? 0);
+    setKeywordExtractUsageCount(keywordRes.count ?? 0);
+    setTextPolishUsageCount(polishRes.count ?? 0);
+    setChatUsageCount(chatRes.count ?? 0);
   };
 
   const loadActivities = async (userId: string) => {
@@ -151,6 +206,7 @@ function DashboardPage() {
 
   const atCvLimit = limits.maxCvs !== null && cvCount >= limits.maxCvs;
 
+  // Build usage bars dynamically based on tier features
   const usageBars = [
     {
       icon: FileText,
@@ -158,29 +214,73 @@ function DashboardPage() {
       used: cvCount,
       max: limits.maxCvs,
       color: "bg-primary",
+      visible: true,
     },
     {
       icon: Sparkles,
       label: "AI Saran",
       used: aiUsageCount,
-      max: limits.maxAiSuggestions,
+      max: tierQuotas?.quota_ai_suggest ?? limits.maxAiSuggestions,
       color: "bg-violet-500",
+      visible: limits.enableAiSuggest,
     },
     {
       icon: BarChart3,
       label: "CV Scoring",
       used: scoreUsageCount,
-      max: limits.maxAtsScores,
+      max: tierQuotas?.quota_ai_score ?? limits.maxAtsScores,
       color: "bg-amber-500",
+      visible: limits.enableAiScore,
     },
     {
       icon: Brain,
       label: "Guided Mode",
       used: guidedUsageCount,
-      max: limits.maxGuidedSessions,
+      max: tierQuotas?.quota_ai_chat ?? limits.maxGuidedSessions,
       color: "bg-emerald-500",
+      visible: true,
     },
-  ];
+    {
+      icon: FileCheck,
+      label: "Cover Letter",
+      used: coverLetterUsageCount,
+      max: tierQuotas?.quota_ai_cover_letter ?? (limits.canCoverLetter ? (tier === "free" ? 1 : tier === "starter" ? 10 : null) : 0),
+      color: "bg-teal-500",
+      visible: tierQuotas?.enable_cover_letter ?? limits.canCoverLetter,
+    },
+    {
+      icon: Target,
+      label: "CV Review",
+      used: cvReviewUsageCount,
+      max: tierQuotas?.quota_cv_review ?? (limits.enableCvReview ? (tier === "starter" ? 10 : null) : 0),
+      color: "bg-rose-500",
+      visible: tierQuotas?.enable_cv_review ?? limits.enableCvReview,
+    },
+    {
+      icon: Key,
+      label: "Keyword Extract",
+      used: keywordExtractUsageCount,
+      max: tierQuotas?.quota_ai_keyword_extract ?? (tier === "free" ? 2 : tier === "starter" ? 10 : null),
+      color: "bg-blue-500",
+      visible: tier !== "free",
+    },
+    {
+      icon: Type,
+      label: "Text Polish",
+      used: textPolishUsageCount,
+      max: tierQuotas?.quota_ai_polish ?? limits.maxTextPolish,
+      color: "bg-purple-500",
+      visible: tierQuotas?.enable_text_polish ?? limits.enableTextPolish,
+    },
+    {
+      icon: MessageSquare,
+      label: "AI Chat",
+      used: chatUsageCount,
+      max: tierQuotas?.quota_ai_chat ?? (tier === "free" ? 5 : tier === "starter" ? 50 : null),
+      color: "bg-cyan-500",
+      visible: true,
+    },
+  ].filter((bar) => bar.visible);
 
   const powerFeatures: { icon: React.ComponentType<{ className?: string }>; label: string; desc: string; action: string; badge: string; visible: boolean }[] = [
     {
@@ -337,7 +437,7 @@ function DashboardPage() {
       </Card>
 
       {/* ── Usage Progress ── */}
-      <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {usageBars.map((bar) => (
           <Card key={bar.label} className="border">
             <CardContent className="p-4">
