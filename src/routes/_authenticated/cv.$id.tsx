@@ -68,6 +68,7 @@ function CvEditorPage() {
   const [showTemplatePicker, setShowTemplatePicker] = useState(false);
   const [showGuidedMode, setShowGuidedMode] = useState(search.guided === "true");
   const [userTier, setUserTier] = useState("free");
+  const [allowedTemplates, setAllowedTemplates] = useState<string[] | null>(null);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "unsaved">("idle");
 
   // ─── 3-Panel Layout State ─────────────────────────────────────
@@ -152,9 +153,21 @@ function CvEditorPage() {
       setShareToken(row.share_token ?? null);
       const { data: sub } = await (supabase as any)
         .from("user_subscriptions")
-        .select("subscription_tiers!inner(slug)")
+        .select("subscription_tiers!inner(slug, template_access_detail)")
         .eq("user_id", row.user_id).eq("status", "active").single();
-      if (sub) setUserTier(sub.subscription_tiers?.slug ?? "free");
+      if (sub) {
+        setUserTier(sub.subscription_tiers?.slug ?? "free");
+        // Set allowed templates
+        if (sub.subscription_tiers?.template_access_detail) {
+          setAllowedTemplates(sub.subscription_tiers.template_access_detail);
+        } else if (sub.subscription_tiers?.template_access_detail === null) {
+          // null means all templates allowed (Pro/Pro+ tier)
+          setAllowedTemplates(null);
+        } else {
+          // Fallback to free templates
+          setAllowedTemplates(["jakarta", "bandung"]);
+        }
+      }
       setLoading(false);
     })();
   }, [id]);
@@ -484,16 +497,19 @@ function CvEditorPage() {
 
       {/* ─── DIALOGS ─── */}
       <Dialog open={showTemplatePicker} onOpenChange={setShowTemplatePicker}>
-        <DialogContent className="sm:max-w-2xl">
-          <DialogHeader>
+        <DialogContent className="sm:max-w-4xl max-h-[90vh] flex flex-col">
+          <DialogHeader className="shrink-0">
             <DialogTitle>Pilih Template</DialogTitle>
             <DialogDescription>Pilih template CV yang sesuai dengan gaya dan kebutuhanmu.</DialogDescription>
           </DialogHeader>
-          <TemplateGallery
-            selected={templateId}
-            onSelect={(id) => { setTemplateId(id); setShowTemplatePicker(false); }}
-            tier={userTier}
-          />
+          <div className="flex-1 overflow-y-auto -mx-6 px-6 py-2">
+            <TemplateGallery
+              selected={templateId}
+              onSelect={(id) => { setTemplateId(id); setShowTemplatePicker(false); }}
+              tier={userTier}
+              allowedTemplates={allowedTemplates}
+            />
+          </div>
         </DialogContent>
       </Dialog>
 

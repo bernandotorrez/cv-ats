@@ -39,6 +39,7 @@ interface Props {
   onSelect: (id: TemplateId) => void;
   tier?: string;
   templates?: TemplateMeta[];
+  allowedTemplates?: string[] | null; // null = all templates allowed
 }
 
 // Free templates: jakarta, bandung (tanpa badge)
@@ -47,11 +48,13 @@ const FREE_TEMPLATES = ["jakarta", "bandung"];
 // Pro templates: semarang, surabaya
 const PRO_TEMPLATES = ["semarang", "surabaya"];
 
-export function TemplateGallery({ selected, onSelect, tier = "free", templates }: Props) {
+export function TemplateGallery({ selected, onSelect, tier = "free", templates, allowedTemplates }: Props) {
   const displayTemplates = templates?.length
     ? templates.map((t) => {
         const isPro = PRO_TEMPLATES.includes(t.slug);
-        const isLocked = (isPro || !FREE_TEMPLATES.includes(t.slug)) && (tier === "free" || tier === undefined);
+        // Check if template is allowed based on allowedTemplates array
+        const isAllowed = allowedTemplates === null || allowedTemplates === undefined || allowedTemplates.includes(t.slug);
+        const isLocked = !isAllowed;
         return { 
           id: t.slug as TemplateId, 
           name: t.name, 
@@ -62,7 +65,9 @@ export function TemplateGallery({ selected, onSelect, tier = "free", templates }
       })
     : TEMPLATES.map((t) => {
         const isPro = PRO_TEMPLATES.includes(t.id);
-        const isLocked = (isPro || !FREE_TEMPLATES.includes(t.id)) && (tier === "free" || tier === undefined);
+        // Check if template is allowed based on allowedTemplates array
+        const isAllowed = allowedTemplates === null || allowedTemplates === undefined || allowedTemplates.includes(t.id);
+        const isLocked = !isAllowed;
         return {
           id: t.id,
           name: t.name,

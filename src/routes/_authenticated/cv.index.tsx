@@ -73,6 +73,7 @@ function CvListPage() {
   const [loading, setLoading] = useState(true);
   const [tier, setTier] = useState<Tier>("free");
   const [limits, setLimits] = useState<TierLimits>(getTierLimits("free"));
+  const [allowedTemplates, setAllowedTemplates] = useState<string[] | null>(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showModeDialog, setShowModeDialog] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateId>("jakarta");
@@ -89,6 +90,25 @@ function CvListPage() {
     setCvs(data ?? []);
   };
 
+  const loadAllowedTemplates = async (userId: string) => {
+    const { data } = await (supabase as any)
+      .from("user_subscriptions")
+      .select("subscription_tiers!inner(template_access_detail)")
+      .eq("user_id", userId)
+      .eq("status", "active")
+      .single();
+
+    if (data?.subscription_tiers?.template_access_detail) {
+      setAllowedTemplates(data.subscription_tiers.template_access_detail);
+    } else if (data?.subscription_tiers?.template_access_detail === null) {
+      // null means all templates allowed (Pro/Pro+ tier)
+      setAllowedTemplates(null);
+    } else {
+      // Fallback to free templates
+      setAllowedTemplates(["jakarta", "bandung"]);
+    }
+  };
+
   useEffect(() => {
     if (!userId) return;
     Promise.all([
@@ -97,6 +117,7 @@ function CvListPage() {
         setTier(t);
         setLimits(getTierLimits(t));
       }),
+      loadAllowedTemplates(userId),
     ]);
   }, [userId]);
 
@@ -480,19 +501,22 @@ function CvListPage() {
 
       {/* ── Create CV Dialog ── */}
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-        <DialogContent className="sm:max-w-2xl">
-          <DialogHeader>
+        <DialogContent className="sm:max-w-4xl max-h-[90vh] flex flex-col">
+          <DialogHeader className="shrink-0">
             <DialogTitle>Pilih Template CV</DialogTitle>
             <DialogDescription>
               Pilih template untuk CV barumu. Template bisa diubah nanti di editor.
             </DialogDescription>
           </DialogHeader>
-          <TemplateGallery
-            selected={selectedTemplate}
-            onSelect={setSelectedTemplate}
-            tier={tier}
-          />
-          <div className="flex justify-end gap-2 mt-2">
+          <div className="flex-1 overflow-y-auto -mx-6 px-6 py-2">
+            <TemplateGallery
+              selected={selectedTemplate}
+              onSelect={setSelectedTemplate}
+              tier={tier}
+              allowedTemplates={allowedTemplates}
+            />
+          </div>
+          <div className="flex justify-end gap-2 mt-2 shrink-0 border-t pt-4">
             <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
               Batal
             </Button>
