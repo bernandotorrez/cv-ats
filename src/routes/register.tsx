@@ -125,6 +125,10 @@ function RegisterPage() {
     });
     setLoading(false);
     if (error) {
+      // Reset captcha on error to get fresh token for next attempt
+      setCaptchaToken(null);
+      setCaptchaResetKey((k) => k + 1);
+
       if (error.message?.toLowerCase().includes("already")) {
         toast.error("Email sudah terdaftar. Silakan masuk atau gunakan email lain.");
       } else {

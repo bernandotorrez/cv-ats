@@ -187,6 +187,10 @@ function LoginPage() {
       const updatedLockout = getLockoutState();
       setLockout(updatedLockout);
 
+      // Reset captcha on error to get fresh token for next attempt
+      setCaptchaToken(null);
+      setCaptchaResetKey((k) => k + 1);
+
       // Generic error message — jangan spesifik (security)
       toast.error("Email atau password salah");
       if (updatedLockout.locked) {
