@@ -1,6 +1,7 @@
 {
   "buildCommand": "npm run build",
   "installCommand": "npm install",
+  "outputDirectory": "dist/client",
   "functions": {
     "api/index.ts": {
       "memory": 1024,
@@ -9,7 +10,6 @@
   },
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api" },
-    { "source": "/assets/(.*)", "destination": "/assets/$1" },
     { "source": "/(.*)", "destination": "/api" }
   ],
   "headers": [
