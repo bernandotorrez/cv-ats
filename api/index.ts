@@ -1,18 +1,24 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 
+// TanStack Start Cloudflare Worker adapter for Vercel
+const serverPath = `${process.cwd()}/dist/server/index.js`;
+const serverModule = await import(serverPath);
+
+// The Cloudflare Worker is exported as 'w'
+const worker = serverModule.w;
+
 export default async function (req: VercelRequest, res: VercelResponse) {
   const url = new URL(req.url!, `http://${req.headers.host}`);
   
-  // @ts-ignore - Build artifact
-  const { fetch } = await import("../dist/server/index.js");
-  
   const request = new Request(url.toString(), {
     method: req.method,
-    headers: req.headers as HeadersInit,
-    body: ["POST", "PUT", "PATCH"].includes(req.method!) ? JSON.stringify(req.body) : undefined,
+    headers: req.headers as Record<string, string>,
+    body: ["POST", "PUT", "PATCH"].includes(req.method!) 
+      ? JSON.stringify(req.body) 
+      : undefined,
   });
 
-  const response = await fetch(request, {}, {});
+  const response = await worker.fetch(request, {}, {});
   
   res.status(response.status);
   response.headers.forEach((value: string, key: string) => {
