@@ -24,6 +24,7 @@ export interface TierLimits {
   enableAiSuggest: boolean; // ai-suggest: all tiers
   enableAiScore: boolean; // ai-score: all tiers with quota
   enableTextPolish: boolean; // ai-polish: all tiers with quota
+  enableGuidedMode: boolean; // ai-chat (mode=guided): all tiers ✅
   maxTextPolish: number | null; // null = unlimited
   canDownloadDocx: boolean;
   canCoverLetter: boolean; // ai-cover-letter: free=❌
@@ -61,7 +62,9 @@ type DbSubscriptionRow = {
     enable_analytics: boolean;
     enable_linkedin_optimize: boolean;
     enable_text_polish: boolean;
+    enable_guided_mode: boolean;
     quota_ai_polish: number | null;
+    quota_guided_mode: number | null;
   } | null;
 };
 
@@ -81,6 +84,7 @@ const TIER_LIMITS: Record<Tier, TierLimits> = {
     enableCvReview: false,
     enableAiSuggest: true,
     enableAiScore: true,
+    enableGuidedMode: true,
     enableTextPolish: true,
     maxTextPolish: 10,
     canDownloadDocx: false,
@@ -104,6 +108,7 @@ const TIER_LIMITS: Record<Tier, TierLimits> = {
     enableCvReview: true,
     enableAiSuggest: true,
     enableAiScore: true,
+    enableGuidedMode: true,
     enableTextPolish: true,
     maxTextPolish: 50,
     canDownloadDocx: true,
@@ -127,6 +132,7 @@ const TIER_LIMITS: Record<Tier, TierLimits> = {
     enableCvReview: true,
     enableAiSuggest: true,
     enableAiScore: true,
+    enableGuidedMode: true,
     enableTextPolish: true,
     maxTextPolish: null,
     canDownloadDocx: true,
@@ -150,6 +156,7 @@ const TIER_LIMITS: Record<Tier, TierLimits> = {
     enableCvReview: true,
     enableAiSuggest: true,
     enableAiScore: true,
+    enableGuidedMode: true,
     enableTextPolish: true,
     maxTextPolish: null,
     canDownloadDocx: true,
@@ -182,7 +189,8 @@ export async function getUserTierConfig(userId: string): Promise<TierLimits> {
           enable_cv_review, enable_cover_letter, enable_keyword_extractor,
           enable_cv_comparison, enable_interview_simulator,
           enable_analytics, enable_linkedin_optimize,
-          enable_text_polish, quota_ai_polish
+          enable_text_polish, quota_ai_polish,
+          enable_guided_mode, quota_guided_mode
         )`,
       )
       .eq("user_id", userId)
@@ -203,7 +211,6 @@ export async function getUserTierConfig(userId: string): Promise<TierLimits> {
         maxCvs: t.max_cvs ?? base.maxCvs,
         maxAiSuggestions: t.quota_ai_suggest ?? base.maxAiSuggestions,
         maxAtsScores: t.quota_ai_score ?? base.maxAtsScores,
-        maxGuidedSessions: t.quota_guided_sessions ?? base.maxGuidedSessions,
         templateAccess: (t.template_access as "basic" | "all") || base.templateAccess,
         // Feature gates — read directly from DB columns.
         // DB is the source of truth; hardcoded base is fallback only.
@@ -216,6 +223,8 @@ export async function getUserTierConfig(userId: string): Promise<TierLimits> {
         canLinkedInOptimize: t.enable_linkedin_optimize ?? base.canLinkedInOptimize,
         enableTextPolish: t.enable_text_polish ?? base.enableTextPolish,
         maxTextPolish: t.quota_ai_polish ?? base.maxTextPolish,
+        enableGuidedMode: t.enable_guided_mode ?? base.enableGuidedMode,
+        maxGuidedSessions: t.quota_guided_mode ?? base.maxGuidedSessions,
       };
     }
   } catch {

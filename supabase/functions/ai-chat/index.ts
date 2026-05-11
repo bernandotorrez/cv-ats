@@ -70,9 +70,29 @@ Deno.serve(async (req: Request) => {
   try {
     const userId = await getUserId(req);
     const admin = getAdminClient();
-    const { messages, jsonMode } = await req.json();
+    const { messages, jsonMode, mode } = await req.json();
 
     if (!messages || !Array.isArray(messages)) throw new Error("messages diperlukan");
+
+    const isGuidedMode = mode === "guided";
+    const feature = isGuidedMode ? "guided" : "chat";
+
+    // Guided mode: check feature flag first
+    if (isGuidedMode) {
+      const { data: userSub } = await admin
+        .from("user_subscriptions")
+        .select(`subscription_tiers!inner(enable_guided_mode, slug)`)
+        .eq("user_id", userId)
+        .eq("status", "active")
+        .single();
+
+      const tier = (userSub as any)?.subscription_tiers;
+      if (tier && tier.enable_guided_mode === false) {
+        return corsResponse({
+          reply: "Maaf, fitur Panduan AI tidak tersedia di paket kamu. Silakan upgrade untuk mengakses fitur ini."
+        }, 200, req);
+      }
+    }
 
     // Validate and sanitize messages
     const sanitizedMessages: AiMessage[] = [];
@@ -109,7 +129,7 @@ Deno.serve(async (req: Request) => {
       useGuidedPrompt: true, // Use specialized CV chat prompt with stronger guardrails
     });
 
-    await checkAndTrackQuota(admin, userId, "chat", result.length);
+    await checkAndTrackQuota(admin, userId, feature, result.length);
 
     return corsResponse({ reply: result.trim() }, 200, req);
   } catch (e) {

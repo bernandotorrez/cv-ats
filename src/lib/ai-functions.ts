@@ -70,6 +70,7 @@ export async function chatWithAi(input: {
     cvId?: string;
     messages: Array<{ role: "user" | "assistant"; content: string }>;
     jsonMode?: boolean;
+    mode?: "chat" | "guided";
   };
 }) {
   return callEdge("ai-chat", input.data) as Promise<{ reply: string }>;

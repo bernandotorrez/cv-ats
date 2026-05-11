@@ -94,7 +94,7 @@ async function runApifyActor(linkedinUrl: string): Promise<Record<string, unknow
       Authorization: `Bearer ${APIFY_API_KEY}`,
     },
     body: JSON.stringify({
-      linkedInUrls: [linkedinUrl],
+      profileUrls: [linkedinUrl],
       maxDelay: 5,
       minDelay: 2,
     }),

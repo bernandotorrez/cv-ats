@@ -194,7 +194,7 @@ Jika ini step terakhir, beri rangkuman dan katakan CV sudah siap.` },
       ];
 
       const result = await chatWithAi({
-        data: { cvId, messages: msgs, jsonMode: true },
+        data: { cvId, messages: msgs, jsonMode: true, mode: "guided" },
       });
 
       // Parse JSON response

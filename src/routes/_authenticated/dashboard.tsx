@@ -124,10 +124,12 @@ function DashboardPage() {
           quota_ai_keyword_extract,
           quota_cv_review,
           quota_ai_polish,
+          quota_guided_mode,
           enable_cv_review,
           enable_cover_letter,
           enable_keyword_extractor,
-          enable_text_polish
+          enable_text_polish,
+          enable_guided_mode
         )`,
       )
       .eq("user_id", userId)
@@ -176,7 +178,7 @@ function DashboardPage() {
 
     setAiUsageCount(counts["suggest"] ?? 0);
     setScoreUsageCount(counts["score"] ?? 0);
-    setGuidedUsageCount(counts["chat"] ?? 0);
+    setGuidedUsageCount(counts["guided"] ?? 0);
     setCoverLetterUsageCount(counts["cover_letter"] ?? 0);
     setCvReviewUsageCount(counts["cv_review"] ?? 0);
     setKeywordExtractUsageCount(counts["keyword_extract"] ?? 0);
@@ -237,9 +239,9 @@ function DashboardPage() {
       icon: Brain,
       label: "Guided Mode",
       used: guidedUsageCount,
-      max: tierQuotas?.quota_ai_chat ?? limits.maxGuidedSessions,
+      max: tierQuotas?.quota_guided_mode ?? limits.maxGuidedSessions,
       color: "bg-emerald-500",
-      visible: true,
+      visible: tierQuotas?.enable_guided_mode ?? limits.enableGuidedMode,
     },
     {
       icon: FileCheck,

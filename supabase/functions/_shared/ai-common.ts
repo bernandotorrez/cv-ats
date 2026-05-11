@@ -41,6 +41,7 @@ const FEATURE_QUOTA_MAP: Record<string, string> = {
   keyword_extract: "quota_ai_keyword_extract",
   cv_review: "quota_cv_review",
   polish: "quota_ai_polish",
+  guided: "quota_guided_mode",
 };
 
 // ─── Auth ──────────────────────────────────────────────────────────
