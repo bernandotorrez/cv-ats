@@ -22,7 +22,3 @@ export default async function (req: VercelRequest, res: VercelResponse) {
   
   res.send(await response.text());
 }
-
-export const config = {
-  runtime: "edge",
-};
