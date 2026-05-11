@@ -47,7 +47,6 @@ import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedToolsIndexRouteImport } from './routes/_authenticated/tools.index'
 import { Route as AuthenticatedCvIndexRouteImport } from './routes/_authenticated/cv.index'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
-import { Route as AuthenticatedSimulasiWawancaraIdRouteImport } from './routes/_authenticated/simulasi-wawancara./$id'
 import { Route as AuthenticatedScoreCvIdRouteImport } from './routes/_authenticated/score.$cvId'
 import { Route as AuthenticatedCvIdRouteImport } from './routes/_authenticated/cv.$id'
 import { Route as AuthenticatedCvReviewCvIdRouteImport } from './routes/_authenticated/cv-review.$cvId'
@@ -246,12 +245,6 @@ const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
-const AuthenticatedSimulasiWawancaraIdRoute =
-  AuthenticatedSimulasiWawancaraIdRouteImport.update({
-    id: '/$id',
-    path: '/$id',
-    getParentRoute: () => AuthenticatedSimulasiWawancaraRoute,
-  } as any)
 const AuthenticatedScoreCvIdRoute = AuthenticatedScoreCvIdRouteImport.update({
   id: '/score/$cvId',
   path: '/score/$cvId',
@@ -317,7 +310,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/lamaran': typeof AuthenticatedLamaranRoute
   '/referral': typeof AuthenticatedReferralRoute
-  '/simulasi-wawancara': typeof AuthenticatedSimulasiWawancaraRouteWithChildren
+  '/simulasi-wawancara': typeof AuthenticatedSimulasiWawancaraRoute
   '/api/ai-cv-review': typeof ApiAiCvReviewRoute
   '/api/headers-check': typeof ApiHeadersCheckRoute
   '/blog/$slug': typeof BlogSlugRoute
@@ -332,7 +325,6 @@ export interface FileRoutesByFullPath {
   '/cv-review/$cvId': typeof AuthenticatedCvReviewCvIdRoute
   '/cv/$id': typeof AuthenticatedCvIdRoute
   '/score/$cvId': typeof AuthenticatedScoreCvIdRoute
-  '/simulasi-wawancara/$id': typeof AuthenticatedSimulasiWawancaraIdRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/cv/': typeof AuthenticatedCvIndexRoute
   '/tools/': typeof AuthenticatedToolsIndexRoute
@@ -363,7 +355,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/lamaran': typeof AuthenticatedLamaranRoute
   '/referral': typeof AuthenticatedReferralRoute
-  '/simulasi-wawancara': typeof AuthenticatedSimulasiWawancaraRouteWithChildren
+  '/simulasi-wawancara': typeof AuthenticatedSimulasiWawancaraRoute
   '/api/ai-cv-review': typeof ApiAiCvReviewRoute
   '/api/headers-check': typeof ApiHeadersCheckRoute
   '/blog/$slug': typeof BlogSlugRoute
@@ -378,7 +370,6 @@ export interface FileRoutesByTo {
   '/cv-review/$cvId': typeof AuthenticatedCvReviewCvIdRoute
   '/cv/$id': typeof AuthenticatedCvIdRoute
   '/score/$cvId': typeof AuthenticatedScoreCvIdRoute
-  '/simulasi-wawancara/$id': typeof AuthenticatedSimulasiWawancaraIdRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/cv': typeof AuthenticatedCvIndexRoute
   '/tools': typeof AuthenticatedToolsIndexRoute
@@ -412,7 +403,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/lamaran': typeof AuthenticatedLamaranRoute
   '/_authenticated/referral': typeof AuthenticatedReferralRoute
-  '/_authenticated/simulasi-wawancara': typeof AuthenticatedSimulasiWawancaraRouteWithChildren
+  '/_authenticated/simulasi-wawancara': typeof AuthenticatedSimulasiWawancaraRoute
   '/api/ai-cv-review': typeof ApiAiCvReviewRoute
   '/api/headers-check': typeof ApiHeadersCheckRoute
   '/blog/$slug': typeof BlogSlugRoute
@@ -427,7 +418,6 @@ export interface FileRoutesById {
   '/_authenticated/cv-review/$cvId': typeof AuthenticatedCvReviewCvIdRoute
   '/_authenticated/cv/$id': typeof AuthenticatedCvIdRoute
   '/_authenticated/score/$cvId': typeof AuthenticatedScoreCvIdRoute
-  '/_authenticated/simulasi-wawancara/$id': typeof AuthenticatedSimulasiWawancaraIdRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/cv/': typeof AuthenticatedCvIndexRoute
   '/_authenticated/tools/': typeof AuthenticatedToolsIndexRoute
@@ -476,7 +466,6 @@ export interface FileRouteTypes {
     | '/cv-review/$cvId'
     | '/cv/$id'
     | '/score/$cvId'
-    | '/simulasi-wawancara/$id'
     | '/admin/'
     | '/cv/'
     | '/tools/'
@@ -522,7 +511,6 @@ export interface FileRouteTypes {
     | '/cv-review/$cvId'
     | '/cv/$id'
     | '/score/$cvId'
-    | '/simulasi-wawancara/$id'
     | '/admin'
     | '/cv'
     | '/tools'
@@ -570,7 +558,6 @@ export interface FileRouteTypes {
     | '/_authenticated/cv-review/$cvId'
     | '/_authenticated/cv/$id'
     | '/_authenticated/score/$cvId'
-    | '/_authenticated/simulasi-wawancara/$id'
     | '/_authenticated/admin/'
     | '/_authenticated/cv/'
     | '/_authenticated/tools/'
@@ -873,13 +860,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
-    '/_authenticated/simulasi-wawancara/$id': {
-      id: '/_authenticated/simulasi-wawancara/$id'
-      path: '/$id'
-      fullPath: '/simulasi-wawancara/$id'
-      preLoaderRoute: typeof AuthenticatedSimulasiWawancaraIdRouteImport
-      parentRoute: typeof AuthenticatedSimulasiWawancaraRoute
-    }
     '/_authenticated/score/$cvId': {
       id: '/_authenticated/score/$cvId'
       path: '/score/$cvId'
@@ -947,21 +927,6 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
 const AuthenticatedAdminRouteWithChildren =
   AuthenticatedAdminRoute._addFileChildren(AuthenticatedAdminRouteChildren)
 
-interface AuthenticatedSimulasiWawancaraRouteChildren {
-  AuthenticatedSimulasiWawancaraIdRoute: typeof AuthenticatedSimulasiWawancaraIdRoute
-}
-
-const AuthenticatedSimulasiWawancaraRouteChildren: AuthenticatedSimulasiWawancaraRouteChildren =
-  {
-    AuthenticatedSimulasiWawancaraIdRoute:
-      AuthenticatedSimulasiWawancaraIdRoute,
-  }
-
-const AuthenticatedSimulasiWawancaraRouteWithChildren =
-  AuthenticatedSimulasiWawancaraRoute._addFileChildren(
-    AuthenticatedSimulasiWawancaraRouteChildren,
-  )
-
 interface AuthenticatedRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
   AuthenticatedAkunRoute: typeof AuthenticatedAkunRoute
@@ -970,7 +935,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedLamaranRoute: typeof AuthenticatedLamaranRoute
   AuthenticatedReferralRoute: typeof AuthenticatedReferralRoute
-  AuthenticatedSimulasiWawancaraRoute: typeof AuthenticatedSimulasiWawancaraRouteWithChildren
+  AuthenticatedSimulasiWawancaraRoute: typeof AuthenticatedSimulasiWawancaraRoute
   AuthenticatedCvReviewCvIdRoute: typeof AuthenticatedCvReviewCvIdRoute
   AuthenticatedCvIdRoute: typeof AuthenticatedCvIdRoute
   AuthenticatedScoreCvIdRoute: typeof AuthenticatedScoreCvIdRoute
@@ -988,8 +953,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedLamaranRoute: AuthenticatedLamaranRoute,
   AuthenticatedReferralRoute: AuthenticatedReferralRoute,
-  AuthenticatedSimulasiWawancaraRoute:
-    AuthenticatedSimulasiWawancaraRouteWithChildren,
+  AuthenticatedSimulasiWawancaraRoute: AuthenticatedSimulasiWawancaraRoute,
   AuthenticatedCvReviewCvIdRoute: AuthenticatedCvReviewCvIdRoute,
   AuthenticatedCvIdRoute: AuthenticatedCvIdRoute,
   AuthenticatedScoreCvIdRoute: AuthenticatedScoreCvIdRoute,
