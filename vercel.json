@@ -1,13 +1,4 @@
 {
   "buildCommand": "npm run build",
-  "installCommand": "npm install",
-  "regions": ["sin1"],
-  "functions": {
-    "api/**/*.ts": {
-      "runtime": "nodejs22.x"
-    }
-  },
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/api" }
-  ]
+  "installCommand": "npm install"
 }
