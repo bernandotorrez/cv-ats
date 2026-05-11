@@ -5,7 +5,7 @@ const serverPath = `${process.cwd()}/dist/server/index.js`;
 const serverModule = await import(serverPath);
 
 // The Cloudflare Worker is exported as 'w'
-const worker = serverModule.w;
+const worker = serverModule.default;
 
 export default async function (req: VercelRequest, res: VercelResponse) {
   const url = new URL(req.url!, `http://${req.headers.host}`);
