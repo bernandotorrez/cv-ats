@@ -21,8 +21,8 @@ const supabaseDomain = getSupabaseDomain();
 
 // Production origins - your deployed frontend domains
 const PRODUCTION_ORIGINS = [
-  "https://cvats.id",
-  "https://www.cvats.id",
+  "https://cvpintar.web.id",
+  "https://www.cvpintar.web.id",
   `https://nfdrkuvyowaydjkhfvrr.supabase.co`,
   "http://localhost:8080",
 ];

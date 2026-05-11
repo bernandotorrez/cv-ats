@@ -181,15 +181,15 @@ function LoginPage() {
       },
     });
 
+    // Reset captcha after attempt (token is one-time use regardless of result)
+    setCaptchaToken(null);
+    setCaptchaResetKey((k) => k + 1);
+
     if (error) {
       setLoading(false);
       recordFailedAttempt();
       const updatedLockout = getLockoutState();
       setLockout(updatedLockout);
-
-      // Reset captcha on error to get fresh token for next attempt
-      setCaptchaToken(null);
-      setCaptchaResetKey((k) => k + 1);
 
       // Generic error message — jangan spesifik (security)
       toast.error("Email atau password salah");
@@ -203,8 +203,6 @@ function LoginPage() {
     }
 
     clearAttempts();
-    setCaptchaToken(null);
-    setCaptchaResetKey((k) => k + 1);
     toast.success("Berhasil masuk");
     navigate({ to: redirect || "/dashboard" });
   };
