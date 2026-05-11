@@ -8,6 +8,7 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
+import { Analytics } from "@vercel/analytics/react";
 
 import appCss from "../styles.css?url";
 import { SiteHeader } from "@/components/site/SiteHeader";
@@ -191,6 +192,7 @@ function RootComponent() {
           <SiteFooter />
         </div>
         <Toaster />
+        <Analytics />
       </AuthProvider>
     </QueryClientProvider>
   );
