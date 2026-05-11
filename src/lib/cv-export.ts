@@ -411,7 +411,11 @@ export function downloadBlob(blob: Blob, fileName: string) {
 
 /**
  * Download CV as PDF (via print dialog)
+ * Forces the preview panel to be visible and ensures proper rendering before printing
  */
 export function downloadPdf(cv: CvData, fileName: string = "CV.pdf") {
-  window.print();
+  // Small delay to ensure DOM is ready and any pending renders complete
+  setTimeout(() => {
+    window.print();
+  }, 100);
 }

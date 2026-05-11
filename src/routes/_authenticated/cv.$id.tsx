@@ -371,7 +371,7 @@ function CvEditorPage() {
       </div>
 
       {/* ─── MAIN CONTENT ─── */}
-      <div className="flex-1 flex overflow-hidden print:block print:overflow-visible">
+      <div className="flex-1 flex overflow-hidden print:block print:overflow-visible print:!visible">
         {/* Desktop: Sections Nav (3-panel) */}
         {showNav && (
           <aside className="hidden lg:block w-[250px] shrink-0 border-r border-border bg-card/50 overflow-y-auto p-3 print:hidden">
@@ -417,7 +417,7 @@ function CvEditorPage() {
         )}
 
         {/* Preview Panel (Desktop + Tablet + Mobile preview tab) */}
-        <div className={cn("flex-1 flex flex-col overflow-hidden print:flex", mobileTab !== "preview" && "hidden md:flex")}>
+        <div className={cn("flex-1 flex flex-col overflow-hidden print:flex print:overflow-visible print:!visible", mobileTab !== "preview" && "hidden md:flex")}>
           {/* Preview Toolbar */}
           <div className="shrink-0 flex items-center justify-between px-4 py-2 border-b border-border bg-muted/30 print:hidden">
             <span className="text-xs text-muted-foreground flex items-center gap-2">
@@ -436,7 +436,7 @@ function CvEditorPage() {
           )}
 
           {/* Preview Area */}
-          <div className="flex-1 overflow-auto bg-muted/40 print:bg-white">
+          <div className="flex-1 overflow-auto bg-muted/40 print:bg-white print:overflow-visible">
             <div className="cv-print-area flex justify-center p-4 print:p-0">
               <div
                 className="rounded-lg border border-border bg-white shadow-lg print:!shadow-none print:!border-0 print:!rounded-none print:!transform-none print:!w-auto print:!h-auto print:!min-w-0"

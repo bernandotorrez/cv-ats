@@ -4,7 +4,7 @@ import { FileText } from "lucide-react";
 export function SiteFooter() {
   const year = new Date().getFullYear();
   return (
-    <footer className="border-t border-border bg-muted/40">
+    <footer className="border-t border-border bg-muted/40 print:hidden">
       <div className="container-page py-12">
         <div className="grid gap-10 md:grid-cols-4">
           <div className="md:col-span-1">

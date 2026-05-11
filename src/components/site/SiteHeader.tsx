@@ -21,7 +21,7 @@ export function SiteHeader() {
   const isNavigating = routerState.isLoading;
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border/60 bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/70">
+    <header className="sticky top-0 z-40 border-b border-border/60 bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/70 print:hidden">
       {/* Navigation loading bar */}
       {isNavigating && (
         <div className="absolute bottom-0 left-0 h-0.5 w-full overflow-hidden">

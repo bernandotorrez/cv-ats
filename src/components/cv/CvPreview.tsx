@@ -519,21 +519,27 @@ export const cvPrintStyles = `
     page-break-inside: avoid;
     width: auto !important;
     height: auto !important;
+    min-height: 0 !important;
     margin: 0 !important;
+    transform: none !important;
+    overflow: visible !important;
   }
 
   .cv-preview {
     box-shadow: none !important;
     margin: 0 !important;
     padding: 16mm !important;
-    width: auto !important;
+    width: 210mm !important;
     height: auto !important;
+    min-height: 297mm !important;
     overflow: visible !important;
     transform: none !important;
   }
 
   .cv-print-area {
     padding: 0 !important;
+    display: flex !important;
+    justify-content: center !important;
   }
 
   .cv-print-area > div {
@@ -541,9 +547,11 @@ export const cvPrintStyles = `
     width: auto !important;
     height: auto !important;
     min-width: 0 !important;
+    min-height: 0 !important;
     box-shadow: none !important;
     border: none !important;
     border-radius: 0 !important;
+    overflow: visible !important;
   }
 
   @page {

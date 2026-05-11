@@ -243,7 +243,7 @@
 
 @media print {
   body { background: white !important; }
-  header, footer, nav, .print\:hidden { display: none !important; }
+  .print\:hidden { display: none !important; }
   .cv-print-area { padding: 0 !important; }
   .cv-print-area > div { 
     border: 0 !important; 
