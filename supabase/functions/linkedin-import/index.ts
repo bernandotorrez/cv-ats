@@ -27,57 +27,61 @@ function formatDate(ym: string | null | undefined): string {
 }
 
 function mapProfileToCvData(profile: Record<string, unknown>) {
-  const personal: Record<string, string> = {};
-  if (profile.fullName) personal.fullName = profile.fullName as string;
-  if (profile.headline) personal.headline = profile.headline as string;
-  if (profile.email) personal.email = profile.email as string;
-  if (profile.mobileNumber) personal.phone = profile.mobileNumber as string;
-  if (profile.addressWithCountry) personal.location = profile.addressWithCountry as string;
-  else if (profile.addressWithoutCountry) personal.location = profile.addressWithoutCountry as string;
-  if (profile.linkedinUrl) personal.linkedin = profile.linkedinUrl as string;
-  if (profile.about) personal.summary = profile.about as string;
+  const p = (key: string, fallback?: string) => (profile[key] ?? (fallback ? profile[fallback] : undefined)) as string | undefined;
+  const a = (key: string, fallback?: string) => ((profile[key] ?? (fallback ? profile[fallback] : undefined)) as unknown[]) || [];
 
-  const experiences = ((profile.experiences as unknown[]) || []).map((e: any, i: number) => ({
+  const personal: Record<string, string> = {};
+  const name = p("fullName", "name") || p("firstName") + " " + p("lastName") || "";
+  if (name.trim()) personal.fullName = name.trim();
+  if (p("headline", "title")) personal.headline = p("headline", "title")!;
+  if (p("email")) personal.email = p("email")!;
+  if (p("mobileNumber", "phone")) personal.phone = p("mobileNumber", "phone")!;
+  if (p("addressWithCountry", "location")) personal.location = p("addressWithCountry", "location")!;
+  else if (p("addressWithoutCountry")) personal.location = p("addressWithoutCountry")!;
+  if (p("linkedinUrl", "url")) personal.linkedin = p("linkedinUrl", "url")!;
+  if (p("about", "summary")) personal.summary = p("about", "summary")!;
+
+  const experiences = a("experiences", "experience").map((e: any, i: number) => ({
     id: `import-${i}`,
-    company: e.companyName || "",
-    position: e.title || "",
-    startDate: formatDate(e.jobStartedOn),
-    endDate: e.jobStillWorking ? "" : formatDate(e.jobEndedOn),
-    current: !!e.jobStillWorking,
-    location: e.jobLocation || "",
-    description: e.jobDescription || "",
+    company: e.companyName || e.company || "",
+    position: e.title || e.position || "",
+    startDate: formatDate(e.jobStartedOn || e.startDate || e.startedOn),
+    endDate: e.jobStillWorking || e.current ? "" : formatDate(e.jobEndedOn || e.endDate || e.endedOn),
+    current: !!(e.jobStillWorking || e.current),
+    location: e.jobLocation || e.location || "",
+    description: e.jobDescription || e.description || "",
   }));
 
-  const educations = ((profile.educations as unknown[]) || []).map((e: any, i: number) => {
-    const subtitle = (e.subtitle || "") as string;
+  const educations = a("educations", "education").map((e: any, i: number) => {
+    const subtitle = (e.subtitle || e.degree || "") as string;
     const [degree, field] = subtitle.split(",").map((s: string) => s.trim());
     return {
       id: `import-edu-${i}`,
-      school: e.title || "",
-      degree: degree || subtitle || "",
-      field: field || "",
-      startDate: formatDate(e.period?.startedOn),
-      endDate: formatDate(e.period?.endedOn),
+      school: e.title || e.school || e.institution || "",
+      degree: degree || subtitle || e.fieldOfStudy || "",
+      field: field || e.fieldOfStudy || "",
+      startDate: formatDate(e.period?.startedOn || e.startDate || e.startedOn),
+      endDate: formatDate(e.period?.endedOn || e.endDate || e.endedOn),
       description: e.description || "",
     };
   });
 
-  const skills = ((profile.skills as unknown[]) || []).map((s: any, i: number) => ({
+  const skills = a("skills", "skill").map((s: any, i: number) => ({
     id: `import-skill-${i}`,
-    name: s.title || "",
+    name: s.title || s.name || "",
   }));
 
-  const certificates = ((profile.licenseAndCertificates as unknown[]) || []).map((c: any, i: number) => ({
+  const certificates = a("licenseAndCertificates", "certificates").map((c: any, i: number) => ({
     id: `import-cert-${i}`,
-    name: c.title || "",
-    issuer: c.subtitle || "",
-    date: (c.issued || "").replace("Issued ", ""),
+    name: c.title || c.name || "",
+    issuer: c.subtitle || c.issuer || "",
+    date: (c.issued || c.date || "").replace("Issued ", ""),
   }));
 
-  const languages = ((profile.languages as unknown[]) || []).map((l: any, i: number) => ({
+  const languages = a("languages", "language").map((l: any, i: number) => ({
     id: `import-lang-${i}`,
-    name: l.name || l.title || "",
-    level: l.proficiency || "Intermediate",
+    name: l.name || l.title || l.language || "",
+    level: l.proficiency || l.level || "Intermediate",
   }));
 
   return { personal, experiences, educations, skills, certificates, languages };
@@ -95,6 +99,10 @@ async function runApifyActor(linkedinUrl: string): Promise<Record<string, unknow
     },
     body: JSON.stringify({
       profileUrls: [linkedinUrl],
+      proxyConfiguration: { useApifyProxy: true },
+      scrapeSkills: true,
+      scrapeCertifications: true,
+      scrapeLanguages: true,
       maxDelay: 5,
       minDelay: 2,
     }),
@@ -105,11 +113,16 @@ async function runApifyActor(linkedinUrl: string): Promise<Record<string, unknow
     throw new Error(`Gagal memulai Apify run: ${runRes.status} ${errText}`);
   }
 
-  const runData = (await runRes.json()) as { data: { id: string } };
-  const runId = runData.data.id;
+  const runJson = await runRes.json();
+  const run = runJson.data ?? runJson;
+  const runId = run.id;
+  const datasetId = run.defaultDatasetId;
 
-  // Step 2: Poll until finished (max 60 seconds)
-  const maxAttempts = 30;
+  if (!runId) throw new Error("Gagal mendapatkan run ID dari Apify.");
+
+  // Step 2: Poll until finished (max 90 seconds)
+  let succeeded = false;
+  const maxAttempts = 45;
   for (let i = 0; i < maxAttempts; i++) {
     await new Promise((r) => setTimeout(r, 2000));
 
@@ -119,27 +132,80 @@ async function runApifyActor(linkedinUrl: string): Promise<Record<string, unknow
 
     if (!statusRes.ok) continue;
 
-    const statusData = (await statusRes.json()) as { data: { status: string } };
-    const status = statusData.data.status;
+    const statusJson = await statusRes.json();
+    const statusData = statusJson.data ?? statusJson;
+    const status = statusData.status;
 
-    if (status === "SUCCEEDED") break;
+    if (status === "SUCCEEDED") {
+      succeeded = true;
+      break;
+    }
     if (status === "FAILED" || status === "ABORTED" || status === "TIMED-OUT") {
       throw new Error(`Scraping LinkedIn gagal (status: ${status}). Coba lagi nanti.`);
     }
   }
 
-  // Step 3: Fetch dataset items
-  const datasetRes = await fetch(
-    `${APIFY_BASE}/acts/${APIFY_ACTOR_ID}/runs/${runId}/dataset/items`,
-    { headers: { Authorization: `Bearer ${APIFY_API_KEY}` } },
-  );
+  if (!succeeded) {
+    throw new Error("Scraping LinkedIn timeout. Profil mungkin private atau terlalu lama diproses. Coba lagi nanti.");
+  }
 
-  if (!datasetRes.ok) throw new Error("Gagal mengambil hasil scraping.");
+  // Step 3: Fetch dataset items using defaultDatasetId if available
+  const itemsUrl = datasetId
+    ? `${APIFY_BASE}/datasets/${datasetId}/items`
+    : `${APIFY_BASE}/acts/${APIFY_ACTOR_ID}/runs/${runId}/dataset/items`;
 
-  const items = (await datasetRes.json()) as unknown[];
-  if (!items.length) throw new Error("Profil LinkedIn tidak ditemukan atau kosong.");
+  const datasetRes = await fetch(itemsUrl, {
+    headers: { Authorization: `Bearer ${APIFY_API_KEY}` },
+  });
 
-  return items[0] as Record<string, unknown>;
+  if (!datasetRes.ok) {
+    const errText = await datasetRes.text();
+    console.error("Apify dataset fetch error:", datasetRes.status, errText);
+    throw new Error("Gagal mengambil hasil scraping.");
+  }
+
+  const items = await datasetRes.json() as unknown[];
+  if (!items || !items.length) throw new Error("Profil LinkedIn tidak ditemukan atau kosong.");
+
+  // Debug: log raw dataset structure
+  console.log("Apify dataset items count:", items.length);
+  console.log("Apify first item keys:", JSON.stringify(Object.keys(items[0] as Record<string, unknown> ?? {})));
+
+  // Apify actors sometimes wrap profile data under "profile", "result", or first array item
+  let profile = items[0] as Record<string, unknown>;
+  
+  // Unwrap nested structures
+  if (profile.profile && typeof profile.profile === "object") {
+    profile = profile.profile as Record<string, unknown>;
+  } else if (profile.result && typeof profile.result === "object") {
+    profile = profile.result as Record<string, unknown>;
+  }
+
+  // If first item looks like metadata (has no personal fields), try finding the real profile
+  const PROFILE_KEYS = ["fullName", "headline", "experiences", "educations", "skills"];
+  const hasProfileData = PROFILE_KEYS.some((k) => k in profile);
+  
+  if (!hasProfileData && items.length > 1) {
+    for (const item of items) {
+      const candidate = item as Record<string, unknown>;
+      if (PROFILE_KEYS.some((k) => k in candidate)) {
+        profile = candidate;
+        break;
+      }
+      // Also check nested
+      if (candidate.profile && typeof candidate.profile === "object") {
+        const nested = candidate.profile as Record<string, unknown>;
+        if (PROFILE_KEYS.some((k) => k in nested)) {
+          profile = nested;
+          break;
+        }
+      }
+    }
+  }
+
+  console.log("Final profile keys:", JSON.stringify(Object.keys(profile)));
+
+  return profile;
 }
 
 Deno.serve(async (req: Request) => {

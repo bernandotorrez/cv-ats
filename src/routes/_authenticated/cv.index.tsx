@@ -212,15 +212,24 @@ function CvListPage() {
             Kelola, edit, dan ekspor CV ATS-friendly kamu — semua di satu tempat.
           </p>
         </div>
-        <Button onClick={() => setShowCreateDialog(true)} disabled={atLimit} size="sm" className="gap-1.5">
-          <Plus className="h-4 w-4" />
-          Buat CV Baru
-          {cvs.length > 0 && (
-            <span className="ml-1 text-xs opacity-70">
-              ({cvs.length}{cvLimit !== Infinity && `/${cvLimit}`})
-            </span>
+        <div className="flex items-center gap-2">
+          <Button onClick={() => setShowCreateDialog(true)} disabled={atLimit} size="sm" className="gap-1.5">
+            <Plus className="h-4 w-4" />
+            Buat CV Baru
+            {cvs.length > 0 && (
+              <span className="ml-1 text-xs opacity-70">
+                ({cvs.length}{cvLimit !== Infinity && `/${cvLimit}`})
+              </span>
+            )}
+          </Button>
+          {limits.enableCvReview && (
+            <Button asChild variant="outline" size="sm" className="gap-1.5">
+              <Link to="/cv-review">
+                <Brain className="h-4 w-4" /> Upload & Review
+              </Link>
+            </Button>
           )}
-        </Button>
+        </div>
       </div>
 
       {/* ── Quick Stats ── */}

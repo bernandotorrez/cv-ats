@@ -151,6 +151,16 @@ export async function reviewCv(input: {
   return callEdge("ai-cv-review", input.data) as Promise<CvReviewResult>;
 }
 
+export async function reviewCvUpload(input: {
+  data: {
+    rawText: string;
+    targetRole?: string;
+    jobDescription?: string;
+  };
+}) {
+  return callEdge("ai-cv-review-upload", input.data) as Promise<CvReviewResult>;
+}
+
 export async function polishText(input: {
   data: {
     text: string;
