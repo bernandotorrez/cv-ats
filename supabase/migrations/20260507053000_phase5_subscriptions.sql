@@ -186,20 +186,20 @@ INSERT INTO public.blog_posts (slug, title, excerpt, category, content) VALUES
      "Hampir 75% perusahaan besar di Indonesia dan global menggunakan ATS untuk proses rekrutmen. Jika CV kamu tidak ATS-friendly, besar kemungkinan langsung tersingkir.",
      "ATS bekerja dengan cara mengekstrak teks dari CV, mencari keyword yang relevan dengan job description, dan memberi skor. CV dengan skor rendah otomatis ditolak.",
      "Tips utama: hindari tabel, gambar, kolom, dan font dekoratif. Gunakan heading standar, keyword relevan, dan format single-column.",
-     "Dengan CV ATS Indonesia, kamu bisa membuat CV ATS-friendly dalam hitungan menit. Template kami sudah dioptimasi untuk lolos screening ATS."
+     "Dengan CV Pintar, kamu bisa membuat CV ATS-friendly dalam hitungan menit. Template kami sudah dioptimasi untuk lolos screening ATS."
    ]'::jsonb),
   ('keyword-cv-ats', 'Cara Riset Keyword untuk CV ATS Friendly', 'Panduan lengkap riset keyword dari job description agar CV kamu muncul di pencarian rekruter.', 'CV & Karier',
    '["Keyword adalah kunci agar CV kamu lolos ATS dan ditemukan rekruter. Tanpa keyword yang tepat, CV terbaik pun bisa terlewat.",
      "Cara riset: baca 3-5 job description posisi yang kamu incar. Catat kata-kata yang sering muncul — itu keyword utama.",
      "Kelompokkan keyword menjadi: hard skills (tools, bahasa pemrograman, sertifikasi), soft skills (komunikasi, kepemimpinan), dan kualifikasi (pengalaman, pendidikan).",
      "Taburkan keyword secara natural di ringkasan, pengalaman, dan skill. Jangan keyword stuffing — ATS modern bisa mendeteksinya.",
-     "Gunakan fitur Keyword Extractor di CV ATS Indonesia untuk otomatis mengekstrak keyword dari job description favoritmu."
+     "Gunakan fitur Keyword Extractor di CV Pintar untuk otomatis mengekstrak keyword dari job description favoritmu."
    ]'::jsonb),
   ('template-cv-gratis-vs-premium', 'Template CV Gratis vs Premium: Mana yang Kamu Butuhkan?', 'Perbandingan jujur template CV gratis dan premium, plus tips memilih yang tepat untuk jenjang kariermu.', 'CV & Karier',
    '["Template CV gratis biasanya cukup untuk fresh graduate atau yang baru pertama kali bikin CV. Namun ada keterbatasan: pilihan desain sedikit, fitur AI terbatas, dan sering ada watermark.",
      "Template premium menawarkan: desain lebih profesional dan bervariasi, AI scoring unlimited, cover letter generator, dan tentunya tanpa watermark.",
      "Kapan upgrade ke premium? Jika kamu: melamar ke 10+ perusahaan, ingin ganti industri, target posisi senior, atau butuh CV dalam multiple format.",
-     "Di CV ATS Indonesia, semua template — baik gratis maupun premium — sudah ATS-friendly dan dioptimasi untuk screening otomatis.",
+     "Di CV Pintar, semua template — baik gratis maupun premium — sudah ATS-friendly dan dioptimasi untuk screening otomatis.",
      "Mulai dari paket Free (Rp 0 selamanya). Upgrade ke Starter (Rp 19.000/bln) atau Pro (Rp 49.000/bln) saat kamu siap level up karier."
    ]'::jsonb),
   ('cara-menulis-ringkasan-cv', 'Cara Menulis Ringkasan CV yang Bikin Rekruter Berhenti Scroll', 'Ringkasan profil adalah bagian paling krusial di CV. Pelajari formula menulis ringkasan yang memikat.', 'CV & Karier',
@@ -207,5 +207,5 @@ INSERT INTO public.blog_posts (slug, title, excerpt, category, content) VALUES
      "Formula ringkasan: [Posisi] + [pengalaman tahun] + [keahlian utama] + [pencapaian signifikan] + [value proposition].",
      "Contoh bagus: Frontend Developer dengan 5+ tahun pengalaman membangun web app skala enterprise. Spesialis React & TypeScript, berhasil meningkatkan performa aplikasi 40%.",
      "Hindari: kalimat klise (saya pekerja keras), kata ganti berlebihan, dan informasi yang tidak relevan dengan posisi.",
-     "Gunakan AI Saran di editor CV ATS Indonesia untuk otomatis membuat ringkasan profesional yang ATS-friendly."
+     "Gunakan AI Saran di editor CV Pintar untuk otomatis membuat ringkasan profesional yang ATS-friendly."
    ]'::jsonb);

@@ -16,8 +16,8 @@ import { Mail, Loader2, CheckCircle2, ArrowRight } from "lucide-react";
 export const Route = createFileRoute("/verify-email")({
   head: () =>
     buildSeo({
-      title: "Verifikasi Email — CV ATS Indonesia",
-      description: "Verifikasi email akun CV ATS Indonesia.",
+      title: "Verifikasi Email — CV Pintar",
+      description: "Verifikasi email akun CV Pintar.",
       path: "/verify-email",
       noindex: true,
     }),

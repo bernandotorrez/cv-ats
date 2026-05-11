@@ -15,7 +15,7 @@ import { checkRateLimit } from "../_shared/rate-limit.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") || "";
-const FROM_EMAIL = "CV ATS Indonesia <noreply@cvats.id>";
+const FROM_EMAIL = "CV Pintar <noreply@cvats.id>";
 
 interface EmailPayload {
   to?: string;
@@ -82,15 +82,15 @@ async function getUserId(req: Request): Promise<string> {
 // Pre-defined email templates for security
 const EMAIL_TEMPLATES: Record<string, { subject: string; html: string }> = {
   welcome: {
-    subject: "Selamat Datang di CV ATS Indonesia!",
-    html: "<h1>Selamat Datang!</h1><p>Terima kasih telah bergabung dengan CV ATS Indonesia. Mulai buat CV profesionalmu sekarang!</p>",
+    subject: "Selamat Datang di CV Pintar!",
+    html: "<h1>Selamat Datang!</h1><p>Terima kasih telah bergabung dengan CV Pintar. Mulai buat CV profesionalmu sekarang!</p>",
   },
   payment: {
-    subject: "Konfirmasi Pembayaran - CV ATS Indonesia",
+    subject: "Konfirmasi Pembayaran - CV Pintar",
     html: "<h1>Pembayaran Berhasil</h1><p>Pembayaranmu telah kami terima. Subscriptionmu telah diaktifkan.</p>",
   },
   subscription: {
-    subject: "Pengingat Subscription - CV ATS Indonesia",
+    subject: "Pengingat Subscription - CV Pintar",
     html: "<h1>Subscription Berakhir</h1><p>Subscriptionmu akan berakhir segera. Perpanjang sekarang untuk terus menikmati fitur premium.</p>",
   },
 };
@@ -157,7 +157,7 @@ Deno.serve(async (req: Request) => {
     } else {
       // Custom email with user-provided content
       sanitizedHtml = sanitizeHtml(body.html || "");
-      finalSubject = body.subject || "Email dari CV ATS Indonesia";
+      finalSubject = body.subject || "Email dari CV Pintar";
     }
 
     if (!RESEND_API_KEY) {

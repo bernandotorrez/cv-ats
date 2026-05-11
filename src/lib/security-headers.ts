@@ -15,12 +15,12 @@
 // If a future refactor can eliminate these, security posture would be significantly improved.
 const CSP_DIRECTIVES = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://app.midtrans.com https://api.midtrans.com",
-  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://app.midtrans.com https://api.midtrans.com https://js.hcaptcha.com https://*.hcaptcha.com",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.hcaptcha.com",
   "font-src 'self' https://fonts.gstatic.com",
-  "img-src 'self' data: blob: https://*.supabase.co https://lh3.googleusercontent.com",
-  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://ai.sumopod.com https://app.midtrans.com",
-  "frame-src https://app.midtrans.com",
+  "img-src 'self' data: blob: https://*.supabase.co https://lh3.googleusercontent.com https://*.hcaptcha.com",
+  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://ai.sumopod.com https://app.midtrans.com https://*.hcaptcha.com",
+  "frame-src https://app.midtrans.com https://*.hcaptcha.com https://newassets.hcaptcha.com",
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",

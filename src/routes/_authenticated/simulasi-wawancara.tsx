@@ -18,7 +18,7 @@ import {
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/simulasi-wawancara")({
-  head: () => buildSeo({ title: "Simulasi Wawancara — CV ATS Indonesia", description: "Latihan interview dengan AI.", path: "/simulasi-wawancara", noindex: true }),
+  head: () => buildSeo({ title: "Simulasi Wawancara — CV Pintar", description: "Latihan interview dengan AI.", path: "/simulasi-wawancara", noindex: true }),
   component: SimulasiWawancaraPage,
 });
 

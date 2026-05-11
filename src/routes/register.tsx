@@ -17,6 +17,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { PasswordStrength } from "@/components/ui/password-strength";
+import { HCaptchaWidget } from "@/components/ui/hcaptcha";
 import { Loader2, Eye, EyeOff } from "lucide-react";
 
 const schema = z.object({
@@ -44,8 +45,8 @@ export const Route = createFileRoute("/register")({
   },
   head: () =>
     buildSeo({
-      title: "Daftar Gratis — CV ATS Indonesia",
-      description: "Buat akun gratis CV ATS Indonesia.",
+      title: "Daftar Gratis — CV Pintar",
+      description: "Buat akun gratis CV Pintar.",
       path: "/register",
       noindex: true,
     }),
@@ -61,6 +62,9 @@ function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaError, setCaptchaError] = useState<string | null>(null);
+  const [captchaResetKey, setCaptchaResetKey] = useState(0);
   const [hydrated, setHydrated] = useState(false);
 
   // Mark as hydrated after first client-side render
@@ -100,11 +104,21 @@ function RegisterPage() {
       toast.error(parsed.error.issues[0].message);
       return;
     }
+
+    // Verifikasi hCaptcha
+    if (!captchaToken) {
+      setCaptchaError("Harap selesaikan verifikasi captcha");
+      toast.error("Harap selesaikan verifikasi captcha");
+      return;
+    }
+    setCaptchaError(null);
     setLoading(true);
+
     const { data, error } = await supabase.auth.signUp({
       email: parsed.data.email,
       password: parsed.data.password,
       options: {
+        captchaToken,
         emailRedirectTo: `${window.location.origin}/verify-email?confirmed=true`,
         data: { full_name: parsed.data.fullName },
       },
@@ -130,6 +144,8 @@ function RegisterPage() {
       } catch {}
     }
 
+    setCaptchaToken(null);
+    setCaptchaResetKey((k) => k + 1);
     toast.success("Pendaftaran berhasil! Silakan cek email untuk verifikasi.");
     navigate({ to: "/verify-email", search: { confirmed: undefined } });
   };
@@ -202,6 +218,21 @@ function RegisterPage() {
               </div>
               <PasswordStrength password={password} />
             </div>
+
+            {/* hCaptcha */}
+            <HCaptchaWidget
+              onVerify={(token) => {
+                setCaptchaToken(token);
+                setCaptchaError(null);
+              }}
+              onExpire={() => {
+                setCaptchaToken(null);
+                setCaptchaError("Sesi captcha berakhir, harap verifikasi ulang");
+              }}
+              disabled={loading}
+              error={captchaError}
+              resetKey={captchaResetKey}
+            />
 
             {/* TOS Checkbox */}
             <div className="flex items-start gap-2">

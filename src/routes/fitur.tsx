@@ -14,7 +14,7 @@ import {
 export const Route = createFileRoute("/fitur")({
   head: () =>
     buildSeo({
-      title: "Fitur — CV ATS Indonesia",
+      title: "Fitur — CV Pintar",
       description:
         "Saran AI Bahasa Indonesia, scoring CV otomatis, template ATS friendly, cover letter generator, dan banyak fitur lain untuk pencari kerja Indonesia.",
       path: "/fitur",

@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/users")({
-  head: () => buildSeo({ title: "Admin Users — CV ATS Indonesia", description: "Kelola pengguna.", path: "/admin/users", noindex: true }),
+  head: () => buildSeo({ title: "Admin Users — CV Pintar", description: "Kelola pengguna.", path: "/admin/users", noindex: true }),
   component: AdminUsersPage,
 });
 

@@ -43,7 +43,7 @@ export const Route = createFileRoute("/template")({
   pendingComponent: TemplateLoading,
   head: () =>
     buildSeo({
-      title: "Template CV ATS Gratis — CV ATS Indonesia",
+      title: "Template CV ATS Gratis — CV Pintar",
       description:
         "Pilih dari koleksi template CV ATS friendly: klasik, modern, minimalis, profesional. Cocok fresh graduate sampai senior.",
       path: "/template",

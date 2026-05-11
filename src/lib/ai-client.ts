@@ -22,7 +22,7 @@ export interface AiCompletionOptions {
 }
 
 function buildSystemPrompt(): string {
-  return `Kamu adalah asisten AI untuk CV ATS Indonesia, platform pembuatan CV ATS-friendly berbahasa Indonesia. Tugasmu membantu pengguna membuat CV profesional yang lolos screening ATS (Applicant Tracking System).
+  return `Kamu adalah asisten AI untuk CV Pintar, platform pembuatan CV ATS-friendly berbahasa Indonesia. Tugasmu membantu pengguna membuat CV profesional yang lolos screening ATS (Applicant Tracking System).
 
 PEDOMAN BAHASA:
 - SELALU gunakan Bahasa Indonesia yang formal, profesional, dan mudah dipahami.

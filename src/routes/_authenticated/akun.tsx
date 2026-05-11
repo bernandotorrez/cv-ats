@@ -35,7 +35,7 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/_authenticated/akun")({
   head: () =>
     buildSeo({
-      title: "Akun Saya — CV ATS Indonesia",
+      title: "Akun Saya — CV Pintar",
       description: "Profil & subscription.",
       path: "/akun",
       noindex: true,

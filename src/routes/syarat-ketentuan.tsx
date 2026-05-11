@@ -24,7 +24,7 @@ const sections = [
     content: (
       <>
         <p>
-          CV ATS Indonesia adalah tools untuk membantu kamu membuat CV
+          CV Pintar adalah tools untuk membantu kamu membuat CV
           personal. Simpel, jujur, dan sesuai peruntukannya.
         </p>
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -218,8 +218,8 @@ const sections = [
 export const Route = createFileRoute("/syarat-ketentuan")({
   head: () =>
     buildSeo({
-      title: "Syarat & Ketentuan — CV ATS Indonesia",
-      description: "Ketentuan penggunaan layanan CV ATS Indonesia.",
+      title: "Syarat & Ketentuan — CV Pintar",
+      description: "Ketentuan penggunaan layanan CV Pintar.",
       path: "/syarat-ketentuan",
     }),
   component: SyaratKetentuanPage,
@@ -240,7 +240,7 @@ function SyaratKetentuanPage() {
         </p>
 
         <p className="mt-4 leading-relaxed">
-          Dengan menggunakan CV ATS Indonesia, kamu menyetujui ketentuan di
+          Dengan menggunakan CV Pintar, kamu menyetujui ketentuan di
           bawah ini. Kalau ada yang kurang sreg, drop email — kami terbuka
           buat diskusi.
         </p>

@@ -52,7 +52,7 @@ import { DashboardSkeleton } from "@/components/ui/dashboard-skeleton";
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () =>
     buildSeo({
-      title: "Dashboard — CV ATS Indonesia",
+      title: "Dashboard — CV Pintar",
       description: "Dashboard akun.",
       path: "/dashboard",
       noindex: true,

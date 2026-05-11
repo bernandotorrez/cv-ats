@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
+import { HCaptchaWidget } from "@/components/ui/hcaptcha";
 import { Loader2, Eye, EyeOff, ShieldAlert } from "lucide-react";
 
 const schema = z.object({
@@ -37,8 +38,8 @@ export const Route = createFileRoute("/login")({
   },
   head: () =>
     buildSeo({
-      title: "Masuk — CV ATS Indonesia",
-      description: "Masuk ke akun CV ATS Indonesia.",
+      title: "Masuk — CV Pintar",
+      description: "Masuk ke akun CV Pintar.",
       path: "/login",
       noindex: true,
     }),
@@ -97,6 +98,9 @@ function LoginPage() {
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
   const [lockout, setLockout] = useState(getLockoutState);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaError, setCaptchaError] = useState<string | null>(null);
+  const [captchaResetKey, setCaptchaResetKey] = useState(0);
   const [hydrated, setHydrated] = useState(false);
 
   // Mark as hydrated after first client-side render
@@ -159,11 +163,22 @@ function LoginPage() {
       toast.error(parsed.error.issues[0].message);
       return;
     }
+
+    // Verifikasi hCaptcha
+    if (!captchaToken) {
+      setCaptchaError("Harap selesaikan verifikasi captcha");
+      toast.error("Harap selesaikan verifikasi captcha");
+      return;
+    }
+    setCaptchaError(null);
     setLoading(true);
 
     const { error } = await supabase.auth.signInWithPassword({
       email: parsed.data.email,
       password: parsed.data.password,
+      options: {
+        captchaToken,
+      },
     });
 
     if (error) {
@@ -184,6 +199,8 @@ function LoginPage() {
     }
 
     clearAttempts();
+    setCaptchaToken(null);
+    setCaptchaResetKey((k) => k + 1);
     toast.success("Berhasil masuk");
     navigate({ to: redirect || "/dashboard" });
   };
@@ -194,7 +211,7 @@ function LoginPage() {
         <CardHeader>
           <CardTitle className="font-display text-2xl">Masuk</CardTitle>
           <CardDescription>
-            Lanjutkan ke akun CV ATS Indonesia.
+            Lanjutkan ke akun CV Pintar.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -258,6 +275,21 @@ function LoginPage() {
                 </button>
               </div>
             </div>
+
+            {/* hCaptcha */}
+            <HCaptchaWidget
+              onVerify={(token) => {
+                setCaptchaToken(token);
+                setCaptchaError(null);
+              }}
+              onExpire={() => {
+                setCaptchaToken(null);
+                setCaptchaError("Sesi captcha berakhir, harap verifikasi ulang");
+              }}
+              disabled={loading || lockout.locked}
+              error={captchaError}
+              resetKey={captchaResetKey}
+            />
 
             {/* Remember Me */}
             <div className="flex items-center gap-2">

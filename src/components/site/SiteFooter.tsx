@@ -12,7 +12,7 @@ export function SiteFooter() {
               <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary text-primary-foreground">
                 <FileText className="h-4 w-4" aria-hidden />
               </span>
-              CV ATS Indonesia
+              CV Pintar
             </div>
             <p className="mt-3 text-sm text-muted-foreground">
               Bantu pelamar kerja Indonesia bikin CV yang lolos ATS dan menarik perhatian HR.
@@ -39,7 +39,7 @@ export function SiteFooter() {
         </div>
 
         <div className="mt-10 flex flex-col items-start justify-between gap-2 border-t border-border pt-6 text-sm text-muted-foreground md:flex-row md:items-center">
-          <p>© {year} CV ATS Indonesia. Semua hak dilindungi.</p>
+          <p>© {year} CV Pintar. Semua hak dilindungi.</p>
           <p>Dibuat dengan ❤️ untuk pencari kerja di Indonesia.</p>
         </div>
       </div>

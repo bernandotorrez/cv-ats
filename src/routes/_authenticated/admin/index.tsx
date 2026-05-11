@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/")({
-  head: () => buildSeo({ title: "Admin Dashboard — CV ATS Indonesia", description: "Admin analytics.", path: "/admin", noindex: true }),
+  head: () => buildSeo({ title: "Admin Dashboard — CV Pintar", description: "Admin analytics.", path: "/admin", noindex: true }),
   component: AdminDashboard,
 });
 
@@ -104,7 +104,7 @@ function AdminDashboard() {
     <div className="space-y-6">
       <div>
         <h2 className="text-lg font-semibold">Analytics Overview</h2>
-        <p className="text-sm text-muted-foreground">Ringkasan performa platform CV ATS Indonesia.</p>
+        <p className="text-sm text-muted-foreground">Ringkasan performa platform CV Pintar.</p>
       </div>
 
       {/* Stats Grid */}

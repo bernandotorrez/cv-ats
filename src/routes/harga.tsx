@@ -106,7 +106,7 @@ export const Route = createFileRoute("/harga")({
   pendingComponent: () => <div className="container-page py-20"><div className="animate-pulse space-y-4"><div className="h-64 bg-muted rounded-xl" /><div className="grid md:grid-cols-3 gap-4"><div className="h-96 bg-muted rounded-xl" /><div className="h-96 bg-muted rounded-xl" /><div className="h-96 bg-muted rounded-xl" /></div></div></div>,
   head: () =>
     buildSeo({
-      title: "Harga — CV ATS Indonesia",
+      title: "Harga — CV Pintar",
       description:
         "Mulai gratis selamanya. Paket berbayar mulai Rp 19.000/bulan dengan AI saran, scoring, dan cover letter unlimited.",
       path: "/harga",
@@ -115,7 +115,7 @@ export const Route = createFileRoute("/harga")({
         {
           "@context": "https://schema.org",
           "@type": "Product",
-          name: "CV ATS Indonesia Subscription",
+          name: "CV Pintar Subscription",
           offers: tiers.map((t) => ({
             "@type": "Offer",
             name: t.name,

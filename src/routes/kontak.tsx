@@ -6,8 +6,8 @@ import { Mail, MessageCircle } from "lucide-react";
 export const Route = createFileRoute("/kontak")({
   head: () =>
     buildSeo({
-      title: "Kontak — CV ATS Indonesia",
-      description: "Hubungi tim CV ATS Indonesia untuk pertanyaan, kerja sama, atau dukungan akun.",
+      title: "Kontak — CV Pintar",
+      description: "Hubungi tim CV Pintar untuk pertanyaan, kerja sama, atau dukungan akun.",
       path: "/kontak",
     }),
   component: () => (

@@ -22,7 +22,7 @@ import {
 export const Route = createFileRoute("/_authenticated/tools/")({
   head: () =>
     buildSeo({
-      title: "AI Tools — CV ATS Indonesia",
+      title: "AI Tools — CV Pintar",
       description: "Tools AI untuk optimasi CV dan lamaran kerja.",
       path: "/tools",
       noindex: true,

@@ -36,7 +36,7 @@ const schema = z
 export const Route = createFileRoute("/reset-password")({
   head: () =>
     buildSeo({
-      title: "Reset Password — CV ATS Indonesia",
+      title: "Reset Password — CV Pintar",
       description: "Atur password baru.",
       path: "/reset-password",
       noindex: true,

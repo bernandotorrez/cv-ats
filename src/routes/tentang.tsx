@@ -75,14 +75,14 @@ const storyParagraphs = [
   },
   {
     highlight: "Dari situ kami membangun solusi.",
-    text: "CV ATS Indonesia lahir dari perpaduan pengalaman sebagai rekruter dan engineer. Kami menggabungkan pemahaman mendalam tentang pasar kerja lokal dengan teknologi AI untuk menciptakan tools yang sederhana, terjangkau, dan benar-benar bekerja.",
+    text: "CV Pintar lahir dari perpaduan pengalaman sebagai rekruter dan engineer. Kami menggabungkan pemahaman mendalam tentang pasar kerja lokal dengan teknologi AI untuk menciptakan tools yang sederhana, terjangkau, dan benar-benar bekerja.",
   },
 ];
 
 export const Route = createFileRoute("/tentang")({
   head: () =>
     buildSeo({
-      title: "Tentang Kami — CV ATS Indonesia",
+      title: "Tentang Kami — CV Pintar",
       description:
         "Misi kami: bantu setiap pencari kerja Indonesia bikin CV yang lolos ATS dan dapat panggilan interview lebih banyak.",
       path: "/tentang",

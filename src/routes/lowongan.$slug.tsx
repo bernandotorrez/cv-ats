@@ -24,7 +24,7 @@ export const Route = createFileRoute("/lowongan/$slug")({
   head: ({ loaderData }: any) => {
     if (!loaderData) return { meta: [{ title: "Lowongan tidak ditemukan" }], links: [], scripts: [] };
     return buildSeo({
-      title: `Lowongan ${loaderData.title} di ${loaderData.company} — CV ATS Indonesia`,
+      title: `Lowongan ${loaderData.title} di ${loaderData.company} — CV Pintar`,
       description: loaderData.description?.substring(0, 160) ?? `Lowongan ${loaderData.title} di ${loaderData.company}, ${loaderData.location}.`,
       path: `/lowongan/${loaderData.slug}`,
       keywords: `lowongan ${loaderData.title}, loker ${loaderData.company}, kerja ${loaderData.location}`,

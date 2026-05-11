@@ -19,7 +19,7 @@ import {
 
 export const Route = createFileRoute("/_authenticated/tools/keyword/$cvId")({
   head: () => buildSeo({ 
-    title: "Keyword Extractor — CV ATS Indonesia", 
+    title: "Keyword Extractor — CV Pintar", 
     description: "Ekstrak keyword penting dari job description untuk optimasi CV ATS.", 
     path: "/tools/keyword-extractor", 
     noindex: true 

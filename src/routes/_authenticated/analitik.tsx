@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/analitik")({
-  head: () => buildSeo({ title: "Analitik CV — CV ATS Indonesia", description: "Analitik CV kamu.", path: "/analitik", noindex: true }),
+  head: () => buildSeo({ title: "Analitik CV — CV Pintar", description: "Analitik CV kamu.", path: "/analitik", noindex: true }),
   component: AnalitikPage,
 });
 

@@ -29,7 +29,7 @@ import {
 export const Route = createFileRoute("/_authenticated/tools/cover-letter/$cvId")({
   head: () =>
     buildSeo({
-      title: "Cover Letter Generator — CV ATS Indonesia",
+      title: "Cover Letter Generator — CV Pintar",
       description: "Buat surat lamaran profesional dengan AI.",
       path: "/tools/cover-letter",
       noindex: true,

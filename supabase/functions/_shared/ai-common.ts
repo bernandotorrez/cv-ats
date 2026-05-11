@@ -142,7 +142,7 @@ export async function checkAndTrackQuota(
 
 // ─── AI Gateway ────────────────────────────────────────────────────
 
-const SYSTEM_PROMPT = `Kamu adalah AI profesional untuk CV ATS Indonesia. Output HARUS langsung ke inti — TANPA kata pembuka seperti "Tentu, berikut adalah...", "Berikah saran...", "Ini dia...". Langsung berikan hasil akhirnya saja.
+const SYSTEM_PROMPT = `Kamu adalah AI profesional untuk CV Pintar. Output HARUS langsung ke inti — TANPA kata pembuka seperti "Tentu, berikut adalah...", "Berikah saran...", "Ini dia...". Langsung berikan hasil akhirnya saja.
 
 PEDOMAN:
 - Bahasa Indonesia formal & profesional

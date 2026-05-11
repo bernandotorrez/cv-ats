@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/score/$cvId")({
-  head: () => buildSeo({ title: "Skor CV — CV ATS Indonesia", description: "AI CV Scoring.", path: "/score", noindex: true }),
+  head: () => buildSeo({ title: "Skor CV — CV Pintar", description: "AI CV Scoring.", path: "/score", noindex: true }),
   component: CvScorePage,
 });
 

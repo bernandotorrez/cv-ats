@@ -33,7 +33,7 @@ export function SiteHeader() {
           <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary text-primary-foreground">
             <FileText className="h-4 w-4" aria-hidden />
           </span>
-          <span>CV ATS Indonesia</span>
+          <span>CV Pintar</span>
         </Link>
 
         <nav aria-label="Navigasi utama" className="hidden items-center gap-1 md:flex">

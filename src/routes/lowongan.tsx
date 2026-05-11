@@ -17,7 +17,7 @@ import {
 
 export const Route = createFileRoute("/lowongan")({
   head: () => buildSeo({
-    title: "Lowongan Pekerjaan — CV ATS Indonesia",
+    title: "Lowongan Pekerjaan — CV Pintar",
     description: "Temukan lowongan kerja terbaru. Buat CV ATS-friendly dan lamar dengan percaya diri.",
     path: "/lowongan",
     keywords: "lowongan kerja, loker, job indonesia, cari kerja, lowongan terbaru",

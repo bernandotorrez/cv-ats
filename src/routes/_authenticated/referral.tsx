@@ -17,7 +17,7 @@ import {
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/referral")({
-  head: () => buildSeo({ title: "Program Referral — CV ATS Indonesia", description: "Ajak teman, dapatkan hadiah.", path: "/referral", noindex: true }),
+  head: () => buildSeo({ title: "Program Referral — CV Pintar", description: "Ajak teman, dapatkan hadiah.", path: "/referral", noindex: true }),
   component: ReferralPage,
 });
 

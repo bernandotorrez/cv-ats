@@ -1,4 +1,4 @@
-# Security Hardening Tasks — CV ATS Indonesia
+# Security Hardening Tasks — CV Pintar
 
 > **Sumber**: `security-audit.md`  
 > **Prioritas**: SEGERA → MINGGU INI → SPRINT INI  

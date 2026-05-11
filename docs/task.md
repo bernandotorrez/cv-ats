@@ -257,7 +257,7 @@ Sebelum menulis kode apapun, pastikan:
 
 **Implementasi**:
 - [x] PDF generation via HTML-to-PDF Edge Function
-- [x] Free tier: PDF dengan watermark "Dibuat dengan CV ATS Indonesia"
+- [x] Free tier: PDF dengan watermark "Dibuat dengan CV Pintar"
 - [x] Starter+: PDF tanpa watermark
 - [x] Print/Cetak button di toolbar editor
 - [x] Upload ke Supabase Storage

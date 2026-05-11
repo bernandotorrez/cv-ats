@@ -5,7 +5,7 @@ export const Route = createFileRoute("/manifest/webmanifest")({
     handlers: {
       GET: async () => {
         const manifest = {
-          name: "CV ATS Indonesia",
+          name: "CV Pintar",
           short_name: "CV ATS",
           description: "Buat CV ATS friendly dengan AI, gratis.",
           start_url: "/",

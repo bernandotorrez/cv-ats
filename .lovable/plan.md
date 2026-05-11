@@ -92,8 +92,8 @@ Quota di-enforce di server function via cek `ai_usage` + `subscriptions.tier`.
 
 ## 5. SEO & SERP
 
-- `head()` per route dengan title <60 char + meta description <160 char unik. Format: `Judul Halaman | CV ATS Indonesia`.
-- Keywords target: "buat cv ats", "contoh cv ats indonesia", "template cv ats gratis", "cv generator ai indonesia", "tips interview kerja", dll.
+- `head()` per route dengan title <60 char + meta description <160 char unik. Format: `Judul Halaman | CV Pintar`.
+- Keywords target: "buat cv ats", "contoh CV Pintar", "template cv ats gratis", "cv generator ai indonesia", "tips interview kerja", dll.
 - Single H1 per page, semantic `<header><main><article><section>`, alt text deskriptif.
 - JSON-LD: `Organization`, `WebSite` di root; `Article` di blog/tips; `FAQPage` di landing & harga; `Product` + `Offer` di harga; `BreadcrumbList`.
 - `<link rel="canonical">` per route.

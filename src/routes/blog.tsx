@@ -48,7 +48,7 @@ export const Route = createFileRoute("/blog")({
   pendingComponent: BlogLoading,
   head: () =>
     buildSeo({
-      title: "Blog — CV ATS Indonesia",
+      title: "Blog — CV Pintar",
       description:
         "Artikel terbaru tentang karier, lamaran kerja, dan pengembangan profesional di Indonesia.",
       path: "/blog",

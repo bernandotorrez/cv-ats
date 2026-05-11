@@ -1,4 +1,4 @@
-# Content Audit & Fix Plan — CV ATS Indonesia
+# Content Audit & Fix Plan — CV Pintar
 
 ## Temuan Redundansi
 

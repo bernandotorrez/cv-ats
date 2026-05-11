@@ -1,4 +1,4 @@
-# FITUR BARU — CV ATS Indonesia (cvats.id)
+# FITUR BARU — CV Pintar (cvats.id)
 
 > **Product Manager Perspective**  
 > **Tanggal**: 8 Mei 2026  
@@ -9,7 +9,7 @@
 ## 1. Analisis Pasar & Gap
 
 ### Kondisi Saat Ini
-CV ATS Indonesia sudah memiliki fondasi kuat: CV builder, AI scoring, templates, subscription tiers. Namun ada beberapa gap besar yang membatasi pertumbuhan:
+CV Pintar sudah memiliki fondasi kuat: CV builder, AI scoring, templates, subscription tiers. Namun ada beberapa gap besar yang membatasi pertumbuhan:
 
 | Gap | Dampak | Opportunity |
 |-----|--------|-------------|

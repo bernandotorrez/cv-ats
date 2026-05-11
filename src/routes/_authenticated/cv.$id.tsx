@@ -37,7 +37,7 @@ import {
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/cv/$id")({
-  head: () => buildSeo({ title: "Edit CV — CV ATS Indonesia", description: "Editor CV.", path: "/cv", noindex: true }),
+  head: () => buildSeo({ title: "Edit CV — CV Pintar", description: "Editor CV.", path: "/cv", noindex: true }),
   component: CvEditorPage,
 });
 

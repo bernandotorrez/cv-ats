@@ -9,7 +9,7 @@ import { emptyCv, type CvData } from "@/lib/cv-types";
 import { ArrowLeft, ArrowLeftRight } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/compare")({
-  head: () => buildSeo({ title: "Bandingkan CV — CV ATS Indonesia", description: "CV Comparison.", path: "/compare", noindex: true }),
+  head: () => buildSeo({ title: "Bandingkan CV — CV Pintar", description: "CV Comparison.", path: "/compare", noindex: true }),
   component: ComparePage,
 });
 

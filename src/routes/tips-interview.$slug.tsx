@@ -531,7 +531,7 @@ export const Route = createFileRoute("/tips-interview/$slug")({
     if (!loaderData) return { meta: [{ title: "Tips tidak ditemukan" }] };
     const { tip, slug } = loaderData;
     return buildSeo({
-      title: `${tip.title} — Tips Interview CV ATS Indonesia`,
+      title: `${tip.title} — Tips Interview CV Pintar`,
       description: tip.excerpt,
       path: `/tips-interview/${slug}`,
       type: "article",
@@ -544,7 +544,7 @@ export const Route = createFileRoute("/tips-interview/$slug")({
         articleSection: tip.category,
         datePublished: tip.date,
         inLanguage: "id-ID",
-        author: { "@type": "Organization", name: "CV ATS Indonesia" },
+        author: { "@type": "Organization", name: "CV Pintar" },
       },
     });
   },

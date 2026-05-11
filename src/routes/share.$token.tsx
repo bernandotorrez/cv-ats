@@ -38,7 +38,7 @@ export const Route = createFileRoute("/share/$token")({
   head: ({ loaderData }: any) => {
     if (!loaderData) return { meta: [{ title: "CV tidak ditemukan" }], links: [], scripts: [] };
     return buildSeo({
-      title: `${loaderData.cvData.personal.fullName || "CV"} — CV ATS Indonesia`,
+      title: `${loaderData.cvData.personal.fullName || "CV"} — CV Pintar`,
       description: `CV profesional ${loaderData.cvData.personal.fullName || ""} — ${loaderData.cvData.personal.headline || ""}`,
       path: `/share/${Route.useParams().token}`,
       noindex: true,
@@ -83,7 +83,7 @@ function SharePage() {
             <div className="grid h-8 w-8 place-items-center rounded-lg bg-primary/10 text-primary">
               <FileText className="h-4 w-4" />
             </div>
-            <span className="text-sm font-medium">CV ATS Indonesia</span>
+            <span className="text-sm font-medium">CV Pintar</span>
           </div>
           <div className="flex items-center gap-3">
             <span className="text-xs text-muted-foreground">
@@ -109,7 +109,7 @@ function SharePage() {
       {/* Bottom CTA */}
       <div className="container-page py-8 text-center print:hidden">
         <p className="text-sm text-muted-foreground mb-4">
-          CV ini dibuat dengan CV ATS Indonesia
+          CV ini dibuat dengan CV Pintar
         </p>
         <Button asChild variant="outline">
           <Link to="/register">Buat CV ATS Friendly Gratis</Link>

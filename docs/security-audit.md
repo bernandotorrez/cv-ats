@@ -1,4 +1,4 @@
-# Security Audit Report — CV ATS Indonesia
+# Security Audit Report — CV Pintar
 
 > **Auditor**: AI Security Expert  
 > **Tanggal**: 2026-05-08  

@@ -20,12 +20,12 @@ import { buildSeo } from "@/lib/seo";
 export const Route = createFileRoute("/")({
   head: () =>
     buildSeo({
-      title: "CV ATS Indonesia — Buat CV ATS Friendly dengan AI Gratis",
+      title: "CV Pintar — Buat CV ATS Friendly dengan AI Gratis",
       description:
         "Bikin CV ATS friendly Bahasa Indonesia dalam 10 menit. Template profesional, saran AI, scoring otomatis, & tips interview. Mulai gratis tanpa kartu kredit.",
       path: "/",
       keywords:
-        "buat cv ats, cv ats indonesia, template cv ats, cv generator ai, contoh cv ats, cv lolos screening, ai cv builder indonesia",
+        "buat cv ats, CV Pintar, template cv ats, cv generator ai, contoh cv ats, cv lolos screening, ai cv builder indonesia",
       jsonLd: [
         {
           "@context": "https://schema.org",
@@ -39,7 +39,7 @@ export const Route = createFileRoute("/")({
         {
           "@context": "https://schema.org",
           "@type": "SoftwareApplication",
-          name: "CV ATS Indonesia",
+          name: "CV Pintar",
           applicationCategory: "BusinessApplication",
           operatingSystem: "Web",
           offers: { "@type": "Offer", price: "0", priceCurrency: "IDR" },

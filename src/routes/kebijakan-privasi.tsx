@@ -56,7 +56,7 @@ const sections = [
       <>
         <p>
           Data kamu digunakan <strong>satu tujuan saja</strong>: menjalankan
-          dan meningkatkan layanan CV ATS Indonesia.
+          dan meningkatkan layanan CV Pintar.
         </p>
         <ul className="mt-3 space-y-2">
           {[
@@ -172,9 +172,9 @@ const sections = [
 export const Route = createFileRoute("/kebijakan-privasi")({
   head: () =>
     buildSeo({
-      title: "Kebijakan Privasi — CV ATS Indonesia",
+      title: "Kebijakan Privasi — CV Pintar",
       description:
-        "Bagaimana kami mengumpulkan, menggunakan, dan melindungi data pribadi pengguna CV ATS Indonesia.",
+        "Bagaimana kami mengumpulkan, menggunakan, dan melindungi data pribadi pengguna CV Pintar.",
       path: "/kebijakan-privasi",
     }),
   component: KebijakanPrivasiPage,

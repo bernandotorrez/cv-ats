@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/templates")({
-  head: () => buildSeo({ title: "Admin Templates — CV ATS Indonesia", description: "Kelola template.", path: "/admin", noindex: true }),
+  head: () => buildSeo({ title: "Admin Templates — CV Pintar", description: "Kelola template.", path: "/admin", noindex: true }),
   component: AdminTemplatesPage,
 });
 

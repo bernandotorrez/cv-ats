@@ -138,7 +138,7 @@ export const Route = createFileRoute("/tips-interview")({
   pendingComponent: TipsLoading,
   head: () =>
     buildSeo({
-      title: "Tips & Trik Interview Kerja — CV ATS Indonesia",
+      title: "Tips & Trik Interview Kerja — CV Pintar",
       description:
         "Kumpulan tips interview kerja: HR, technical, behavioral, negosiasi gaji, dan strategi untuk fresh graduate sampai senior.",
       path: "/tips-interview",

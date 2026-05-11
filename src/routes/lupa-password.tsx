@@ -21,7 +21,7 @@ const schema = z.object({ email: z.string().email("Email tidak valid").max(255) 
 export const Route = createFileRoute("/lupa-password")({
   head: () =>
     buildSeo({
-      title: "Lupa Password — CV ATS Indonesia",
+      title: "Lupa Password — CV Pintar",
       description: "Atur ulang password akun.",
       path: "/lupa-password",
       noindex: true,

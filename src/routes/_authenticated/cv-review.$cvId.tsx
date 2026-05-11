@@ -41,7 +41,7 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/_authenticated/cv-review/$cvId")({
   head: () =>
     buildSeo({
-      title: "CV Review HR — CV ATS Indonesia",
+      title: "CV Review HR — CV Pintar",
       description: "Review CV oleh AI HR profesional.",
       path: "/cv-review",
       noindex: true,

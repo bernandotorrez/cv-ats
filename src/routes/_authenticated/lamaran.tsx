@@ -21,7 +21,7 @@ import {
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/lamaran")({
-  head: () => buildSeo({ title: "Pelacak Lamaran — CV ATS Indonesia", description: "Lacak status lamaran kerja.", path: "/lamaran", noindex: true }),
+  head: () => buildSeo({ title: "Pelacak Lamaran — CV Pintar", description: "Lacak status lamaran kerja.", path: "/lamaran", noindex: true }),
   component: LamaranPage,
 });
 

@@ -92,7 +92,7 @@ export function CvPreview({
             textAlign: "right",
           }}
         >
-          Dibuat dengan CV ATS Indonesia
+          Dibuat dengan CV Pintar
         </div>
       )}
 
@@ -162,7 +162,7 @@ export function MultiPageCvPreview({
                 textAlign: "right",
               }}
             >
-              Dibuat dengan CV ATS Indonesia
+              Dibuat dengan CV Pintar
             </div>
           )}
 
@@ -515,7 +515,6 @@ export const cvPrintStyles = `
   }
 
   .cv-preview-container {
-    page-break-after: always;
     page-break-inside: avoid;
     width: auto !important;
     height: auto !important;
