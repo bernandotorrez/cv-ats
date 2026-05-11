@@ -48,7 +48,7 @@ const groups = [
     items: [
       { icon: Briefcase, name: "Pelacak Lamaran", desc: "Catat & lacak status lamaran dalam satu dashboard. Lihat progress di kanban board.", badge: "Baru" },
       { icon: Search, name: "Lowongan Pekerjaan", desc: "Temukan lowongan terbaru yang sesuai dengan skill dan level kamu.", badge: "Baru" },
-      { icon: Mic, name: "Simulasi Wawancara AI", desc: "Latihan interview dengan AI — dapatkan pertanyaan, jawab, dan terima feedback.", badge: "Pro+" },
+      { icon: Mic, name: "Simulasi Wawancara AI", desc: "Latihan interview dengan AI — dapatkan pertanyaan, jawab, dan terima feedback.", badge: "Pro" },
       { icon: Gift, name: "Program Referral", desc: "Ajak teman daftar & upgrade, dapatkan 1 bulan Starter gratis.", badge: "Baru" },
     ],
   },
@@ -139,7 +139,7 @@ function FiturPage() {
             Fitur bagus cuma berguna kalau kamu pakai
           </h2>
           <p className="mx-auto mt-4 max-w-lg text-primary-foreground/85">
-            Coba sendiri. Gratis. Tanpa kartu kredit. Dalam 10 menit kamu sudah punya CV siap kirim.
+            Coba sendiri. Gratis. Tanpa kartu kredit. Dalam 1 menit kamu sudah punya CV siap kirim.
           </p>
           <Button asChild size="lg" variant="secondary" className="mt-8 h-12 px-8 text-base">
             <Link to="/register">Mulai Gratis Sekarang <ArrowRight className="ml-2 h-4 w-4" /></Link>

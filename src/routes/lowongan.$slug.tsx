@@ -136,7 +136,7 @@ function LowonganDetailPage() {
                 <FileText className="mx-auto h-8 w-8 text-primary mb-3" />
                 <h3 className="font-semibold">Siap Melamar?</h3>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Buat CV ATS-friendly dalam 10 menit dan tingkatkan peluang lolos screening.
+                  Buat CV ATS-friendly dalam 1 menit dan tingkatkan peluang lolos screening.
                 </p>
                 <Button asChild className="w-full mt-4">
                   <Link to="/register">Buat CV Gratis</Link>

@@ -19,8 +19,8 @@ const WHATSAPP_ICON = (
 
 export function WhatsAppShare({ shareUrl, cvId, fullName, variant = "outline", size = "sm", className }: Props) {
   const message = fullName
-    ? `✨ Lihat CV ATS-friendly ${fullName}! Dibuat dalam 10 menit pakai cvats.id\n\n${shareUrl}`
-    : `✨ CV ATS-friendly yang siap melamar! Dibuat dalam 10 menit pakai cvats.id\n\n${shareUrl}`;
+    ? `✨ Lihat CV ATS-friendly ${fullName}! Dibuat dalam 1 menit pakai cvats.id\n\n${shareUrl}`
+    : `✨ CV ATS-friendly yang siap melamar! Dibuat dalam 1 menit pakai cvats.id\n\n${shareUrl}`;
 
   const waUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
 

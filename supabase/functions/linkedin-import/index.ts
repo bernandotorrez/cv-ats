@@ -1,138 +1,169 @@
 /**
- * LinkedIn Import — parse LinkedIn URL or text to CV data
+ * LinkedIn Import — scrape LinkedIn profile via Apify & map to CV data
  * POST /linkedin-import
- * 
- * SECURITY:
- * - Requires authentication (getUserId)
- * - Rate limited: 10 imports per hour per user
  */
-import { aiComplete, corsResponse, errorResponse, getAdminClient, getUserId } from "../_shared/ai-common.ts";
+import { corsResponse, errorResponse, getUserId } from "../_shared/ai-common.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 import { checkRateLimit } from "../_shared/rate-limit.ts";
-import type { AiMessage } from "../_shared/ai-common.ts";
+
+const APIFY_API_KEY = Deno.env.get("APIFY_API_KEY") || "";
+const APIFY_ACTOR_ID = "2SyF0bVxmgGr8IVCZ";
+const APIFY_BASE = "https://api.apify.com/v2";
+
+const MONTH_NAMES: Record<string, string> = {
+  "01": "Jan", "02": "Feb", "03": "Mar", "04": "Apr",
+  "05": "Mei", "06": "Jun", "07": "Jul", "08": "Agu",
+  "09": "Sep", "10": "Okt", "11": "Nov", "12": "Des",
+};
+
+function formatDate(ym: string | null | undefined): string {
+  if (!ym) return "";
+  const parts = ym.split("-");
+  if (parts.length === 2) {
+    const month = MONTH_NAMES[parts[0]] || parts[0];
+    return `${month} ${parts[1]}`;
+  }
+  return ym;
+}
+
+function mapProfileToCvData(profile: Record<string, unknown>) {
+  const personal: Record<string, string> = {};
+  if (profile.fullName) personal.fullName = profile.fullName as string;
+  if (profile.headline) personal.headline = profile.headline as string;
+  if (profile.email) personal.email = profile.email as string;
+  if (profile.mobileNumber) personal.phone = profile.mobileNumber as string;
+  if (profile.addressWithCountry) personal.location = profile.addressWithCountry as string;
+  else if (profile.addressWithoutCountry) personal.location = profile.addressWithoutCountry as string;
+  if (profile.linkedinUrl) personal.linkedin = profile.linkedinUrl as string;
+  if (profile.about) personal.summary = profile.about as string;
+
+  const experiences = ((profile.experiences as unknown[]) || []).map((e: any, i: number) => ({
+    id: `import-${i}`,
+    company: e.companyName || "",
+    position: e.title || "",
+    startDate: formatDate(e.jobStartedOn),
+    endDate: e.jobStillWorking ? "" : formatDate(e.jobEndedOn),
+    current: !!e.jobStillWorking,
+    location: e.jobLocation || "",
+    description: e.jobDescription || "",
+  }));
+
+  const educations = ((profile.educations as unknown[]) || []).map((e: any, i: number) => {
+    const subtitle = (e.subtitle || "") as string;
+    const [degree, field] = subtitle.split(",").map((s: string) => s.trim());
+    return {
+      id: `import-edu-${i}`,
+      school: e.title || "",
+      degree: degree || subtitle || "",
+      field: field || "",
+      startDate: formatDate(e.period?.startedOn),
+      endDate: formatDate(e.period?.endedOn),
+      description: e.description || "",
+    };
+  });
+
+  const skills = ((profile.skills as unknown[]) || []).map((s: any, i: number) => ({
+    id: `import-skill-${i}`,
+    name: s.title || "",
+  }));
+
+  const certificates = ((profile.licenseAndCertificates as unknown[]) || []).map((c: any, i: number) => ({
+    id: `import-cert-${i}`,
+    name: c.title || "",
+    issuer: c.subtitle || "",
+    date: (c.issued || "").replace("Issued ", ""),
+  }));
+
+  const languages = ((profile.languages as unknown[]) || []).map((l: any, i: number) => ({
+    id: `import-lang-${i}`,
+    name: l.name || l.title || "",
+    level: l.proficiency || "Intermediate",
+  }));
+
+  return { personal, experiences, educations, skills, certificates, languages };
+}
+
+async function runApifyActor(linkedinUrl: string): Promise<Record<string, unknown>> {
+  if (!APIFY_API_KEY) throw new Error("APIFY_API_KEY tidak dikonfigurasi.");
+
+  // Step 1: Start actor run
+  const runRes = await fetch(`${APIFY_BASE}/acts/${APIFY_ACTOR_ID}/runs`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${APIFY_API_KEY}`,
+    },
+    body: JSON.stringify({
+      linkedInUrls: [linkedinUrl],
+      maxDelay: 5,
+      minDelay: 2,
+    }),
+  });
+
+  if (!runRes.ok) {
+    const errText = await runRes.text();
+    throw new Error(`Gagal memulai Apify run: ${runRes.status} ${errText}`);
+  }
+
+  const runData = (await runRes.json()) as { data: { id: string } };
+  const runId = runData.data.id;
+
+  // Step 2: Poll until finished (max 60 seconds)
+  const maxAttempts = 30;
+  for (let i = 0; i < maxAttempts; i++) {
+    await new Promise((r) => setTimeout(r, 2000));
+
+    const statusRes = await fetch(`${APIFY_BASE}/acts/${APIFY_ACTOR_ID}/runs/${runId}`, {
+      headers: { Authorization: `Bearer ${APIFY_API_KEY}` },
+    });
+
+    if (!statusRes.ok) continue;
+
+    const statusData = (await statusRes.json()) as { data: { status: string } };
+    const status = statusData.data.status;
+
+    if (status === "SUCCEEDED") break;
+    if (status === "FAILED" || status === "ABORTED" || status === "TIMED-OUT") {
+      throw new Error(`Scraping LinkedIn gagal (status: ${status}). Coba lagi nanti.`);
+    }
+  }
+
+  // Step 3: Fetch dataset items
+  const datasetRes = await fetch(
+    `${APIFY_BASE}/acts/${APIFY_ACTOR_ID}/runs/${runId}/dataset/items`,
+    { headers: { Authorization: `Bearer ${APIFY_API_KEY}` } },
+  );
+
+  if (!datasetRes.ok) throw new Error("Gagal mengambil hasil scraping.");
+
+  const items = (await datasetRes.json()) as unknown[];
+  if (!items.length) throw new Error("Profil LinkedIn tidak ditemukan atau kosong.");
+
+  return items[0] as Record<string, unknown>;
+}
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders(req) });
 
   try {
-    // SECURITY: Require authentication
     const userId = await getUserId(req);
-    const admin = getAdminClient();
 
-    // SECURITY: Rate limiting - 10 imports per hour per user
     const rateLimitKey = `linkedin-import:${userId}`;
     if (!checkRateLimit(rateLimitKey, 10, 60 * 60 * 1000)) {
       throw new Error("Terlalu banyak request. Silakan coba lagi dalam 1 jam.");
     }
 
-    const { input, mode } = await req.json();
+    const { linkedinUrl } = await req.json();
+    if (!linkedinUrl?.trim()) throw new Error("URL LinkedIn diperlukan.");
 
-    if (!input?.trim()) {
-      throw new Error("Input diperlukan (URL atau teks profil LinkedIn)");
+    if (!linkedinUrl.includes("linkedin.com/in/")) {
+      throw new Error("URL tidak valid. Gunakan format linkedin.com/in/username");
     }
 
-    if (!["url", "text"].includes(mode)) {
-      throw new Error("Mode harus 'url' atau 'text'");
-    }
+    const profile = await runApifyActor(linkedinUrl.trim());
+    const cvData = mapProfileToCvData(profile);
 
-    const isUrlMode = mode === "url";
-
-    // Validate URL if mode is url
-    if (isUrlMode && !input.includes("linkedin.com/in/")) {
-      throw new Error("URL tidak valid. Pastikan formatnya seperti linkedin.com/in/username");
-    }
-
-    // Build prompt
-    const prompt = `Parse ${isUrlMode ? "URL LinkedIn" : "teks profil LinkedIn"} berikut menjadi data CV terstruktur. Output HARUS JSON valid.
-
-${isUrlMode ? "URL:" : "PROFIL:"}
-${input}
-
-${isUrlMode ? `
-CATATAN: Kamu tidak bisa mengakses URL tersebut langsung. 
-Extract username dari URL: ${input}
-Buatlah data CV yang PROFESIONAL dan REALISTIC berdasarkan pola username.
-- Jika username terlihat seperti nama: gunakan nama tersebut
-- Pilih posisi yang umum di Indonesia (Software Engineer, Marketing Manager, Product Manager, dll.)
-- Industri yang realistis: Teknologi, FinTech, E-commerce, dll.
-- Buat pengalaman 1-3 posisi yang masuk akal
-- Education: universitas umum Indonesia atau international
-` : `
-PENTING: Hanya gunakan data yang BENAR-BENAR ada di teks. JANGAN mengarang data yang tidak ada.
-`}
-
-Output format (JSON):
-{
-  "personal": {
-    "fullName": string,
-    "headline": string,
-    "summary": string (ringkasan profesional 2-3 kalimat dalam Bahasa Indonesia),
-    "location": string
-  },
-  "experiences": [{ "position": string, "company": string, "startDate": string, "endDate": string, "current": boolean, "description": string, "location": string }],
-  "educations": [{ "school": string, "degree": string, "field": string, "startDate": string, "endDate": string }],
-  "skills": [{ "name": string }],
-  "languages": [{ "name": string, "level": string }],
-  "certificates": [{ "name": string, "issuer": string, "date": string }]
-}
-
-ATURAN:
-- Jika ada data yang tidak tersedia, kosongkan array/field tersebut.
-- Format tanggal: "Jan 2020" atau "2020" saja.
-- Deskripsi pengalaman dalam Bahasa Indonesia, gunakan bullet point dengan kata kerja aktif.
-- current: true jika posisi saat ini, false jika sudah selesai.
-- Output HARUS JSON valid, tanpa markdown wrapper, tanpa backtick.`;
-
-    const result = await aiComplete(
-      [{ role: "user" as const, content: prompt }],
-      { temperature: 0.3, maxTokens: 3000, jsonMode: true },
-    );
-
-    // Parse JSON response
-    let parsed: Record<string, unknown>;
-    try {
-      // Clean potential markdown wrapper
-      let cleanResult = result.trim();
-      if (cleanResult.startsWith("```")) {
-        cleanResult = cleanResult.replace(/^```json\n?/, "").replace(/\n?```$/, "");
-      }
-      parsed = JSON.parse(cleanResult);
-    } catch {
-      // Try to extract JSON from response
-      const match = result.match(/\{[\s\S]*\}/);
-      if (match) {
-        parsed = JSON.parse(match[0]);
-      } else {
-        throw new Error("Gagal parsing hasil AI. Silakan coba lagi.");
-      }
-    }
-
-    // Add IDs to array items
-    const cvData = {
-      personal: (parsed.personal as Record<string, unknown>) || {},
-      experiences: ((parsed.experiences as unknown[]) || []).map((e: unknown, i: number) => ({
-        id: `import-${i}`,
-        ...(e as Record<string, unknown>),
-      })),
-      educations: ((parsed.educations as unknown[]) || []).map((e: unknown, i: number) => ({
-        id: `import-edu-${i}`,
-        ...(e as Record<string, unknown>),
-      })),
-      skills: ((parsed.skills as unknown[]) || []).map((s: unknown, i: number) => ({
-        id: `import-skill-${i}`,
-        ...(s as Record<string, unknown>),
-      })),
-      languages: ((parsed.languages as unknown[]) || []).map((l: unknown, i: number) => ({
-        id: `import-lang-${i}`,
-        ...(l as Record<string, unknown>),
-      })),
-      certificates: ((parsed.certificates as unknown[]) || []).map((c: unknown, i: number) => ({
-        id: `import-cert-${i}`,
-        ...(c as Record<string, unknown>),
-      })),
-    };
-
-    return corsResponse({ data: cvData, raw: result }, 200, req);
+    return corsResponse({ data: cvData }, 200, req);
   } catch (e) {
     return errorResponse(e, req);
   }

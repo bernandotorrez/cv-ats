@@ -140,7 +140,7 @@ function RegisterPage() {
         <CardHeader>
           <CardTitle className="font-display text-2xl">Daftar Gratis</CardTitle>
           <CardDescription>
-            Mulai bikin CV ATS friendly dalam 10 menit.
+            Mulai bikin CV ATS friendly dalam 1 menit.
           </CardDescription>
         </CardHeader>
         <CardContent>

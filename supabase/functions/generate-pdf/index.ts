@@ -12,8 +12,34 @@ Deno.serve(async (req: Request) => {
   try {
     const userId = await getUserId(req);
     const admin = getAdminClient();
-    const { cvId, format = "pdf", withWatermark = false } = await req.json();
+    const { cvId, format = "pdf", withWatermark = false, html: directHtml, filename: directFilename } = await req.json();
 
+    // Support direct HTML input for cover letter PDFs (no cvId required)
+    if (directHtml) {
+      const filename = directFilename || `document-${Date.now()}.pdf`;
+      const bucketName = "cv-pdfs";
+      const fileName = `${userId}-${Date.now()}.html`;
+
+      const { error: uploadError } = await admin.storage
+        .from(bucketName)
+        .upload(fileName, new Blob([directHtml], { type: "text/html" }), {
+          contentType: "text/html",
+          upsert: true,
+        });
+
+      if (uploadError) throw new Error("Gagal mengunggah file");
+
+      const { data: urlData } = admin.storage
+        .from(bucketName)
+        .getPublicUrl(fileName);
+
+      return new Response(
+        JSON.stringify({ url: urlData.publicUrl, fileName, format: "html" }),
+        { status: 200, headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
+      );
+    }
+
+    // CV PDF generation requires cvId
     if (!cvId) throw new Error("cvId diperlukan");
 
     // Fetch CV data

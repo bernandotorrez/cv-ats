@@ -25,6 +25,8 @@ CREATE TABLE IF NOT EXISTS public.job_listings (
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 ALTER TABLE public.job_listings ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Anyone can view active job listings" ON public.job_listings;
+DROP POLICY IF EXISTS "Admins can manage job listings" ON public.job_listings;
 CREATE POLICY "Anyone can view active job listings" ON public.job_listings FOR SELECT USING (is_active = true);
 CREATE POLICY "Admins can manage job listings" ON public.job_listings FOR ALL USING (
   EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role = 'admin')
@@ -49,6 +51,7 @@ CREATE TABLE IF NOT EXISTS public.job_applications (
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 ALTER TABLE public.job_applications ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users can manage own applications" ON public.job_applications;
 CREATE POLICY "Users can manage own applications" ON public.job_applications FOR ALL USING (auth.uid() = user_id);
 
 -- 3. CV Analytics
@@ -64,6 +67,8 @@ CREATE TABLE IF NOT EXISTS public.cv_analytics (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 ALTER TABLE public.cv_analytics ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users can view own analytics" ON public.cv_analytics;
+DROP POLICY IF EXISTS "Public can insert analytics" ON public.cv_analytics;
 CREATE POLICY "Users can view own analytics" ON public.cv_analytics FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Public can insert analytics" ON public.cv_analytics FOR INSERT WITH CHECK (true);
 
@@ -82,6 +87,8 @@ CREATE TABLE IF NOT EXISTS public.referral_codes (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 ALTER TABLE public.referral_codes ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users can view own referral code" ON public.referral_codes;
+DROP POLICY IF EXISTS "Users can insert own referral code" ON public.referral_codes;
 CREATE POLICY "Users can view own referral code" ON public.referral_codes FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Users can insert own referral code" ON public.referral_codes FOR INSERT WITH CHECK (auth.uid() = user_id);
 
@@ -97,6 +104,9 @@ CREATE TABLE IF NOT EXISTS public.referral_tracking (
   upgraded_at TIMESTAMPTZ
 );
 ALTER TABLE public.referral_tracking ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users can view own referral tracking" ON public.referral_tracking;
+DROP POLICY IF EXISTS "Public can insert referral clicks" ON public.referral_tracking;
+DROP POLICY IF EXISTS "Users can update own referral tracking" ON public.referral_tracking;
 CREATE POLICY "Users can view own referral tracking" ON public.referral_tracking FOR SELECT USING (auth.uid() = referrer_id);
 CREATE POLICY "Public can insert referral clicks" ON public.referral_tracking FOR INSERT WITH CHECK (true);
 CREATE POLICY "Users can update own referral tracking" ON public.referral_tracking FOR UPDATE USING (auth.uid() = referrer_id);
@@ -116,6 +126,7 @@ CREATE TABLE IF NOT EXISTS public.interview_sessions (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 ALTER TABLE public.interview_sessions ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users can manage own interview sessions" ON public.interview_sessions;
 CREATE POLICY "Users can manage own interview sessions" ON public.interview_sessions FOR ALL USING (auth.uid() = user_id);
 
 -- 7. RPC: generate referral code

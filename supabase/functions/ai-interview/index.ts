@@ -58,7 +58,7 @@ Deno.serve(async (req: Request) => {
       .single();
 
     if (!sub?.subscription_tiers?.enable_interview_simulator) {
-      return new Response(JSON.stringify({ error: "Fitur ini hanya untuk pengguna Pro+." }), {
+      return new Response(JSON.stringify({ error: "Fitur ini hanya untuk pengguna Pro." }), {
         status: 403, headers: { ...corsHeaders(req), "Content-Type": "application/json" }
       });
     }

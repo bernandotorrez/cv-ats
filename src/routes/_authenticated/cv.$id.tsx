@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { CvPreview } from "@/components/cv/CvPreview";
+import { cvPrintStyles } from "@/components/cv/CvPreview";
 import { DownloadDropdown } from "@/components/cv/DownloadDropdown";
 import { WhatsAppShare } from "@/components/share/WhatsAppShare";
 import { TemplateGallery } from "@/components/cv/TemplateGallery";
@@ -291,6 +292,7 @@ function CvEditorPage() {
 
   return (
     <div className="cv-editor-page h-[calc(100vh-4rem)] flex flex-col">
+      <style>{cvPrintStyles}</style>
       {/* ─── TOOLBAR ─── */}
       <div className="shrink-0 border-b border-border bg-background/80 backdrop-blur sticky top-16 z-30 print:hidden">
         <div className="flex flex-wrap items-center gap-2 px-4 py-2.5">
@@ -442,8 +444,8 @@ function CvEditorPage() {
                   transform: `scale(${previewScale / 100})`,
                   transformOrigin: "top center",
                   width: "210mm",
-                  height: `${297 * (previewScale / 100)}mm`,
                   minWidth: "210mm",
+                  ...(previewScale < 100 ? { height: `${297 * (previewScale / 100)}mm` } : {}),
                 }}
               >
                 <div className="print:!transform-none print:!w-auto">

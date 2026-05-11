@@ -101,16 +101,16 @@ function SimulasiWawancaraPage() {
     return <div className="container-page py-10"><Skeleton className="h-8 w-64 mb-4" /><Skeleton className="h-64" /></div>;
   }
 
-  if (tier !== "pro_plus") {
+  if (tier !== "pro" && tier !== "pro_plus") {
     return (
       <div className="container-page py-20 text-center">
         <Mic className="mx-auto h-12 w-12 text-muted-foreground" />
-        <h1 className="mt-4 font-display text-2xl font-bold">Fitur Pro+</h1>
+        <h1 className="mt-4 font-display text-2xl font-bold">Fitur Pro</h1>
         <p className="mt-2 text-muted-foreground max-w-md mx-auto">
-          Simulasi Wawancara AI tersedia untuk pengguna Pro+. Latih kemampuan interview kamu dengan AI.
+          Simulasi Wawancara AI tersedia untuk pengguna Pro. Latih kemampuan interview kamu dengan AI.
         </p>
         <Button asChild className="mt-6">
-          <Link to="/harga">Upgrade ke Pro+</Link>
+          <Link to="/harga">Upgrade ke Pro</Link>
         </Button>
       </div>
     );

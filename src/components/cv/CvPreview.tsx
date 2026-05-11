@@ -509,15 +509,41 @@ function splitContentIntoPages(
 // CSS for print
 export const cvPrintStyles = `
 @media print {
+  .cv-editor-page {
+    height: auto !important;
+    display: block !important;
+  }
+
   .cv-preview-container {
     page-break-after: always;
     page-break-inside: avoid;
+    width: auto !important;
+    height: auto !important;
+    margin: 0 !important;
   }
 
   .cv-preview {
     box-shadow: none !important;
     margin: 0 !important;
-    padding: 10mm !important;
+    padding: 16mm !important;
+    width: auto !important;
+    height: auto !important;
+    overflow: visible !important;
+    transform: none !important;
+  }
+
+  .cv-print-area {
+    padding: 0 !important;
+  }
+
+  .cv-print-area > div {
+    transform: none !important;
+    width: auto !important;
+    height: auto !important;
+    min-width: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
   }
 
   @page {

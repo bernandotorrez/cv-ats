@@ -44,6 +44,7 @@ import {
   MessageSquare,
   Key,
   Type,
+  Lock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DashboardSkeleton } from "@/components/ui/dashboard-skeleton";
@@ -155,34 +156,32 @@ function DashboardPage() {
     monthStart.setHours(0, 0, 0, 0);
     const iso = monthStart.toISOString();
 
-    const [
-      aiRes,
-      scoreRes,
-      guidedRes,
-      coverLetterRes,
-      cvReviewRes,
-      keywordRes,
-      polishRes,
-      chatRes,
-    ] = await Promise.all([
-      supabase.from("ai_usage").select("*", { count: "exact", head: true }).eq("user_id", userId).eq("feature", "suggest").gte("created_at", iso) as any,
-      supabase.from("ai_usage").select("*", { count: "exact", head: true }).eq("user_id", userId).eq("feature", "score").gte("created_at", iso) as any,
-      supabase.from("ai_usage").select("*", { count: "exact", head: true }).eq("user_id", userId).eq("feature", "chat").gte("created_at", iso) as any,
-      supabase.from("ai_usage").select("*", { count: "exact", head: true }).eq("user_id", userId).eq("feature", "cover_letter").gte("created_at", iso) as any,
-      supabase.from("ai_usage").select("*", { count: "exact", head: true }).eq("user_id", userId).eq("feature", "cv_review").gte("created_at", iso) as any,
-      supabase.from("ai_usage").select("*", { count: "exact", head: true }).eq("user_id", userId).eq("feature", "keyword_extract").gte("created_at", iso) as any,
-      supabase.from("ai_usage").select("*", { count: "exact", head: true }).eq("user_id", userId).eq("feature", "polish").gte("created_at", iso) as any,
-      supabase.from("ai_usage").select("*", { count: "exact", head: true }).eq("user_id", userId).eq("feature", "chat").gte("created_at", iso) as any,
-    ]);
+    // Single query to get all usage counts grouped by feature
+    const { data, error } = await supabase
+      .from("ai_usage")
+      .select("feature")
+      .eq("user_id", userId)
+      .gte("created_at", iso);
 
-    setAiUsageCount(aiRes.count ?? 0);
-    setScoreUsageCount(scoreRes.count ?? 0);
-    setGuidedUsageCount(guidedRes.count ?? 0);
-    setCoverLetterUsageCount(coverLetterRes.count ?? 0);
-    setCvReviewUsageCount(cvReviewRes.count ?? 0);
-    setKeywordExtractUsageCount(keywordRes.count ?? 0);
-    setTextPolishUsageCount(polishRes.count ?? 0);
-    setChatUsageCount(chatRes.count ?? 0);
+    if (error) {
+      console.error("Failed to load usage stats:", error);
+      return;
+    }
+
+    // Count occurrences of each feature
+    const counts: Record<string, number> = {};
+    for (const row of data ?? []) {
+      counts[row.feature] = (counts[row.feature] || 0) + 1;
+    }
+
+    setAiUsageCount(counts["suggest"] ?? 0);
+    setScoreUsageCount(counts["score"] ?? 0);
+    setGuidedUsageCount(counts["chat"] ?? 0);
+    setCoverLetterUsageCount(counts["cover_letter"] ?? 0);
+    setCvReviewUsageCount(counts["cv_review"] ?? 0);
+    setKeywordExtractUsageCount(counts["keyword_extract"] ?? 0);
+    setTextPolishUsageCount(counts["polish"] ?? 0);
+    setChatUsageCount(counts["chat"] ?? 0);
   };
 
   const loadActivities = async (userId: string) => {
@@ -246,7 +245,7 @@ function DashboardPage() {
       icon: FileCheck,
       label: "Cover Letter",
       used: coverLetterUsageCount,
-      max: tierQuotas?.quota_ai_cover_letter ?? (limits.canCoverLetter ? (tier === "free" ? 1 : tier === "starter" ? 10 : null) : 0),
+      max: tierQuotas?.quota_ai_cover_letter ?? (tierQuotas?.enable_cover_letter ? (tier === "free" ? 1 : tier === "starter" ? 10 : null) : 0),
       color: "bg-teal-500",
       visible: tierQuotas?.enable_cover_letter ?? limits.canCoverLetter,
     },
@@ -254,7 +253,7 @@ function DashboardPage() {
       icon: Target,
       label: "CV Review",
       used: cvReviewUsageCount,
-      max: tierQuotas?.quota_cv_review ?? (limits.enableCvReview ? (tier === "starter" ? 10 : null) : 0),
+      max: tierQuotas?.quota_cv_review ?? (tierQuotas?.enable_cv_review ? (tier === "starter" ? 10 : null) : 0),
       color: "bg-rose-500",
       visible: tierQuotas?.enable_cv_review ?? limits.enableCvReview,
     },
@@ -262,7 +261,7 @@ function DashboardPage() {
       icon: Key,
       label: "Keyword Extract",
       used: keywordExtractUsageCount,
-      max: tierQuotas?.quota_ai_keyword_extract ?? (tier === "free" ? 2 : tier === "starter" ? 10 : null),
+      max: tierQuotas?.quota_ai_keyword_extract ?? (tierQuotas?.enable_keyword_extractor ? (tier === "free" ? 2 : tier === "starter" ? 20 : null) : 0),
       color: "bg-blue-500",
       visible: tierQuotas?.enable_keyword_extractor ?? limits.canKeywordExtract,
     },
@@ -284,14 +283,16 @@ function DashboardPage() {
     },
   ].filter((bar) => bar.visible);
 
-  const powerFeatures: { icon: React.ComponentType<{ className?: string }>; label: string; desc: string; action: string; badge: string; visible: boolean }[] = [
+  const powerFeatures: { icon: React.ComponentType<{ className?: string }>; label: string; desc: string; action: string; badge: string; visible: boolean; locked: boolean; upgradeTier?: string }[] = [
     {
       icon: Brain,
       label: "CV Review AI",
       desc: "AI analisis CV-mu seperti HR profesional — dapatkan skor, saran perbaikan, dan rekomendasi kata kunci.",
       action: "cv-review",
       badge: "⭐ Powerful",
-      visible: limits.enableCvReview,
+      visible: true,
+      locked: (tierQuotas?.enable_cv_review ?? limits.enableCvReview) === false,
+      upgradeTier: "Starter",
     },
     {
       icon: BarChart3,
@@ -299,15 +300,18 @@ function DashboardPage() {
       desc: "Lihat skor ATS CV-mu secara instan. Ketahui bagian mana yang perlu diperbaiki.",
       action: "score",
       badge: "📊 Analitik",
-      visible: limits.enableAiScore,
+      visible: true,
+      locked: false,
     },
     {
       icon: Mic,
       label: "Simulasi Wawancara",
       desc: "Latihan interview dengan AI. Dapatkan pertanyaan realistis dan feedback instan.",
       action: "simulasi",
-      badge: "🔥 Pro+",
-      visible: limits.canInterviewSimulator,
+      badge: "🔥 Pro",
+      visible: true,
+      locked: (tierQuotas?.enable_interview_simulator ?? limits.canInterviewSimulator) === false,
+      upgradeTier: "Pro",
     },
     {
       icon: FileCheck,
@@ -315,7 +319,9 @@ function DashboardPage() {
       desc: "Generate surat lamaran yang personalize dari CV dan job description.",
       action: "cover-letter",
       badge: "✨ Baru",
-      visible: limits.canCoverLetter,
+      visible: true,
+      locked: (tierQuotas?.enable_cover_letter ?? limits.canCoverLetter) === false,
+      upgradeTier: "Starter",
     },
     {
       icon: Key,
@@ -323,20 +329,22 @@ function DashboardPage() {
       desc: "Ekstrak keyword dari job description untuk optimasi CV ATS. Auto-suggest keyword berdasarkan posisi target.",
       action: "keyword-extractor",
       badge: "🔑 ATS",
-      visible: limits.canKeywordExtract,
+      visible: true,
+      locked: (tierQuotas?.enable_keyword_extractor ?? limits.canKeywordExtract) === false,
+      upgradeTier: "Starter",
     },
   ];
 
-  const quickActions: { icon: React.ComponentType<{ className?: string }>; label: string; action: string; color: string; visible: boolean }[] = [
+  const quickActions: { icon: React.ComponentType<{ className?: string }>; label: string; action: string; color: string; visible: boolean; locked?: boolean; upgradeTier?: string }[] = [
     { icon: FileText, label: "Kelola CV", action: "manage", color: "bg-primary/10 text-primary", visible: true },
     { icon: Sparkles, label: "AI Saran CV", action: "ai-suggest", color: "bg-violet-500/10 text-violet-600", visible: true },
     { icon: BarChart3, label: "CV Scoring", action: "score", color: "bg-amber-500/10 text-amber-600", visible: true },
     { icon: Briefcase, label: "Pelacak Lamaran", action: "lamaran", color: "bg-blue-500/10 text-blue-600", visible: true },
-    { icon: Mic, label: "Simulasi Wawancara", action: "simulasi", color: "bg-rose-500/10 text-rose-600", visible: limits.canInterviewSimulator },
-    { icon: FileCheck, label: "Cover Letter", action: "cover-letter", color: "bg-teal-500/10 text-teal-600", visible: limits.canCoverLetter },
-    { icon: Key, label: "Keyword Extract", action: "keyword-extractor", color: "bg-blue-500/10 text-blue-600", visible: limits.canKeywordExtract },
+    { icon: Mic, label: "Simulasi Wawancara", action: "simulasi", color: "bg-rose-500/10 text-rose-600", visible: true, locked: (tierQuotas?.enable_interview_simulator ?? limits.canInterviewSimulator) === false, upgradeTier: "Pro" },
+    { icon: FileCheck, label: "Cover Letter", action: "cover-letter", color: "bg-teal-500/10 text-teal-600", visible: true, locked: (tierQuotas?.enable_cover_letter ?? limits.canCoverLetter) === false, upgradeTier: "Starter" },
+    { icon: Key, label: "Keyword Extract", action: "keyword-extractor", color: "bg-blue-500/10 text-blue-600", visible: true, locked: (tierQuotas?.enable_keyword_extractor ?? limits.canKeywordExtract) === false, upgradeTier: "Starter" },
     { icon: Gift, label: "Referral", action: "referral", color: "bg-pink-500/10 text-pink-600", visible: true },
-    { icon: TrendingUp, label: "Analitik CV", action: "analitik", color: "bg-indigo-500/10 text-indigo-600", visible: limits.canAnalytics },
+    { icon: TrendingUp, label: "Analitik CV", action: "analitik", color: "bg-indigo-500/10 text-indigo-600", visible: true, locked: (tierQuotas?.enable_analytics ?? limits.canAnalytics) === false, upgradeTier: "Pro" },
     ...(admin ? [{ icon: Shield, label: "Admin Panel", action: "admin" as const, color: "bg-red-500/10 text-red-600", visible: true }] : []),
   ];
 
@@ -510,35 +518,63 @@ function DashboardPage() {
               {powerFeatures
                 .filter((f) => f.visible)
                 .map((f) => (
-                  <button
-                    key={f.label}
-                    onClick={() => handleFeatureClick(f.action)}
-                    className="group block text-left w-full"
-                  >
-                    <Card className="relative h-full border-2 border-border transition-all duration-300 hover:border-primary/40 hover:shadow-lg hover:-translate-y-0.5 overflow-hidden">
-                      <div className="absolute top-0 right-0 left-0 h-0.5 bg-gradient-to-r from-primary via-warning to-primary opacity-60" />
-                      <CardContent className="p-5">
-                        <div className="mb-2 flex items-center justify-between">
-                          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary-soft">
-                            <f.icon className="h-5 w-5 text-primary" />
+                  <div key={f.label} className="relative">
+                    {f.locked && (
+                      <div className="absolute -top-1.5 -right-1.5 z-10 flex items-center gap-0.5 rounded-full bg-muted border border-border shadow-sm px-2 py-0.5">
+                        <Lock className="h-2.5 w-2.5 text-muted-foreground" />
+                        <span className="text-[9px] text-muted-foreground font-medium">{f.upgradeTier}</span>
+                      </div>
+                    )}
+                    <button
+                      onClick={() => f.locked ? navigate({ to: "/harga" } as any) : handleFeatureClick(f.action)}
+                      className={cn("group block text-left w-full", f.locked && "opacity-70")}
+                    >
+                      <Card className={cn(
+                        "relative h-full border-2 transition-all duration-300 overflow-hidden",
+                        f.locked ? "border-dashed border-muted-foreground/20 hover:border-primary/30" : "border-border hover:border-primary/40 hover:shadow-lg hover:-translate-y-0.5"
+                      )}>
+                        {!f.locked && (
+                          <div className="absolute top-0 right-0 left-0 h-0.5 bg-gradient-to-r from-primary via-warning to-primary opacity-60" />
+                        )}
+                        <CardContent className="p-5">
+                          <div className="mb-2 flex items-center justify-between">
+                            <div className={cn("flex h-9 w-9 items-center justify-center rounded-xl", f.locked ? "bg-muted" : "bg-primary-soft")}>
+                              <f.icon className={cn("h-5 w-5", f.locked ? "text-muted-foreground" : "text-primary")} />
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Badge variant="secondary" className="text-[10px]">
+                                {f.badge}
+                              </Badge>
+                              {f.locked && (
+                                <Badge variant="outline" className="text-[10px] border-dashed">
+                                  <Lock className="h-3 w-3 mr-0.5" /> {f.upgradeTier}
+                                </Badge>
+                              )}
+                            </div>
                           </div>
-                          <Badge variant="secondary" className="text-[10px]">
-                            {f.badge}
-                          </Badge>
-                        </div>
-                        <h3 className="font-semibold group-hover:text-primary transition-colors">
-                          {f.label}
-                        </h3>
-                        <p className="mt-1 text-xs text-muted-foreground line-clamp-2">
-                          {f.desc}
-                        </p>
-                        <div className="mt-3 flex items-center text-xs font-medium text-primary">
-                          Coba sekarang
-                          <ArrowUpRight className="ml-1 h-3 w-3 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </button>
+                          <h3 className={cn("font-semibold", !f.locked && "group-hover:text-primary", f.locked && "text-muted-foreground", "transition-colors")}>
+                            {f.label}
+                          </h3>
+                          <p className={cn("mt-1 text-xs line-clamp-2", f.locked ? "text-muted-foreground/60" : "text-muted-foreground")}>
+                            {f.desc}
+                          </p>
+                          <div className={cn("mt-3 flex items-center text-xs font-medium", f.locked ? "text-muted-foreground" : "text-primary")}>
+                            {f.locked ? (
+                              <>
+                                Upgrade ke {f.upgradeTier}
+                                <ChevronRight className="ml-1 h-3 w-3" />
+                              </>
+                            ) : (
+                              <>
+                                Coba sekarang
+                                <ArrowUpRight className="ml-1 h-3 w-3 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                              </>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </button>
+                  </div>
                 ))}
             </div>
           </section>
@@ -555,18 +591,36 @@ function DashboardPage() {
               {quickActions
                 .filter((a) => a.visible)
                 .map((a) => (
-                  <Button
-                    key={a.label}
-                    variant="outline"
-                    size="sm"
-                    className="h-auto flex-col items-center gap-2 px-3 py-4 transition-all hover:border-primary/50 hover:bg-primary/5"
-                    onClick={() => handleFeatureClick(a.action)}
-                  >
-                    <div className={cn("flex h-8 w-8 items-center justify-center rounded-lg", a.color)}>
-                      <a.icon className="h-4 w-4" />
-                    </div>
-                    <span className="text-xs font-medium">{a.label}</span>
-                  </Button>
+                  <div key={a.label} className="relative">
+                    {/* Lock icon overlay for locked features */}
+                    {a.locked && (
+                      <div className="absolute -top-1 -right-1 z-10 flex h-5 w-5 items-center justify-center rounded-full bg-muted border border-border shadow-sm">
+                        <Lock className="h-3 w-3 text-muted-foreground" />
+                      </div>
+                    )}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className={cn(
+                        "h-auto flex-col items-center gap-2 px-3 py-4 transition-all w-full",
+                        !a.locked && "hover:border-primary/50 hover:bg-primary/5",
+                        a.locked && "opacity-60 cursor-not-allowed"
+                      )}
+                      onClick={() => !a.locked && handleFeatureClick(a.action)}
+                    >
+                      <div className={cn("flex h-8 w-8 items-center justify-center rounded-lg", a.color)}>
+                        <a.icon className="h-4 w-4" />
+                      </div>
+                      <div className="text-center">
+                        <span className="text-xs font-medium block">{a.label}</span>
+                        {a.locked && a.upgradeTier && (
+                          <span className="text-[10px] text-muted-foreground">
+                            Upgrade ke {a.upgradeTier}
+                          </span>
+                        )}
+                      </div>
+                    </Button>
+                  </div>
                 ))}
             </div>
           </section>

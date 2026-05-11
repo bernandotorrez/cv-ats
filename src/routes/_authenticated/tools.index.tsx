@@ -16,6 +16,7 @@ import {
   Sparkles,
   ArrowLeft,
   Zap,
+  Lock,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/tools/")({
@@ -47,11 +48,36 @@ function ToolsIndexPage() {
   const [cvs, setCvs] = useState<CvRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCvPicker, setShowCvPicker] = useState<{ tool: string } | null>(null);
+  const [featureFlags, setFeatureFlags] = useState<{
+    enable_cover_letter?: boolean;
+    enable_keyword_extractor?: boolean;
+  }>({});
 
   useEffect(() => {
     if (!user?.id) return;
-    loadCvs();
+    Promise.all([
+      loadCvs(),
+      loadFeatureFlags(user.id),
+    ]);
   }, [user?.id]);
+
+  const loadFeatureFlags = async (userId: string) => {
+    const { data } = await (supabase as any)
+      .from("user_subscriptions")
+      .select(`
+        subscription_tiers!inner(
+          enable_cover_letter,
+          enable_keyword_extractor
+        )
+      `)
+      .eq("user_id", userId)
+      .eq("status", "active")
+      .single();
+
+    if (data?.subscription_tiers) {
+      setFeatureFlags(data.subscription_tiers);
+    }
+  };
 
   const loadCvs = async () => {
     setLoading(true);
@@ -73,6 +99,9 @@ function ToolsIndexPage() {
       badge: "AI Powered",
       color: "bg-blue-500/10 text-blue-600 border-blue-200",
       route: "/tools/cover-letter",
+      enabled: featureFlags.enable_cover_letter !== false,
+      locked: featureFlags.enable_cover_letter === false,
+      upgradeTier: "Starter",
     },
     {
       id: "keyword-extractor",
@@ -82,10 +111,20 @@ function ToolsIndexPage() {
       badge: "ATS Optimizer",
       color: "bg-purple-500/10 text-purple-600 border-purple-200",
       route: "/tools/keyword",
+      enabled: featureFlags.enable_keyword_extractor !== false,
+      locked: featureFlags.enable_keyword_extractor === false,
+      upgradeTier: "Starter",
     },
-  ];
+  ]; // Show all tools, locked ones will be grayed out
 
   const handleToolClick = (tool: typeof tools[0]) => {
+    // Check if tool is disabled (premium feature)
+    if (!tool.enabled) {
+      toast.error("Fitur ini memerlukan upgrade ke paket yang lebih tinggi.");
+      navigate({ to: "/harga" });
+      return;
+    }
+    
     if (cvs.length === 0) {
       toast.error("Kamu belum punya CV. Buat CV dulu ya!");
       navigate({ to: "/cv" });
@@ -134,36 +173,79 @@ function ToolsIndexPage() {
       {/* Tools Grid */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2">
         {tools.map((tool) => (
-          <button
-            key={tool.id}
-            onClick={() => handleToolClick(tool)}
-            className="group block text-left w-full"
-          >
-            <Card className={`h-full border-2 transition-all duration-300 hover:border-primary/40 hover:shadow-lg hover:-translate-y-1 ${tool.color}`}>
-              <CardHeader>
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-background shadow-sm">
-                    <tool.icon className="h-6 w-6" />
+          <div key={tool.id} className={`relative ${tool.locked ? "cursor-not-allowed" : ""}`}>
+            {/* Blur overlay for locked tools */}
+            {tool.locked && (
+              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-background/60 backdrop-blur-sm rounded-xl">
+                <div className="flex flex-col items-center gap-2">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+                    <Lock className="h-6 w-6 text-muted-foreground" />
                   </div>
-                  <Badge variant="secondary" className="text-xs">
-                    {tool.badge}
-                  </Badge>
+                  <div className="text-center px-4">
+                    <p className="text-sm font-medium text-foreground">Fitur Terkunci</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Upgrade ke <span className="font-semibold text-primary">{tool.upgradeTier}</span> untuk akses
+                    </p>
+                  </div>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="mt-2"
+                    onClick={() => navigate({ to: "/harga" })}
+                  >
+                    Lihat Paket
+                  </Button>
                 </div>
-                <CardTitle className="text-xl group-hover:text-primary transition-colors">
-                  {tool.title}
-                </CardTitle>
-                <CardDescription className="text-sm">
-                  {tool.description}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center text-sm font-medium text-primary">
-                  Gunakan Tool
-                  <ChevronRight className="ml-1 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                </div>
-              </CardContent>
-            </Card>
-          </button>
+              </div>
+            )}
+            <button
+              onClick={() => handleToolClick(tool)}
+              disabled={!tool.enabled}
+              className={`group block text-left w-full h-full ${tool.locked ? "opacity-50" : ""}`}
+            >
+              <Card className={`h-full border-2 transition-all duration-300 ${tool.locked ? "hover:border-muted" : "hover:border-primary/40 hover:shadow-lg hover:-translate-y-1"} ${tool.color}`}>
+                <CardHeader>
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-background shadow-sm">
+                      <tool.icon className={`h-6 w-6 ${tool.locked ? "text-muted-foreground" : ""}`} />
+                    </div>
+                    <div className="flex flex-col items-end gap-1">
+                      <Badge variant="secondary" className="text-xs">
+                        {tool.badge}
+                      </Badge>
+                      {tool.locked && (
+                        <Badge variant="outline" className="text-xs text-muted-foreground border-dashed">
+                          <Lock className="h-3 w-3 mr-1" />
+                          Premium
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                  <CardTitle className={`text-xl ${!tool.locked ? "group-hover:text-primary" : ""} transition-colors`}>
+                    {tool.title}
+                  </CardTitle>
+                  <CardDescription className="text-sm">
+                    {tool.description}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className={`flex items-center text-sm font-medium ${tool.locked ? "text-muted-foreground" : "text-primary"}`}>
+                    {tool.enabled ? (
+                      <>
+                        Gunakan Tool
+                        <ChevronRight className="ml-1 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                      </>
+                    ) : (
+                      <>
+                        Upgrade untuk akses
+                        <ChevronRight className="ml-1 h-4 w-4" />
+                      </>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </button>
+          </div>
         ))}
       </div>
 

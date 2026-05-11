@@ -17,13 +17,13 @@ CV ATS Indonesia sudah memiliki fondasi kuat: CV builder, AI scoring, templates,
 | Tidak ada alasan kembali | Retensi rendah | **Application Tracker** |
 | Tidak tahu nilai CV mereka | Conversion rendah ke paid | **CV Analytics** |
 | Growth hanya dari SEO/ads | CAC tinggi | **Referral Program** |
-| Pro+ janji fitur yang belum ada | Churn Pro+ user | **Interview Simulator** |
+| Pro janji fitur yang belum ada | Churn Pro user | **Interview Simulator** |
 | Share hanya via link | Kurang viral di Indonesia | **WhatsApp Share** |
 
 ### Persona & Pain Points
 - **Fresh Graduate**: "Udah punya CV bagus, tapi lowongan di mana? Dan gimana cara tracking lamaran?"
 - **Profesional**: "Gue apply 20+ perusahaan, susah tracking status lamaran satu-satu."
-- **Power User**: "Gue bayar Pro+ tapi fitur Interview Simulator belum ada."
+- **Power User**: "Gue bayar Pro tapi fitur Interview Simulator belum ada."
 
 ---
 
@@ -43,13 +43,13 @@ Karena WhatsApp adalah platform komunikasi #1 di Indonesia, fitur ini akan mendo
 
 ---
 
-### F-12: CV Analytics (Pro+ Feature)
+### F-12: CV Analytics (Pro Feature)
 **Priority**: P0 | **Effort**: Medium | **Target**: Monetisasi
 
 Dashboard analitik CV: berapa kali CV dilihat, didownload, dibagikan. Memberikan nilai tambah untuk user Pro+.
 
 **Acceptance Criteria**:
-- Halaman `/analitik` (authenticated, Pro+ only)
+- Halaman `/analitik` (authenticated, Pro only)
 - Metrics: Total views, unique viewers, downloads, shares
 - Timeline: views/downloads per hari (chart)
 - Per-CV breakdown
@@ -104,12 +104,12 @@ Halaman lowongan kerja yang relevan dengan user. Bisa berupa curated listings ma
 ---
 
 ### F-16: Interview Simulator / Simulasi Wawancara
-**Priority**: P1 | **Effort**: High | **Target**: Monetisasi Pro+
+**Priority**: P1 | **Effort**: High | **Target**: Monetisasi Pro
 
-Fitur yang sudah dijanjikan di tier Pro+. AI-powered mock interview dengan feedback real-time.
+Fitur yang sudah dijanjikan di tier Pro. AI-powered mock interview dengan feedback real-time.
 
 **Acceptance Criteria**:
-- Halaman `/simulasi-wawancara` (authenticated, Pro+ only)
+- Halaman `/simulasi-wawancara` (authenticated, Pro only)
 - Pilih: posisi, level, industri
 - AI generate 5-10 pertanyaan interview
 - User jawab via text input
@@ -141,7 +141,7 @@ Fitur yang sudah dijanjikan di tier Pro+. AI-powered mock interview dengan feedb
 3. Referral Program (growth engine)
 4. Application Tracker (retention loop)
 5. Job Board (traffic + engagement)
-6. Interview Simulator (Pro+ retention)
+6. Interview Simulator (Pro retention)
 
 ---
 
@@ -265,10 +265,10 @@ CREATE POLICY "Users can manage own interview sessions" ON public.interview_sess
 | `/lowongan` | Job listings (public) | No | All |
 | `/lowongan/$slug` | Job detail (public) | No | All |
 | `/lamaran` | Application tracker | Yes | All |
-| `/analitik` | CV analytics | Yes | Pro+ |
+| `/analitik` | CV analytics | Yes | Pro |
 | `/referral` | Referral dashboard | Yes | All |
-| `/simulasi-wawancara` | Interview simulator | Yes | Pro+ |
-| `/simulasi-wawancara/$id` | Interview session result | Yes | Pro+ |
+| `/simulasi-wawancara` | Interview simulator | Yes | Pro |
+| `/simulasi-wawancara/$id` | Interview session result | Yes | Pro |
 
 ---
 

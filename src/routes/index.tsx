@@ -90,7 +90,7 @@ function LandingPage() {
             </Badge>
             <h1 className="mt-4 font-display text-4xl font-bold leading-tight tracking-tight text-foreground sm:text-5xl lg:text-6xl">
               Bikin CV ATS Friendly dalam{" "}
-              <span className="text-primary">10 menit</span>
+              <span className="text-primary">1 menit</span>
             </h1>
             <p className="mt-5 text-lg text-muted-foreground sm:text-xl">
               Template profesional, saran AI, dan scoring otomatis — semua dalam Bahasa Indonesia.

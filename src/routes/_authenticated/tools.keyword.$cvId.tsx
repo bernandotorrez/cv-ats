@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { buildSeo } from "@/lib/seo";
@@ -12,8 +12,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { extractKeywords } from "@/lib/ai-functions";
 import type { CvData } from "@/lib/cv-types";
 import { emptyCv } from "@/lib/cv-types";
+import { useAuth } from "@/lib/auth-context";
 import {
-  ArrowLeft, Sparkles, Loader2, Key, ListFilter, RotateCcw,
+  ArrowLeft, Sparkles, Loader2, Key, ListFilter, RotateCcw, Lock,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/tools/keyword/$cvId")({
@@ -28,7 +29,10 @@ export const Route = createFileRoute("/_authenticated/tools/keyword/$cvId")({
 
 function KeywordExtractorPage() {
   const { cvId } = Route.useParams();
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
+  const [hasAccess, setHasAccess] = useState<boolean | null>(null);
   const [cvData, setCvData] = useState<CvData>(emptyCv);
   const [cvTitle, setCvTitle] = useState("");
 
@@ -48,6 +52,23 @@ function KeywordExtractorPage() {
 
   useEffect(() => {
     (async () => {
+      // Check subscription access first
+      if (user?.id) {
+        const { data } = await (supabase as any)
+          .from("user_subscriptions")
+          .select(`subscription_tiers!inner(enable_keyword_extractor)`)
+          .eq("user_id", user.id)
+          .eq("status", "active")
+          .single();
+        
+        if (data?.subscription_tiers?.enable_keyword_extractor === false) {
+          setHasAccess(false);
+          setLoading(false);
+          return;
+        }
+        setHasAccess(true);
+      }
+      
       const { data: row, error } = await supabase
         .from("cvs").select("*").eq("id", cvId).single();
       if (error) { 
@@ -61,7 +82,7 @@ function KeywordExtractorPage() {
       setKwTargetRole(d.personal.headline || "");
       setLoading(false);
     })();
-  }, [cvId]);
+  }, [cvId, user?.id]);
 
   const handleExtractKeywords = async () => {
     // Validation based on mode
@@ -106,6 +127,32 @@ function KeywordExtractorPage() {
     return (
       <div className="container-page py-10 text-sm text-muted-foreground">
         Memuat...
+      </div>
+    );
+  }
+
+  if (hasAccess === false) {
+    return (
+      <div className="container-page py-10">
+        <Card className="max-w-md mx-auto">
+          <CardContent className="flex flex-col items-center py-12 text-center">
+            <div className="rounded-full bg-muted p-4 mb-4">
+              <Lock className="h-8 w-8 text-muted-foreground" />
+            </div>
+            <h2 className="text-xl font-bold mb-2">Akses Terbatas</h2>
+            <p className="text-sm text-muted-foreground mb-6">
+              Fitur Keyword Extractor memerlukan paket langganan yang mendukung fitur ini.
+            </p>
+            <div className="flex gap-3">
+              <Button variant="outline" asChild>
+                <Link to="/tools">Kembali ke Tools</Link>
+              </Button>
+              <Button asChild>
+                <Link to="/harga">Upgrade Paket</Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }

@@ -78,7 +78,8 @@ const tiers = [
       "Review CV by HR Expert",
       "Keyword extractor unlimited",
       "Bandingkan versi CV",
-      "Tips interview premium",
+      "Simulasi Wawancara AI",
+      "Analitik CV & LinkedIn Optimizer",
       "Dukungan prioritas 24/7",
     ],
     cta: "Pilih Paket Pro",
@@ -273,7 +274,9 @@ function HargaPage() {
                     ["Keyword Extractor", "—", "10x/bulan", "Unlimited"],
                     ["Review CV by HR Expert", "—", "✓", "✓"],
                     ["Bandingkan versi CV", "—", "—", "✓"],
-                    ["Tips interview premium", "—", "—", "✓"],
+                    ["Simulasi Wawancara AI", "—", "—", "✓"],
+                    ["Analitik CV", "—", "—", "✓"],
+                    ["LinkedIn Optimizer", "—", "—", "✓"],
                     ["Support prioritas", "—", "—", "✓"],
                   ].map((row, i) => (
                     <tr key={i} className="border-b last:border-0 hover:bg-muted/30 transition-colors">

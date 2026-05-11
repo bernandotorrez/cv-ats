@@ -100,7 +100,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         name: "description",
         content:
-          "Bikin CV ATS friendly dalam 10 menit. Template gratis, saran AI Bahasa Indonesia, scoring otomatis, dan tips lolos screening HR & interview.",
+          "Bikin CV ATS friendly dalam 1 menit. Template gratis, saran AI Bahasa Indonesia, scoring otomatis, dan tips lolos screening HR & interview.",
       },
       { name: "author", content: "CV ATS Indonesia" },
       { name: "robots", content: "index, follow" },

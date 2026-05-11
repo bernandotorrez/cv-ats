@@ -105,16 +105,16 @@ function AnalitikPage() {
     );
   }
 
-  if (tier !== "pro_plus") {
+  if (tier !== "pro" && tier !== "pro_plus") {
     return (
       <div className="container-page py-20 text-center">
         <BarChart3 className="mx-auto h-12 w-12 text-muted-foreground" />
-        <h1 className="mt-4 font-display text-2xl font-bold">Fitur Pro+</h1>
+        <h1 className="mt-4 font-display text-2xl font-bold">Fitur Pro</h1>
         <p className="mt-2 text-muted-foreground max-w-md mx-auto">
-          CV Analytics tersedia untuk pengguna Pro+. Upgrade untuk melihat statistik CV kamu.
+          CV Analytics tersedia untuk pengguna Pro. Upgrade untuk melihat statistik CV kamu.
         </p>
         <Button asChild className="mt-6">
-          <Link to="/harga">Upgrade ke Pro+</Link>
+          <Link to="/harga">Upgrade ke Pro</Link>
         </Button>
       </div>
     );
