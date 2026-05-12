@@ -12,17 +12,3 @@ BEGIN
   RETURN new_token;
 END;
 $$;
-
--- Add updated_at trigger for cvs if not exists
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_trigger WHERE tgname = 'set_cvs_updated_at'
-  ) THEN
-    CREATE TRIGGER set_cvs_updated_at
-      BEFORE UPDATE ON public.cvs
-      FOR EACH ROW
-      EXECUTE FUNCTION public.set_updated_at();
-  END IF;
-END;
-$$;
