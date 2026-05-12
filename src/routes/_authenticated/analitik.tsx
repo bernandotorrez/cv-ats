@@ -105,7 +105,7 @@ function AnalitikPage() {
     );
   }
 
-  if (tier !== "pro" && tier !== "pro_plus") {
+  if (tier !== "pro") {
     return (
       <div className="container-page py-20 text-center">
         <BarChart3 className="mx-auto h-12 w-12 text-muted-foreground" />

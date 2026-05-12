@@ -277,8 +277,8 @@ function AdminUsersPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="free">Free — Rp 0</SelectItem>
-                    <SelectItem value="starter">Starter — Rp 19.000/bln</SelectItem>
-                    <SelectItem value="pro">Pro — Rp 49.000/bln</SelectItem>
+                    <SelectItem value="starter">Starter — Rp 14.900/bln</SelectItem>
+                    <SelectItem value="pro">Pro — Rp 39.000/bln</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

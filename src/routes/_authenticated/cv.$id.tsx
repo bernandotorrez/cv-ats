@@ -172,7 +172,7 @@ function CvEditorPage() {
         if (sub.subscription_tiers?.template_access_detail) {
           setAllowedTemplates(sub.subscription_tiers.template_access_detail);
         } else if (sub.subscription_tiers?.template_access_detail === null) {
-          // null means all templates allowed (Pro/Pro+ tier)
+          // null means all templates allowed (Pro tier)
           setAllowedTemplates(null);
         } else {
           // Fallback to free templates

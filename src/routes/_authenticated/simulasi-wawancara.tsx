@@ -101,7 +101,7 @@ function SimulasiWawancaraPage() {
     return <div className="container-page py-10"><Skeleton className="h-8 w-64 mb-4" /><Skeleton className="h-64" /></div>;
   }
 
-  if (tier !== "pro" && tier !== "pro_plus") {
+  if (tier !== "pro") {
     return (
       <div className="container-page py-20 text-center">
         <Mic className="mx-auto h-12 w-12 text-muted-foreground" />

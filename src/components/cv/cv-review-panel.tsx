@@ -102,7 +102,7 @@ export function CVReviewPanel({ cvData, cvId, onReviewComplete, className }: CVR
   const [targetRole, setTargetRole] = useState("");
   const [jobDescription, setJobDescription] = useState("");
 
-  const canAccess = tier === "starter" || tier === "pro" || tier === "pro_plus";
+  const canAccess = tier === "starter" || tier === "pro";
   const isStarter = tier === "starter";
 
   const handleReview = async () => {

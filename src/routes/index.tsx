@@ -56,7 +56,7 @@ const features = [
   { icon: Target, title: "CV Scoring Otomatis", desc: "Cek kecocokan CV dengan job description: keyword, skill, format, & saran perbaikan instan." },
   { icon: UserCircle, title: "Review CV by HR Expert", desc: "Analisis mendalam dari HR profesional 20+ tahun — temukan kekuatan, kelemahan, & quick wins.", badge: "Starter" },
   { icon: Briefcase, title: "Pelacak Lamaran", desc: "Catat & lacak status lamaran kerja kamu dalam satu dashboard. Kanban view, stats, reminder.", badge: "Baru" },
-  { icon: Mic, title: "Simulasi Wawancara AI", desc: "Latihan interview dengan AI — dapatkan pertanyaan, jawab, dan terima feedback instan.", badge: "Pro+" },
+  { icon: Mic, title: "Simulasi Wawancara AI", desc: "Latihan interview dengan AI — dapatkan pertanyaan, jawab, dan terima feedback instan.", badge: "Pro" },
   { icon: Search, title: "Lowongan Pekerjaan", desc: "Temukan lowongan terbaru yang relevan. Buat CV ATS dan lamar dengan percaya diri.", badge: "Baru" },
   { icon: Gift, title: "Program Referral", desc: "Ajak teman gabung, kamu dapat 1 bulan Starter gratis per referral yang upgrade.", badge: "Baru" },
   { icon: Download, title: "Export PDF Berkualitas", desc: "Hasil PDF rapi, ringan, dan terbaca sempurna oleh ATS maupun rekruter manusia." },
@@ -414,7 +414,7 @@ function LandingPage() {
           <p className="mt-4 text-muted-foreground text-lg">
             Harga ramah kantong pelajar & fresh graduate. Mulai dari{" "}
             <strong className="text-foreground">Rp 0</strong> selamanya.
-            Paket berbayar mulai Rp 19.000/bulan — setara 1 kopi kekinian.
+            Paket berbayar mulai Rp 14.900/bulan — setara 1 kopi kekinian.
           </p>
           <div className="mt-8 flex flex-wrap gap-3 justify-center">
             <Button asChild size="lg" className="h-12 px-6 text-base">

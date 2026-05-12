@@ -351,7 +351,7 @@ function DashboardPage() {
     ...(admin ? [{ icon: Shield, label: "Admin Panel", action: "admin" as const, color: "bg-red-500/10 text-red-600", visible: true }] : []),
   ];
 
-  const tierName = tier === "free" ? "Free" : tier === "starter" ? "Starter" : tier === "pro" ? "Pro" : "Pro+";
+  const tierName = tier === "free" ? "Free" : tier === "starter" ? "Starter" : "Pro";
 
   // Actions that need a CV picker (CV-specific features)
   const CV_PICKER_ACTIONS = ["cv-review", "score", "ai-suggest", "cover-letter", "keyword-extractor"];
@@ -435,7 +435,7 @@ function DashboardPage() {
               <div className="flex items-center gap-2">
                 <Badge className={cn(
                   "text-xs",
-                  tier === "pro_plus" && "bg-warning text-warning-foreground",
+                  tier === "pro" && "bg-warning text-warning-foreground",
                   tier === "pro" && "bg-primary text-primary-foreground",
                   tier === "starter" && "bg-info text-info-foreground",
                   tier === "free" && "bg-muted-foreground/20 text-foreground",
@@ -757,7 +757,7 @@ function DashboardPage() {
                 <div className="flex items-center justify-between text-sm">
                   <span>
                     Mulai dari{" "}
-                    <strong className="text-foreground">Rp 19.000</strong>
+                    <strong className="text-foreground">Rp 14.900</strong>
                     <span className="text-xs text-muted-foreground">/bln</span>
                   </span>
                   <Button asChild size="sm" className="gap-1">

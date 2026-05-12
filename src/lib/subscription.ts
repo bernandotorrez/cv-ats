@@ -8,7 +8,7 @@
  */
 import { supabase } from "@/integrations/supabase/client";
 
-export type Tier = "free" | "starter" | "pro" | "pro_plus";
+export type Tier = "free" | "starter" | "pro";
 
 export interface TierLimits {
   tier: Tier;
@@ -19,6 +19,11 @@ export interface TierLimits {
   maxAiSuggestions: number | null;
   maxAtsScores: number | null;
   maxGuidedSessions: number | null;
+  maxCoverLetter: number | null;
+  maxCvReview: number | null;
+  maxKeywordExtract: number | null;
+  maxInterviewSimulator: number | null;
+  maxAiChat: number | null;
   // Boolean feature gates — MUST match edge function gating
   enableCvReview: boolean; // ai-cv-review: free=❌, starter+=✅
   enableAiSuggest: boolean; // ai-suggest: all tiers
@@ -30,7 +35,6 @@ export interface TierLimits {
   canCoverLetter: boolean; // ai-cover-letter: free=❌
   canKeywordExtract: boolean; // ai-keywords: free=❌
   canCompare: boolean;
-  canLinkedInOptimize: boolean;
   canAnalytics: boolean;
   canInterviewSimulator: boolean;
   watermark: boolean;
@@ -52,7 +56,9 @@ type DbSubscriptionRow = {
     quota_ai_chat: number | null;
     quota_ai_cover_letter: number | null;
     quota_ai_keyword_extract: number | null;
-    quota_guided_sessions: number | null;
+    quota_cv_review: number | null;
+    quota_interview_simulator: number | null;
+    quota_guided_mode: number | null;
     template_access: string;
     enable_cv_review: boolean;
     enable_cover_letter: boolean;
@@ -60,11 +66,9 @@ type DbSubscriptionRow = {
     enable_cv_comparison: boolean;
     enable_interview_simulator: boolean;
     enable_analytics: boolean;
-    enable_linkedin_optimize: boolean;
     enable_text_polish: boolean;
     enable_guided_mode: boolean;
     quota_ai_polish: number | null;
-    quota_guided_mode: number | null;
   } | null;
 };
 
@@ -78,20 +82,24 @@ const TIER_LIMITS: Record<Tier, TierLimits> = {
     tierName: "Free",
     priceMonthly: 0,
     maxCvs: 1,
-    maxAiSuggestions: 10,
-    maxAtsScores: 3,
-    maxGuidedSessions: 1,
+    maxAiSuggestions: 5,
+    maxAtsScores: 1,
+    maxGuidedSessions: 10,
+    maxCoverLetter: 0,
+    maxCvReview: 0,
+    maxKeywordExtract: 0,
+    maxInterviewSimulator: 0,
+    maxAiChat: 5,
     enableCvReview: false,
     enableAiSuggest: true,
     enableAiScore: true,
     enableGuidedMode: true,
     enableTextPolish: true,
-    maxTextPolish: 10,
+    maxTextPolish: 5,
     canDownloadDocx: false,
     canCoverLetter: false,
     canKeywordExtract: false,
     canCompare: false,
-    canLinkedInOptimize: false,
     canAnalytics: false,
     canInterviewSimulator: false,
     watermark: true,
@@ -100,11 +108,16 @@ const TIER_LIMITS: Record<Tier, TierLimits> = {
   starter: {
     tier: "starter",
     tierName: "Starter",
-    priceMonthly: 19000,
+    priceMonthly: 14900,
     maxCvs: 3,
     maxAiSuggestions: 50,
     maxAtsScores: 10,
-    maxGuidedSessions: 3,
+    maxGuidedSessions: 30,
+    maxCoverLetter: 10,
+    maxCvReview: 10,
+    maxKeywordExtract: 20,
+    maxInterviewSimulator: 0,
+    maxAiChat: 50,
     enableCvReview: true,
     enableAiSuggest: true,
     enableAiScore: true,
@@ -115,7 +128,6 @@ const TIER_LIMITS: Record<Tier, TierLimits> = {
     canCoverLetter: true,
     canKeywordExtract: true,
     canCompare: false,
-    canLinkedInOptimize: false,
     canAnalytics: false,
     canInterviewSimulator: false,
     watermark: false,
@@ -124,46 +136,26 @@ const TIER_LIMITS: Record<Tier, TierLimits> = {
   pro: {
     tier: "pro",
     tierName: "Pro",
-    priceMonthly: 49000,
-    maxCvs: null,
-    maxAiSuggestions: null,
-    maxAtsScores: null,
-    maxGuidedSessions: null,
+    priceMonthly: 39000,
+    maxCvs: 10,
+    maxAiSuggestions: 200,
+    maxAtsScores: 50,
+    maxGuidedSessions: 100,
+    maxCoverLetter: 50,
+    maxCvReview: 50,
+    maxKeywordExtract: 100,
+    maxInterviewSimulator: 50,
+    maxAiChat: 200,
     enableCvReview: true,
     enableAiSuggest: true,
     enableAiScore: true,
     enableGuidedMode: true,
     enableTextPolish: true,
-    maxTextPolish: null,
+    maxTextPolish: 200,
     canDownloadDocx: true,
     canCoverLetter: true,
     canKeywordExtract: true,
     canCompare: true,
-    canLinkedInOptimize: true,
-    canAnalytics: true,
-    canInterviewSimulator: true,
-    watermark: false,
-    templateAccess: "all",
-  },
-  pro_plus: {
-    tier: "pro_plus",
-    tierName: "Pro+",
-    priceMonthly: 99000,
-    maxCvs: null,
-    maxAiSuggestions: null,
-    maxAtsScores: null,
-    maxGuidedSessions: null,
-    enableCvReview: true,
-    enableAiSuggest: true,
-    enableAiScore: true,
-    enableGuidedMode: true,
-    enableTextPolish: true,
-    maxTextPolish: null,
-    canDownloadDocx: true,
-    canCoverLetter: true,
-    canKeywordExtract: true,
-    canCompare: true,
-    canLinkedInOptimize: true,
     canAnalytics: true,
     canInterviewSimulator: true,
     watermark: false,
@@ -185,12 +177,13 @@ export async function getUserTierConfig(userId: string): Promise<TierLimits> {
           slug, name, price_monthly,
           max_cvs, quota_ai_suggest, quota_ai_score,
           quota_ai_chat, quota_ai_cover_letter, quota_ai_keyword_extract,
+          quota_cv_review, quota_interview_simulator, quota_guided_mode,
           template_access,
           enable_cv_review, enable_cover_letter, enable_keyword_extractor,
           enable_cv_comparison, enable_interview_simulator,
-          enable_analytics, enable_linkedin_optimize,
+          enable_analytics,
           enable_text_polish, quota_ai_polish,
-          enable_guided_mode, quota_guided_mode
+          enable_guided_mode
         )`,
       )
       .eq("user_id", userId)
@@ -211,6 +204,11 @@ export async function getUserTierConfig(userId: string): Promise<TierLimits> {
         maxCvs: t.max_cvs ?? base.maxCvs,
         maxAiSuggestions: t.quota_ai_suggest ?? base.maxAiSuggestions,
         maxAtsScores: t.quota_ai_score ?? base.maxAtsScores,
+        maxCoverLetter: t.quota_ai_cover_letter ?? base.maxCoverLetter,
+        maxCvReview: t.quota_cv_review ?? base.maxCvReview,
+        maxKeywordExtract: t.quota_ai_keyword_extract ?? base.maxKeywordExtract,
+        maxInterviewSimulator: t.quota_interview_simulator ?? base.maxInterviewSimulator,
+        maxAiChat: t.quota_ai_chat ?? base.maxAiChat,
         templateAccess: (t.template_access as "basic" | "all") || base.templateAccess,
         // Feature gates — read directly from DB columns.
         // DB is the source of truth; hardcoded base is fallback only.
@@ -220,7 +218,6 @@ export async function getUserTierConfig(userId: string): Promise<TierLimits> {
         canCompare: t.enable_cv_comparison ?? base.canCompare,
         canInterviewSimulator: t.enable_interview_simulator ?? base.canInterviewSimulator,
         canAnalytics: t.enable_analytics ?? base.canAnalytics,
-        canLinkedInOptimize: t.enable_linkedin_optimize ?? base.canLinkedInOptimize,
         enableTextPolish: t.enable_text_polish ?? base.enableTextPolish,
         maxTextPolish: t.quota_ai_polish ?? base.maxTextPolish,
         enableGuidedMode: t.enable_guided_mode ?? base.enableGuidedMode,

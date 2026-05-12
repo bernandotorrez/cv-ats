@@ -56,24 +56,17 @@ const TIER_INFO: Record<
   },
   starter: {
     name: "Starter",
-    price: "Rp 19.000/bln",
+    price: "Rp 14.900/bln",
     bg: "bg-primary",
     text: "text-primary-foreground",
     icon: Zap,
   },
   pro: {
     name: "Pro",
-    price: "Rp 49.000/bln",
+    price: "Rp 39.000/bln",
     bg: "bg-warning",
     text: "text-warning-foreground",
     icon: Crown,
-  },
-  pro_plus: {
-    name: "Pro+",
-    price: "Rp 99.000/bln",
-    bg: "bg-destructive",
-    text: "text-destructive-foreground",
-    icon: Shield,
   },
 };
 
@@ -363,14 +356,14 @@ export function AkunPage() {
               {tier === "free" && (
                 <Button asChild className="w-full gap-1.5">
                   <Link to="/harga">
-                    <Zap className="h-4 w-4" /> Upgrade ke Starter — Rp 19.000/bln
+                    <Zap className="h-4 w-4" /> Upgrade ke Starter — Rp 14.900/bln
                   </Link>
                 </Button>
               )}
               {tier === "starter" && (
                 <Button asChild variant="outline" className="w-full gap-1.5">
                   <Link to="/harga">
-                    <Crown className="h-4 w-4" /> Upgrade ke Pro — Rp 49.000/bln
+                    <Crown className="h-4 w-4" /> Upgrade ke Pro — Rp 39.000/bln
                   </Link>
                 </Button>
               )}
@@ -425,13 +418,13 @@ export function AkunPage() {
                   },
                   {
                     label: "CV Comparison",
-                    value: tier === "pro" || tier === "pro_plus" ? "Ya" : "Tidak",
-                    included: tier === "pro" || tier === "pro_plus",
+                    value: tier === "pro" ? "Ya" : "Tidak",
+                    included: tier === "pro",
                   },
                   {
                     label: "Simulasi Wawancara",
-                    value: tier === "pro_plus" ? "Ya" : "Tidak",
-                    included: tier === "pro_plus",
+                    value: tier === "pro" ? "Ya" : "Tidak",
+                    included: tier === "pro",
                   },
                   {
                     label: "Watermark",
@@ -440,8 +433,8 @@ export function AkunPage() {
                   },
                   {
                     label: "Analitik CV",
-                    value: tier === "pro_plus" ? "Ya" : "Tidak",
-                    included: tier === "pro_plus",
+                    value: tier === "pro" ? "Ya" : "Tidak",
+                    included: tier === "pro",
                   },
                 ].map((f) => (
                   <div

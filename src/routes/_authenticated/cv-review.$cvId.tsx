@@ -221,7 +221,7 @@ function CvReviewPage() {
             </p>
             <Button asChild className="gap-1.5">
               <Link to="/harga">
-                <Zap className="h-4 w-4" /> Upgrade ke Starter — Rp 19.000/bln
+                <Zap className="h-4 w-4" /> Upgrade ke Starter — Rp 14.900/bln
               </Link>
             </Button>
           </CardContent>

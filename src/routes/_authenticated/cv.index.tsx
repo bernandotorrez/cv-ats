@@ -109,7 +109,7 @@ function CvListPage() {
     if (data?.subscription_tiers?.template_access_detail) {
       setAllowedTemplates(data.subscription_tiers.template_access_detail);
     } else if (data?.subscription_tiers?.template_access_detail === null) {
-      // null means all templates allowed (Pro/Pro+ tier)
+      // null means all templates allowed (Pro tier)
       setAllowedTemplates(null);
     } else {
       // Fallback to free templates
@@ -222,7 +222,7 @@ function CvListPage() {
   };
 
   const tierName =
-    tier === "free" ? "Free" : tier === "starter" ? "Starter" : tier === "pro" ? "Pro" : "Pro+";
+    tier === "free" ? "Free" : tier === "starter" ? "Starter" : "Pro";
 
   const lastEdited = cvs.length > 0 ? cvs[0] : null;
   const usedTemplates = [...new Set(cvs.map((c) => c.template_id))];
