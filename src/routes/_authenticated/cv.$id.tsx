@@ -865,6 +865,7 @@ function EditorForm({
                   </div>
                 </div>
                 <Textarea rows={3} value={item.description} onChange={(e) => mutate(setData, "experiences", i, "description", e.target.value)} placeholder="Deskripsikan pencapaian dengan metrik..." />
+                <p className="text-xs text-muted-foreground">Ketik <code className="text-xs bg-muted px-1 rounded">-</code> di awal baris untuk menambahkan poin deskripsi baru.</p>
                 <TextAlignPicker value={item.descriptionAlign} onChange={(v) => mutate(setData, "experiences", i, "descriptionAlign", v)} />
                 {suggestionPanel.section === "experience" && (
                   <SuggestionPanel
