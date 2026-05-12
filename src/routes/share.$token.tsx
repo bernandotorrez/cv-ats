@@ -71,11 +71,14 @@ function SharePage() {
   // Log analytics view
   useEffect(() => {
     if (!cvId || !userId) return;
-    (supabase as any).from("cv_analytics").insert({
-      cv_id: cvId,
-      user_id: userId,
-      event_type: "view",
-    }).catch(() => {});
+    (async () => {
+      const { error } = await (supabase as any).from("cv_analytics").insert({
+        cv_id: cvId,
+        user_id: userId,
+        event_type: "view",
+      });
+      if (error) console.error("Analytics insert error:", error);
+    })();
   }, [cvId, userId]);
 
   // Auto-open print dialog after page loads (gives PDF view)

@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { buildSeo } from "@/lib/seo";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
+import { Input } from "@/components/ui/input";
+import { WhatsAppShare } from "@/components/share/WhatsAppShare";
 import {
   Dialog,
   DialogContent,
@@ -42,6 +44,10 @@ import {
   Brain,
   Mic,
   FileCheck,
+  Share2,
+  Copy,
+  Check,
+  ExternalLink,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -63,6 +69,8 @@ interface CvRow {
   status: string;
   updated_at: string;
   created_at: string;
+  share_token: string | null;
+  share_enabled: boolean;
 }
 
 function CvListPage() {
@@ -83,7 +91,7 @@ function CvListPage() {
     setLoading(true);
     const { data, error } = await supabase
       .from("cvs")
-      .select("id, title, template_id, status, updated_at, created_at")
+      .select("id, title, template_id, status, updated_at, created_at, share_token, share_enabled")
       .order("updated_at", { ascending: false });
     setLoading(false);
     if (error) return toast.error(error.message);
@@ -152,6 +160,57 @@ function CvListPage() {
       params: { id: data.id },
       search: guided ? ({ guided: "true" } as any) : {},
     });
+  };
+
+  const [showShareDialog, setShowShareDialog] = useState(false);
+  const [shareCv, setShareCv] = useState<CvRow | null>(null);
+  const [shareGenerating, setShareGenerating] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const shareInputRef = useRef<HTMLInputElement>(null);
+
+  const handleToggleShare = async (cv: CvRow) => {
+    if (cv.share_enabled) {
+      setShareGenerating(true);
+      await (supabase as any).from("cvs").update({ share_enabled: false }).eq("id", cv.id);
+      setShareGenerating(false);
+      toast.success("Link share dinonaktifkan");
+      load();
+      return;
+    }
+
+    setShareGenerating(true);
+    try {
+      let token = cv.share_token;
+      if (!token) {
+        const { data: rpcData, error: rpcError } = await supabase.rpc("generate_share_token");
+        if (rpcError) throw new Error(rpcError.message);
+        token = rpcData as string;
+      }
+
+      const { error } = await (supabase as any)
+        .from("cvs").update({ share_enabled: true, share_token: token }).eq("id", cv.id);
+      if (error) throw new Error(error.message);
+
+      setShareCv({ ...cv, share_token: token, share_enabled: true });
+      setShowShareDialog(true);
+      setTimeout(() => {
+        shareInputRef.current?.select();
+      }, 100);
+    } catch (e: any) {
+      toast.error(e.message || "Gagal mengaktifkan share");
+    } finally {
+      setShareGenerating(false);
+      load();
+    }
+  };
+
+  const handleCopyShareLink = async () => {
+    if (!shareCv?.share_token) return;
+    const link = `https://cvats.id/share/${shareCv.share_token}`;
+    await navigator.clipboard.writeText(link);
+    setCopied(true);
+    toast.success("Link disalin!");
+    setTimeout(() => setCopied(false), 2000);
   };
 
   const handleDelete = async (id: string) => {
@@ -407,6 +466,16 @@ function CvListPage() {
                       )}
                       <Button
                         size="sm"
+                        variant={cv.share_enabled ? "default" : "outline"}
+                        className="gap-1 text-xs h-7"
+                        onClick={() => handleToggleShare(cv)}
+                        disabled={shareGenerating}
+                      >
+                        {shareGenerating ? <Loader2 className="h-3 w-3 animate-spin" /> : <Share2 className="h-3 w-3" />}
+                        {cv.share_enabled ? "Aktif" : "Bagikan"}
+                      </Button>
+                      <Button
+                        size="sm"
                         variant="ghost"
                         className="gap-1 text-xs h-7 text-muted-foreground hover:text-destructive"
                         onClick={() => handleDelete(cv.id)}
@@ -539,6 +608,55 @@ function CvListPage() {
               Pilih Template
               <ArrowLeftRight className="h-3.5 w-3.5" style={{ transform: "rotate(90deg)" }} />
             </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Share Dialog */}
+      <Dialog open={showShareDialog} onOpenChange={(open) => { setShowShareDialog(open); if (!open) setCopied(false); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-lg">
+              <Share2 className="h-5 w-5 text-primary" />
+              Link CV Siap Dibagikan
+            </DialogTitle>
+            <DialogDescription className="text-sm">
+              Bagikan link ini agar orang lain bisa melihat CV <strong>{shareCv?.title}</strong> kamu.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Input
+                ref={shareInputRef}
+                readOnly
+                value={`https://cvats.id/share/${shareCv?.share_token || ""}`}
+                className="font-mono text-sm h-10"
+                onClick={(e) => (e.target as HTMLInputElement).select()}
+              />
+              <Button size="sm" className="h-10 gap-1.5 shrink-0" onClick={handleCopyShareLink}>
+                {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                {copied ? "Tersalin" : "Salin"}
+              </Button>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-muted-foreground">Bagikan via:</span>
+              <div className="flex gap-2">
+                <WhatsAppShare
+                  shareUrl={`https://cvats.id/share/${shareCv?.share_token || ""}`}
+                  cvId={shareCv?.id}
+                  size="sm"
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1"
+                  onClick={() => window.open(`https://cvats.id/share/${shareCv?.share_token}`, "_blank")}
+                >
+                  <ExternalLink className="h-3.5 w-3.5" />
+                  Buka
+                </Button>
+              </div>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
