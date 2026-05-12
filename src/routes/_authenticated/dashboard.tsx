@@ -21,6 +21,7 @@ import { getUserTier, getTierLimits, type Tier, type TierLimits } from "@/lib/su
 import { TEMPLATES } from "@/lib/cv-types";
 import {
   FileText,
+  List,
   Plus,
   Sparkles,
   BarChart3,
@@ -415,6 +416,11 @@ function DashboardPage() {
               <Plus className="h-4 w-4" /> Buat CV Baru
             </Link>
           </Button>
+          <Button asChild variant="outline" size="sm" className="gap-1.5">
+            <Link to="/cv">
+              <List className="h-4 w-4" /> Kelola CV
+            </Link>
+          </Button>
           <Button asChild variant="outline" size="sm">
             <Link to="/akun">Akun</Link>
           </Button>
@@ -548,11 +554,6 @@ function DashboardPage() {
                               <Badge variant="secondary" className="text-[10px]">
                                 {f.badge}
                               </Badge>
-                              {f.locked && (
-                                <Badge variant="outline" className="text-[10px] border-dashed">
-                                  <Lock className="h-3 w-3 mr-0.5" /> {f.upgradeTier}
-                                </Badge>
-                              )}
                             </div>
                           </div>
                           <h3 className={cn("font-semibold", !f.locked && "group-hover:text-primary", f.locked && "text-muted-foreground", "transition-colors")}>

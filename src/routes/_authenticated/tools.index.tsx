@@ -210,13 +210,14 @@ function ToolsIndexPage() {
                       <tool.icon className={`h-6 w-6 ${tool.locked ? "text-muted-foreground" : ""}`} />
                     </div>
                     <div className="flex flex-col items-end gap-1">
-                      <Badge variant="secondary" className="text-xs">
-                        {tool.badge}
-                      </Badge>
-                      {tool.locked && (
+                      {tool.locked ? (
                         <Badge variant="outline" className="text-xs text-muted-foreground border-dashed">
                           <Lock className="h-3 w-3 mr-1" />
                           Premium
+                        </Badge>
+                      ) : (
+                        <Badge variant="secondary" className="text-xs">
+                          {tool.badge}
                         </Badge>
                       )}
                     </div>
