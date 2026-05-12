@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Crown, Sparkles, FileText, FileCheck, Zap, Brain, ArrowUpRight } from "lucide-react";
+import { Crown, Sparkles, FileText, FileCheck, Zap, Brain, ArrowUpRight, Rocket } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function UpgradeCard() {
@@ -13,8 +13,8 @@ export function UpgradeCard() {
 
       <CardContent className="relative p-6">
         <div className="mb-4 flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-warning/20 text-xl">
-            🚀
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-warning/20">
+            <Rocket className="h-5 w-5 text-warning" />
           </div>
           <div>
             <h3 className="font-display font-bold text-foreground">Buka Semua Fitur</h3>

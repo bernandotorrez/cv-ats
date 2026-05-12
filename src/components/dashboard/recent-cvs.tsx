@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, FileText, Pencil, ChevronRight, Clock } from "lucide-react";
+import { Plus, FileText, Pencil, ChevronRight, Clock, FileEdit, CheckCircle2 } from "lucide-react";
 import { TEMPLATES } from "@/lib/cv-types";
 import { cn } from "@/lib/utils";
 
@@ -32,7 +32,7 @@ export function RecentCvs({ cvs, loading }: RecentCvsProps) {
     <section>
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="text-lg">📄</span>
+          <FileText className="h-5 w-5 text-primary" />
           <h2 className="font-display text-lg font-bold text-foreground">CV Terbaru</h2>
         </div>
         <Button asChild variant="ghost" size="sm" className="gap-1 text-xs text-muted-foreground hover:text-primary">
@@ -111,7 +111,7 @@ export function RecentCvs({ cvs, loading }: RecentCvsProps) {
                       isDraft ? "border-warning/30 text-warning" : "border-primary/30 text-primary",
                     )}
                   >
-                    {isDraft ? "📝 Draft" : "✅ Selesai"}
+                    <>{isDraft ? <FileEdit className="h-3 w-3" /> : <CheckCircle2 className="h-3 w-3" />} {isDraft ? "Draft" : "Selesai"}</>
                   </Badge>
                   <Pencil className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
                 </div>

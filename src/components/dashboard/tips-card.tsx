@@ -16,7 +16,7 @@ export function TipsCard() {
     <Card className="overflow-hidden border-2 border-info/20 bg-gradient-to-br from-info/5 to-card">
       <CardHeader className="pb-3">
         <div className="flex items-center gap-2">
-          <span className="text-lg">💡</span>
+          <Lightbulb className="h-5 w-5 text-warning" />
           <h3 className="font-display font-bold">Tips Cepat</h3>
         </div>
       </CardHeader>

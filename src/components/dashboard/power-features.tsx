@@ -1,7 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { ArrowUpRight, Lock } from "lucide-react";
+import { ArrowUpRight, Lock, Zap } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 interface PowerFeature {
@@ -30,7 +30,7 @@ export function PowerFeatures({ features, onFeatureClick, onUpgrade }: PowerFeat
   return (
     <section>
       <div className="mb-4 flex items-center gap-2">
-        <span className="text-lg">🚀</span>
+        <Zap className="h-5 w-5 text-warning" />
         <h2 className="font-display text-lg font-bold text-foreground">Fitur Andalan</h2>
       </div>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -46,12 +46,10 @@ export function PowerFeatures({ features, onFeatureClick, onUpgrade }: PowerFeat
                 ? "border-dashed border-muted-foreground/20 opacity-75 hover:border-warning/40"
                 : "border-border hover:border-primary/40 hover:shadow-xl hover:-translate-y-1",
             )}>
-              {/* Gradient top accent */}
               {!f.locked && (
                 <div className={cn("h-1 w-full", f.gradient || "bg-gradient-to-r from-primary to-secondary")} />
               )}
               <CardContent className="p-5">
-                {/* Lock badge */}
                 {f.locked && (
                   <div className="absolute top-3 right-3 flex items-center gap-1 rounded-full bg-warning/15 border border-warning/30 px-2.5 py-1">
                     <Lock className="h-3 w-3 text-warning" />

@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Lock } from "lucide-react";
+import { Lock, Zap } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 interface QuickAction {
@@ -25,7 +25,7 @@ export function QuickActions({ actions, onAction }: QuickActionsProps) {
   return (
     <section>
       <div className="mb-4 flex items-center gap-2">
-        <span className="text-lg">⚡</span>
+        <Zap className="h-5 w-5 text-warning" />
         <h2 className="font-display text-lg font-bold text-foreground">Aksi Cepat</h2>
       </div>
       <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">

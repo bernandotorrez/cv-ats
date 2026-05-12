@@ -219,34 +219,34 @@ function DashboardPage() {
     {
       icon: Brain, label: "CV Review AI",
       desc: "AI analisis CV-mu seperti HR profesional — skor, saran perbaikan, dan rekomendasi kata kunci.",
-      action: "cv-review", badge: "⭐ Powerful", visible: true,
+      action: "cv-review", badge: "Powerful", visible: true,
       locked: (tierQuotas?.enable_cv_review ?? limits.enableCvReview) === false, upgradeTier: "Starter",
       gradient: "bg-gradient-to-r from-rose-500 to-pink-500",
     },
     {
       icon: BarChart3, label: "CV Scoring",
       desc: "Lihat skor ATS CV-mu secara instan. Ketahui bagian mana yang perlu diperbaiki.",
-      action: "score", badge: "📊 Analitik", visible: true, locked: false,
+      action: "score", badge: "Analitik", visible: true, locked: false,
       gradient: "bg-gradient-to-r from-amber-500 to-orange-500",
     },
     {
       icon: Mic, label: "Simulasi Wawancara",
       desc: "Latihan interview dengan AI. Pertanyaan realistis dan feedback instan.",
-      action: "simulasi", badge: "🔥 Pro", visible: true,
+      action: "simulasi", badge: "Pro", visible: true,
       locked: (tierQuotas?.enable_interview_simulator ?? limits.canInterviewSimulator) === false, upgradeTier: "Pro",
       gradient: "bg-gradient-to-r from-rose-500 to-red-500",
     },
     {
       icon: FileCheck, label: "Cover Letter AI",
       desc: "Generate surat lamaran yang personalize dari CV dan job description.",
-      action: "cover-letter", badge: "✨ Baru", visible: true,
+      action: "cover-letter", badge: "Baru", visible: true,
       locked: (tierQuotas?.enable_cover_letter ?? limits.canCoverLetter) === false, upgradeTier: "Starter",
       gradient: "bg-gradient-to-r from-teal-500 to-cyan-500",
     },
     {
       icon: Key, label: "Keyword Extractor",
       desc: "Ekstrak keyword dari job description untuk optimasi CV ATS. Auto-suggest keyword berdasarkan posisi target.",
-      action: "keyword-extractor", badge: "🔑 ATS", visible: true,
+      action: "keyword-extractor", badge: "ATS", visible: true,
       locked: (tierQuotas?.enable_keyword_extractor ?? limits.canKeywordExtract) === false, upgradeTier: "Starter",
       gradient: "bg-gradient-to-r from-blue-500 to-indigo-500",
     },
@@ -336,7 +336,7 @@ function DashboardPage() {
       {/* ── Usage Stats ── */}
       <section>
         <div className="mb-4 flex items-center gap-2">
-          <span className="text-lg">📊</span>
+          <BarChart3 className="h-5 w-5 text-primary" />
           <h2 className="font-display text-lg font-bold text-foreground">Penggunaan Bulan Ini</h2>
         </div>
         <UsageBars bars={usageBars} />

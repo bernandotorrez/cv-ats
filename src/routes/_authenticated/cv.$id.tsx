@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { buildSeo } from "@/lib/seo";
@@ -24,18 +24,38 @@ import { AtsPreview } from "@/components/cv/AtsPreview";
 import { LinkedInImport } from "@/components/cv/LinkedInImport";
 import { GuidedMode } from "@/components/ai/guided-mode";
 import { useAutosave } from "@/lib/hooks/use-autosave";
-import { SectionsNav, DEFAULT_SECTIONS, type SectionDef } from "@/components/cv/editor/SectionsNav";
-import { PreviewToolbar, type PreviewScale } from "@/components/cv/editor/PreviewToolbar";
 import { SuggestionPanel } from "@/components/ai/suggestion-panel";
 import { AtsScoreWidget } from "@/components/ai/score-widget";
 import { scoreCvLocally } from "@/lib/local-scoring";
 import { EditorSkeleton } from "@/components/ui/skeleton-loading";
 import { CvFileUpload } from "@/components/cv/CvFileUpload";
 import { extractCvText } from "@/lib/cv-text-extractor";
+
+// New editor components
 import {
-  ArrowLeft, Plus, Trash2, Save, Loader2, Sparkles, MessageSquare,
-  BarChart3, Wrench, Share2, Copy, Check, Import, Palette, Download,
-  CheckCircle2, FileText, Eye, PanelLeftClose, PanelLeft, Linkedin, Upload, ExternalLink,
+  EditorToolbar,
+  AiSuggestBtn,
+  SectionCard,
+  ListSectionCard,
+  Field,
+  TextareaField,
+  TextAlignPicker,
+  mutate,
+  SectionsNav,
+  DEFAULT_SECTIONS,
+  PreviewToolbar,
+} from "@/components/cv/editor";
+import type { SectionDef, PreviewScale } from "@/components/cv/editor";
+
+import {
+  Plus, Trash2, Save, Loader2, Sparkles, MessageSquare,
+  BarChart3, Wrench, Share2, Copy, Check, Palette,
+  CheckCircle2, FileText, Eye, Upload, ExternalLink,
+  Linkedin, Wand2, Star, Zap, Crown,
+  Crosshair, User, Pencil, Mail, Phone, MapPin,
+  Briefcase, Building2, Calendar, GraduationCap, ScrollText,
+  BookOpen, Globe, Languages, Award, Trophy, Landmark,
+  Link2, ShieldX, RefreshCw,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/cv/$id")({
@@ -377,76 +397,35 @@ function CvEditorPage() {
     <div className="cv-editor-page h-[calc(100vh-4rem)] flex flex-col">
       <style>{cvPrintStyles}</style>
       {/* ─── TOOLBAR ─── */}
-      <div className="shrink-0 border-b border-border bg-background/80 backdrop-blur sticky top-16 z-30 print:hidden">
-        <div className="flex flex-wrap items-center gap-2 px-4 py-2.5">
-          <Button asChild variant="ghost" size="sm"><Link to="/cv"><ArrowLeft className="h-4 w-4" /></Link></Button>
-          <Input value={title} onChange={(e) => setTitle(e.target.value)} className="h-8 max-w-[160px] text-sm" aria-label="Judul CV" />
-          <Input value={targetRole} onChange={(e) => setTargetRole(e.target.value)} className="h-8 max-w-[160px] text-sm" aria-label="Target Posisi" placeholder="Target Posisi..." />
-          <Button variant="outline" size="sm" onClick={() => setShowTemplatePicker(!showTemplatePicker)} className="h-8 gap-1 text-xs">
-            <Palette className="h-3.5 w-3.5" /> {TEMPLATES.find(t => t.id === templateId)?.name || "Template"}
-          </Button>
-
-          {/* Save Status */}
-          <div className="flex items-center gap-1.5 text-xs ml-1">
-            {saveStatus === "saving" && <><Loader2 className="h-3 w-3 animate-spin text-muted-foreground" /> <span className="text-muted-foreground">Menyimpan...</span></>}
-            {saveStatus === "saved" && <><CheckCircle2 className="h-3.5 w-3.5 text-primary" /> <span className="text-primary">Tersimpan</span></>}
-            {saveStatus === "unsaved" && <span className="text-destructive">Gagal</span>}
-          </div>
-
-          {/* Desktop nav toggle */}
-          <Button variant="ghost" size="sm" className="hidden lg:flex h-8 ml-auto" onClick={() => setShowNav(!showNav)} title="Toggle panel section">
-            {showNav ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeft className="h-4 w-4" />}
-          </Button>
-
-          <div className="ml-auto lg:ml-0 flex gap-1.5 flex-wrap">
-            {/* Share Button */}
-            <Button
-              variant={shareEnabled ? "default" : "outline"}
-              size="sm"
-              className="h-8 text-xs gap-1.5"
-              onClick={handleToggleShare}
-              disabled={shareGenerating}
-            >
-              {shareGenerating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Share2 className="h-3.5 w-3.5" />}
-              <span className="hidden sm:inline">
-                {shareEnabled ? "Link Aktif" : "Bagikan"}
-              </span>
-            </Button>
-            
-            {/* LinkedIn Import Button */}
-            {/* <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5" onClick={() => setShowLinkedInImport(true)}>
-              <Linkedin className="h-3.5 w-3.5 text-blue-600" />
-              <span className="hidden sm:inline">Import LinkedIn</span>
-            </Button> */}
-
-            {/* Upload CV Button */}
-            <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5" onClick={() => { setShowCvUpload(true); setCvUploadFile(null); setCvUploadError(null); }}>
-              <Upload className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Upload CV</span>
-            </Button>
-            
-            <Button asChild variant="ghost" size="sm" className="h-8 text-xs">
-              <Link to="/tools" search={{ cvId: id }}><Wrench className="h-3.5 w-3.5" /></Link>
-            </Button>
-            <Button asChild variant="ghost" size="sm" className="h-8 text-xs">
-              <Link to="/score/$cvId" params={{ cvId: id }}><BarChart3 className="h-3.5 w-3.5" /></Link>
-            </Button>
-            <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => setChatOpen(!chatOpen)}>
-              <MessageSquare className="h-3.5 w-3.5" />
-            </Button>
-            <DownloadDropdown cv={data} fileName={title} templateId={templateId} showWatermark={userTier === "free"} cvId={id} userId={user?.id} />
-            <Button size="sm" className="h-8 text-xs" onClick={handleSave} disabled={saving || saveStatus === "saving"}>
-              {saving || saveStatus === "saving" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />} Simpan
-            </Button>
-          </div>
-        </div>
-      </div>
+      <EditorToolbar
+        id={id}
+        title={title}
+        onTitleChange={setTitle}
+        targetRole={targetRole}
+        onTargetRoleChange={setTargetRole}
+        templateId={templateId}
+        onOpenTemplatePicker={() => setShowTemplatePicker(!showTemplatePicker)}
+        saveStatus={saveStatus}
+        onSave={handleSave}
+        saving={saving}
+        shareEnabled={shareEnabled}
+        shareGenerating={shareGenerating}
+        onToggleShare={handleToggleShare}
+        chatOpen={chatOpen}
+        onToggleChat={() => setChatOpen(!chatOpen)}
+        showNav={showNav}
+        onToggleNav={() => setShowNav(!showNav)}
+        cvData={data}
+        userTier={userTier}
+        userId={user?.id}
+        onOpenCvUpload={() => { setShowCvUpload(true); setCvUploadFile(null); setCvUploadError(null); }}
+      />
 
       {/* ─── MAIN CONTENT ─── */}
       <div className="flex-1 flex overflow-hidden print:block print:overflow-visible print:!visible">
         {/* Desktop: Sections Nav (3-panel) */}
         {showNav && (
-          <aside className="hidden lg:block w-[250px] shrink-0 border-r border-border bg-card/50 overflow-y-auto p-3 print:hidden">
+          <aside className="hidden lg:block w-[260px] shrink-0 border-r border-border bg-gradient-to-b from-card/80 to-card/50 overflow-y-auto p-4 print:hidden">
             <SectionsNav
               sections={sections}
               activeSection={activeSection}
@@ -457,8 +436,8 @@ function CvEditorPage() {
         )}
 
         {/* Form Panel (Desktop + Tablet) */}
-        <div className={cn("hidden md:flex flex-col overflow-y-auto print:hidden", showNav ? "lg:w-[420px] shrink-0 border-r border-border" : "lg:w-[480px] shrink-0")}>
-          <div className="p-4">
+        <div className={cn("hidden md:flex flex-col overflow-y-auto print:hidden", showNav ? "lg:w-[440px] shrink-0 border-r border-border" : "lg:w-[500px] shrink-0")}>
+          <div className="p-5">
             <EditorForm
               data={data} setData={setData} activeSection={activeSection} setActiveSection={setActiveSection}
               targetRole={targetRole} aiLoading={aiLoading} handleAiSuggest={handleAiSuggest}
@@ -474,7 +453,7 @@ function CvEditorPage() {
 
         {/* Mobile: Form */}
         {mobileTab === "form" && (
-          <div className="md:hidden flex-1 overflow-y-auto p-4 print:hidden">
+          <div className="md:hidden flex-1 overflow-y-auto p-5 print:hidden">
             <EditorForm
               data={data} setData={setData} activeSection={activeSection} setActiveSection={setActiveSection}
               targetRole={targetRole} aiLoading={aiLoading} handleAiSuggest={handleAiSuggest}
@@ -544,7 +523,7 @@ function CvEditorPage() {
       </div>
 
       {/* ─── MOBILE TAB BAR ─── */}
-      <nav className="md:hidden shrink-0 border-t border-border bg-background flex print:hidden" aria-label="Navigasi editor mobile">
+      <nav className="md:hidden shrink-0 border-t border-border bg-background/95 backdrop-blur-lg flex print:hidden shadow-[0_-4px_20px_rgba(0,0,0,0.05)]" aria-label="Navigasi editor mobile">
         {[
           { id: "form" as EditorTab, icon: FileText, label: "Form" },
           { id: "preview" as EditorTab, icon: Eye, label: "Preview" },
@@ -555,16 +534,19 @@ function CvEditorPage() {
             type="button"
             onClick={() => setMobileTab(tab.id)}
             className={cn(
-              "flex-1 flex flex-col items-center justify-center py-2 text-xs transition-colors",
+              "flex-1 flex flex-col items-center justify-center py-3 text-xs transition-all relative",
               mobileTab === tab.id
-                ? "text-primary border-t-2 border-primary -mt-px"
+                ? "text-primary font-semibold"
                 : "text-muted-foreground hover:text-foreground",
             )}
             aria-label={tab.label}
             aria-pressed={mobileTab === tab.id}
           >
-            <tab.icon className="h-4 w-4 mb-0.5" />
-            {tab.label}
+            {mobileTab === tab.id && (
+              <span className="absolute -top-px left-1/4 right-1/4 h-0.5 bg-primary rounded-full" />
+            )}
+            <span className="text-base mb-0.5"><tab.icon className="h-5 w-5" /></span>
+            <span className="text-[10px]">{tab.label}</span>
           </button>
         ))}
       </nav>
@@ -663,32 +645,34 @@ function CvEditorPage() {
 
       {/* Share Dialog */}
       <Dialog open={showShareDialog} onOpenChange={(open) => { setShowShareDialog(open); if (!open) setCopied(false); }}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md rounded-2xl">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-lg">
-              <Share2 className="h-5 w-5 text-primary" />
-              Link CV Siap Dibagikan
+            <DialogTitle className="flex items-center gap-3 text-lg">
+              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10"><Link2 className="h-5 w-5 text-primary" /></span>
+              <span>CV Siap Dibagikan!</span>
             </DialogTitle>
             <DialogDescription className="text-sm">
-              Bagikan link ini agar orang lain bisa melihat CV kamu.
+              Bagikan link ini agar orang lain bisa melihat CV kamu. 
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <Input
-                ref={shareInputRef}
-                readOnly
-                value={`https://cvpintar.web.id/share/${shareToken || ""}`}
-                className="font-mono text-sm h-10"
-                onClick={(e) => (e.target as HTMLInputElement).select()}
-              />
-              <Button size="sm" className="h-10 gap-1.5 shrink-0" onClick={handleCopyShareLink}>
-                {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                {copied ? "Tersalin" : "Salin"}
-              </Button>
+            <div className="relative">
+              <div className="flex items-center gap-2 rounded-2xl border-2 border-primary/20 bg-primary/5 p-1.5">
+                <Input
+                  ref={shareInputRef}
+                  readOnly
+                  value={`https://cvpintar.web.id/share/${shareToken || ""}`}
+                  className="font-mono text-sm h-11 border-0 bg-transparent focus-visible:ring-0"
+                  onClick={(e) => (e.target as HTMLInputElement).select()}
+                />
+                <Button size="sm" className="h-10 gap-1.5 shrink-0 rounded-xl" onClick={handleCopyShareLink}>
+                  {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                  {copied ? "Tersalin!" : "Salin"}
+                </Button>
+              </div>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-muted-foreground">Bagikan via:</span>
+            <div className="flex items-center justify-between rounded-xl bg-muted/50 px-4 py-3">
+              <span className="text-xs text-muted-foreground">📤 Bagikan via:</span>
               <div className="flex gap-2">
                 <WhatsAppShare
                   shareUrl={`https://cvpintar.web.id/share/${shareToken || ""}`}
@@ -699,7 +683,7 @@ function CvEditorPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="gap-1"
+                  className="gap-1.5 rounded-xl"
                   onClick={() => window.open(`https://cvpintar.web.id/share/${shareToken}`, "_blank")}
                 >
                   <ExternalLink className="h-3.5 w-3.5" />
@@ -710,10 +694,10 @@ function CvEditorPage() {
             <Button
               variant="ghost"
               size="sm"
-              className="w-full text-muted-foreground"
+              className="w-full text-muted-foreground hover:text-destructive gap-1.5"
               onClick={() => handleToggleShare()}
             >
-              Nonaktifkan Link Share
+              <ShieldX className="h-4 w-4" /> Nonaktifkan Link Share
             </Button>
           </div>
         </DialogContent>
@@ -766,106 +750,124 @@ function EditorForm({
 
       {/* Personal */}
       {activeSection === "personal" && (
-        <Card>
-          <CardHeader className="pb-3"><CardTitle className="text-base">Data Pribadi</CardTitle></CardHeader>
-          <CardContent className="grid gap-3 sm:grid-cols-2">
-            <Field label="Nama Lengkap" value={data.personal.fullName} onChange={(v) => updatePersonal("fullName", v)} />
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <Label>Posisi / Headline</Label>
-                <AiSuggestBtn loading={aiLoading === "headline"} onClick={() => handleAiSuggest("headline", data.personal.headline)} />
-              </div>
-              <Input value={data.personal.headline} onChange={(e) => updatePersonal("headline", e.target.value)} placeholder="Frontend Developer" />
-              {suggestionPanel.section === "headline" && (
-                <SuggestionPanel
-                  open={suggestionPanel.suggestions !== null}
-                  onClose={onCloseSuggestion}
-                  section="headline"
-                  loading={aiLoading === "headline"}
-                  suggestions={suggestionPanel.suggestions}
-                  acceptedIndex={suggestionPanel.acceptedIndex}
-                  onAccept={(i, opt) => {
-                    const accepted = onAcceptSuggestion(i, opt);
-                    updatePersonal("headline", accepted);
-                  }}
-                  onRegenerate={onRegenerateSuggestion}
-                  onRegenerateAll={onRegenerateAll}
-                />
-              )}
-            </div>
-            <Field label="Email" type="email" value={data.personal.email} onChange={(v) => updatePersonal("email", v)} />
-            <Field label="No. HP" value={data.personal.phone} onChange={(v) => updatePersonal("phone", v)} placeholder="+62..." />
-            <Field label="Lokasi" value={data.personal.location} onChange={(v) => updatePersonal("location", v)} placeholder="Jakarta" />
-            <Field label="LinkedIn" value={data.personal.linkedin ?? ""} onChange={(v) => updatePersonal("linkedin", v)} placeholder="linkedin.com/in/..." />
-            <div className="sm:col-span-2 space-y-1.5">
-              <div className="flex items-center justify-between">
-                <Label>Ringkasan Profil</Label>
+        <SectionCard title="Data Pribadi" icon={<User className="h-5 w-5" />} accentColor="from-blue-500/5 to-purple-500/5">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Nama Lengkap" value={data.personal.fullName} onChange={(v) => updatePersonal("fullName", v)} icon={<Pencil className="h-4 w-4" />} />
+            <Field label="Posisi / Headline" value={data.personal.headline} onChange={(v) => updatePersonal("headline", v)} placeholder="Frontend Developer"
+              extra={<AiSuggestBtn loading={aiLoading === "headline"} onClick={() => handleAiSuggest("headline", data.personal.headline)} />}
+              icon={<Crosshair className="h-4 w-4" />}
+            />
+          </div>
+          {suggestionPanel.section === "headline" && (
+            <SuggestionPanel
+              open={suggestionPanel.suggestions !== null}
+              onClose={onCloseSuggestion}
+              section="headline"
+              loading={aiLoading === "headline"}
+              suggestions={suggestionPanel.suggestions}
+              acceptedIndex={suggestionPanel.acceptedIndex}
+              onAccept={(i, opt) => {
+                const accepted = onAcceptSuggestion(i, opt);
+                updatePersonal("headline", accepted);
+              }}
+              onRegenerate={onRegenerateSuggestion}
+              onRegenerateAll={onRegenerateAll}
+            />
+          )}
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Email" type="email" value={data.personal.email} onChange={(v) => updatePersonal("email", v)} icon={<Mail className="h-4 w-4" />} />
+            <Field label="No. HP" value={data.personal.phone} onChange={(v) => updatePersonal("phone", v)} placeholder="+62..." icon={<Phone className="h-4 w-4" />} />
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Lokasi" value={data.personal.location} onChange={(v) => updatePersonal("location", v)} placeholder="Jakarta" icon={<MapPin className="h-4 w-4" />} />
+            <Field label="LinkedIn" value={data.personal.linkedin ?? ""} onChange={(v) => updatePersonal("linkedin", v)} placeholder="linkedin.com/in/..." icon={<Linkedin className="h-4 w-4" />} />
+          </div>
+
+          <TextareaField
+            label="Ringkasan Profil"
+            value={data.personal.summary}
+            onChange={(v) => updatePersonal("summary", v)}
+            placeholder="2-4 kalimat ringkas tentang dirimu..."
+            rows={4} maxLength={1000}
+            hint="Tip: Fokus pada pencapaian & skill utama yang relevan dengan target posisi"
+            icon={<FileText className="h-4 w-4" />}
+            extra={
+              <div className="flex items-center gap-1">
                 <AiSuggestBtn loading={aiLoading === "summary"} onClick={() => handleAiSuggest("summary", data.personal.summary)} />
               </div>
-              <Textarea rows={4} maxLength={1000} value={data.personal.summary}
-                onChange={(e) => updatePersonal("summary", e.target.value)}
-                placeholder="2-4 kalimat ringkas tentang dirimu..." />
-              <TextAlignPicker value={data.personal.summaryAlign} onChange={(v) => updatePersonal("summaryAlign", v)} />
-              {suggestionPanel.section === "summary" && (
-                <SuggestionPanel
-                  open={suggestionPanel.suggestions !== null}
-                  onClose={onCloseSuggestion}
-                  section="summary"
-                  loading={aiLoading === "summary"}
-                  suggestions={suggestionPanel.suggestions}
-                  acceptedIndex={suggestionPanel.acceptedIndex}
-                  onAccept={(i, opt) => {
-                    const accepted = onAcceptSuggestion(i, opt);
-                    updatePersonal("summary", accepted);
-                  }}
-                  onRegenerate={onRegenerateSuggestion}
-                  onRegenerateAll={onRegenerateAll}
-                />
-              )}
-            </div>
-          </CardContent>
-        </Card>
+            }
+          />
+          <TextAlignPicker value={data.personal.summaryAlign} onChange={(v) => updatePersonal("summaryAlign", v)} />
+
+          {suggestionPanel.section === "summary" && (
+            <SuggestionPanel
+              open={suggestionPanel.suggestions !== null}
+              onClose={onCloseSuggestion}
+              section="summary"
+              loading={aiLoading === "summary"}
+              suggestions={suggestionPanel.suggestions}
+              acceptedIndex={suggestionPanel.acceptedIndex}
+              onAccept={(i, opt) => {
+                const accepted = onAcceptSuggestion(i, opt);
+                updatePersonal("summary", accepted);
+              }}
+              onRegenerate={onRegenerateSuggestion}
+              onRegenerateAll={onRegenerateAll}
+            />
+          )}
+        </SectionCard>
       )}
 
       {/* Experience */}
       {activeSection === "experience" && (
-        <ListSection
-          title="Pengalaman Kerja"
-          items={data.experiences}
+        <ListSectionCard
+          title="Pengalaman Kerja" icon={<Briefcase className="h-5 w-5" />} items={data.experiences}
+          accentColor="from-amber-500/5 to-orange-500/5"
           onAdd={() => setData((d) => ({ ...d, experiences: [...d.experiences, { id: uid(), company: "", position: "", startDate: "", endDate: "", description: "" }] }))}
           onRemove={(i) => setData((d) => ({ ...d, experiences: d.experiences.filter((_, idx) => idx !== i) }))}
           renderItem={(item, i) => (
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Field label="Posisi" value={item.position} onChange={(v) => mutate(setData, "experiences", i, "position", v)} />
-              <Field label="Perusahaan" value={item.company} onChange={(v) => mutate(setData, "experiences", i, "company", v)} />
-              <Field label="Mulai" value={item.startDate} onChange={(v) => mutate(setData, "experiences", i, "startDate", v)} />
-              <Field label="Selesai" value={item.endDate} onChange={(v) => mutate(setData, "experiences", i, "endDate", v)} disabled={item.current} />
-              <label className="sm:col-span-2 flex items-center gap-2 text-sm"><Checkbox checked={!!item.current} onCheckedChange={(c) => mutate(setData, "experiences", i, "current", !!c)} /> Masih bekerja di sini</label>
-              <div className="sm:col-span-2 space-y-1.5">
-                <div className="flex items-center justify-between"><Label>Deskripsi</Label>
-                  <div className="flex items-center gap-1">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-6 text-xs gap-1 text-secondary-foreground hover:text-primary"
-                      disabled={polishingField === `exp-${i}`}
-                      onClick={async () => {
-                        const result = await handlePolishText(`exp-${i}`, item.description, `Posisi: ${item.position} di ${item.company}`);
-                        if (result) mutate(setData, "experiences", i, "description", result);
-                      }}
-                    >
-                      {polishingField === `exp-${i}` ? (
-                        <Loader2 className="h-3 w-3 animate-spin" />
-                      ) : (
-                        <Sparkles className="h-3 w-3" />
-                      )}
-                      Perbaiki
-                    </Button>
-                    <AiSuggestBtn loading={aiLoading === "experience"} onClick={() => handleAiSuggest("experience", item.description, `Posisi: ${item.position} di ${item.company}`)} />
-                  </div>
-                </div>
-                <Textarea rows={3} value={item.description} onChange={(e) => mutate(setData, "experiences", i, "description", e.target.value)} placeholder="Deskripsikan pencapaian dengan metrik..." />
-                <p className="text-xs text-muted-foreground">Ketik <code className="text-xs bg-muted px-1 rounded">-</code> di awal baris untuk menambahkan poin deskripsi baru.</p>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Posisi" value={item.position} onChange={(v) => mutate(setData, "experiences", i, "position", v)} icon={<Crosshair className="h-4 w-4" />} />
+              <Field label="Perusahaan" value={item.company} onChange={(v) => mutate(setData, "experiences", i, "company", v)} icon={<Building2 className="h-4 w-4" />} />
+              <Field label="Mulai" value={item.startDate} onChange={(v) => mutate(setData, "experiences", i, "startDate", v)} icon={<Calendar className="h-4 w-4" />} />
+              <Field label="Selesai" value={item.endDate} onChange={(v) => mutate(setData, "experiences", i, "endDate", v)} disabled={item.current} icon={<Calendar className="h-4 w-4" />} />
+              <label className="sm:col-span-2 flex items-center gap-2 text-sm rounded-xl bg-muted/50 px-3 py-2 cursor-pointer hover:bg-muted transition-colors">
+                <Checkbox checked={!!item.current} onCheckedChange={(c) => mutate(setData, "experiences", i, "current", !!c)} />
+                <span className="flex items-center gap-1.5"><RefreshCw className="h-3.5 w-3.5" /> Masih bekerja di sini</span>
+              </label>
+              <div className="sm:col-span-2 space-y-2">
+                <TextareaField
+                  label="Deskripsi" value={item.description}
+                  onChange={(v) => mutate(setData, "experiences", i, "description", v)}
+                  placeholder="Deskripsikan pencapaian dengan metrik..."
+                  rows={3}
+                  hint="Tip: Gunakan kata kerja aktif & sertakan angka (contoh: meningkatkan penjualan 30%)"
+                  icon={<FileText className="h-4 w-4" />}
+                  extra={
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 gap-1 text-xs rounded-lg text-muted-foreground hover:text-primary"
+                        disabled={polishingField === `exp-${i}`}
+                        onClick={async () => {
+                          const result = await handlePolishText(`exp-${i}`, item.description, `Posisi: ${item.position} di ${item.company}`);
+                          if (result) mutate(setData, "experiences", i, "description", result);
+                        }}
+                      >
+                        {polishingField === `exp-${i}` ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <Wand2 className="h-3 w-3" />
+                        )}
+                        Perbaiki
+                      </Button>
+                      <AiSuggestBtn loading={aiLoading === "experience"} onClick={() => handleAiSuggest("experience", item.description, `Posisi: ${item.position} di ${item.company}`)} />
+                    </div>
+                  }
+                />
                 <TextAlignPicker value={item.descriptionAlign} onChange={(v) => mutate(setData, "experiences", i, "descriptionAlign", v)} />
                 {suggestionPanel.section === "experience" && (
                   <SuggestionPanel
@@ -891,42 +893,45 @@ function EditorForm({
 
       {/* Education */}
       {activeSection === "education" && (
-        <ListSection
-          title="Pendidikan"
-          items={data.educations}
+        <ListSectionCard
+          title="Pendidikan" icon={<GraduationCap className="h-5 w-5" />} items={data.educations}
+          accentColor="from-emerald-500/5 to-green-500/5"
           onAdd={() => setData((d) => ({ ...d, educations: [...d.educations, { id: uid(), school: "", degree: "", startDate: "", endDate: "" }] }))}
           onRemove={(i) => setData((d) => ({ ...d, educations: d.educations.filter((_, idx) => idx !== i) }))}
           renderItem={(item, i) => (
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Field label="Sekolah/Universitas" value={item.school} onChange={(v) => mutate(setData, "educations", i, "school", v)} />
-              <Field label="Gelar" value={item.degree} onChange={(v) => mutate(setData, "educations", i, "degree", v)} placeholder="S1" />
-              <Field label="Jurusan" value={item.field ?? ""} onChange={(v) => mutate(setData, "educations", i, "field", v)} />
-              <Field label="Mulai" value={item.startDate} onChange={(v) => mutate(setData, "educations", i, "startDate", v)} />
-              <Field label="Selesai" value={item.endDate} onChange={(v) => mutate(setData, "educations", i, "endDate", v)} />
-              <div className="sm:col-span-2 space-y-1.5">
-                <div className="flex items-center justify-between"><Label>Deskripsi</Label>
-                  <div className="flex items-center gap-1">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-6 text-xs gap-1 text-secondary-foreground hover:text-primary"
-                      disabled={polishingField === `edu-${i}`}
-                      onClick={async () => {
-                        const result = await handlePolishText(`edu-${i}`, item.description || "", `${item.degree} ${item.field || ""} di ${item.school}`);
-                        if (result) mutate(setData, "educations", i, "description", result);
-                      }}
-                    >
-                      {polishingField === `edu-${i}` ? (
-                        <Loader2 className="h-3 w-3 animate-spin" />
-                      ) : (
-                        <Sparkles className="h-3 w-3" />
-                      )}
-                      Perbaiki
-                    </Button>
-                    <AiSuggestBtn loading={aiLoading === "education"} onClick={() => handleAiSuggest("education", item.description || "", `${item.degree} ${item.field || ""} di ${item.school}`)} />
-                  </div>
-                </div>
-                <Textarea rows={2} value={item.description ?? ""} onChange={(e) => mutate(setData, "educations", i, "description", e.target.value)} />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Sekolah/Universitas" value={item.school} onChange={(v) => mutate(setData, "educations", i, "school", v)} icon={<Building2 className="h-4 w-4" />} />
+              <Field label="Gelar" value={item.degree} onChange={(v) => mutate(setData, "educations", i, "degree", v)} placeholder="S1" icon={<ScrollText className="h-4 w-4" />} />
+              <Field label="Jurusan" value={item.field ?? ""} onChange={(v) => mutate(setData, "educations", i, "field", v)} icon={<BookOpen className="h-4 w-4" />} />
+              <Field label="Periode" value={`${item.startDate}${item.endDate ? " - " + item.endDate : ""}`} onChange={(v) => {}} placeholder="2020 - 2024" icon={<Calendar className="h-4 w-4" />} />
+              <div className="sm:col-span-2 space-y-2">
+                <TextareaField
+                  label="Deskripsi" value={item.description ?? ""}
+                  onChange={(v) => mutate(setData, "educations", i, "description", v)}
+                  rows={2}
+                  extra={
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 gap-1 text-xs rounded-lg text-muted-foreground hover:text-primary"
+                        disabled={polishingField === `edu-${i}`}
+                        onClick={async () => {
+                          const result = await handlePolishText(`edu-${i}`, item.description || "", `${item.degree} ${item.field || ""} di ${item.school}`);
+                          if (result) mutate(setData, "educations", i, "description", result);
+                        }}
+                      >
+                        {polishingField === `edu-${i}` ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <Wand2 className="h-3 w-3" />
+                        )}
+                        Perbaiki
+                      </Button>
+                      <AiSuggestBtn loading={aiLoading === "education"} onClick={() => handleAiSuggest("education", item.description || "", `${item.degree} ${item.field || ""} di ${item.school}`)} />
+                    </div>
+                  }
+                />
                 <TextAlignPicker value={item.descriptionAlign} onChange={(v) => mutate(setData, "educations", i, "descriptionAlign", v)} />
                 {suggestionPanel.section === "education" && (
                   <SuggestionPanel
@@ -952,12 +957,13 @@ function EditorForm({
 
       {/* Skills */}
       {activeSection === "skills" && (
-        <ListSection
-          title="Keahlian" items={data.skills} compact
+        <ListSectionCard
+          title="Keahlian" icon={<Wrench className="h-5 w-5" />} items={data.skills} compact
+          accentColor="from-violet-500/5 to-purple-500/5"
           onAdd={() => setData((d) => ({ ...d, skills: [...d.skills, { id: uid(), name: "" }] }))}
           onRemove={(i) => setData((d) => ({ ...d, skills: d.skills.filter((_, idx) => idx !== i) }))}
           renderItem={(item, i) => (
-            <Field label="Nama Skill" value={item.name} onChange={(v) => mutate(setData, "skills", i, "name", v)} placeholder="React, SQL, Komunikasi..." />
+            <Field label="Nama Skill" value={item.name} onChange={(v) => mutate(setData, "skills", i, "name", v)} placeholder="React, SQL, Komunikasi..." icon={<Zap className="h-4 w-4" />} />
           )}
           extraAction={
             <AiSuggestBtn loading={aiLoading === "skills"} onClick={() => handleAiSuggest("skills", data.skills.map((s) => s.name).join(", "))} />
@@ -985,26 +991,28 @@ function EditorForm({
       {/* Extras */}
       {activeSection === "extras" && (
         <div className="space-y-6">
-          <ListSection
-            title="Bahasa" items={data.languages} compact
+          <ListSectionCard
+            title="Bahasa" icon={<Globe className="h-5 w-5" />} items={data.languages} compact
+            accentColor="from-teal-500/5 to-cyan-500/5"
             onAdd={() => setData((d) => ({ ...d, languages: [...d.languages, { id: uid(), name: "", level: "Mahir" }] }))}
             onRemove={(i) => setData((d) => ({ ...d, languages: d.languages.filter((_, idx) => idx !== i) }))}
             renderItem={(item, i) => (
-              <div className="grid grid-cols-2 gap-2">
-                <Field label="Bahasa" value={item.name} onChange={(v) => mutate(setData, "languages", i, "name", v)} />
-                <Field label="Level" value={item.level} onChange={(v) => mutate(setData, "languages", i, "level", v)} />
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="Bahasa" value={item.name} onChange={(v) => mutate(setData, "languages", i, "name", v)} icon={<Languages className="h-4 w-4" />} />
+                <Field label="Level" value={item.level} onChange={(v) => mutate(setData, "languages", i, "level", v)} icon={<BarChart3 className="h-4 w-4" />} />
               </div>
             )}
           />
-          <ListSection
-            title="Sertifikat" items={data.certificates} compact
+          <ListSectionCard
+            title="Sertifikat" icon={<Award className="h-5 w-5" />} items={data.certificates} compact
+            accentColor="from-rose-500/5 to-pink-500/5"
             onAdd={() => setData((d) => ({ ...d, certificates: [...d.certificates, { id: uid(), name: "", issuer: "", date: "" }] }))}
             onRemove={(i) => setData((d) => ({ ...d, certificates: d.certificates.filter((_, idx) => idx !== i) }))}
             renderItem={(item, i) => (
-              <div className="grid gap-2 sm:grid-cols-3">
-                <Field label="Nama" value={item.name} onChange={(v) => mutate(setData, "certificates", i, "name", v)} />
-                <Field label="Penerbit" value={item.issuer} onChange={(v) => mutate(setData, "certificates", i, "issuer", v)} />
-                <Field label="Tanggal" value={item.date} onChange={(v) => mutate(setData, "certificates", i, "date", v)} />
+              <div className="grid gap-3 sm:grid-cols-3">
+                <Field label="Nama" value={item.name} onChange={(v) => mutate(setData, "certificates", i, "name", v)} icon={<Trophy className="h-4 w-4" />} />
+                <Field label="Penerbit" value={item.issuer} onChange={(v) => mutate(setData, "certificates", i, "issuer", v)} icon={<Landmark className="h-4 w-4" />} />
+                <Field label="Tanggal" value={item.date} onChange={(v) => mutate(setData, "certificates", i, "date", v)} icon={<Calendar className="h-4 w-4" />} />
               </div>
             )}
           />
@@ -1028,101 +1036,4 @@ function EditorForm({
   );
 }
 
-// ─── SUB-COMPONENTS ─────────────────────────────────────────────────────
 
-function AiSuggestBtn({ loading, onClick }: { loading: boolean; onClick: () => void }) {
-  return (
-    <Button variant="ghost" size="sm" onClick={onClick} disabled={loading}
-      className="h-7 gap-1 text-xs text-secondary-foreground hover:text-primary">
-      {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />} Sarankan AI
-    </Button>
-  );
-}
-
-type TextAlign = "left" | "center" | "right" | "justify";
-
-function TextAlignPicker({ value, onChange }: { value?: TextAlign; onChange: (v: TextAlign) => void }) {
-  const options: { value: TextAlign; label: string }[] = [
-    { value: "left", label: "Kiri" },
-    { value: "center", label: "Tengah" },
-    { value: "right", label: "Kanan" },
-    { value: "justify", label: "Rata" },
-  ];
-  return (
-    <div className="flex items-center gap-1">
-      <Label className="text-xs text-muted-foreground mr-1">Rata teks:</Label>
-      <div className="flex gap-0.5">
-        {options.map((opt) => (
-          <button
-            key={opt.value}
-            type="button"
-            onClick={() => onChange(opt.value)}
-            className={cn(
-              "px-1.5 py-0.5 text-[11px] rounded border transition-colors font-medium",
-              value === opt.value
-                ? "bg-primary text-primary-foreground border-primary"
-                : "bg-background border-border hover:bg-muted text-muted-foreground"
-            )}
-            title={opt.label}
-          >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="inline-block align-middle mr-0.5">
-              {opt.value === "left" && <><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="15" y2="12" /><line x1="3" y1="18" x2="18" y2="18" /></>}
-              {opt.value === "center" && <><line x1="3" y1="6" x2="21" y2="6" /><line x1="6" y1="12" x2="18" y2="12" /><line x1="4" y1="18" x2="20" y2="18" /></>}
-              {opt.value === "right" && <><line x1="3" y1="6" x2="21" y2="6" /><line x1="9" y1="12" x2="21" y2="12" /><line x1="6" y1="18" x2="21" y2="18" /></>}
-              {opt.value === "justify" && <><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" /></>}
-            </svg>
-            {opt.label}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function Field({ label, value, onChange, type = "text", placeholder, className, disabled }: {
-  label: string; value: string; onChange: (v: string) => void; type?: string; placeholder?: string; className?: string; disabled?: boolean;
-}) {
-  return (
-    <div className={`space-y-1.5 ${className ?? ""}`}>
-      <Label>{label}</Label>
-      <Input type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} disabled={disabled} />
-    </div>
-  );
-}
-
-function ListSection<T>({ title, items, onAdd, onRemove, renderItem, compact, extraAction }: {
-  title: string; items: T[]; onAdd: () => void; onRemove: (i: number) => void;
-  renderItem: (item: T, i: number) => React.ReactNode; compact?: boolean;
-  extraAction?: React.ReactNode;
-}) {
-  return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between py-3">
-        <CardTitle className="text-base">{title}</CardTitle>
-        <div className="flex items-center gap-2">
-          {extraAction}
-          <Button size="sm" variant="outline" onClick={onAdd}><Plus className="h-4 w-4" /> Tambah</Button>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {items.length === 0 && <p className="text-sm text-muted-foreground">Belum ada data.</p>}
-        {items.map((item, i) => (
-          <div key={(item as any).id ?? i} className={`rounded-lg border border-border p-4 ${compact ? "" : "bg-muted/30"}`}>
-            <div className="mb-3 flex justify-end">
-              <Button size="sm" variant="ghost" onClick={() => onRemove(i)} aria-label="Hapus"><Trash2 className="h-4 w-4" /></Button>
-            </div>
-            {renderItem(item, i)}
-          </div>
-        ))}
-      </CardContent>
-    </Card>
-  );
-}
-
-function mutate<K extends keyof CvData>(setData: React.Dispatch<React.SetStateAction<CvData>>, key: K, index: number, field: string, value: unknown) {
-  setData((d) => {
-    const arr = [...(d[key] as any[])];
-    arr[index] = { ...arr[index], [field]: value };
-    return { ...d, [key]: arr } as CvData;
-  });
-}

@@ -1,7 +1,8 @@
 import { User } from "@supabase/supabase-js";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
-import { Plus, Sparkles } from "lucide-react";
+import { Plus, Sparkles, Sun, Sunset, Moon, MoonStar } from "lucide-react";
+import type { ReactNode } from "react";
 
 interface WelcomeHeaderProps {
   user: User | null;
@@ -13,11 +14,11 @@ export function WelcomeHeader({ user }: WelcomeHeaderProps) {
 
   const hour = new Date().getHours();
   let greeting = "Halo";
-  let emoji = "👋";
-  if (hour < 11) { greeting = "Selamat pagi"; emoji = "🌅"; }
-  else if (hour < 15) { greeting = "Selamat siang"; emoji = "☀️"; }
-  else if (hour < 18) { greeting = "Selamat sore"; emoji = "🌤️"; }
-  else { greeting = "Selamat malam"; emoji = "🌙"; }
+  let Icon: ReactNode;
+  if (hour < 11) { greeting = "Selamat pagi"; Icon = <Sun className="h-7 w-7" />; }
+  else if (hour < 15) { greeting = "Selamat siang"; Icon = <Sunset className="h-7 w-7" />; }
+  else if (hour < 18) { greeting = "Selamat sore"; Icon = <Moon className="h-7 w-7" />; }
+  else { greeting = "Selamat malam"; Icon = <MoonStar className="h-7 w-7" />; }
 
   return (
     <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary via-primary/90 to-primary/70 px-6 py-8 text-primary-foreground md:px-8">
@@ -29,8 +30,10 @@ export function WelcomeHeader({ user }: WelcomeHeaderProps) {
 
       <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="text-2xl">{emoji}</span>
+          <div className="flex items-center gap-3">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/15 text-primary-foreground">
+              {Icon}
+            </span>
             <h1 className="font-display text-2xl font-bold md:text-3xl">
               {greeting}, {displayName}!
             </h1>
