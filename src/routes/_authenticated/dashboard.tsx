@@ -45,6 +45,7 @@ import {
   Key,
   Type,
   Lock,
+  Upload,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DashboardSkeleton } from "@/components/ui/dashboard-skeleton";
@@ -843,6 +844,18 @@ function DashboardPage() {
               })
             )}
           </div>
+          {showCvPicker?.action === "cv-review" && (
+            <>
+              <Separator className="my-2" />
+              <div className="flex justify-center">
+                <Button asChild variant="outline" size="sm">
+                  <Link to="/cv-review">
+                    <Upload className="mr-1 h-4 w-4" /> Upload CV Saya
+                  </Link>
+                </Button>
+              </div>
+            </>
+          )}
           {cvs.length === 0 && (
             <div className="flex justify-center pb-2">
               <Button asChild size="sm">
