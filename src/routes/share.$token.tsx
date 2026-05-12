@@ -1,5 +1,5 @@
 import { createFileRoute, notFound, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { buildSeo, SITE_URL } from "@/lib/seo";
 import { Button } from "@/components/ui/button";
 import { CvPreview, cvPrintStyles } from "@/components/cv/CvPreview";
@@ -21,8 +21,6 @@ export const Route = createFileRoute("/share/$token")({
     if (error || !data) throw notFound();
 
     const cvData = { ...emptyCv, ...(data.data as unknown as CvData) };
-    cvData.personal.email = "\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022";
-    cvData.personal.phone = "\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022";
     cvData.personal.linkedin = "";
     cvData.personal.website = "";
 
@@ -66,7 +64,6 @@ export const Route = createFileRoute("/share/$token")({
 function SharePage() {
   const { title, templateId, cvData, createdAt, cvId, userId, fullName, token } = Route.useLoaderData();
   const shareUrl = `${SITE_URL}/share/${token}`;
-  const [autoPrintDone, setAutoPrintDone] = useState(false);
 
   // Log analytics view
   useEffect(() => {
@@ -81,17 +78,6 @@ function SharePage() {
     })();
   }, [cvId, userId]);
 
-  // Auto-open print dialog after page loads (gives PDF view)
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (!autoPrintDone) {
-        setAutoPrintDone(true);
-        window.print();
-      }
-    }, 2500);
-    return () => clearTimeout(timer);
-  }, [autoPrintDone]);
-
   const handlePrint = () => {
     window.print();
   };
@@ -104,10 +90,12 @@ function SharePage() {
       <div className="border-b border-border bg-background/80 backdrop-blur sticky top-0 z-30 print:hidden">
         <div className="container-page flex items-center justify-between py-3">
           <div className="flex items-center gap-3">
-            <div className="grid h-8 w-8 place-items-center rounded-lg bg-primary/10 text-primary">
-              <FileText className="h-4 w-4" />
-            </div>
-            <span className="text-sm font-medium hidden sm:inline">CV Pintar</span>
+            <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+              <div className="grid h-8 w-8 place-items-center rounded-lg bg-primary/10 text-primary">
+                <FileText className="h-4 w-4" />
+              </div>
+              <span className="text-sm font-medium hidden sm:inline">CV Pintar</span>
+            </Link>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-xs text-muted-foreground hidden sm:inline">

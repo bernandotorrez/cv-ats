@@ -5,6 +5,7 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -183,19 +184,21 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const routerState = useRouterState();
+  const isSharePage = routerState.location.pathname.startsWith("/share/");
 
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <a href="#main" className="skip-link">Lewati ke konten utama</a>
         <div className="flex min-h-screen flex-col">
-          <SiteHeader />
+          {!isSharePage && <SiteHeader />}
           <main id="main" className="flex-1">
             <Suspense fallback={<PageLoadingFallback />}>
               <Outlet />
             </Suspense>
           </main>
-          <SiteFooter />
+          {!isSharePage && <SiteFooter />}
         </div>
         <Toaster />
         <Analytics />
