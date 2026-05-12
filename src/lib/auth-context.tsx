@@ -30,7 +30,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    try {
+      await supabase.auth.signOut({ scope: "local" });
+    } catch {
+      // Fallback: clear session locally if remote call fails
+      const key = Object.keys(localStorage).find((k) => k.startsWith("sb-") && k.endsWith("-auth-token"));
+      if (key) localStorage.removeItem(key);
+    }
+    setSession(null);
+    setLoading(false);
+    // Force navigate to home to escape authenticated route skeleton
+    window.location.href = "/";
   };
 
   return (
