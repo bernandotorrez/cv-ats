@@ -67,13 +67,25 @@ async function normalizeCatastrophicSsrResponse(response: Response): Promise<Res
   return brandedErrorResponse();
 }
 
+const FILE_EXTENSION_REWRITES: Record<string, string> = {
+  "/sitemap.xml": "/sitemap/xml",
+  "/robots.txt": "/robots/txt",
+};
+
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
+    const url = new URL(request.url);
+    const rewriteTarget = FILE_EXTENSION_REWRITES[url.pathname];
+    if (rewriteTarget) {
+      const newUrl = new URL(request.url);
+      newUrl.pathname = rewriteTarget;
+      request = new Request(newUrl.toString(), request);
+    }
+
     try {
       const handler = await getServerEntry();
       const rawResponse = await handler.fetch(request, env, ctx);
       const response = await normalizeCatastrophicSsrResponse(rawResponse);
-      // Apply security headers to all responses
       return applySecurityHeaders(response);
     } catch (error) {
       console.error(error);
