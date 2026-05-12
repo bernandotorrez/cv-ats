@@ -30,6 +30,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as TipsInterviewSlugRouteImport } from './routes/tips-interview.$slug'
 import { Route as SitemapXmlRouteImport } from './routes/sitemap.xml'
 import { Route as ShareTokenRouteImport } from './routes/share.$token'
+import { Route as SecurityTxtRouteImport } from './routes/security.txt'
 import { Route as RobotsTxtRouteImport } from './routes/robots.txt'
 import { Route as ManifestWebmanifestRouteImport } from './routes/manifest.webmanifest'
 import { Route as LowonganSlugRouteImport } from './routes/lowongan.$slug'
@@ -159,6 +160,11 @@ const SitemapXmlRoute = SitemapXmlRouteImport.update({
 const ShareTokenRoute = ShareTokenRouteImport.update({
   id: '/share/$token',
   path: '/share/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SecurityTxtRoute = SecurityTxtRouteImport.update({
+  id: '/security/txt',
+  path: '/security/txt',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RobotsTxtRoute = RobotsTxtRouteImport.update({
@@ -331,6 +337,7 @@ export interface FileRoutesByFullPath {
   '/lowongan/$slug': typeof LowonganSlugRoute
   '/manifest/webmanifest': typeof ManifestWebmanifestRoute
   '/robots/txt': typeof RobotsTxtRoute
+  '/security/txt': typeof SecurityTxtRoute
   '/share/$token': typeof ShareTokenRoute
   '/sitemap/xml': typeof SitemapXmlRoute
   '/tips-interview/$slug': typeof TipsInterviewSlugRoute
@@ -378,6 +385,7 @@ export interface FileRoutesByTo {
   '/lowongan/$slug': typeof LowonganSlugRoute
   '/manifest/webmanifest': typeof ManifestWebmanifestRoute
   '/robots/txt': typeof RobotsTxtRoute
+  '/security/txt': typeof SecurityTxtRoute
   '/share/$token': typeof ShareTokenRoute
   '/sitemap/xml': typeof SitemapXmlRoute
   '/tips-interview/$slug': typeof TipsInterviewSlugRoute
@@ -428,6 +436,7 @@ export interface FileRoutesById {
   '/lowongan/$slug': typeof LowonganSlugRoute
   '/manifest/webmanifest': typeof ManifestWebmanifestRoute
   '/robots/txt': typeof RobotsTxtRoute
+  '/security/txt': typeof SecurityTxtRoute
   '/share/$token': typeof ShareTokenRoute
   '/sitemap/xml': typeof SitemapXmlRoute
   '/tips-interview/$slug': typeof TipsInterviewSlugRoute
@@ -478,6 +487,7 @@ export interface FileRouteTypes {
     | '/lowongan/$slug'
     | '/manifest/webmanifest'
     | '/robots/txt'
+    | '/security/txt'
     | '/share/$token'
     | '/sitemap/xml'
     | '/tips-interview/$slug'
@@ -525,6 +535,7 @@ export interface FileRouteTypes {
     | '/lowongan/$slug'
     | '/manifest/webmanifest'
     | '/robots/txt'
+    | '/security/txt'
     | '/share/$token'
     | '/sitemap/xml'
     | '/tips-interview/$slug'
@@ -574,6 +585,7 @@ export interface FileRouteTypes {
     | '/lowongan/$slug'
     | '/manifest/webmanifest'
     | '/robots/txt'
+    | '/security/txt'
     | '/share/$token'
     | '/sitemap/xml'
     | '/tips-interview/$slug'
@@ -614,6 +626,7 @@ export interface RootRouteChildren {
   ApiHeadersCheckRoute: typeof ApiHeadersCheckRoute
   ManifestWebmanifestRoute: typeof ManifestWebmanifestRoute
   RobotsTxtRoute: typeof RobotsTxtRoute
+  SecurityTxtRoute: typeof SecurityTxtRoute
   ShareTokenRoute: typeof ShareTokenRoute
   SitemapXmlRoute: typeof SitemapXmlRoute
 }
@@ -765,6 +778,13 @@ declare module '@tanstack/react-router' {
       path: '/share/$token'
       fullPath: '/share/$token'
       preLoaderRoute: typeof ShareTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/security/txt': {
+      id: '/security/txt'
+      path: '/security/txt'
+      fullPath: '/security/txt'
+      preLoaderRoute: typeof SecurityTxtRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/robots/txt': {
@@ -1083,6 +1103,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiHeadersCheckRoute: ApiHeadersCheckRoute,
   ManifestWebmanifestRoute: ManifestWebmanifestRoute,
   RobotsTxtRoute: RobotsTxtRoute,
+  SecurityTxtRoute: SecurityTxtRoute,
   ShareTokenRoute: ShareTokenRoute,
   SitemapXmlRoute: SitemapXmlRoute,
 }

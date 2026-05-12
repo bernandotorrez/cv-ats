@@ -1,0 +1,29 @@
+# =====================================================
+# security.txt - Security Contact Information
+# =====================================================
+# Learn more: https://securitytxt.org/
+# =====================================================
+
+# Contact information
+Contact: https://cvpintar.web.id/kontak
+
+# Encryption key (PGP)
+# Encryption: https://cvpintar.web.id/.well-known/pgp-key.txt
+
+# Security policy
+Policy: https://cvpintar.web.id/kebijakan-privasi
+
+# Permissions
+Permissions-Access: read-only
+
+# Expiration
+Expires: 2027-01-01T00:00:00.000Z
+
+# Preferred languages
+Preferred-Languages: id, en
+
+# Hiring
+Hiring: https://cvpintar.web.id/karir
+
+# Acknowledgments
+Acknowledgments: https://cvpintar.web.id/security-acknowledgments

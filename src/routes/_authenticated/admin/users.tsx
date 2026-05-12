@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { toast } from "sonner";
 import { buildSeo } from "@/lib/seo";
 import { Button } from "@/components/ui/button";
@@ -9,11 +9,16 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
+import { invalidateAdminCache } from "@/lib/admin";
 import type { Database } from "@/integrations/supabase/types";
 import {
   Users, Search, Shield, Crown, FileText, Sparkles,
   ChevronDown, Loader2, Pencil, Trash2,
+  ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight,
 } from "lucide-react";
+
+// ─── Security: Pagination Constants ──────────────────────────────────────────────
+const PAGE_SIZE = 50; // Max users per page to prevent DoS
 
 export const Route = createFileRoute("/_authenticated/admin/users")({
   head: () => buildSeo({ title: "Admin Users — CV Pintar", description: "Kelola pengguna.", path: "/admin/users", noindex: true }),
@@ -32,6 +37,13 @@ interface UserRow {
   created_at: string;
 }
 
+interface PaginationState {
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+}
+
 function AdminUsersPage() {
   const [users, setUsers] = useState<UserRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -41,46 +53,78 @@ function AdminUsersPage() {
   const [editTier, setEditTier] = useState("");
   const [editRole, setEditRole] = useState("");
   const [saving, setSaving] = useState(false);
+  const [pagination, setPagination] = useState<PaginationState>({
+    page: 1,
+    pageSize: PAGE_SIZE,
+    total: 0,
+    totalPages: 0,
+  });
 
-  useEffect(() => { loadUsers(); }, []);
-
-  const loadUsers = async () => {
+  // Load users with pagination
+  const loadUsers = useCallback(async (page: number = 1) => {
     setLoading(true);
-
-    // Get all profiles
-    const { data: profiles } = await supabase.from("profiles").select("id, full_name, created_at");
-
-    // Get user subscriptions with tier
-    const { data: subs } = await supabase
-      .from("user_subscriptions")
-      .select("user_id, status, subscription_tiers!inner(slug)");
-    const { data: roles } = await supabase.from("user_roles").select("*");
-
-    // Get CV counts per user
-    const { data: cvs } = await supabase.from("cvs").select("user_id");
-
-    // Get AI usage counts this month
-    const monthStart = new Date();
-    monthStart.setDate(1);
-    monthStart.setHours(0, 0, 0, 0);
-    const { data: aiUsage } = await supabase
-      .from("ai_usage")
-      .select("user_id")
-      .gte("created_at", monthStart.toISOString());
-
-    // Aggregate
+    
+    const offset = (page - 1) * PAGE_SIZE;
+    
+    // Get total count first (for pagination info)
+    const { count: totalCount } = await supabase
+      .from("profiles")
+      .select("*", { count: "exact", head: true });
+    
+    // Get paginated profiles
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("id, full_name, created_at")
+      .order("created_at", { ascending: false })
+      .range(offset, offset + PAGE_SIZE - 1);
+    
+    // Get user IDs for related data
+    const userIds = (profiles || []).map((p) => p.id);
+    
+    // Fetch all related data in parallel (with pagination, this is manageable)
+    const [subs, roles, cvs, aiUsage] = await Promise.all([
+      // Get user subscriptions with tier
+      userIds.length > 0 
+        ? supabase
+            .from("user_subscriptions")
+            .select("user_id, status, subscription_tiers!inner(slug)")
+            .in("user_id", userIds)
+        : { data: [] },
+      // Get user roles
+      userIds.length > 0 
+        ? supabase.from("user_roles").select("*").in("user_id", userIds)
+        : { data: [] },
+      // Get CV counts per user
+      userIds.length > 0 
+        ? supabase.from("cvs").select("user_id").in("user_id", userIds)
+        : { data: [] },
+      // Get AI usage counts this month
+      userIds.length > 0 
+        ? supabase
+            .from("ai_usage")
+            .select("user_id")
+            .in("user_id", userIds)
+            .gte("created_at", new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString())
+        : { data: [] },
+    ]);
+    
+    // Aggregate data
     const cvCountMap: Record<string, number> = {};
-    cvs?.forEach((c: any) => { cvCountMap[c.user_id] = (cvCountMap[c.user_id] || 0) + 1; });
-
+    (cvs.data || []).forEach((c: any) => { 
+      cvCountMap[c.user_id] = (cvCountMap[c.user_id] || 0) + 1; 
+    });
+    
     const aiCountMap: Record<string, number> = {};
-    aiUsage?.forEach((a: any) => { aiCountMap[a.user_id] = (aiCountMap[a.user_id] || 0) + 1; });
-
+    (aiUsage.data || []).forEach((a: any) => { 
+      aiCountMap[a.user_id] = (aiCountMap[a.user_id] || 0) + 1; 
+    });
+    
     const subMap: Record<string, any> = {};
-    subs?.forEach((s: any) => { subMap[s.user_id] = s; });
-
+    (subs.data || []).forEach((s: any) => { subMap[s.user_id] = s; });
+    
     const roleMap: Record<string, string> = {};
-    roles?.forEach((r: any) => { roleMap[r.user_id] = r.role; });
-
+    (roles.data || []).forEach((r: any) => { roleMap[r.user_id] = r.role; });
+    
     const userRows: UserRow[] = (profiles || []).map((p: any) => ({
       id: p.id,
       full_name: p.full_name,
@@ -91,10 +135,42 @@ function AdminUsersPage() {
       ai_count: aiCountMap[p.id] || 0,
       created_at: p.created_at,
     }));
-
-    setUsers(userRows);
+    
+    // Apply client-side filters
+    let filteredRows = userRows;
+    if (filterTier !== "all") {
+      filteredRows = filteredRows.filter((u) => u.tier === filterTier);
+    }
+    if (search) {
+      const q = search.toLowerCase();
+      filteredRows = filteredRows.filter(
+        (u) =>
+          u.full_name?.toLowerCase().includes(q) ||
+          u.id.toLowerCase().includes(q)
+      );
+    }
+    
+    const total = totalCount || 0;
+    setUsers(filteredRows);
+    setPagination({
+      page,
+      pageSize: PAGE_SIZE,
+      total,
+      totalPages: Math.ceil(total / PAGE_SIZE),
+    });
     setLoading(false);
-  };
+  }, [filterTier, search]); // Re-run when filters change
+  
+  // Initial load and filter changes
+  useEffect(() => {
+    loadUsers(pagination.page);
+  }, [pagination.page]);
+  
+  // Handle filter/search changes - reset to page 1
+  useEffect(() => {
+    setPagination(prev => ({ ...prev, page: 1 }));
+    loadUsers(1);
+  }, [filterTier, search]);
 
   const handleEdit = (u: UserRow) => {
     setEditUser(u);
@@ -132,13 +208,28 @@ function AdminUsersPage() {
       } else {
         await supabase.from("user_roles").insert({ user_id: editUser.id, role: "user" });
       }
+      
+      // SECURITY: Invalidate admin cache for this user
+      invalidateAdminCache(editUser.id);
     }
 
     toast.success(`User ${editUser.full_name || editUser.id.slice(0, 8)} diupdate`);
     setEditUser(null);
     setSaving(false);
-    loadUsers();
+    loadUsers(pagination.page);
   };
+  
+  // Pagination handlers
+  const goToPage = (page: number) => {
+    if (page >= 1 && page <= pagination.totalPages) {
+      setPagination(prev => ({ ...prev, page }));
+    }
+  };
+  
+  const goToFirstPage = () => goToPage(1);
+  const goToLastPage = () => goToPage(pagination.totalPages);
+  const goToPrevPage = () => goToPage(pagination.page - 1);
+  const goToNextPage = () => goToPage(pagination.page + 1);
 
   const filtered = users.filter((u) => {
     if (filterTier !== "all" && u.tier !== filterTier) return false;
@@ -161,7 +252,7 @@ function AdminUsersPage() {
           <h2 className="text-lg font-semibold flex items-center gap-2">
             <Users className="h-5 w-5" /> Manage Users
           </h2>
-          <p className="text-sm text-muted-foreground">{users.length} pengguna terdaftar</p>
+          <p className="text-sm text-muted-foreground">{pagination.total} pengguna terdaftar</p>
         </div>
       </div>
 
@@ -242,6 +333,58 @@ function AdminUsersPage() {
           </p>
         )}
       </div>
+      
+      {/* ─── Security: Pagination Controls ─────────────────────────────────────── */}
+      {pagination.totalPages > 1 && (
+        <div className="flex items-center justify-between px-2 py-4 border-t">
+          <p className="text-sm text-muted-foreground">
+            Menampilkan {((pagination.page - 1) * pagination.pageSize) + 1}–
+            {Math.min(pagination.page * pagination.pageSize, pagination.total)} dari {pagination.total}
+          </p>
+          
+          <div className="flex items-center gap-1">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={goToFirstPage}
+              disabled={pagination.page === 1}
+              className="hidden sm:flex"
+            >
+              <ChevronsLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={goToPrevPage}
+              disabled={pagination.page === 1}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            
+            <span className="px-3 text-sm">
+              Halaman {pagination.page} dari {pagination.totalPages}
+            </span>
+            
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={goToNextPage}
+              disabled={pagination.page === pagination.totalPages}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={goToLastPage}
+              disabled={pagination.page === pagination.totalPages}
+              className="hidden sm:flex"
+            >
+              <ChevronsRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Edit User Dialog */}
       <Dialog open={!!editUser} onOpenChange={(v) => { if (!v) setEditUser(null); }}>

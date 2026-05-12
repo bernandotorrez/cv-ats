@@ -1,14 +1,41 @@
+# =====================================================
 # Environment variables - NEVER commit these!
+# =====================================================
+
+# Standard env files
 .env
 .env.local
 .env.production
 .env.*.local
+.env.production.local
 
-# ⚠️ SECURITY: Never commit files containing secrets
-# If you accidentally committed secrets:
-# 1. Immediately rotate ALL affected API keys
-# 2. Use git filter-branch or BFG Repo-Cleaner to remove history
-# 3. Review security-audit.md for response procedures
+# Cloudflare Workers local dev vars (contains SERVER-SIDE SECRETS)
+.dev.vars
+.dev.vars.local
+
+# Supabase local secrets
+.supabase/functions/**/secrets.json
+
+# ⚠️ SECURITY ALERT: If you accidentally committed secrets:
+# =====================================================
+# 1. IMMEDIATELY rotate ALL affected API keys in:
+#    - Supabase Dashboard → Project Settings → API
+#    - AI Gateway provider dashboard
+#    - Midtrans Dashboard
+#    - Resend/Email provider dashboard
+#    - hCaptcha Dashboard
+#
+# 2. Remove from git history:
+#    - BFG Repo-Cleaner: java -jar bfg.jar --delete-files filename
+#    - Or: git filter-branch --force --index-filter \
+#            'git rm --cached --ignore-unmatch filename' --prune-empty --tag-name-filter cat -- --all
+#
+# 3. Force push (with team coordination):
+#    - git push origin --force --all
+#    - git push origin --force --tags
+#
+# 4. Review SECURITY_AUDIT_REPORT.md → Emergency Response section
+# =====================================================
 
 # Logs
 logs
