@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /cv
+Disallow: /akun
+Disallow: /_authenticated/
+Disallow: /admin/
+
+Sitemap: https://cvats.id/sitemap.xml

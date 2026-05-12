@@ -40,13 +40,26 @@ export const Route = createFileRoute("/panduan-cv-ats")({
       path: "/panduan-cv-ats",
       type: "article",
       keywords: "cara buat cv ats, panduan CV Pintar, format cv ats, contoh cv ats friendly",
-      jsonLd: {
-        "@context": "https://schema.org",
-        "@type": "Article",
-        headline: "Panduan Lengkap Membuat CV ATS Friendly 2026",
-        inLanguage: "id-ID",
-        author: { "@type": "Organization", name: "CV Pintar" },
-      },
+      jsonLd: [
+        {
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            { "@type": "ListItem", position: 1, name: "Beranda", item: "https://cvats.id" },
+            { "@type": "ListItem", position: 2, name: "Panduan CV ATS" },
+          ],
+        },
+        {
+          "@context": "https://schema.org",
+          "@type": "Article",
+          headline: "Panduan Lengkap Membuat CV ATS Friendly 2026",
+          inLanguage: "id-ID",
+          author: { "@type": "Organization", name: "CV Pintar" },
+          publisher: { "@type": "Organization", name: "CV Pintar", url: "https://cvats.id" },
+          datePublished: "2026-05-05",
+          dateModified: "2026-05-05",
+        },
+      ],
     }),
   component: PanduanPage,
 });

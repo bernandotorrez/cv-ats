@@ -9,10 +9,13 @@ Allow: /
 Disallow: /dashboard
 Disallow: /cv
 Disallow: /akun
+Disallow: /_authenticated/
+Disallow: /admin/
+Disallow: /api/
 
 Sitemap: https://cvats.id/sitemap.xml
 `;
-        return new Response(body, { headers: { "Content-Type": "text/plain; charset=utf-8" } });
+        return new Response(body, { headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "public, max-age=86400" } });
       },
     },
   },
