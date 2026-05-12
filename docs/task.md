@@ -15,7 +15,7 @@ Sebelum menulis kode apapun, pastikan:
 - [x] Sudah baca `design.md` lengkap (terutama Color System dan Accessibility)
 - [x] Supabase project sudah dibuat (URL + Anon Key tersedia)
 - [x] Cloudflare/Vercel project sudah dibuat
-- [x] Domain `cvats.id` sudah dikonfigurasi
+- [x] Domain `cvpintar.web.id` sudah dikonfigurasi
 - [x] `.env` sudah diisi dengan semua environment variables
 
 ---

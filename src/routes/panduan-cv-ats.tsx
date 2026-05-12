@@ -45,7 +45,7 @@ export const Route = createFileRoute("/panduan-cv-ats")({
           "@context": "https://schema.org",
           "@type": "BreadcrumbList",
           itemListElement: [
-            { "@type": "ListItem", position: 1, name: "Beranda", item: "https://cvats.id" },
+            { "@type": "ListItem", position: 1, name: "Beranda", item: "https://cvpintar.web.id" },
             { "@type": "ListItem", position: 2, name: "Panduan CV ATS" },
           ],
         },
@@ -55,7 +55,7 @@ export const Route = createFileRoute("/panduan-cv-ats")({
           headline: "Panduan Lengkap Membuat CV ATS Friendly 2026",
           inLanguage: "id-ID",
           author: { "@type": "Organization", name: "CV Pintar" },
-          publisher: { "@type": "Organization", name: "CV Pintar", url: "https://cvats.id" },
+          publisher: { "@type": "Organization", name: "CV Pintar", url: "https://cvpintar.web.id" },
           datePublished: "2026-05-05",
           dateModified: "2026-05-05",
         },

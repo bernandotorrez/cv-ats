@@ -28,8 +28,8 @@
 - [x] Ubah `"Access-Control-Allow-Origin": "*"` menjadi origin spesifik
   ```ts
   const ALLOWED_ORIGINS = [
-    "https://cvats.id",
-    "https://www.cvats.id",
+    "https://cvpintar.web.id",
+    "https://www.cvpintar.web.id",
     "http://localhost:8000",  // development only
     "http://localhost:5173",  // vite dev
   ];

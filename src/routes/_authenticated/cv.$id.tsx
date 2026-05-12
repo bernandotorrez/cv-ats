@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { buildSeo } from "@/lib/seo";
 import { cn } from "@/lib/utils";
@@ -18,7 +18,7 @@ import { DownloadDropdown } from "@/components/cv/DownloadDropdown";
 import { WhatsAppShare } from "@/components/share/WhatsAppShare";
 import { TemplateGallery } from "@/components/cv/TemplateGallery";
 import { TEMPLATES, type CvData, type TemplateId, emptyCv } from "@/lib/cv-types";
-import { suggestSection, polishText } from "@/lib/ai-functions";
+import { suggestSection, polishText, parseCvUpload } from "@/lib/ai-functions";
 import { AiChatPanel } from "@/components/cv/AiChatPanel";
 import { AtsPreview } from "@/components/cv/AtsPreview";
 import { LinkedInImport } from "@/components/cv/LinkedInImport";
@@ -30,10 +30,12 @@ import { SuggestionPanel } from "@/components/ai/suggestion-panel";
 import { AtsScoreWidget } from "@/components/ai/score-widget";
 import { scoreCvLocally } from "@/lib/local-scoring";
 import { EditorSkeleton } from "@/components/ui/skeleton-loading";
+import { CvFileUpload } from "@/components/cv/CvFileUpload";
+import { extractCvText } from "@/lib/cv-text-extractor";
 import {
   ArrowLeft, Plus, Trash2, Save, Loader2, Sparkles, MessageSquare,
   BarChart3, Wrench, Share2, Copy, Check, Import, Palette, Download,
-  CheckCircle2, FileText, Eye, PanelLeftClose, PanelLeft, Linkedin,
+  CheckCircle2, FileText, Eye, PanelLeftClose, PanelLeft, Linkedin, Upload, ExternalLink,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/cv/$id")({
@@ -65,9 +67,17 @@ function CvEditorPage() {
   const [shareEnabled, setShareEnabled] = useState(false);
   const [shareToken, setShareToken] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [showShareDialog, setShowShareDialog] = useState(false);
+  const [shareGenerating, setShareGenerating] = useState(false);
+  const shareInputRef = useRef<HTMLInputElement>(null);
   const [showLinkedInImport, setShowLinkedInImport] = useState(false);
   const [showTemplatePicker, setShowTemplatePicker] = useState(false);
   const [showGuidedMode, setShowGuidedMode] = useState(search.guided === "true");
+  const [showCvUpload, setShowCvUpload] = useState(false);
+  const [cvUploadFile, setCvUploadFile] = useState<File | null>(null);
+  const [cvUploadExtracting, setCvUploadExtracting] = useState(false);
+  const [cvUploadParsing, setCvUploadParsing] = useState(false);
+  const [cvUploadError, setCvUploadError] = useState<string | null>(null);
   const [userTier, setUserTier] = useState("free");
   const [allowedTemplates, setAllowedTemplates] = useState<string[] | null>(null);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "unsaved">("idle");
@@ -190,29 +200,52 @@ function CvEditorPage() {
   };
 
   const handleToggleShare = async () => {
-    const newEnabled = !shareEnabled;
-    setShareEnabled(newEnabled);
-    if (newEnabled && !shareToken) {
-      const { data: rpcData } = await supabase.rpc("generate_share_token");
-      const token = rpcData as string;
-      setShareToken(token);
+    if (shareEnabled) {
+      // Disable share
+      setShareGenerating(true);
+      await (supabase as any).from("cvs").update({ share_enabled: false }).eq("id", id);
+      setShareEnabled(false);
+      setShowShareDialog(false);
+      setShareGenerating(false);
+      toast.success("Link share dinonaktifkan");
+      return;
+    }
+
+    // Enable share
+    setShareGenerating(true);
+    try {
+      let token = shareToken;
+      if (!token) {
+        const { data: rpcData, error: rpcError } = await supabase.rpc("generate_share_token");
+        if (rpcError) throw new Error(rpcError.message);
+        token = rpcData as string;
+        setShareToken(token);
+      }
+
       const { error } = await (supabase as any)
         .from("cvs").update({ share_enabled: true, share_token: token }).eq("id", id);
-      if (error) { toast.error(error.message); setShareEnabled(false); return; }
-      toast.success("Link share aktif!");
-    } else if (!newEnabled) {
-      await (supabase as any).from("cvs").update({ share_enabled: false }).eq("id", id);
-      toast.success("Link share dinonaktifkan");
-    } else {
-      await (supabase as any).from("cvs").update({ share_enabled: true }).eq("id", id);
-      toast.success("Link share diaktifkan kembali");
+      if (error) throw new Error(error.message);
+
+      setShareEnabled(true);
+      setShowShareDialog(true);
+      // Focus and select the link after dialog renders
+      setTimeout(() => {
+        shareInputRef.current?.select();
+      }, 100);
+    } catch (e: any) {
+      toast.error(e.message || "Gagal mengaktifkan share");
+      setShareEnabled(false);
+    } finally {
+      setShareGenerating(false);
     }
   };
 
   const handleCopyShareLink = async () => {
     if (!shareToken) return;
-    await navigator.clipboard.writeText(`${window.location.origin}/share/${shareToken}`);
-    setCopied(true); toast.success("Link disalin!");
+    const link = `https://cvpintar.web.id/share/${shareToken}`;
+    await navigator.clipboard.writeText(link);
+    setCopied(true);
+    toast.success("Link disalin!");
     setTimeout(() => setCopied(false), 2000);
   };
 
@@ -226,6 +259,56 @@ function CvEditorPage() {
     if (imported.personal) merged.personal = { ...data.personal, ...imported.personal };
     setData(merged as CvData);
     toast.success("Profil LinkedIn berhasil diimpor!");
+  };
+
+  const handleCvFileReady = (file: File) => {
+    setCvUploadFile(file);
+    setCvUploadError(null);
+  };
+
+  const handleCvUploadParse = async () => {
+    if (!cvUploadFile) return;
+    setCvUploadExtracting(true);
+    setCvUploadError(null);
+    try {
+      const { text } = await extractCvText(cvUploadFile);
+      setCvUploadExtracting(false);
+      setCvUploadParsing(true);
+
+      const result = await parseCvUpload({ data: { rawText: text } });
+      const parsed = result.cvData as Partial<CvData>;
+
+      // Merge with existing data (non-destructive)
+      const merged = { ...data, ...parsed };
+      if (parsed.experiences && Array.isArray(parsed.experiences) && parsed.experiences.length > 0) {
+        merged.experiences = parsed.experiences as any;
+      }
+      if (parsed.educations && Array.isArray(parsed.educations) && parsed.educations.length > 0) {
+        merged.educations = parsed.educations as any;
+      }
+      if (parsed.skills && Array.isArray(parsed.skills) && parsed.skills.length > 0) {
+        merged.skills = parsed.skills as any;
+      }
+      if (parsed.languages && Array.isArray(parsed.languages) && parsed.languages.length > 0) {
+        merged.languages = parsed.languages as any;
+      }
+      if (parsed.certificates && Array.isArray(parsed.certificates) && parsed.certificates.length > 0) {
+        merged.certificates = parsed.certificates as any;
+      }
+      if (parsed.personal) {
+        merged.personal = { ...data.personal, ...parsed.personal };
+      }
+
+      setData(merged as CvData);
+      setShowCvUpload(false);
+      setCvUploadFile(null);
+      toast.success("CV berhasil di-import!");
+    } catch (e: any) {
+      setCvUploadError(e.message || "Gagal membaca CV");
+    } finally {
+      setCvUploadExtracting(false);
+      setCvUploadParsing(false);
+    }
   };
 
   const updatePersonal = <K extends keyof CvData["personal"]>(k: K, v: CvData["personal"][K]) =>
@@ -317,40 +400,29 @@ function CvEditorPage() {
 
           <div className="ml-auto lg:ml-0 flex gap-1.5 flex-wrap">
             {/* Share Button */}
-            <div className="relative">
-              <Button
-                variant={shareEnabled ? "default" : "outline"}
-                size="sm"
-                className="h-8 text-xs gap-1.5"
-                onClick={handleToggleShare}
-              >
-                <Share2 className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">
-                  {shareEnabled ? "Link Aktif" : "Bagikan"}
-                </span>
-              </Button>
-              {shareEnabled && shareToken && (
-                <div className="absolute right-0 top-full mt-1 z-50 flex items-center gap-1 bg-card rounded-lg border border-border shadow-lg px-2 py-1.5">
-                  <code className="text-[11px] text-muted-foreground max-w-[180px] truncate hidden sm:block">
-                    .../share/{shareToken.slice(0, 8)}...
-                  </code>
-                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={handleCopyShareLink} title="Salin link">
-                    {copied ? <Check className="h-3.5 w-3.5 text-primary" /> : <Copy className="h-3.5 w-3.5" />}
-                  </Button>
-                  <WhatsAppShare
-                    shareUrl={`${window.location.origin}/share/${shareToken}`}
-                    cvId={id}
-                    fullName={data?.personal?.fullName}
-                    size="sm"
-                  />
-                </div>
-              )}
-            </div>
+            <Button
+              variant={shareEnabled ? "default" : "outline"}
+              size="sm"
+              className="h-8 text-xs gap-1.5"
+              onClick={handleToggleShare}
+              disabled={shareGenerating}
+            >
+              {shareGenerating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Share2 className="h-3.5 w-3.5" />}
+              <span className="hidden sm:inline">
+                {shareEnabled ? "Link Aktif" : "Bagikan"}
+              </span>
+            </Button>
             
             {/* LinkedIn Import Button */}
-            <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5" onClick={() => setShowLinkedInImport(true)}>
+            {/* <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5" onClick={() => setShowLinkedInImport(true)}>
               <Linkedin className="h-3.5 w-3.5 text-blue-600" />
               <span className="hidden sm:inline">Import LinkedIn</span>
+            </Button> */}
+
+            {/* Upload CV Button */}
+            <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5" onClick={() => { setShowCvUpload(true); setCvUploadFile(null); setCvUploadError(null); }}>
+              <Upload className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Upload CV</span>
             </Button>
             
             <Button asChild variant="ghost" size="sm" className="h-8 text-xs">
@@ -549,6 +621,101 @@ function CvEditorPage() {
             }}
             onCancel={() => setShowGuidedMode(false)}
           />
+        </DialogContent>
+      </Dialog>
+
+      {/* Upload CV Dialog */}
+      <Dialog open={showCvUpload} onOpenChange={(open) => { setShowCvUpload(open); if (!open) { setCvUploadFile(null); setCvUploadError(null); } }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-lg">
+              <Upload className="h-5 w-5" />
+              Upload CV yang Sudah Ada
+            </DialogTitle>
+            <DialogDescription className="text-sm">
+              Upload CV kamu dalam format PDF atau DOCX. AI akan membaca dan mengisi data otomatis.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <CvFileUpload
+              onFileReady={handleCvFileReady}
+              extracting={cvUploadExtracting}
+              error={cvUploadError}
+              currentFile={cvUploadFile}
+              onClear={() => { setCvUploadFile(null); setCvUploadError(null); }}
+            />
+            <Button
+              className="w-full gap-2"
+              disabled={!cvUploadFile || cvUploadExtracting || cvUploadParsing}
+              onClick={handleCvUploadParse}
+            >
+              {cvUploadParsing ? (
+                <><Loader2 className="h-4 w-4 animate-spin" /> AI membaca CV...</>
+              ) : cvUploadExtracting ? (
+                <><Loader2 className="h-4 w-4 animate-spin" /> Mengekstrak teks...</>
+              ) : (
+                <><Sparkles className="h-4 w-4" /> Parse & Isi CV</>
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Share Dialog */}
+      <Dialog open={showShareDialog} onOpenChange={(open) => { setShowShareDialog(open); if (!open) setCopied(false); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-lg">
+              <Share2 className="h-5 w-5 text-primary" />
+              Link CV Siap Dibagikan
+            </DialogTitle>
+            <DialogDescription className="text-sm">
+              Bagikan link ini agar orang lain bisa melihat CV kamu.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Input
+                ref={shareInputRef}
+                readOnly
+                value={`https://cvpintar.web.id/share/${shareToken || ""}`}
+                className="font-mono text-sm h-10"
+                onClick={(e) => (e.target as HTMLInputElement).select()}
+              />
+              <Button size="sm" className="h-10 gap-1.5 shrink-0" onClick={handleCopyShareLink}>
+                {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                {copied ? "Tersalin" : "Salin"}
+              </Button>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-muted-foreground">Bagikan via:</span>
+              <div className="flex gap-2">
+                <WhatsAppShare
+                  shareUrl={`https://cvpintar.web.id/share/${shareToken || ""}`}
+                  cvId={id}
+                  fullName={data?.personal?.fullName}
+                  size="sm"
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1"
+                  onClick={() => window.open(`https://cvpintar.web.id/share/${shareToken}`, "_blank")}
+                >
+                  <ExternalLink className="h-3.5 w-3.5" />
+                  Buka
+                </Button>
+              </div>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full text-muted-foreground"
+              onClick={() => handleToggleShare()}
+            >
+              Nonaktifkan Link Share
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

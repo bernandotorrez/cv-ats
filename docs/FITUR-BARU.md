@@ -1,4 +1,4 @@
-# FITUR BARU — CV Pintar (cvats.id)
+# FITUR BARU — CV Pintar (cvpintar.web.id)
 
 > **Product Manager Perspective**  
 > **Tanggal**: 8 Mei 2026  
@@ -37,7 +37,7 @@ Karena WhatsApp adalah platform komunikasi #1 di Indonesia, fitur ini akan mendo
 
 **Acceptance Criteria**:
 - Tombol "Bagikan via WhatsApp" di halaman CV & share
-- Teks template menarik: "✨ Lihat CV ATS-friendly aku! Dibuat dalam 10 menit pakai cvats.id"
+- Teks template menarik: "✨ Lihat CV ATS-friendly aku! Dibuat dalam 10 menit pakai cvpintar.web.id"
 - Link preview dengan OG image CV
 - Tracking: jumlah share via WhatsApp
 

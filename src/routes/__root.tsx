@@ -17,7 +17,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/lib/auth-context";
 import { Skeleton } from "@/components/ui/skeleton-loading";
 
-const SITE_URL = "https://cvats.id";
+const SITE_URL = "https://cvpintar.web.id";
 
 function NotFoundComponent() {
   return (

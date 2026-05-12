@@ -1,4 +1,5 @@
--- Shorten share token to 16 chars (from 32), no pgcrypto needed
+-- Fix generate_share_token: use gen_random_uuid() instead of gen_random_bytes()
+-- gen_random_bytes requires pgcrypto extension which may not be enabled
 CREATE OR REPLACE FUNCTION public.generate_share_token()
 RETURNS TEXT
 LANGUAGE plpgsql

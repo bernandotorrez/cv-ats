@@ -71,7 +71,7 @@ export function DownloadDropdown({ cv, fileName = "CV", templateId = "jakarta", 
         onClick={() => setOpen(!open)}
       >
         <Download className="h-3.5 w-3.5" />
-        <span>Download</span>
+        
         <ChevronDown className={`h-3 w-3 transition-transform ${open ? "rotate-180" : ""}`} />
       </Button>
 

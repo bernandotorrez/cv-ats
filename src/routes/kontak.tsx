@@ -14,10 +14,10 @@ export const Route = createFileRoute("/kontak")({
     <>
       <PageHero eyebrow="Kontak" title="Hubungi kami" description="Tim kami siap bantu di hari kerja, 09.00–18.00 WIB." />
       <div className="container-page max-w-2xl py-16 grid gap-4 sm:grid-cols-2">
-        <a href="mailto:halo@cvats.id" className="rounded-xl border border-border bg-card p-6 hover:shadow-md transition-shadow">
+        <a href="mailto:halo@cvpintar.web.id" className="rounded-xl border border-border bg-card p-6 hover:shadow-md transition-shadow">
           <Mail className="h-6 w-6 text-primary" />
           <div className="mt-3 font-display font-semibold">Email</div>
-          <div className="text-sm text-muted-foreground">halo@cvats.id</div>
+          <div className="text-sm text-muted-foreground">halo@cvpintar.web.id</div>
         </a>
         <a href="https://wa.me/6281234567890" target="_blank" rel="noopener noreferrer" className="rounded-xl border border-border bg-card p-6 hover:shadow-md transition-shadow">
           <MessageCircle className="h-6 w-6 text-primary" />

@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-const SITE_URL = "https://cvats.id";
+const SITE_URL = "https://cvpintar.web.id";
 
 const staticPaths: { path: string; priority: string; changefreq: "weekly" | "monthly" | "yearly"; lastmod: string }[] = [
   { path: "/", priority: "1.0", changefreq: "weekly", lastmod: "2026-05-10" },

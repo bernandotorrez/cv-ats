@@ -157,10 +157,10 @@ const sections = [
         <p className="mt-4 text-sm text-muted-foreground">
           Atau kirim email ke{" "}
           <a
-            href="mailto:halo@cvats.id"
+            href="mailto:halo@cvpintar.web.id"
             className="font-medium text-primary underline underline-offset-2"
           >
-            halo@cvats.id
+            halo@cvpintar.web.id
           </a>{" "}
           — kami proses maksimal 2×24 jam kerja.
         </p>
@@ -223,11 +223,11 @@ function KebijakanPrivasiPage() {
             langsung aja kirim email. Kami beneran baca dan balas.
           </p>
           <a
-            href="mailto:halo@cvats.id"
+            href="mailto:halo@cvpintar.web.id"
             className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-primary underline underline-offset-2"
           >
             <Mail className="h-4 w-4" />
-            halo@cvats.id
+            halo@cvpintar.web.id
           </a>
         </div>
       </article>

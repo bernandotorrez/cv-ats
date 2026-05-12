@@ -22,7 +22,7 @@ export const corsHeaders = {
 
 **Dampak**: Semua edge function merespon dengan `Access-Control-Allow-Origin: *`. Situs malicious manapun bisa membuat authenticated cross-origin request ke edge function jika user punya Supabase session token yang bocor (lewat XSS). Kombinasi dengan `Access-Control-Allow-Headers: authorization` memungkinkan credential-bearing requests dari origin manapun.
 
-**Rekomendasi**: Restrict ke domain spesifik (`https://cvats.id` + dev domain).
+**Rekomendasi**: Restrict ke domain spesifik (`https://cvpintar.web.id` + dev domain).
 
 ---
 

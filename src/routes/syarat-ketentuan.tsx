@@ -100,7 +100,7 @@ const sections = [
           {[
             "Kamu bertanggung jawab penuh atas semua aktivitas di akunmu.",
             "OTP login dikirim ke email — jangan dibagikan ke siapa pun.",
-            "Kalau ada aktivitas mencurigakan, laporkan segera ke halo@cvats.id.",
+            "Kalau ada aktivitas mencurigakan, laporkan segera ke halo@cvpintar.web.id.",
             "Kami berhak menangguhkan akun yang melanggar ketentuan ini.",
           ].map((item) => (
             <li key={item} className="flex gap-3 text-sm">
@@ -274,11 +274,11 @@ function SyaratKetentuanPage() {
             Kirim email kapan aja. Kami baca semua. Beneran.
           </p>
           <a
-            href="mailto:halo@cvats.id"
+            href="mailto:halo@cvpintar.web.id"
             className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-primary underline underline-offset-2"
           >
             <Mail className="h-4 w-4" />
-            halo@cvats.id
+            halo@cvpintar.web.id
           </a>
         </div>
       </article>

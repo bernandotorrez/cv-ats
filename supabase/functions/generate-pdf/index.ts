@@ -369,7 +369,7 @@ function generateSurabayaHtml(
     ` : ""}
   </div>
   
-  ${watermark ? '<div class="watermark">Dibuat dengan CV Pintar — cvats.id</div>' : ""}
+  ${watermark ? '<div class="watermark">Dibuat dengan CV Pintar — cvpintar.web.id</div>' : ""}
 </body>
 </html>`;
 }
@@ -521,7 +521,7 @@ function generateJakartaHtml(
   ${skillsHtml}
   ${langsHtml}
   ${certHtml}
-  ${watermark ? '<div class="watermark">Dibuat dengan CV Pintar — cvats.id</div>' : ""}
+  ${watermark ? '<div class="watermark">Dibuat dengan CV Pintar — cvpintar.web.id</div>' : ""}
 </body>
 </html>`;
 }

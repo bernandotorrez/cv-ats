@@ -28,18 +28,16 @@ CREATE POLICY "Users update own cvs" ON public.cvs
 CREATE POLICY "Users delete own cvs" ON public.cvs
   FOR DELETE USING (auth.uid() = user_id);
 
--- Function to generate share token
+-- Function to generate share token (no pgcrypto needed)
 CREATE OR REPLACE FUNCTION public.generate_share_token()
 RETURNS TEXT
 LANGUAGE plpgsql
 SET search_path = public
 AS $$
 DECLARE
-  new_token TEXT;
+  raw_hex TEXT;
 BEGIN
-  new_token := encode(gen_random_bytes(24), 'base64');
-  -- Replace URL-unsafe characters
-  new_token := replace(replace(replace(new_token, '+', '-'), '/', '_'), '=', '');
-  RETURN new_token;
+  raw_hex := replace(gen_random_uuid()::text || gen_random_uuid()::text, '-', '');
+  RETURN substr(raw_hex, 1, 16);
 END;
 $$;

@@ -4,7 +4,7 @@
  * Applied to all HTTP responses via server.ts wrapper.
  */
 
-// CSP directives tailored for cvats.id
+// CSP directives tailored for cvpintar.web.id
 //
 // SECURITY NOTE: These directives contain 'unsafe-inline' and 'unsafe-eval' for the following reasons:
 // - 'unsafe-inline': Required by Tailwind CSS and inline styles used by shadcn/ui components
@@ -53,7 +53,7 @@ export const SECURITY_HEADERS: Record<string, string> = {
   "X-DNS-Prefetch-Control": "on",
 
   // Informasi server minimal (jangan tampilkan tech stack)
-  "Server": "cvats.id",
+  "Server": "cvpintar.web.id",
 };
 
 /**

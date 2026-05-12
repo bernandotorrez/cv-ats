@@ -1,4 +1,4 @@
-const SITE_URL = "https://cvats.id";
+const SITE_URL = "https://cvpintar.web.id";
 const OG_IMAGE_WIDTH = "1200";
 const OG_IMAGE_HEIGHT = "630";
 const OG_IMAGE_ALT = "CV Pintar — Buat CV ATS Friendly dengan AI";

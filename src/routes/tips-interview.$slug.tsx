@@ -543,8 +543,8 @@ export const Route = createFileRoute("/tips-interview/$slug")({
           "@context": "https://schema.org",
           "@type": "BreadcrumbList",
           itemListElement: [
-            { "@type": "ListItem", position: 1, name: "Beranda", item: "https://cvats.id" },
-            { "@type": "ListItem", position: 2, name: "Tips Interview", item: "https://cvats.id/tips-interview" },
+            { "@type": "ListItem", position: 1, name: "Beranda", item: "https://cvpintar.web.id" },
+            { "@type": "ListItem", position: 2, name: "Tips Interview", item: "https://cvpintar.web.id/tips-interview" },
             { "@type": "ListItem", position: 3, name: tip.title },
           ],
         },
@@ -558,7 +558,7 @@ export const Route = createFileRoute("/tips-interview/$slug")({
           dateModified: tip.date,
           inLanguage: "id-ID",
           author: { "@type": "Organization", name: "CV Pintar" },
-          publisher: { "@type": "Organization", name: "CV Pintar", url: "https://cvats.id" },
+          publisher: { "@type": "Organization", name: "CV Pintar", url: "https://cvpintar.web.id" },
         },
       ],
     });

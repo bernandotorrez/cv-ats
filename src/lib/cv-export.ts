@@ -348,7 +348,7 @@ export async function generateDocx(cv: CvData, options: ExportOptions): Promise<
     sections.push(
       new Paragraph({
         children: [
-          new TextRun({ text: "Dibuat dengan CV Pintar — cvats.id", size: 18, font: FONT_NAME, color: "999999" }),
+          new TextRun({ text: "Dibuat dengan CV Pintar — cvpintar.web.id", size: 18, font: FONT_NAME, color: "999999" }),
         ],
         alignment: AlignmentType.CENTER,
         spacing: { before: 400 },

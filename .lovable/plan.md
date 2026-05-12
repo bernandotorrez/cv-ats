@@ -95,10 +95,10 @@ Quota di-enforce di server function via cek `ai_usage` + `subscriptions.tier`.
 - `head()` per route dengan title <60 char + meta description <160 char unik. Format: `Judul Halaman | CV Pintar`.
 - Keywords target: "buat cv ats", "contoh CV Pintar", "template cv ats gratis", "cv generator ai indonesia", "tips interview kerja", dll.
 - Single H1 per page, semantic `<header><main><article><section>`, alt text deskriptif.
-- JSON-LD: `Organization`, `WebSite` di root; `Article` di blog/tips; `FAQPage` di landing & harga; `Product` + `Offer` di harga; `BreadcrumbList`.
+namis (gabung route statis + slug dari `interview_tips` & `blog`), `/robots.txt` allow - JSON-LD: `Organization`, `WebSite` di root; `Article` di blog/tips; `FAQPage` di landing & harga; `Product` + `Offer` di harga; `BreadcrumbList`.
 - `<link rel="canonical">` per route.
 - `og:image` 1200x630 unik untuk landing & artikel utama (di-generate sebagai asset).
-- Server route `/sitemap.xml` dinamis (gabung route statis + slug dari `interview_tips` & `blog`), `/robots.txt` allow + sitemap link.
+- Server route `/sitemap.xml` di+ sitemap link.
 - Open Graph & Twitter card lengkap, lang="id".
 - Performance: lazy-load images, preconnect ke Supabase, route preload TanStack — penting untuk Core Web Vitals (signal SEO).
 

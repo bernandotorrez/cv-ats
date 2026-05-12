@@ -172,3 +172,14 @@ export async function polishText(input: {
     polished: string;
   }>;
 }
+
+export async function parseCvUpload(input: {
+  data: {
+    rawText: string;
+  };
+}) {
+  return callEdge("ai-parse-cv", input.data) as Promise<{
+    success: boolean;
+    cvData: Record<string, unknown>;
+  }>;
+}

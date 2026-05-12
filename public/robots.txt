@@ -6,4 +6,4 @@ Disallow: /akun
 Disallow: /_authenticated/
 Disallow: /admin/
 
-Sitemap: https://cvats.id/sitemap.xml
+Sitemap: https://cvpintar.web.id/sitemap.xml

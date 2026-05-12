@@ -15,7 +15,7 @@ import { checkRateLimit } from "../_shared/rate-limit.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") || "";
-const FROM_EMAIL = "CV Pintar <noreply@cvats.id>";
+const FROM_EMAIL = "CV Pintar <noreply@cvpintar.web.id>";
 
 interface EmailPayload {
   to?: string;

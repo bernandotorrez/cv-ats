@@ -90,8 +90,8 @@ export const Route = createFileRoute("/blog/$slug")({
           "@context": "https://schema.org",
           "@type": "BreadcrumbList",
           itemListElement: [
-            { "@type": "ListItem", position: 1, name: "Beranda", item: "https://cvats.id" },
-            { "@type": "ListItem", position: 2, name: "Blog", item: "https://cvats.id/blog" },
+            { "@type": "ListItem", position: 1, name: "Beranda", item: "https://cvpintar.web.id" },
+            { "@type": "ListItem", position: 2, name: "Blog", item: "https://cvpintar.web.id/blog" },
             { "@type": "ListItem", position: 3, name: post.title },
           ],
         },
@@ -105,7 +105,7 @@ export const Route = createFileRoute("/blog/$slug")({
           dateModified: post.date,
           inLanguage: "id-ID",
           author: { "@type": "Organization", name: "CV Pintar" },
-          publisher: { "@type": "Organization", name: "CV Pintar", url: "https://cvats.id" },
+          publisher: { "@type": "Organization", name: "CV Pintar", url: "https://cvpintar.web.id" },
         },
       ],
     });
