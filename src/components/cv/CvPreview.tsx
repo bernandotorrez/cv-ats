@@ -1,4 +1,5 @@
 import type { CvData, TemplateId } from "@/lib/cv-types";
+import { useMemo } from "react";
 import type { SectionDef } from "./editor/SectionsNav";
 import {
   JakartaTemplate,
@@ -10,6 +11,35 @@ import {
   SemarangTemplate,
   BaliTemplate,
 } from "./templates";
+
+function formatDescription(text: string): string {
+  if (!text) return text;
+  return text
+    .split("\n")
+    .map((line) => {
+      const trimmed = line.trimStart();
+      if (trimmed.startsWith("- ")) {
+        const indent = line.length - trimmed.length;
+        return " ".repeat(indent) + "\u2022 " + trimmed.slice(2);
+      }
+      return line;
+    })
+    .join("\n");
+}
+
+function formatCvDescriptions(data: CvData): CvData {
+  return {
+    ...data,
+    experiences: data.experiences.map((e) => ({
+      ...e,
+      description: formatDescription(e.description),
+    })),
+    educations: data.educations.map((e) => ({
+      ...e,
+      description: e.description ? formatDescription(e.description) : e.description,
+    })),
+  };
+}
 
 interface Props {
   data: CvData;
@@ -35,25 +65,27 @@ export function CvPreview({
   totalPages = 1,
   sectionOrder,
 }: Props) {
+  const formattedData = useMemo(() => formatCvDescriptions(data), [data]);
+
   const renderTemplate = () => {
     switch (template) {
       case "bandung":
-        return <BandungTemplate data={data} sectionOrder={sectionOrder} />;
+        return <BandungTemplate data={formattedData} sectionOrder={sectionOrder} />;
       case "surabaya":
-        return <SurabayaTemplate data={data} sectionOrder={sectionOrder} />;
+        return <SurabayaTemplate data={formattedData} sectionOrder={sectionOrder} />;
       case "yogya":
-        return <YogyaTemplate data={data} sectionOrder={sectionOrder} />;
+        return <YogyaTemplate data={formattedData} sectionOrder={sectionOrder} />;
       case "medan":
-        return <MedanTemplate data={data} sectionOrder={sectionOrder} />;
+        return <MedanTemplate data={formattedData} sectionOrder={sectionOrder} />;
       case "makassar":
-        return <MakassarTemplate data={data} sectionOrder={sectionOrder} />;
+        return <MakassarTemplate data={formattedData} sectionOrder={sectionOrder} />;
       case "semarang":
-        return <SemarangTemplate data={data} sectionOrder={sectionOrder} />;
+        return <SemarangTemplate data={formattedData} sectionOrder={sectionOrder} />;
       case "bali":
-        return <BaliTemplate data={data} sectionOrder={sectionOrder} />;
+        return <BaliTemplate data={formattedData} sectionOrder={sectionOrder} />;
       case "jakarta":
       default:
-        return <JakartaTemplate data={data} sectionOrder={sectionOrder} />;
+        return <JakartaTemplate data={formattedData} sectionOrder={sectionOrder} />;
     }
   };
 
@@ -186,12 +218,13 @@ function renderTemplateById(
   data: CvData,
   showHeader: boolean
 ) {
+  const formatted = formatCvDescriptions(data);
   const dataWithHiddenHeader = showHeader
-    ? data
+    ? formatted
     : {
-        ...data,
+        ...formatted,
         personal: {
-          ...data.personal,
+          ...formatted.personal,
           fullName: "",
           headline: "",
           email: "",
