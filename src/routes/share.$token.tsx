@@ -1,11 +1,12 @@
 import { createFileRoute, notFound, Link } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { buildSeo, SITE_URL } from "@/lib/seo";
 import { Button } from "@/components/ui/button";
-import { CvPreview } from "@/components/cv/CvPreview";
-import { TEMPLATES, type CvData, type TemplateId, emptyCv } from "@/lib/cv-types";
+import { CvPreview, cvPrintStyles } from "@/components/cv/CvPreview";
+import type { CvData, TemplateId } from "@/lib/cv-types";
+import { emptyCv } from "@/lib/cv-types";
 import { supabase } from "@/integrations/supabase/client";
-import { FileText } from "lucide-react";
+import { FileText, Download, Printer, Share2 } from "lucide-react";
 import { WhatsAppShare } from "@/components/share/WhatsAppShare";
 
 export const Route = createFileRoute("/share/$token")({
@@ -20,9 +21,8 @@ export const Route = createFileRoute("/share/$token")({
     if (error || !data) throw notFound();
 
     const cvData = { ...emptyCv, ...(data.data as unknown as CvData) };
-    // Remove sensitive info
-    cvData.personal.email = "••••••••";
-    cvData.personal.phone = "••••••••";
+    cvData.personal.email = "\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022";
+    cvData.personal.phone = "\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022";
     cvData.personal.linkedin = "";
     cvData.personal.website = "";
 
@@ -33,14 +33,17 @@ export const Route = createFileRoute("/share/$token")({
       createdAt: data.created_at,
       cvId: data.id,
       userId: data.user_id,
+      fullName: cvData.personal.fullName,
+      headline: cvData.personal.headline,
+      token: params.token,
     };
   },
   head: ({ loaderData }: any) => {
     if (!loaderData) return { meta: [{ title: "CV tidak ditemukan" }], links: [], scripts: [] };
     return buildSeo({
-      title: `${loaderData.cvData.personal.fullName || "CV"} — CV Pintar`,
-      description: `CV profesional ${loaderData.cvData.personal.fullName || ""} — ${loaderData.cvData.personal.headline || ""}`,
-      path: `/share/${Route.useParams().token}`,
+      title: `${loaderData.fullName || "CV"} — CV ATS Friendly`,
+      description: `CV profesional ${loaderData.fullName || ""} — ${loaderData.headline || ""}. Dibuat dengan CV Pintar.`,
+      path: `/share/${loaderData.token}`,
       noindex: true,
     });
   },
@@ -61,10 +64,11 @@ export const Route = createFileRoute("/share/$token")({
 });
 
 function SharePage() {
-  const { title, templateId, cvData, createdAt, cvId, userId } = Route.useLoaderData();
-  const { token } = Route.useParams();
+  const { title, templateId, cvData, createdAt, cvId, userId, fullName, token } = Route.useLoaderData();
   const shareUrl = `${SITE_URL}/share/${token}`;
+  const [autoPrintDone, setAutoPrintDone] = useState(false);
 
+  // Log analytics view
   useEffect(() => {
     if (!cvId || !userId) return;
     (supabase as any).from("cv_analytics").insert({
@@ -74,22 +78,43 @@ function SharePage() {
     }).catch(() => {});
   }, [cvId, userId]);
 
+  // Auto-open print dialog after page loads (gives PDF view)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (!autoPrintDone) {
+        setAutoPrintDone(true);
+        window.print();
+      }
+    }, 2500);
+    return () => clearTimeout(timer);
+  }, [autoPrintDone]);
+
+  const handlePrint = () => {
+    window.print();
+  };
+
   return (
     <div className="min-h-screen bg-muted/30">
-      {/* Top Bar */}
+      <style>{cvPrintStyles}</style>
+
+      {/* Top Bar - hidden when printing */}
       <div className="border-b border-border bg-background/80 backdrop-blur sticky top-0 z-30 print:hidden">
         <div className="container-page flex items-center justify-between py-3">
           <div className="flex items-center gap-3">
             <div className="grid h-8 w-8 place-items-center rounded-lg bg-primary/10 text-primary">
               <FileText className="h-4 w-4" />
             </div>
-            <span className="text-sm font-medium">CV Pintar</span>
+            <span className="text-sm font-medium hidden sm:inline">CV Pintar</span>
           </div>
-          <div className="flex items-center gap-3">
-            <span className="text-xs text-muted-foreground">
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground hidden sm:inline">
               Dibagikan {new Date(createdAt).toLocaleDateString("id-ID")}
             </span>
-            <WhatsAppShare shareUrl={shareUrl} fullName={cvData.personal.fullName} size="sm" />
+            <WhatsAppShare shareUrl={shareUrl} fullName={fullName} size="sm" />
+            <Button size="sm" variant="outline" onClick={handlePrint} className="gap-1.5">
+              <Printer className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Cetak</span>
+            </Button>
             <Button asChild size="sm">
               <Link to="/register">Buat CV Sendiri</Link>
             </Button>
@@ -106,14 +131,37 @@ function SharePage() {
         </div>
       </div>
 
-      {/* Bottom CTA */}
+      {/* Bottom Actions - hidden when printing */}
       <div className="container-page py-8 text-center print:hidden">
-        <p className="text-sm text-muted-foreground mb-4">
-          CV ini dibuat dengan CV Pintar
-        </p>
-        <Button asChild variant="outline">
-          <Link to="/register">Buat CV ATS Friendly Gratis</Link>
-        </Button>
+        <div className="flex flex-col items-center gap-4">
+          <p className="text-sm text-muted-foreground">
+            CV ini dibuat dengan CV Pintar — Buat CV ATS friendly dalam 1 menit
+          </p>
+          <div className="flex flex-wrap gap-3 justify-center">
+            <Button onClick={handlePrint} size="lg" className="gap-2">
+              <Download className="h-4 w-4" />
+              Download / Cetak PDF
+            </Button>
+            <Button asChild variant="outline" size="lg">
+              <Link to="/register">Buat CV Gratis</Link>
+            </Button>
+          </div>
+          <div className="flex items-center gap-2 mt-2">
+            <span className="text-xs text-muted-foreground">Bagikan:</span>
+            <WhatsAppShare shareUrl={shareUrl} fullName={fullName} size="sm" />
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-1"
+              onClick={() => {
+                navigator.clipboard.writeText(shareUrl);
+              }}
+            >
+              <Share2 className="h-3.5 w-3.5" />
+              <span className="text-xs">Salin Link</span>
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   );
