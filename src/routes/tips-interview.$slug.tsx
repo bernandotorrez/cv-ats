@@ -140,7 +140,7 @@ const tipsContent: Record<string, TipContent> = {
         icon: "FileText",
         content: [
           "STAR = Situation, Task, Action, Result. Ini framework untuk jawab pertanyaan behavioral. Contoh: 'Ceritakan saat kamu menghadapi konflik di tim'.",
-          "Situation: Konteks situasinya. Task: Apa tugamu. Action: Apa yang kamu lakukan. Result: Hasilnya apa (最好 ada angka).",
+          "Situation: Konteks situasinya. Task: Apa tugamu. Action: Apa yang kamu lakukan. Result: Hasilnya apa (sebaiknya ada angka).",
           "Untuk fresh graduate, siapkan 3-5 cerita dari pengalaman organisasi, project kuliah, magang, atau volunteer. Cerita yang spesifik lebih convincing daripada yang generik.",
         ],
       },
@@ -804,3 +804,4 @@ function TipDetailPage() {
     </article>
   );
 }
+
