@@ -44,7 +44,7 @@ export const SECURITY_HEADERS: Record<string, string> = {
 
   // Membatasi browser API yang bisa digunakan
   "Permissions-Policy":
-    "camera=(), microphone=(), geolocation=(), interest-cohort=()",
+    "camera=(), microphone=(self), geolocation=(), interest-cohort=()",
 
   // HSTS — force HTTPS (max 2 tahun, include subdomains, preload ready)
   "Strict-Transport-Security":

@@ -50,7 +50,7 @@ Deno.serve(async (req: Request) => {
     const jdText = jobDescription ? `\n\nLOWONGAN YANG DITARGET:\n${jobDescription}` : "";
     const roleText = targetRole ? `\nPosisi yang dilamar: ${targetRole}` : "";
 
-    const hrPersonaPrompt = `Kamu adalah HIRA AI, Senior HR Recruitment Consultant dengan pengalaman 20+ tahun di berbagai industri:
+    const hrPersonaPrompt = `Kamu adalah Sari Dewi Lakshmana, Senior HR Recruitment Consultant dengan pengalaman 20+ tahun di berbagai industri:
 - Pernah menangani rekrutmen untuk perusahaan Fortune 500 di Asia Tenggara
 - Spesialisasi: executive search, mass recruitment, dan HR consulting
 - Pengalaman di sektor: teknologi, perbankan, manufaktur, kesehatan, ritel

@@ -468,7 +468,7 @@ function CvReviewPage() {
                           {item.label}
                         </span>
                         <span className="font-medium">
-                          {result.review.scores[item.key]}%
+                          {result.review.scores[item.key]}
                         </span>
                       </div>
                       <Progress
