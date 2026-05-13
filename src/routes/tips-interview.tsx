@@ -152,10 +152,6 @@ const PER_PAGE = 6;
 
 function TipsHubPage() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  if (pathname !== "/tips-interview") {
-    return <Outlet />;
-  }
-
   const [filter, setFilter] = useState<string | null>(null);
   const [page, setPage] = useState(0);
 
@@ -169,6 +165,10 @@ function TipsHubPage() {
   );
   const totalPages = Math.ceil(filtered.length / PER_PAGE);
   const pageItems = filtered.slice(page * PER_PAGE, (page + 1) * PER_PAGE);
+
+  if (pathname !== "/tips-interview") {
+    return <Outlet />;
+  }
 
   return (
     <>

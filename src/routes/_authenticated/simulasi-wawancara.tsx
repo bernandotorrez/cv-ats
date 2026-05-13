@@ -40,10 +40,6 @@ interface Session {
 
 function SimulasiWawancaraPage() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  if (pathname !== "/simulasi-wawancara") {
-    return <Outlet />;
-  }
-
   const { user } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -58,6 +54,10 @@ function SimulasiWawancaraPage() {
     if (!user?.id) return;
     loadData();
   }, [user?.id]);
+
+  if (pathname !== "/simulasi-wawancara") {
+    return <Outlet />;
+  }
 
   const loadData = async () => {
     const t = await getUserTier(user!.id);

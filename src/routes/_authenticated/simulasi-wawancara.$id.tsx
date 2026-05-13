@@ -63,7 +63,7 @@ function InterviewSessionPage() {
 
   useEffect(() => {
     loadSession();
-  }, [id]);
+  }, [id, user?.id]);
 
   useEffect(() => {
     const count = questions.filter(q => answers[q.id]?.trim()).length;
@@ -71,30 +71,39 @@ function InterviewSessionPage() {
   }, [answers, questions]);
 
   const loadSession = async () => {
-    const { data, error } = await (supabase as any)
-      .from("interview_sessions")
-      .select("*")
-      .eq("id", id)
-      .eq("user_id", user?.id)
-      .single();
+    try {
+      const { data, error } = await (supabase as any)
+        .from("interview_sessions")
+        .select("*")
+        .eq("id", id)
+        .eq("user_id", user?.id)
+        .single();
 
-    if (error || !data) throw notFound();
+      if (error || !data) {
+        toast.error("Sesi tidak ditemukan.");
+        setStep("loading");
+        return;
+      }
 
-    if (data.questions?.length > 0 && data.answers?.length > 0 && data.overall_score != null) {
-      setSession(data as SessionData);
-      setQuestions(data.questions);
-      setStep("results");
-    } else if (data.questions?.length > 0) {
-      setQuestions(data.questions);
-      setAnswers(Object.fromEntries((data.answers || []).map((a: any) => [a.id, a.answer])));
-      setStep("answering");
-    } else {
-      setSession({ id: data.id, position: data.position, level: data.level, industry: data.industry, questions: [], answers: [], scores: [], overall_score: 0, feedback: "" });
-      setStep("generating");
-      generateQuestions(data.id, data.position, data.level, data.industry);
+      if (data.questions?.length > 0 && data.answers?.length > 0 && data.overall_score != null) {
+        setSession(data as SessionData);
+        setQuestions(data.questions);
+        setStep("results");
+      } else if (data.questions?.length > 0) {
+        setQuestions(data.questions);
+        setAnswers(Object.fromEntries((data.answers || []).map((a: any) => [a.id, a.answer])));
+        setStep("answering");
+      } else {
+        setSession({ id: data.id, position: data.position, level: data.level, industry: data.industry, questions: [], answers: [], scores: [], overall_score: 0, feedback: "" });
+        setStep("generating");
+        generateQuestions(data.id, data.position, data.level, data.industry);
+      }
+    } catch (e: any) {
+      toast.error("Gagal memuat sesi: " + (e.message || "Terjadi kesalahan"));
+      setStep("loading");
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   const generateQuestions = async (sessionId: string, position: string, level: string, industry: string) => {
@@ -119,7 +128,7 @@ function InterviewSessionPage() {
       await (supabase as any).from("interview_sessions").update({ questions: qs }).eq("id", sessionId);
     } catch (e: any) {
       toast.error("Gagal generate pertanyaan: " + e.message);
-      setStep("loading");
+      setStep("generating");
     }
   };
 
@@ -386,6 +395,16 @@ function InterviewSessionPage() {
             <p className="mt-2 text-sm text-muted-foreground max-w-sm">
               Setiap jawaban akan dinilai berdasarkan relevansi, struktur, dampak, dan kepercayaan diri.
             </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* ── Loading / Error Fallback ── */}
+      {step === "loading" && (
+        <Card className="border-2 border-primary/10 bg-gradient-to-br from-primary/5 via-card to-card">
+          <CardContent className="flex flex-col items-center py-16 text-center">
+            <Loader2 className="h-10 w-10 text-primary animate-spin mb-4" />
+            <h3 className="font-display text-lg font-bold">Memuat sesi...</h3>
           </CardContent>
         </Card>
       )}
