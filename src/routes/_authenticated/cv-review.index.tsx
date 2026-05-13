@@ -10,8 +10,8 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/lib/auth-context";
 import { getUserTierConfig } from "@/lib/subscription";
-import { reviewCvUpload, type CvReviewResult } from "@/lib/ai-functions";
-import { extractCvText } from "@/lib/cv-text-extractor";
+import { reviewCvUpload, type CvReviewResult, extractCvTextWithAi } from "@/lib/ai-functions";
+import { extractCvText, renderPdfToImages } from "@/lib/cv-text-extractor";
 import { CvFileUpload } from "@/components/cv/CvFileUpload";
 import {
   ArrowLeft,
@@ -78,6 +78,40 @@ function CvReviewUploadPage() {
     setResult(null);
     try {
       const { text, fileType: ft, pageCount: pc } = await extractCvText(file);
+      const minChars = 50;
+
+      if (text.trim().length < minChars && ft === "pdf") {
+        toast.info("CV tampaknya berupa gambar. Mencoba ekstraksi dengan AI...");
+        try {
+          const images = await renderPdfToImages(file);
+          if (images.length > 0) {
+            const aiResult = await extractCvTextWithAi({
+              data: { images, fileName: file.name },
+            });
+            const aiText = aiResult.text.trim();
+            if (aiText.length >= minChars) {
+              setExtractedText(aiText);
+              setFileName(file.name);
+              setFileType(ft);
+              setPageCount(pc);
+              toast.success(`CV berhasil dibaca dengan AI OCR — ${aiText.length.toLocaleString()} karakter`);
+              return;
+            }
+          }
+        } catch (aiErr: any) {
+          console.warn("AI OCR fallback gagal:", aiErr);
+        }
+        setFileError("CV ini tampaknya berupa gambar/scanned dan tidak bisa diekstrak teksnya. Gunakan CV berbasis teks (bukan hasil scan gambar).");
+        setCurrentFile(null);
+        return;
+      }
+
+      if (text.trim().length < minChars) {
+        setFileError("Teks yang diekstrak terlalu sedikit. Pastikan CV berisi teks yang cukup.");
+        setCurrentFile(null);
+        return;
+      }
+
       setExtractedText(text);
       setFileName(file.name);
       setFileType(ft);
@@ -303,7 +337,7 @@ function CvReviewUploadPage() {
                   </div>
                   <div>
                     <h3 className="font-display font-semibold">
-                      {result.review.reviewer.name}
+                      Hira AI
                     </h3>
                     <p className="text-sm text-muted-foreground">
                       {result.review.reviewer.title} ·{" "}

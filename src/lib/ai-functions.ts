@@ -183,3 +183,14 @@ export async function parseCvUpload(input: {
     cvData: Record<string, unknown>;
   }>;
 }
+
+export async function extractCvTextWithAi(input: {
+  data: {
+    images: string[];
+    fileName: string;
+  };
+}) {
+  return callEdge("ai-extract-text", input.data) as Promise<{
+    text: string;
+  }>;
+}

@@ -54,6 +54,39 @@ export async function extractCvText(file: File): Promise<ExtractionResult> {
   throw new Error("Format file tidak didukung. Unggah file PDF atau DOCX.");
 }
 
+/**
+ * Render halaman PDF menjadi array base64 PNG (untuk OCR via AI multimodal).
+ * Hanya dipanggil saat ekstraksi teks biasa gagal (PDF gambar/scanned).
+ * Max 5 halaman untuk menjaga performa.
+ */
+export async function renderPdfToImages(file: File): Promise<string[]> {
+  const arrayBuffer = await file.arrayBuffer();
+  const pdfjs = await import("pdfjs-dist");
+  pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+    "pdfjs-dist/build/pdf.worker.min.mjs",
+    import.meta.url,
+  ).toString();
+
+  const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
+  const maxPages = Math.min(pdf.numPages, 10);
+  const images: string[] = [];
+
+  for (let i = 1; i <= maxPages; i++) {
+    const page = await pdf.getPage(i);
+    const viewport = page.getViewport({ scale: 1.5 });
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d")!;
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+
+    await page.render({ canvasContext: ctx, viewport } as any).promise;
+    const base64 = canvas.toDataURL("image/png").replace(/^data:image\/png;base64,/, "");
+    images.push(base64);
+  }
+
+  return images;
+}
+
 export function validateCvFile(file: File): string | null {
   const validExtensions = [".pdf", ".docx"];
   const validMimes = [

@@ -416,7 +416,7 @@ function CvReviewPage() {
                   </div>
                   <div>
                     <h3 className="font-display font-semibold">
-                      {result.review.reviewer.name}
+                      Hira AI
                     </h3>
                     <p className="text-sm text-muted-foreground">
                       {result.review.reviewer.title} ·{" "}
