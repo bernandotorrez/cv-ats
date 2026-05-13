@@ -18,7 +18,7 @@ import { DownloadDropdown } from "@/components/cv/DownloadDropdown";
 import { WhatsAppShare } from "@/components/share/WhatsAppShare";
 import { TemplateGallery } from "@/components/cv/TemplateGallery";
 import { TEMPLATES, type CvData, type TemplateId, emptyCv } from "@/lib/cv-types";
-import { suggestSection, polishText, parseCvUpload } from "@/lib/ai-functions";
+import { suggestSection, polishText, parseCvUpload, extractCvTextWithAi } from "@/lib/ai-functions";
 import { AiChatPanel } from "@/components/cv/AiChatPanel";
 import { AtsPreview } from "@/components/cv/AtsPreview";
 import { LinkedInImport } from "@/components/cv/LinkedInImport";
@@ -29,7 +29,7 @@ import { AtsScoreWidget } from "@/components/ai/score-widget";
 import { scoreCvLocally } from "@/lib/local-scoring";
 import { EditorSkeleton } from "@/components/ui/skeleton-loading";
 import { CvFileUpload } from "@/components/cv/CvFileUpload";
-import { extractCvText } from "@/lib/cv-text-extractor";
+import { extractCvText, renderPdfToImages } from "@/lib/cv-text-extractor";
 
 // New editor components
 import {
@@ -291,11 +291,44 @@ function CvEditorPage() {
     setCvUploadExtracting(true);
     setCvUploadError(null);
     try {
-      const { text } = await extractCvText(cvUploadFile);
+      const { text, fileType } = await extractCvText(cvUploadFile);
+      const minChars = 50;
+      let finalText = text;
+
+      if (text.trim().length < minChars && fileType === "pdf") {
+        toast.info("CV tampaknya berupa gambar. Mencoba ekstraksi dengan AI...");
+        try {
+          const images = await renderPdfToImages(cvUploadFile);
+          if (images.length > 0) {
+            const aiResult = await extractCvTextWithAi({
+              data: { images, fileName: cvUploadFile.name },
+            });
+            const aiText = aiResult.text.trim();
+            if (aiText.length >= minChars) {
+              finalText = aiText;
+              toast.success(`CV berhasil dibaca dengan AI OCR — ${aiText.length.toLocaleString()} karakter`);
+            } else {
+              throw new Error("Teks hasil OCR terlalu sedikit");
+            }
+          }
+        } catch (aiErr: any) {
+          console.warn("AI OCR fallback gagal:", aiErr);
+          setCvUploadExtracting(false);
+          setCvUploadError("CV ini tampaknya berupa gambar/scanned dan tidak bisa diekstrak teksnya. Gunakan CV berbasis teks (bukan hasil scan gambar).");
+          return;
+        }
+      }
+
+      if (finalText.trim().length < minChars) {
+        setCvUploadExtracting(false);
+        setCvUploadError("Teks yang diekstrak terlalu sedikit. Pastikan CV berisi teks yang cukup.");
+        return;
+      }
+
       setCvUploadExtracting(false);
       setCvUploadParsing(true);
 
-      const result = await parseCvUpload({ data: { rawText: text } });
+      const result = await parseCvUpload({ data: { rawText: finalText } });
       const parsed = result.cvData as Partial<CvData>;
 
       // Merge with existing data (non-destructive)
@@ -1035,5 +1068,7 @@ function EditorForm({
     </div>
   );
 }
+
+
 
 
