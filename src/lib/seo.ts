@@ -29,7 +29,7 @@ export function buildSeo({
   articleModifiedTime,
 }: SeoInput) {
   const url = `${SITE_URL}${path}`;
-  const ogImage = image ?? `${SITE_URL}/og-default.png`;
+  const ogImage = image ?? "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/44765322-b45b-44f5-a6ac-752e6e50e35e";
   const meta = [
     { title },
     { name: "description", content: description },
