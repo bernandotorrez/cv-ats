@@ -1,14 +1,25 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { buildSeo } from "@/lib/seo";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useAuth } from "@/lib/auth-context";
 import { isAdmin } from "@/lib/admin";
 import { supabase } from "@/integrations/supabase/client";
 import { getUserTier, getTierLimits, type Tier, type TierLimits } from "@/lib/subscription";
 import { Crown, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { TemplateGallery } from "@/components/cv/TemplateGallery";
+import { emptyCv, TEMPLATES, type TemplateId } from "@/lib/cv-types";
 import { DashboardSkeleton } from "@/components/ui/dashboard-skeleton";
 import {
   WelcomeHeader,
@@ -37,6 +48,10 @@ import {
   Gift,
   TrendingUp,
   Briefcase,
+  Edit3,
+  ArrowLeftRight,
+  Loader2,
+  LayoutTemplate,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -85,6 +100,11 @@ function DashboardPage() {
   const [showCvPicker, setShowCvPicker] = useState<{ action: string } | null>(null);
   const [activities, setActivities] = useState<ActivityItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [showModeDialog, setShowModeDialog] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<TemplateId>("jakarta");
+  const [creating, setCreating] = useState(false);
+  const [allowedTemplates, setAllowedTemplates] = useState<string[] | null>(null);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -98,6 +118,7 @@ function DashboardPage() {
       loadCvs(user.id),
       loadUsageStats(user.id),
       loadActivities(user.id),
+      loadAllowedTemplates(user.id),
     ]).finally(() => setLoading(false));
   }, [user?.id]);
 
@@ -126,6 +147,23 @@ function DashboardPage() {
       .single();
     if (data?.subscription_tiers) {
       setTierQuotas(data.subscription_tiers);
+    }
+  };
+
+  const loadAllowedTemplates = async (userId: string) => {
+    const { data } = await (supabase as any)
+      .from("user_subscriptions")
+      .select("subscription_tiers!inner(template_access_detail)")
+      .eq("user_id", userId)
+      .eq("status", "active")
+      .single();
+
+    if (data?.subscription_tiers?.template_access_detail) {
+      setAllowedTemplates(data.subscription_tiers.template_access_detail);
+    } else if (data?.subscription_tiers?.template_access_detail === null) {
+      setAllowedTemplates(null);
+    } else {
+      setAllowedTemplates(["jakarta", "bandung"]);
     }
   };
 
@@ -184,6 +222,36 @@ function DashboardPage() {
       items.push({ action: "welcome", label: "CV pertamamu menunggu!", time: "Sekarang" });
     }
     setActivities(items);
+  };
+
+  const handleCreate = async (guided = false) => {
+    if (!user) return;
+    if (atCvLimit) {
+      toast.error(
+        `Paket ${tierName} hanya bisa ${limits.maxCvs} CV. Upgrade untuk lebih banyak.`,
+      );
+      return;
+    }
+    setCreating(true);
+    const { data, error } = await (supabase as any)
+      .from("cvs")
+      .insert({
+        user_id: user.id,
+        title: "CV Baru",
+        template_id: selectedTemplate,
+        data: emptyCv as any,
+      })
+      .select("id")
+      .single();
+    setCreating(false);
+    if (error) return toast.error(error.message);
+    setShowCreateDialog(false);
+    setShowModeDialog(false);
+    navigate({
+      to: "/cv/$id",
+      params: { id: data.id },
+      search: guided ? ({ guided: "true" } as any) : {},
+    });
   };
 
   const atCvLimit = limits.maxCvs !== null && cvCount >= limits.maxCvs;
@@ -311,7 +379,7 @@ function DashboardPage() {
   return (
     <div className="container-page py-6 md:py-8 space-y-6">
       {/* ── Welcome Hero ── */}
-      <WelcomeHeader user={user} />
+      <WelcomeHeader user={user} onCreateCv={() => setShowCreateDialog(true)} />
 
       {/* ── Tier Banner ── */}
       <TierBanner tier={tier} limits={limits} cvCount={cvCount} aiUsageCount={aiUsageCount} />
@@ -356,7 +424,7 @@ function DashboardPage() {
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Left Column */}
         <div className="space-y-6 lg:col-span-2">
-          <RecentCvs cvs={cvs} loading={loading} />
+          <RecentCvs cvs={cvs} loading={loading} onCreateCv={() => setShowCreateDialog(true)} />
         </div>
 
         {/* Right Column */}
@@ -375,6 +443,100 @@ function DashboardPage() {
         action={showCvPicker?.action ?? null}
         onSelect={handleCvSelect}
       />
+
+      {/* ── Mode Choice Dialog ── */}
+      <Dialog open={showModeDialog} onOpenChange={setShowModeDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Pilih Mode Pengisian CV</DialogTitle>
+            <DialogDescription>
+              Template:{" "}
+              <strong>
+                {TEMPLATES.find((t) => t.id === selectedTemplate)?.name ?? selectedTemplate}
+              </strong>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-3 py-4">
+            <button
+              type="button"
+              onClick={() => handleCreate(true)}
+              disabled={creating}
+              className="flex items-start gap-4 rounded-xl border-2 border-primary/30 bg-primary/5 p-4 text-left hover:border-primary hover:bg-primary/10 transition-all"
+            >
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+                <Sparkles className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-sm flex items-center gap-1.5">
+                  Panduan AI
+                  <Badge className="text-[10px] bg-warning/20 text-warning hover:bg-warning/20">
+                    Direkomendasikan
+                  </Badge>
+                </h3>
+                <p className="text-xs text-muted-foreground mt-1">
+                  AI akan memandumu langkah demi langkah. Cocok untuk yang baru
+                  pertama membuat CV atau bingung mulai dari mana.
+                </p>
+                {creating && <Loader2 className="h-4 w-4 animate-spin mt-2" />}
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleCreate(false)}
+              disabled={creating}
+              className="flex items-start gap-4 rounded-xl border-2 border-border p-4 text-left hover:border-primary/50 transition-all"
+            >
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-muted">
+                <Edit3 className="h-5 w-5 text-muted-foreground" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-sm">Isi Sendiri atau Upload CV Kamu yang sudah ada</h3>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Langsung isi CV dari editor. Cocok untuk yang sudah tahu apa
+                  yang ingin ditulis. dan bisa Upload CV yang kamu punya.
+                </p>
+                {creating && <Loader2 className="h-4 w-4 animate-spin mt-2" />}
+              </div>
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Create CV Dialog ── */}
+      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+        <DialogContent className="sm:max-w-4xl max-h-[90vh] flex flex-col">
+          <DialogHeader className="shrink-0">
+            <DialogTitle>Pilih Template CV</DialogTitle>
+            <DialogDescription>
+              Pilih template untuk CV barumu. Template bisa diubah nanti di editor.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex-1 overflow-y-auto -mx-6 px-6 py-2">
+            <TemplateGallery
+              selected={selectedTemplate}
+              onSelect={setSelectedTemplate}
+              tier={tier}
+              allowedTemplates={allowedTemplates}
+            />
+          </div>
+          <div className="flex justify-end gap-2 mt-2 shrink-0 border-t pt-4">
+            <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
+              Batal
+            </Button>
+            <Button
+              onClick={() => {
+                setShowCreateDialog(false);
+                setShowModeDialog(true);
+              }}
+              className="gap-1.5"
+            >
+              Pilih Template
+              <ArrowLeftRight className="h-3.5 w-3.5" style={{ transform: "rotate(90deg)" }} />
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

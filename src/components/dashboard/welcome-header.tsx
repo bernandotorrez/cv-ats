@@ -6,9 +6,10 @@ import type { ReactNode } from "react";
 
 interface WelcomeHeaderProps {
   user: User | null;
+  onCreateCv?: () => void;
 }
 
-export function WelcomeHeader({ user }: WelcomeHeaderProps) {
+export function WelcomeHeader({ user, onCreateCv }: WelcomeHeaderProps) {
   const displayName =
     user?.user_metadata?.full_name || user?.email?.split("@")[0] || "Pengguna";
 
@@ -44,15 +45,25 @@ export function WelcomeHeader({ user }: WelcomeHeaderProps) {
         </div>
 
         <div className="flex shrink-0 gap-2">
-          <Button
-            asChild
-            size="lg"
-            className="gap-2 bg-white text-primary shadow-lg shadow-black/10 hover:bg-white/90 hover:text-primary"
-          >
-            <Link to="/cv">
+          {onCreateCv ? (
+            <Button
+              size="lg"
+              onClick={onCreateCv}
+              className="gap-2 bg-white text-primary shadow-lg shadow-black/10 hover:bg-white/90 hover:text-primary"
+            >
               <Plus className="h-4 w-4" /> Buat CV Baru
-            </Link>
-          </Button>
+            </Button>
+          ) : (
+            <Button
+              asChild
+              size="lg"
+              className="gap-2 bg-white text-primary shadow-lg shadow-black/10 hover:bg-white/90 hover:text-primary"
+            >
+              <Link to="/cv">
+                <Plus className="h-4 w-4" /> Buat CV Baru
+              </Link>
+            </Button>
+          )}
           <Button
             asChild
             size="lg"

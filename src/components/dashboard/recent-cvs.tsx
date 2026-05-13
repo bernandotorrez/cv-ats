@@ -17,6 +17,7 @@ interface CvRow {
 interface RecentCvsProps {
   cvs: CvRow[];
   loading: boolean;
+  onCreateCv?: () => void;
 }
 
 const templateColors = [
@@ -27,7 +28,7 @@ const templateColors = [
   "from-rose-500/20 to-pink-500/20",
 ];
 
-export function RecentCvs({ cvs, loading }: RecentCvsProps) {
+export function RecentCvs({ cvs, loading, onCreateCv }: RecentCvsProps) {
   return (
     <section>
       <div className="mb-4 flex items-center justify-between">
@@ -54,11 +55,17 @@ export function RecentCvs({ cvs, loading }: RecentCvsProps) {
                 Buat CV pertamamu sekarang — gratis, cepat, dan mudah!
               </p>
             </div>
-            <Button asChild className="gap-2">
-              <Link to="/cv">
+            {onCreateCv ? (
+              <Button onClick={onCreateCv} className="gap-2">
                 <Plus className="h-4 w-4" /> Buat CV Pertamamu
-              </Link>
-            </Button>
+              </Button>
+            ) : (
+              <Button asChild className="gap-2">
+                <Link to="/cv">
+                  <Plus className="h-4 w-4" /> Buat CV Pertamamu
+                </Link>
+              </Button>
+            )}
           </CardContent>
         </Card>
       ) : (
