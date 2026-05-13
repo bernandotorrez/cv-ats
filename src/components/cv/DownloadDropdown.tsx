@@ -76,7 +76,7 @@ export function DownloadDropdown({ cv, fileName = "CV", templateId = "jakarta", 
       </Button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-1 z-50 bg-white rounded-lg border border-border shadow-lg py-1 min-w-[160px]">
+        <div className="absolute right-0 top-full mt-1 z-[100] bg-popover rounded-lg border border-border shadow-lg py-1 min-w-[160px]">
           {/* PDF Option */}
           <button
             onClick={handleDownloadPdf}

@@ -529,7 +529,6 @@ function CvEditorPage() {
                   transformOrigin: "top center",
                   width: "210mm",
                   minWidth: "210mm",
-                  ...(previewScale < 100 ? { height: `${297 * (previewScale / 100)}mm` } : {}),
                 }}
               >
                 <div className="print:!transform-none print:!w-auto">

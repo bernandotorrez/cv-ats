@@ -102,14 +102,13 @@ export function CvPreview({
         className="cv-preview bg-white text-[#111] shadow-sm print:!transform-none print:!w-auto print:!h-auto print:!overflow-visible"
         style={{
           width: `${A4_WIDTH_MM}mm`,
-          height: `${A4_HEIGHT_MM}mm`,
+          minHeight: `${A4_HEIGHT_MM}mm`,
           padding: `${PADDING_MM}mm`,
           fontFamily: "Inter, system-ui, sans-serif",
           fontSize: "10.5pt",
           lineHeight: 1.5,
           transform: `scale(${scale})`,
           transformOrigin: "top center",
-          overflow: "hidden",
         }}
       >
         {renderTemplate()}
@@ -545,10 +544,10 @@ export const cvPrintStyles = `
   .cv-editor-page {
     height: auto !important;
     display: block !important;
+    overflow: visible !important;
   }
 
   .cv-preview-container {
-    page-break-inside: avoid;
     width: auto !important;
     height: auto !important;
     min-height: 0 !important;
@@ -572,6 +571,7 @@ export const cvPrintStyles = `
     padding: 0 !important;
     display: flex !important;
     justify-content: center !important;
+    overflow: visible !important;
   }
 
   .cv-print-area > div {
@@ -589,6 +589,17 @@ export const cvPrintStyles = `
   @page {
     size: A4;
     margin: 0;
+  }
+
+  /* Section headings: keep with next content */
+  .cv-preview h2,
+  .cv-preview h3 {
+    page-break-after: avoid;
+  }
+
+  /* Keep section items together when possible */
+  .cv-preview section > *:last-child {
+    page-break-after: auto;
   }
 
   /* Ensure watermark shows in print */

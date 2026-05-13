@@ -45,9 +45,9 @@ export function EditorToolbar({
   const templateName = TEMPLATES.find((t) => t.id === templateId)?.name || "Template";
 
   return (
-    <div className="shrink-0 border-b border-border bg-gradient-to-r from-background via-background to-muted/50 backdrop-blur supports-[backdrop-filter]:bg-background/80 sticky top-16 z-30 print:hidden">
+    <div className="shrink-0 border-b border-border bg-gradient-to-r from-background via-background to-muted/50 backdrop-blur supports-[backdrop-filter]:bg-background/80 sticky top-16 z-50 print:hidden">
       {/* Main toolbar row */}
-      <div className="flex items-center gap-2 px-3 py-2.5 lg:px-4 overflow-x-auto">
+      <div className="flex items-center gap-2 px-3 py-2.5 lg:px-4 flex-wrap">
         {/* Back button + title */}
         <div className="flex items-center gap-2 shrink-0">
           <Button asChild variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-xl">
