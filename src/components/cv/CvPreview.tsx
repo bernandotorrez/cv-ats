@@ -559,10 +559,10 @@ export const cvPrintStyles = `
   .cv-preview {
     box-shadow: none !important;
     margin: 0 !important;
-    padding: 16mm !important;
-    width: 210mm !important;
+    padding: 0 !important;
+    width: auto !important;
     height: auto !important;
-    min-height: 297mm !important;
+    min-height: 0 !important;
     overflow: visible !important;
     transform: none !important;
   }
@@ -588,7 +588,7 @@ export const cvPrintStyles = `
 
   @page {
     size: A4;
-    margin: 0;
+    margin: 16mm;
   }
 
   /* Section headings: keep with next content */

@@ -268,5 +268,5 @@
     height: auto !important;
   }
   .cv-preview { box-shadow: none !important; margin: 0 !important; }
-  @page { size: A4; margin: 0; }
+  @page { size: A4; margin: 16mm; }
 }
