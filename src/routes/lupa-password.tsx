@@ -14,6 +14,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
+import { HCaptchaWidget } from "@/components/ui/hcaptcha";
 import { Loader2 } from "lucide-react";
 
 const schema = z.object({ email: z.string().email("Email tidak valid").max(255) });
@@ -34,6 +35,9 @@ function ForgotPage() {
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
   const [cooldown, setCooldown] = useState(0);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaError, setCaptchaError] = useState<string | null>(null);
+  const [captchaResetKey, setCaptchaResetKey] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval>>(undefined);
 
   // Cooldown countdown
@@ -63,14 +67,27 @@ function ForgotPage() {
       toast.error(parsed.error.issues[0].message);
       return;
     }
+
+    if (!captchaToken) {
+      setCaptchaError("Harap selesaikan verifikasi captcha");
+      toast.error("Harap selesaikan verifikasi captcha");
+      return;
+    }
+    setCaptchaError(null);
+
     setLoading(true);
     const { error } = await supabase.auth.resetPasswordForEmail(
       parsed.data.email,
       {
         redirectTo: `${window.location.origin}/reset-password`,
+        captchaToken,
       },
     );
     setLoading(false);
+
+    setCaptchaToken(null);
+    setCaptchaResetKey((k) => k + 1);
+
     if (error) {
       toast.error(error.message);
       return;
@@ -88,13 +105,26 @@ function ForgotPage() {
       setLoading(false);
       return;
     }
+
+    if (!captchaToken) {
+      setCaptchaError("Harap selesaikan verifikasi captcha");
+      toast.error("Harap selesaikan verifikasi captcha");
+      return;
+    }
+    setCaptchaError(null);
+
     const { error } = await supabase.auth.resetPasswordForEmail(
       parsed.data.email,
       {
         redirectTo: `${window.location.origin}/reset-password`,
+        captchaToken,
       },
     );
     setLoading(false);
+
+    setCaptchaToken(null);
+    setCaptchaResetKey((k) => k + 1);
+
     if (error) {
       toast.error(error.message);
       return;
@@ -124,6 +154,19 @@ function ForgotPage() {
                 password. Tidak menerima email? Cek folder spam atau coba klik
                 kirim ulang.
               </p>
+              <HCaptchaWidget
+                onVerify={(token) => {
+                  setCaptchaToken(token);
+                  setCaptchaError(null);
+                }}
+                onExpire={() => {
+                  setCaptchaToken(null);
+                  setCaptchaError("Sesi captcha berakhir, harap verifikasi ulang");
+                }}
+                disabled={loading || cooldown > 0}
+                error={captchaError}
+                resetKey={captchaResetKey}
+              />
               <div className="flex gap-2">
                 <Button
                   variant="outline"
@@ -155,6 +198,19 @@ function ForgotPage() {
                   placeholder="nama@domain.com"
                 />
               </div>
+              <HCaptchaWidget
+                onVerify={(token) => {
+                  setCaptchaToken(token);
+                  setCaptchaError(null);
+                }}
+                onExpire={() => {
+                  setCaptchaToken(null);
+                  setCaptchaError("Sesi captcha berakhir, harap verifikasi ulang");
+                }}
+                disabled={loading || cooldown > 0}
+                error={captchaError}
+                resetKey={captchaResetKey}
+              />
               <Button
                 type="submit"
                 className="w-full"
