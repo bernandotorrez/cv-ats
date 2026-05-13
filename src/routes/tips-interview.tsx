@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { buildSeo } from "@/lib/seo";
 import { PageHero } from "@/components/site/PageHero";
@@ -151,6 +151,11 @@ export const Route = createFileRoute("/tips-interview")({
 const PER_PAGE = 6;
 
 function TipsHubPage() {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  if (pathname !== "/tips-interview") {
+    return <Outlet />;
+  }
+
   const [filter, setFilter] = useState<string | null>(null);
   const [page, setPage] = useState(0);
 
