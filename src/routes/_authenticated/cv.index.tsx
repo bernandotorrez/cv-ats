@@ -206,7 +206,7 @@ function CvListPage() {
 
   const handleCopyShareLink = async () => {
     if (!shareCv?.share_token) return;
-    const link = `https://cvats.id/share/${shareCv.share_token}`;
+    const link = `https://cvpintar.web.id/share/${shareCv.share_token}`;
     await navigator.clipboard.writeText(link);
     setCopied(true);
     toast.success("Link disalin!");
@@ -395,12 +395,34 @@ function CvListPage() {
                         </div>
                         <CardTitle className="text-sm truncate">{cv.title}</CardTitle>
                       </div>
-                      <Badge
-                        variant={cv.status === "draft" ? "secondary" : "default"}
-                        className="shrink-0 text-[10px]"
-                      >
-                        {cv.status === "draft" ? "Draft" : "Selesai"}
-                      </Badge>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <Badge
+                          variant={cv.status === "draft" ? "secondary" : "default"}
+                          className="text-[10px]"
+                        >
+                          {cv.status === "draft" ? "Draft" : "Selesai"}
+                        </Badge>
+                        <Button
+                          asChild
+                          size="icon"
+                          variant="ghost"
+                          className="h-7 w-7 text-muted-foreground hover:text-primary"
+                          aria-label="Edit CV"
+                        >
+                          <Link to="/cv/$id" params={{ id: cv.id }}>
+                            <Pencil className="h-3.5 w-3.5" />
+                          </Link>
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => handleDelete(cv.id)}
+                          aria-label="Hapus CV"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-3">
@@ -421,11 +443,6 @@ function CvListPage() {
                     </div>
                     <Separator />
                     <div className="flex flex-wrap gap-1.5">
-                      <Button asChild size="sm" variant="default" className="gap-1 text-xs h-7">
-                        <Link to="/cv/$id" params={{ id: cv.id }}>
-                          <Pencil className="h-3 w-3" /> Edit
-                        </Link>
-                      </Button>
                       <Button asChild size="sm" variant="outline" className="gap-1 text-xs h-7">
                         <Link to="/score/$cvId" params={{ cvId: cv.id }}>
                           <BarChart3 className="h-3 w-3" /> Skor CV
@@ -473,15 +490,6 @@ function CvListPage() {
                       >
                         {shareGenerating ? <Loader2 className="h-3 w-3 animate-spin" /> : <Share2 className="h-3 w-3" />}
                         {cv.share_enabled ? "Aktif" : "Bagikan"}
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="gap-1 text-xs h-7 text-muted-foreground hover:text-destructive"
-                        onClick={() => handleDelete(cv.id)}
-                        aria-label="Hapus CV"
-                      >
-                        <Trash2 className="h-3 w-3" />
                       </Button>
                     </div>
                   </CardContent>
@@ -629,7 +637,7 @@ function CvListPage() {
               <Input
                 ref={shareInputRef}
                 readOnly
-                value={`https://cvats.id/share/${shareCv?.share_token || ""}`}
+                value={`https://cvpintar.web.id/share/${shareCv?.share_token || ""}`}
                 className="font-mono text-sm h-10"
                 onClick={(e) => (e.target as HTMLInputElement).select()}
               />
@@ -642,7 +650,7 @@ function CvListPage() {
               <span className="text-xs text-muted-foreground">Bagikan via:</span>
               <div className="flex gap-2">
                 <WhatsAppShare
-                  shareUrl={`https://cvats.id/share/${shareCv?.share_token || ""}`}
+                  shareUrl={`https://cvpintar.web.id/share/${shareCv?.share_token || ""}`}
                   cvId={shareCv?.id}
                   size="sm"
                 />
@@ -650,7 +658,7 @@ function CvListPage() {
                   variant="outline"
                   size="sm"
                   className="gap-1"
-                  onClick={() => window.open(`https://cvats.id/share/${shareCv?.share_token}`, "_blank")}
+                  onClick={() => window.open(`https://cvpintar.web.id/share/${shareCv?.share_token}`, "_blank")}
                 >
                   <ExternalLink className="h-3.5 w-3.5" />
                   Buka
