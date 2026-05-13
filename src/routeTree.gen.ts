@@ -49,7 +49,7 @@ import { Route as AuthenticatedToolsIndexRouteImport } from './routes/_authentic
 import { Route as AuthenticatedCvIndexRouteImport } from './routes/_authenticated/cv.index'
 import { Route as AuthenticatedCvReviewIndexRouteImport } from './routes/_authenticated/cv-review.index'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
-import { Route as AuthenticatedSimulasiWawancaraIdRouteImport } from './routes/_authenticated/simulasi-wawancara./$id'
+import { Route as AuthenticatedSimulasiWawancaraIdRouteImport } from './routes/_authenticated/simulasi-wawancara.$id'
 import { Route as AuthenticatedScoreCvIdRouteImport } from './routes/_authenticated/score.$cvId'
 import { Route as AuthenticatedCvIdRouteImport } from './routes/_authenticated/cv.$id'
 import { Route as AuthenticatedCvReviewCvIdRouteImport } from './routes/_authenticated/cv-review.$cvId'

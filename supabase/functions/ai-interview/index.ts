@@ -7,7 +7,7 @@
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders } from "../_shared/cors.ts";
-import { aiCompletion, type AiMessage } from "../_shared/ai-common.ts";
+import { aiComplete, type AiMessage } from "../_shared/ai-common.ts";
 
 const supabase = createClient(
   Deno.env.get("SUPABASE_URL") ?? "",
@@ -115,7 +115,7 @@ Bahasa: Indonesia.`
     { role: "user", content: `Generate 8 interview questions untuk ${position} level ${level}.` }
   ];
 
-  const result = await aiCompletion(messages, { temperature: 0.8, jsonMode: true });
+  const result = await aiComplete(messages, { temperature: 0.8, jsonMode: true });
   const parsed = JSON.parse(result);
   return { questions: Array.isArray(parsed) ? parsed : parsed.questions ?? [] };
 }
@@ -155,6 +155,6 @@ Bahasa: Indonesia.`
     { role: "user", content: qaText }
   ];
 
-  const result = await aiCompletion(messages, { temperature: 0.5, jsonMode: true, maxTokens: 3000 });
+  const result = await aiComplete(messages, { temperature: 0.5, jsonMode: true, maxTokens: 3000 });
   return JSON.parse(result);
 }
