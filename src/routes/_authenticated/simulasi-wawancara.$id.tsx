@@ -1,5 +1,5 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { buildSeo } from "@/lib/seo";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,6 +17,7 @@ import {
   Target, Zap, ArrowRight, RotateCcw, Home,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useSpeechRecognition } from "@/hooks/use-speech-recognition";
 
 export const Route = createFileRoute("/_authenticated/simulasi-wawancara/$id")({
   head: () => buildSeo({ title: "Simulasi Wawancara — CV Pintar", description: "Sesi simulasi wawancara.", path: "/simulasi-wawancara", noindex: true }),
@@ -60,6 +61,13 @@ function InterviewSessionPage() {
   const [evaluation, setEvaluation] = useState<{ evaluations: Evaluation[]; overall_score: number; feedback: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [answeredCount, setAnsweredCount] = useState(0);
+  const [speechBaseText, setSpeechBaseText] = useState("");
+
+  const { isListening, transcript, isSupported, startListening, stopListening } = useSpeechRecognition({ lang: "id-ID" });
+
+  useEffect(() => {
+    if (isListening) stopListening();
+  }, [currentQ]);
 
   useEffect(() => {
     loadSession();
@@ -69,6 +77,24 @@ function InterviewSessionPage() {
     const count = questions.filter(q => answers[q.id]?.trim()).length;
     setAnsweredCount(count);
   }, [answers, questions]);
+
+  useEffect(() => {
+    if (isListening && questions[currentQ]) {
+      setAnswers(prev => ({
+        ...prev,
+        [questions[currentQ].id]: (speechBaseText + " " + transcript).trim(),
+      }));
+    }
+  }, [transcript, isListening]);
+
+  const handleMicToggle = useCallback(() => {
+    if (isListening) {
+      stopListening();
+    } else {
+      setSpeechBaseText(answers[questions[currentQ]?.id] || "");
+      startListening();
+    }
+  }, [isListening, stopListening, startListening, answers, questions, currentQ]);
 
   const loadSession = async () => {
     try {
@@ -133,6 +159,8 @@ function InterviewSessionPage() {
   };
 
   const handleSubmitAnswers = async () => {
+    if (isListening) stopListening();
+
     if (questions.some(q => !answers[q.id]?.trim())) {
       toast.error("Jawab semua pertanyaan terlebih dahulu.");
       return;
@@ -330,14 +358,44 @@ function InterviewSessionPage() {
           <Card>
             <CardContent className="p-6">
               <label className="text-sm font-semibold mb-3 flex items-center gap-2">
-                <Mic className="h-4 w-4 text-rose-500" /> Jawaban Kamu
+                {isSupported ? (
+                  <button
+                    type="button"
+                    onClick={handleMicToggle}
+                    className={cn(
+                      "p-1.5 rounded-lg transition-all",
+                      isListening
+                        ? "bg-red-500 text-white animate-pulse"
+                        : "text-rose-500 hover:bg-rose-500/10"
+                    )}
+                    title={isListening ? "Stop rekaman" : "Mulai rekaman suara"}
+                  >
+                    <Mic className="h-4 w-4" />
+                  </button>
+                ) : (
+                  <Mic className="h-4 w-4 text-rose-500" />
+                )}
+                Jawaban Kamu
+                {isListening && (
+                  <span className="text-[11px] text-red-500 font-normal animate-pulse ml-1">
+                    merekam...
+                  </span>
+                )}
               </label>
+              {isSupported && (
+                <p className="text-[11px] text-muted-foreground -mt-2 mb-3">
+                  Klik <Mic className="h-3 w-3 inline text-rose-500" /> untuk menjawab dengan suara, atau ketik langsung di bawah.
+                </p>
+              )}
               <Textarea
                 value={answers[questions[currentQ]?.id] || ""}
-                onChange={e => setAnswers(prev => ({ ...prev, [questions[currentQ].id]: e.target.value }))}
+                onChange={e => {
+                  if (isListening) return;
+                  setAnswers(prev => ({ ...prev, [questions[currentQ].id]: e.target.value }));
+                }}
                 placeholder="Tulis jawabanmu di sini...&#10;&#10;Tips: Gunakan format STAR — Situation (Situasi), Task (Tugas), Action (Aksi), Result (Hasil)."
                 rows={6}
-                className="mb-4 resize-none"
+                className={cn("mb-4 resize-none", isListening && "border-red-500/50 bg-red-500/5")}
               />
               <div className="flex items-center justify-between">
                 <Button

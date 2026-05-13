@@ -92,6 +92,7 @@ function CvListPage() {
     const { data, error } = await supabase
       .from("cvs")
       .select("id, title, template_id, status, updated_at, created_at, share_token, share_enabled")
+      .eq("user_id", userId!)
       .order("updated_at", { ascending: false });
     setLoading(false);
     if (error) return toast.error(error.message);

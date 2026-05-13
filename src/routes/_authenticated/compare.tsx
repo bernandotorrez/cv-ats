@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { CvComparison } from "@/components/cv/CvComparison";
 import { emptyCv, type CvData } from "@/lib/cv-types";
+import { useAuth } from "@/lib/auth-context";
 import { ArrowLeft, ArrowLeftRight } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/compare")({
@@ -14,6 +15,7 @@ export const Route = createFileRoute("/_authenticated/compare")({
 });
 
 function ComparePage() {
+  const { user } = useAuth();
   const [cvs, setCvs] = useState<any[]>([]);
   const [tier, setTier] = useState("free");
   const [loading, setLoading] = useState(true);
@@ -23,6 +25,7 @@ function ComparePage() {
       const { data: cvData } = await supabase
         .from("cvs")
         .select("*")
+        .eq("user_id", user!.id)
         .order("updated_at", { ascending: false });
       if (cvData) {
         setCvs(

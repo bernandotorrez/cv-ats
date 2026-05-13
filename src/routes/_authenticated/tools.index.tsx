@@ -84,6 +84,7 @@ function ToolsIndexPage() {
     const { data, error } = await supabase
       .from("cvs")
       .select("id, title, template_id, updated_at")
+      .eq("user_id", user!.id)
       .order("updated_at", { ascending: false });
     setLoading(false);
     if (error) return toast.error(error.message);
