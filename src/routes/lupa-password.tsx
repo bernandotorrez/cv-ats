@@ -14,6 +14,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/auth-context";
 import { HCaptchaWidget } from "@/components/ui/hcaptcha";
 import { Loader2 } from "lucide-react";
 
@@ -32,6 +33,7 @@ export const Route = createFileRoute("/lupa-password")({
 
 function ForgotPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
@@ -72,7 +74,11 @@ function ForgotPage() {
       return;
     }
     toast.success("Link reset password sudah dikirim ke email kamu.");
-    navigate({ to: "/login", search: { redirect: "/dashboard" } });
+    if (user) {
+      navigate({ to: "/" });
+    } else {
+      navigate({ to: "/login" });
+    }
   };
 
   return (

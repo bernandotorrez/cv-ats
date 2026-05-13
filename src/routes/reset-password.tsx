@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
@@ -45,7 +45,6 @@ export const Route = createFileRoute("/reset-password")({
 });
 
 function ResetPage() {
-  const navigate = useNavigate();
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -69,8 +68,8 @@ function ResetPage() {
       return;
     }
     toast.success("Password berhasil diubah. Silakan masuk.");
-    await supabase.auth.signOut();
-    navigate({ to: "/login", search: { redirect: "/dashboard" } });
+    await supabase.auth.signOut({ scope: "local" });
+    window.location.href = "/login";
   };
 
   return (
