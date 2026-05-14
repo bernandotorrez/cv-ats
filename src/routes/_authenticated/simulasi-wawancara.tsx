@@ -8,6 +8,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -26,7 +35,9 @@ import {
   Brain,
   BriefcaseBusiness,
   CalendarClock,
+  Check,
   CheckCircle2,
+  ChevronsUpDown,
   Clock,
   Crown,
   FileText,
@@ -56,24 +67,74 @@ const LEVELS = ["entry", "mid", "senior", "manager", "director"];
 const INDUSTRIES = [
   "Teknologi",
   "Finance",
+  "Perbankan",
+  "Asuransi",
   "Marketing",
+  "Sales",
+  "Retail",
+  "E-commerce",
   "FMCG",
   "Startup",
   "BUMN",
   "Konsultan",
+  "Otomotif",
+  "Manufaktur",
+  "Real Estate",
+  "Properti",
+  "Konstruksi",
+  "Logistik",
+  "Supply Chain",
   "Healthcare",
+  "Farmasi",
   "Pendidikan",
+  "Media & Kreatif",
+  "Hospitality",
+  "Pariwisata",
+  "Telekomunikasi",
+  "Energi",
+  "Pertambangan",
+  "Agribisnis",
+  "Legal",
+  "Non-profit",
+  "Pemerintahan",
   "Lainnya",
 ];
 const QUICK_POSITIONS = [
   "Software Engineer",
+  "Frontend Developer",
+  "Backend Developer",
+  "Full Stack Developer",
+  "Mobile Developer",
   "Product Manager",
   "Data Analyst",
+  "Data Scientist",
+  "Business Analyst",
   "UI/UX Designer",
+  "Graphic Designer",
+  "Project Manager",
+  "Scrum Master",
+  "QA Engineer",
+  "DevOps Engineer",
+  "Cybersecurity Analyst",
   "Marketing Manager",
+  "Digital Marketing Specialist",
+  "Content Strategist",
+  "Social Media Specialist",
+  "SEO Specialist",
   "Business Development",
+  "Sales Executive",
+  "Account Manager",
+  "Customer Success",
+  "Operations Manager",
+  "Supply Chain Analyst",
   "HR Manager",
+  "Talent Acquisition",
+  "Recruiter",
   "Finance Analyst",
+  "Accounting Staff",
+  "Auditor",
+  "Legal Officer",
+  "Admin Staff",
 ];
 
 interface Session {
@@ -122,6 +183,7 @@ function SimulasiWawancaraPage() {
   const [position, setPosition] = useState("");
   const [level, setLevel] = useState("mid");
   const [industry, setIndustry] = useState("");
+  const [industryOpen, setIndustryOpen] = useState(false);
   const [starting, setStarting] = useState(false);
 
   const loadData = useCallback(async () => {
@@ -413,18 +475,66 @@ function SimulasiWawancaraPage() {
                 <BriefcaseBusiness className="h-4 w-4 text-sky-700" />
                 Industri
               </Label>
-              <Select value={industry} onValueChange={setIndustry}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Opsional, pilih industri" />
-                </SelectTrigger>
-                <SelectContent>
-                  {INDUSTRIES.map((item) => (
-                    <SelectItem key={item} value={item}>
-                      {item}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Popover open={industryOpen} onOpenChange={setIndustryOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={industryOpen}
+                    className={cn(
+                      "h-10 w-full justify-between px-3 font-normal",
+                      !industry && "text-muted-foreground",
+                    )}
+                  >
+                    <span className="truncate">{industry || "Opsional, cari industri"}</span>
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                  <Command>
+                    <CommandInput placeholder="Cari industri..." />
+                    <CommandList>
+                      <CommandEmpty>Industri tidak ditemukan.</CommandEmpty>
+                      <CommandGroup>
+                        <CommandItem
+                          value="Tanpa industri"
+                          onSelect={() => {
+                            setIndustry("");
+                            setIndustryOpen(false);
+                          }}
+                        >
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              industry === "" ? "opacity-100" : "opacity-0",
+                            )}
+                          />
+                          Tanpa industri spesifik
+                        </CommandItem>
+                        {INDUSTRIES.map((item) => (
+                          <CommandItem
+                            key={item}
+                            value={item}
+                            onSelect={() => {
+                              setIndustry(item);
+                              setIndustryOpen(false);
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                industry === item ? "opacity-100" : "opacity-0",
+                              )}
+                            />
+                            {item}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
 
