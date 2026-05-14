@@ -12,7 +12,6 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as VerifyEmailRouteImport } from './routes/verify-email'
 import { Route as TipsInterviewRouteImport } from './routes/tips-interview'
 import { Route as TentangRouteImport } from './routes/tentang'
-import { Route as TemplateRouteImport } from './routes/template'
 import { Route as SyaratKetentuanRouteImport } from './routes/syarat-ketentuan'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as RegisterRouteImport } from './routes/register'
@@ -71,11 +70,6 @@ const TipsInterviewRoute = TipsInterviewRouteImport.update({
 const TentangRoute = TentangRouteImport.update({
   id: '/tentang',
   path: '/tentang',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TemplateRoute = TemplateRouteImport.update({
-  id: '/template',
-  path: '/template',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SyaratKetentuanRoute = SyaratKetentuanRouteImport.update({
@@ -319,7 +313,6 @@ export interface FileRoutesByFullPath {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/syarat-ketentuan': typeof SyaratKetentuanRoute
-  '/template': typeof TemplateRoute
   '/tentang': typeof TentangRoute
   '/tips-interview': typeof TipsInterviewRouteWithChildren
   '/verify-email': typeof VerifyEmailRoute
@@ -368,7 +361,6 @@ export interface FileRoutesByTo {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/syarat-ketentuan': typeof SyaratKetentuanRoute
-  '/template': typeof TemplateRoute
   '/tentang': typeof TentangRoute
   '/tips-interview': typeof TipsInterviewRouteWithChildren
   '/verify-email': typeof VerifyEmailRoute
@@ -418,7 +410,6 @@ export interface FileRoutesById {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/syarat-ketentuan': typeof SyaratKetentuanRoute
-  '/template': typeof TemplateRoute
   '/tentang': typeof TentangRoute
   '/tips-interview': typeof TipsInterviewRouteWithChildren
   '/verify-email': typeof VerifyEmailRoute
@@ -469,7 +460,6 @@ export interface FileRouteTypes {
     | '/register'
     | '/reset-password'
     | '/syarat-ketentuan'
-    | '/template'
     | '/tentang'
     | '/tips-interview'
     | '/verify-email'
@@ -518,7 +508,6 @@ export interface FileRouteTypes {
     | '/register'
     | '/reset-password'
     | '/syarat-ketentuan'
-    | '/template'
     | '/tentang'
     | '/tips-interview'
     | '/verify-email'
@@ -567,7 +556,6 @@ export interface FileRouteTypes {
     | '/register'
     | '/reset-password'
     | '/syarat-ketentuan'
-    | '/template'
     | '/tentang'
     | '/tips-interview'
     | '/verify-email'
@@ -618,7 +606,6 @@ export interface RootRouteChildren {
   RegisterRoute: typeof RegisterRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SyaratKetentuanRoute: typeof SyaratKetentuanRoute
-  TemplateRoute: typeof TemplateRoute
   TentangRoute: typeof TentangRoute
   TipsInterviewRoute: typeof TipsInterviewRouteWithChildren
   VerifyEmailRoute: typeof VerifyEmailRoute
@@ -652,13 +639,6 @@ declare module '@tanstack/react-router' {
       path: '/tentang'
       fullPath: '/tentang'
       preLoaderRoute: typeof TentangRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/template': {
-      id: '/template'
-      path: '/template'
-      fullPath: '/template'
-      preLoaderRoute: typeof TemplateRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/syarat-ketentuan': {
@@ -1095,7 +1075,6 @@ const rootRouteChildren: RootRouteChildren = {
   RegisterRoute: RegisterRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SyaratKetentuanRoute: SyaratKetentuanRoute,
-  TemplateRoute: TemplateRoute,
   TentangRoute: TentangRoute,
   TipsInterviewRoute: TipsInterviewRouteWithChildren,
   VerifyEmailRoute: VerifyEmailRoute,

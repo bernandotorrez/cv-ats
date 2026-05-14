@@ -120,6 +120,11 @@ const features = [
     title: "Review CV by HR Expert",
     desc: "Analisis mendalam dari HR profesional 20+ tahun: temukan kekuatan, kelemahan, dan quick wins.",
   },
+  {
+    icon: Download,
+    title: "Export PDF Berkualitas",
+    desc: "Hasil PDF rapi, ringan, dan terbaca sempurna oleh ATS maupun rekruter manusia.",
+  },
 ] as const;
 
 const steps = [
