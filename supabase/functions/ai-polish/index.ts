@@ -13,6 +13,8 @@ import {
   errorResponse,
   getAdminClient,
   getUserId,
+  getActionVerbExamples,
+  type CvUiLang,
 } from "../_shared/ai-common.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 
@@ -39,7 +41,8 @@ Deno.serve(async (req: Request) => {
       }, 403, req);
     }
 
-    const { text, context } = await req.json();
+    const { text, context, language } = await req.json();
+    const lang: CvUiLang = language === "en" ? "en" : "id";
 
     if (!text || typeof text !== "string" || text.trim().length < 5) {
       throw new Error("Teks terlalu pendek untuk diperbaiki (minimal 5 karakter).");
@@ -50,9 +53,9 @@ Deno.serve(async (req: Request) => {
     const prompt = `Perbaiki teks deskripsi pengalaman kerja/pendidikan berikut agar lebih profesional, impactful, dan ATS-friendly.${ctxLine}
 
 ATURAN:
-- Gunakan kata kerja aktif (memimpin, mengembangkan, meningkatkan, mengelola, dll.)
-- Tambahkan metrik/angka jika memungkinkan (contoh: "meningkatkan 30%", "mengelola tim 5 orang")
-- Bahasa Indonesia formal & profesional
+- ${getActionVerbExamples(lang)}
+- Tambahkan metrik/angka jika memungkinkan (contoh: ${lang === "en" ? '"increased 30%", "managed team of 5"' : '"meningkatkan 30%", "mengelola tim 5 orang"'})
+- ${lang === "en" ? "Professional & formal English" : "Bahasa Indonesia formal & profesional"}
 - JANGAN ubah fakta — hanya perbaiki bahasa dan struktur
 - JANGAN tambahkan informasi yang tidak ada di teks asli
 - Output LANGSUNG teks yang sudah diperbaiki, tanpa kata pembuka
@@ -65,6 +68,7 @@ TEKS PERBAIKAN:`;
     const result = await aiComplete(
       [{ role: "user", content: prompt }],
       { temperature: 0.3, maxTokens: 800 },
+      lang,
     );
 
     // Clean up any markdown or quotes

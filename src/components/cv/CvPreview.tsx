@@ -1,4 +1,5 @@
 import type { CvData, TemplateId } from "@/lib/cv-types";
+import { t, type CvUiLang } from "@/lib/cv-translations";
 import { useMemo } from "react";
 import type { SectionDef } from "./editor/SectionsNav";
 import {
@@ -28,16 +29,16 @@ function formatDescription(text: string): string {
 }
 
 function formatCvDescriptions(data: CvData): CvData {
+  const normalizeDesc = (d: unknown): string => {
+    if (!d) return "";
+    if (typeof d === "string") return formatDescription(d);
+    if (Array.isArray(d)) return formatDescription(d.map((line) => line.startsWith("•") || line.startsWith("-") ? line : `• ${line}`).join("\n"));
+    return formatDescription(String(d));
+  };
   return {
     ...data,
-    experiences: data.experiences.map((e) => ({
-      ...e,
-      description: formatDescription(e.description),
-    })),
-    educations: data.educations.map((e) => ({
-      ...e,
-      description: e.description ? formatDescription(e.description) : e.description,
-    })),
+    experiences: data.experiences.map((e) => ({ ...e, description: normalizeDesc(e.description) })),
+    educations: data.educations.map((e) => ({ ...e, description: e.description ? normalizeDesc(e.description) : e.description })),
   };
 }
 
@@ -49,6 +50,7 @@ interface Props {
   pageNumber?: number;
   totalPages?: number;
   sectionOrder?: SectionDef[];
+  language?: CvUiLang;
 }
 
 const A4_WIDTH_MM = 210;
@@ -64,28 +66,29 @@ export function CvPreview({
   pageNumber = 1,
   totalPages = 1,
   sectionOrder,
+  language = "id",
 }: Props) {
   const formattedData = useMemo(() => formatCvDescriptions(data), [data]);
 
   const renderTemplate = () => {
     switch (template) {
       case "bandung":
-        return <BandungTemplate data={formattedData} sectionOrder={sectionOrder} />;
+        return <BandungTemplate data={formattedData} sectionOrder={sectionOrder} language={language} />;
       case "surabaya":
-        return <SurabayaTemplate data={formattedData} sectionOrder={sectionOrder} />;
+        return <SurabayaTemplate data={formattedData} sectionOrder={sectionOrder} language={language} />;
       case "yogya":
-        return <YogyaTemplate data={formattedData} sectionOrder={sectionOrder} />;
+        return <YogyaTemplate data={formattedData} sectionOrder={sectionOrder} language={language} />;
       case "medan":
-        return <MedanTemplate data={formattedData} sectionOrder={sectionOrder} />;
+        return <MedanTemplate data={formattedData} sectionOrder={sectionOrder} language={language} />;
       case "makassar":
-        return <MakassarTemplate data={formattedData} sectionOrder={sectionOrder} />;
+        return <MakassarTemplate data={formattedData} sectionOrder={sectionOrder} language={language} />;
       case "semarang":
-        return <SemarangTemplate data={formattedData} sectionOrder={sectionOrder} />;
+        return <SemarangTemplate data={formattedData} sectionOrder={sectionOrder} language={language} />;
       case "bali":
-        return <BaliTemplate data={formattedData} sectionOrder={sectionOrder} />;
+        return <BaliTemplate data={formattedData} sectionOrder={sectionOrder} language={language} />;
       case "jakarta":
       default:
-        return <JakartaTemplate data={formattedData} sectionOrder={sectionOrder} />;
+        return <JakartaTemplate data={formattedData} sectionOrder={sectionOrder} language={language} />;
     }
   };
 
@@ -123,7 +126,7 @@ export function CvPreview({
             textAlign: "right",
           }}
         >
-          Dibuat dengan CV Pintar
+          {t(language, 'watermark')}
         </div>
       )}
 
@@ -146,6 +149,7 @@ interface MultiPagePreviewProps {
   scale?: number;
   showWatermark?: boolean;
   maxContentHeight?: number; // in mm
+  language?: CvUiLang;
 }
 
 export function MultiPageCvPreview({
@@ -154,6 +158,7 @@ export function MultiPageCvPreview({
   scale = 0.7,
   showWatermark = false,
   maxContentHeight = CONTENT_HEIGHT_MM,
+  language = "id",
 }: MultiPagePreviewProps) {
   // Split content into pages
   const pages = splitContentIntoPages(data, maxContentHeight);
@@ -181,7 +186,7 @@ export function MultiPageCvPreview({
               transformOrigin: "top left",
             }}
           >
-            {renderTemplateById(template, pageData, index === 0)}
+            {renderTemplateById(template, pageData, index === 0, language)}
           </div>
 
           {showWatermark && (
@@ -193,7 +198,7 @@ export function MultiPageCvPreview({
                 textAlign: "right",
               }}
             >
-              Dibuat dengan CV Pintar
+              {t(language, 'watermark')}
             </div>
           )}
 
@@ -215,7 +220,8 @@ export function MultiPageCvPreview({
 function renderTemplateById(
   templateId: TemplateId,
   data: CvData,
-  showHeader: boolean
+  showHeader: boolean,
+  language: CvUiLang = "id",
 ) {
   const formatted = formatCvDescriptions(data);
   const dataWithHiddenHeader = showHeader
@@ -267,7 +273,7 @@ function renderTemplateById(
               </p>
             </header>
           )}
-          <JakartaTemplate data={dataWithHiddenHeader} showHeader={false} />
+          <JakartaTemplate data={dataWithHiddenHeader} showHeader={false} language={language} />
         </div>
       );
 
@@ -308,7 +314,7 @@ function renderTemplateById(
               </p>
             </header>
           )}
-          <JakartaTemplate data={dataWithHiddenHeader} showHeader={false} />
+          <JakartaTemplate data={dataWithHiddenHeader} showHeader={false} language={language} />
         </div>
       );
 
@@ -345,13 +351,13 @@ function renderTemplateById(
               <hr style={{ border: 0, borderTop: "1px solid #ccc", margin: "8px 0 0" }} />
             </header>
           )}
-          <JakartaTemplate data={dataWithHiddenHeader} showHeader={false} />
+          <JakartaTemplate data={dataWithHiddenHeader} showHeader={false} language={language} />
         </div>
       );
 
     case "jakarta":
     default:
-      return <JakartaTemplate data={dataWithHiddenHeader} showHeader={showHeader} />;
+      return <JakartaTemplate data={dataWithHiddenHeader} showHeader={showHeader} language={language} />;
   }
 }
 

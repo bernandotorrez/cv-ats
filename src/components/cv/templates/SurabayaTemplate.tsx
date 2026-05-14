@@ -1,13 +1,15 @@
 import type { CvData } from "@/lib/cv-types";
+import type { CvUiLang } from "@/lib/cv-translations";
 import type { SectionDef } from "../editor/SectionsNav";
 import { JakartaTemplate } from "./JakartaTemplate";
 
 interface Props {
   data: CvData;
   sectionOrder?: SectionDef[];
+  language?: CvUiLang;
 }
 
-export function SurabayaTemplate({ data, sectionOrder }: Props) {
+export function SurabayaTemplate({ data, sectionOrder, language = "id" }: Props) {
   return (
     <div>
       <header style={{ borderLeft: "6px solid #468432", paddingLeft: 12, marginBottom: 12 }}>
@@ -46,6 +48,7 @@ export function SurabayaTemplate({ data, sectionOrder }: Props) {
         }}
         showHeader={false}
         sectionOrder={sectionOrder}
+        language={language}
       />
     </div>
   );

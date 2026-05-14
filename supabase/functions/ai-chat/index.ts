@@ -2,7 +2,7 @@
  * AI Chat — panduan AI interaktif untuk CV
  * POST /ai-chat
  */
-import { aiComplete, checkAndTrackQuota, corsResponse, errorResponse, getAdminClient, getUserId } from "../_shared/ai-common.ts";
+import { aiComplete, checkAndTrackQuota, corsResponse, errorResponse, getAdminClient, getUserId, type CvUiLang } from "../_shared/ai-common.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 import type { AiMessage } from "../_shared/ai-common.ts";
 
@@ -70,7 +70,8 @@ Deno.serve(async (req: Request) => {
   try {
     const userId = await getUserId(req);
     const admin = getAdminClient();
-    const { messages, jsonMode, mode } = await req.json();
+    const { messages, jsonMode, mode, language } = await req.json();
+    const lang: CvUiLang = language === "en" ? "en" : "id";
 
     if (!messages || !Array.isArray(messages)) throw new Error("messages diperlukan");
 
@@ -127,7 +128,7 @@ Deno.serve(async (req: Request) => {
       maxTokens: 2000,
       jsonMode: jsonMode || false,
       useGuidedPrompt: true, // Use specialized CV chat prompt with stronger guardrails
-    });
+    }, lang);
 
     await checkAndTrackQuota(admin, userId, feature, result.length);
 

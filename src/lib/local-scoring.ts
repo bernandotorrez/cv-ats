@@ -91,12 +91,18 @@ export function scoreCvLocally(data: CvData, targetRole?: string): ScoreResult {
   let experienceScore = 0;
   const allDescriptions: string[] = [];
 
-  if (data.personal.summary) allDescriptions.push(data.personal.summary);
+  if (data.personal.summary && typeof data.personal.summary === "string") allDescriptions.push(data.personal.summary);
   for (const exp of data.experiences) {
-    if (exp.description) allDescriptions.push(exp.description);
+    if (exp.description) {
+      if (typeof exp.description === "string") allDescriptions.push(exp.description);
+      else if (Array.isArray(exp.description)) allDescriptions.push(exp.description.join("\n"));
+    }
   }
   for (const edu of data.educations) {
-    if (edu.description) allDescriptions.push(edu.description);
+    if (edu.description) {
+      if (typeof edu.description === "string") allDescriptions.push(edu.description);
+      else if (Array.isArray(edu.description)) allDescriptions.push(edu.description.join("\n"));
+    }
   }
 
   let totalActionVerbs = 0;
@@ -104,6 +110,7 @@ export function scoreCvLocally(data: CvData, targetRole?: string): ScoreResult {
   let totalPoints = 0;
 
   for (const desc of allDescriptions) {
+    if (typeof desc !== "string") continue;
     const lower = desc.toLowerCase();
     for (const verb of ACTION_VERBS) {
       if (lower.includes(verb)) totalActionVerbs++;

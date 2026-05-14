@@ -1,13 +1,15 @@
 import type { CvData } from "@/lib/cv-types";
+import type { CvUiLang } from "@/lib/cv-translations";
 import type { SectionDef } from "../editor/SectionsNav";
 import { JakartaTemplate } from "./JakartaTemplate";
 
 interface Props {
   data: CvData;
   sectionOrder?: SectionDef[];
+  language?: CvUiLang;
 }
 
-export function YogyaTemplate({ data, sectionOrder }: Props) {
+export function YogyaTemplate({ data, sectionOrder, language = "id" }: Props) {
   return (
     <div>
       <header style={{ textAlign: "left", marginBottom: 12 }}>
@@ -52,6 +54,7 @@ export function YogyaTemplate({ data, sectionOrder }: Props) {
         }}
         showHeader={false}
         sectionOrder={sectionOrder}
+        language={language}
       />
     </div>
   );

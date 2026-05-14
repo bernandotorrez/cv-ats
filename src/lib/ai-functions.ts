@@ -40,6 +40,7 @@ export async function suggestSection(input: {
     currentContent?: string;
     additionalContext?: string;
     regenerateIndex?: number;
+    language?: "id" | "en";
   };
 }) {
   return callEdge("ai-suggest", input.data) as Promise<{
@@ -53,6 +54,7 @@ export async function scoreCv(input: {
     cvData: Record<string, unknown>;
     jobDescription?: string;
     targetRole?: string;
+    language?: "id" | "en";
   };
 }) {
   return callEdge("ai-score", input.data) as Promise<{
@@ -71,6 +73,7 @@ export async function chatWithAi(input: {
     messages: Array<{ role: "user" | "assistant"; content: string }>;
     jsonMode?: boolean;
     mode?: "chat" | "guided";
+    language?: "id" | "en";
   };
 }) {
   return callEdge("ai-chat", input.data) as Promise<{ reply: string }>;
@@ -83,6 +86,7 @@ export async function generateCoverLetter(input: {
     jobDescription: string;
     companyName?: string;
     positionName?: string;
+    language?: "id" | "en";
   };
 }) {
   return callEdge("ai-cover-letter", input.data) as Promise<{ coverLetter: string }>;
@@ -92,6 +96,7 @@ export async function extractKeywords(input: {
   data: {
     jobDescription: string;
     targetRole?: string;
+    language?: "id" | "en";
   };
 }) {
   return callEdge("ai-keywords", input.data) as Promise<{
@@ -146,6 +151,7 @@ export async function reviewCv(input: {
     cvData: Record<string, unknown>;
     targetRole?: string;
     jobDescription?: string;
+    language?: "id" | "en";
   };
 }) {
   return callEdge("ai-cv-review", input.data) as Promise<CvReviewResult>;
@@ -156,6 +162,7 @@ export async function reviewCvUpload(input: {
     rawText: string;
     targetRole?: string;
     jobDescription?: string;
+    language?: "id" | "en";
   };
 }) {
   return callEdge("ai-cv-review-upload", input.data) as Promise<CvReviewResult>;
@@ -165,6 +172,7 @@ export async function polishText(input: {
   data: {
     text: string;
     context?: string;
+    language?: "id" | "en";
   };
 }) {
   return callEdge("ai-polish", input.data) as Promise<{
@@ -176,6 +184,7 @@ export async function polishText(input: {
 export async function parseCvUpload(input: {
   data: {
     rawText: string;
+    language?: "id" | "en";
   };
 }) {
   return callEdge("ai-parse-cv", input.data) as Promise<{

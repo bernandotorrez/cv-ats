@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { t, type CvUiLang } from "@/lib/cv-translations";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import {
@@ -175,11 +176,13 @@ export function SectionsNav({
 
 // ─── Default Section Definitions ─────────────────────────────────
 
-export const DEFAULT_SECTIONS: SectionDef[] = [
-  { id: "personal", label: "Profil & Kontak", icon: <User className="h-4 w-4" /> },
-  { id: "experience", label: "Pengalaman Kerja", icon: <Briefcase className="h-4 w-4" /> },
-  { id: "education", label: "Pendidikan", icon: <GraduationCap className="h-4 w-4" /> },
-  { id: "skills", label: "Keahlian", icon: <Wrench className="h-4 w-4" /> },
-  { id: "extras", label: "Bahasa & Sertifikat", icon: <Award className="h-4 w-4" /> },
-  { id: "ats", label: "ATS View", icon: <Eye className="h-4 w-4" /> },
-];
+export function getDefaultSections(lang: CvUiLang = "id"): SectionDef[] {
+  return [
+    { id: "personal", label: t(lang, "profileAndContact"), icon: <User className="h-4 w-4" /> },
+    { id: "experience", label: t(lang, "workExperience"), icon: <Briefcase className="h-4 w-4" /> },
+    { id: "education", label: t(lang, "education"), icon: <GraduationCap className="h-4 w-4" /> },
+    { id: "skills", label: t(lang, "skills"), icon: <Wrench className="h-4 w-4" /> },
+    { id: "extras", label: t(lang, "extras"), icon: <Award className="h-4 w-4" /> },
+    { id: "ats", label: t(lang, "atsView"), icon: <Eye className="h-4 w-4" /> },
+  ];
+}

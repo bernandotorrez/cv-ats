@@ -1,4 +1,5 @@
 import type { CvData } from "@/lib/cv-types";
+import { t, type CvUiLang } from "@/lib/cv-translations";
 import type { SectionDef } from "../editor/SectionsNav";
 import { Section } from "./Section";
 
@@ -6,6 +7,7 @@ interface Props {
   data: CvData;
   showHeader?: boolean;
   sectionOrder?: SectionDef[];
+  language?: CvUiLang;
 }
 
 const DEFAULT_SECTION_ORDER = [
@@ -16,7 +18,7 @@ const DEFAULT_SECTION_ORDER = [
   { id: "extras", label: "Bahasa & Sertifikat" },
 ] as const;
 
-export function SemarangTemplate({ data, showHeader = true, sectionOrder }: Props) {
+export function SemarangTemplate({ data, showHeader = true, sectionOrder, language = "id" }: Props) {
   const { personal, experiences, educations, skills, languages, certificates } = data;
   const orderedSections = sectionOrder?.filter(s => s.id !== "ats") || DEFAULT_SECTION_ORDER;
 
@@ -27,7 +29,7 @@ export function SemarangTemplate({ data, showHeader = true, sectionOrder }: Prop
       case "personal":
         if (personal.summary) {
           return (
-            <Section key="personal-summary" title="Tentang Saya">
+            <Section key="personal-summary" title={t(language, 'aboutMe')}>
               <p style={{ whiteSpace: "pre-wrap", textAlign: personal.summaryAlign || "left" }}>{personal.summary}</p>
             </Section>
           );
@@ -37,12 +39,12 @@ export function SemarangTemplate({ data, showHeader = true, sectionOrder }: Prop
       case "experience":
         if (experiences.length > 0) {
           return (
-            <Section key="experience" title="Pengalaman Kerja">
+            <Section key="experience" title={t(language, 'workExperience')}>
               {experiences.map((e) => (
                 <div key={e.id} style={{ marginBottom: 10, paddingLeft: 8, borderLeft: "2px solid #059669" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 2 }}>
                     <strong style={{ fontSize: "10.5pt", color: "#059669" }}>{e.position}</strong>
-                    <span style={{ fontSize: "9pt", color: "#666" }}>{e.startDate} – {e.current ? "Sekarang" : e.endDate}</span>
+                    <span style={{ fontSize: "9pt", color: "#666" }}>{e.startDate} – {e.current ? t(language, 'current') : e.endDate}</span>
                   </div>
                   <div style={{ fontSize: "10pt", color: "#333", fontWeight: 500, marginBottom: 2 }}>{e.company}</div>
                   {e.location && <div style={{ fontSize: "9pt", color: "#888", marginBottom: 3 }}>{e.location}</div>}
@@ -57,7 +59,7 @@ export function SemarangTemplate({ data, showHeader = true, sectionOrder }: Prop
       case "education":
         if (educations.length > 0) {
           return (
-            <Section key="education" title="Pendidikan">
+            <Section key="education" title={t(language, 'education')}>
               {educations.map((ed) => (
                 <div key={ed.id} style={{ marginBottom: 8 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
@@ -76,7 +78,7 @@ export function SemarangTemplate({ data, showHeader = true, sectionOrder }: Prop
       case "skills":
         if (skills.length > 0) {
           return (
-            <Section key="skills" title="Keahlian">
+            <Section key="skills" title={t(language, 'skills')}>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
                 {skills.map((s) => (
                   <span
@@ -104,14 +106,14 @@ export function SemarangTemplate({ data, showHeader = true, sectionOrder }: Prop
         if (languages.length > 0) {
           extrasContent.push(
             <p key="languages" style={{ marginBottom: languages.length > 0 && certificates.length > 0 ? 6 : 0 }}>
-              <strong>Bahasa:</strong> {languages.map((l) => `${l.name} (${l.level})`).join(", ")}
+              <strong>{t(language, 'languages')}:</strong> {languages.map((l) => `${l.name} (${l.level})`).join(", ")}
             </p>
           );
         }
         if (certificates.length > 0) {
           extrasContent.push(
             <div key="certificates">
-              <strong>Sertifikat:</strong>
+              <strong>{t(language, 'certificates')}:</strong>
               {certificates.map((c) => (
                 <div key={c.id} style={{ marginLeft: 8, marginTop: 2 }}>
                   <span style={{ fontWeight: 500 }}>{c.name}</span>
@@ -123,7 +125,7 @@ export function SemarangTemplate({ data, showHeader = true, sectionOrder }: Prop
         }
         if (extrasContent.length > 0) {
           return (
-            <Section key="extras" title="Bahasa & Sertifikat">
+            <Section key="extras" title={t(language, 'languagesAndCertificates')}>
               {extrasContent}
             </Section>
           );

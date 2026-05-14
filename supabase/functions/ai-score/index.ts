@@ -2,7 +2,7 @@
  * AI Score — analisis skor ATS untuk CV
  * POST /ai-score
  */
-import { aiComplete, checkAndTrackQuota, corsResponse, errorResponse, getAdminClient, getUserId } from "../_shared/ai-common.ts";
+import { aiComplete, checkAndTrackQuota, corsResponse, errorResponse, getAdminClient, getUserId, getLanguageInstruction, type CvUiLang } from "../_shared/ai-common.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 
 Deno.serve(async (req: Request) => {
@@ -11,14 +11,15 @@ Deno.serve(async (req: Request) => {
   try {
     const userId = await getUserId(req);
     const admin = getAdminClient();
-    const { cvId, cvData, jobDescription, targetRole } = await req.json();
+    const { cvId, cvData, jobDescription, targetRole, language } = await req.json();
+    const lang: CvUiLang = language === "en" ? "en" : "id";
 
     if (!cvId || !cvData) throw new Error("cvId dan cvData diperlukan");
 
     const cvText = JSON.stringify(cvData, null, 2);
     const jdText = jobDescription ? `\nDESKRIPSI PEKERJAAN:\n${jobDescription}` : "";
 
-    const prompt = `Analisis CV berikut dan berikan skor ATS dalam Bahasa Indonesia.
+    const prompt = `Analisis CV berikut dan berikan skor ATS ${getLanguageInstruction(lang)}.
 ${jdText}
 Target posisi: ${targetRole || "tidak disebutkan"}
 
@@ -35,7 +36,7 @@ Output HARUS JSON valid (tanpa markdown wrapper):
     "format": number,
     "keywords": number
   },
-  "summary": string (2-3 kalimat Bahasa Indonesia),
+  "summary": string (2-3 kalimat ${getLanguageInstruction(lang)}),
   "strengths": string[] (3-5),
   "weaknesses": string[] (3-5),
   "suggestions": string[] (5-7 actionable)
@@ -44,6 +45,7 @@ Output HARUS JSON valid (tanpa markdown wrapper):
     const result = await aiComplete(
       [{ role: "user", content: prompt }],
       { temperature: 0.3, maxTokens: 3000, jsonMode: true },
+      lang,
     );
 
     let parsed: Record<string, unknown>;

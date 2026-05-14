@@ -82,3 +82,5 @@ export const TEMPLATES = [
 ] as const;
 
 export type TemplateId = (typeof TEMPLATES)[number]["id"];
+
+export type { CvUiLang } from "./cv-translations";

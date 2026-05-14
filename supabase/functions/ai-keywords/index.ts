@@ -2,7 +2,7 @@
  * AI Keywords — ekstrak keyword dari deskripsi pekerjaan
  * POST /ai-keywords
  */
-import { aiComplete, checkAndTrackQuota, corsResponse, errorResponse, getAdminClient, getUserId } from "../_shared/ai-common.ts";
+import { aiComplete, checkAndTrackQuota, corsResponse, errorResponse, getAdminClient, getUserId, type CvUiLang } from "../_shared/ai-common.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 
 Deno.serve(async (req: Request) => {
@@ -11,7 +11,8 @@ Deno.serve(async (req: Request) => {
   try {
     const userId = await getUserId(req);
     const admin = getAdminClient();
-    const { jobDescription, targetRole } = await req.json();
+    const { jobDescription, targetRole, language } = await req.json();
+    const lang: CvUiLang = language === "en" ? "en" : "id";
 
     if (!jobDescription) throw new Error("jobDescription diperlukan");
 
@@ -46,6 +47,7 @@ Output JSON:
     const result = await aiComplete(
       [{ role: "user", content: prompt }],
       { temperature: 0.3, maxTokens: 1500, jsonMode: true },
+      lang,
     );
 
     let parsed: Record<string, unknown>;

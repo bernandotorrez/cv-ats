@@ -6,7 +6,7 @@
  * Body: { rawText: string }
  */
 
-import { aiComplete, checkAndTrackQuota, corsResponse, errorResponse, getAdminClient, getUserId } from "../_shared/ai-common.ts";
+import { aiComplete, checkAndTrackQuota, corsResponse, errorResponse, getAdminClient, getUserId, getLanguageInstruction, type CvUiLang } from "../_shared/ai-common.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 
 Deno.serve(async (req: Request) => {
@@ -16,7 +16,8 @@ Deno.serve(async (req: Request) => {
     const userId = await getUserId(req);
     const admin = getAdminClient();
 
-    const { rawText } = await req.json();
+    const { rawText, language } = await req.json();
+    const lang: CvUiLang = language === "en" ? "en" : "id";
 
     if (!rawText || typeof rawText !== "string" || rawText.trim().length < 30) {
       throw new Error("Teks CV terlalu pendek. Pastikan file CV berisi data yang cukup.");
@@ -69,7 +70,7 @@ PENTING:
 - Untuk tanggal: gunakan perkiraan terbaik dari konteks
 - Deskripsi WAJIB dipoles: gunakan bullet points (•) dengan kata kerja aktif
 - Skill: gunakan nama spesifik (bukan "Microsoft Office", tapi "Microsoft Excel, Microsoft Word")
-- Semua teks WAJIB Bahasa Indonesia (kecuali nama perusahaan/skill yang memang Bahasa Inggris)
+- ${lang === "en" ? "All text MUST be in English (except company names/skills that are originally in other languages)" : "Semua teks WAJIB Bahasa Indonesia (kecuali nama perusahaan/skill yang memang Bahasa Inggris)"}
 - Output WAJIB JSON valid`;
 
     const result = await aiComplete(
@@ -78,6 +79,7 @@ PENTING:
         { role: "user", content: `CV TEXT:\n\n${cvText}\n\nParse CV ini menjadi JSON terstruktur sesuai format yang dijelaskan.` },
       ],
       { temperature: 0.2, maxTokens: 4000, jsonMode: true },
+      lang,
     );
 
     let parsed: Record<string, unknown>;

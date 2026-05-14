@@ -2,7 +2,7 @@
  * AI Suggest — saran pengisian section CV (3 opsi)
  * POST /ai-suggest
  */
-import { aiComplete, checkAndTrackQuota, corsResponse, errorResponse, getAdminClient, getUserId } from "../_shared/ai-common.ts";
+import { aiComplete, checkAndTrackQuota, corsResponse, errorResponse, getAdminClient, getUserId, getLanguageInstruction, type CvUiLang } from "../_shared/ai-common.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 
 Deno.serve(async (req: Request) => {
@@ -11,12 +11,13 @@ Deno.serve(async (req: Request) => {
   try {
     const userId = await getUserId(req);
     const admin = getAdminClient();
-    const { cvId, section, targetRole, currentContent, additionalContext, regenerateIndex } = await req.json();
+    const { cvId, section, targetRole, currentContent, additionalContext, regenerateIndex, language } = await req.json();
+    const lang: CvUiLang = language === "en" ? "en" : "id";
 
     if (!cvId || !section) throw new Error("cvId dan section diperlukan");
 
     const prompts: Record<string, string> = {
-      summary: `Buatkan 3 opsi ringkasan profil profesional (2-4 kalimat) dalam Bahasa Indonesia. Setiap opsi harus punya gaya berbeda.
+      summary: `Buatkan 3 opsi ringkasan profil profesional (2-4 kalimat) ${getLanguageInstruction(lang)}. Setiap opsi harus punya gaya berbeda.
 Target posisi: ${targetRole || "tidak disebutkan"}
 ${currentContent ? `Konten saat ini: ${currentContent}\nBuat opsi yang lebih baik dengan gaya berbeda.` : "Buat 3 opsi dari awal."}
 ${additionalContext ? `Konteks: ${additionalContext}` : ""}
@@ -26,7 +27,7 @@ OUTPUT FORMAT (JSON):
 [{"option": "teks ringkasan opsi 1", "explanation": "penjelasan singkat kenapa opsi ini kuat"}, {"option": "teks ringkasan opsi 2", "explanation": "penjelasan singkat"}, {"option": "teks ringkasan opsi 3", "explanation": "penjelasan singkat"}]
 HANYA JSON array, tanpa markdown, tanpa kata pembuka/penutup.`,
 
-      headline: `Buatkan 3 opsi headline profesional dalam Bahasa Indonesia untuk posisi ${targetRole || "profesional"}.
+      headline: `Buatkan 3 opsi headline profesional ${getLanguageInstruction(lang)} untuk posisi ${targetRole || "profesional"}.
 ${currentContent ? `Headline saat ini: ${currentContent}\nBuat opsi dengan gaya berbeda.` : ""}
 ${regenerateIndex !== undefined ? `Opsi ke-${regenerateIndex + 1} sebelumnya kurang cocok. Buatkan opsi baru.` : ""}
 Syarat: singkat, sebut posisi + keahlian inti + value proposition.
@@ -34,7 +35,7 @@ OUTPUT FORMAT (JSON):
 [{"option": "headline opsi 1", "explanation": "kenapa headline ini efektif"}, {"option": "headline opsi 2", "explanation": "..."}, {"option": "headline opsi 3", "explanation": "..."}]
 HANYA JSON array.`,
 
-      experience: `Buatkan 3 opsi deskripsi pengalaman kerja (3-5 poin) dalam Bahasa Indonesia.
+      experience: `Buatkan 3 opsi deskripsi pengalaman kerja (3-5 poin) ${getLanguageInstruction(lang)}.
 ${targetRole ? `Target: ${targetRole}` : ""}
 ${currentContent ? `Konten saat ini: ${currentContent}\nBuat opsi dengan gaya berbeda.` : "Buat 3 opsi dari awal."}
 ${additionalContext ? `Konteks: ${additionalContext}` : ""}
@@ -50,7 +51,7 @@ OUTPUT FORMAT (JSON):
 [{"option": "- poin 1\\n- poin 2\\n- poin 3", "explanation": "kenapa deskripsi ini kuat"}, ...]
 HANYA JSON array, tanpa markdown.`,
 
-      education: `Buatkan 3 opsi deskripsi pendidikan (1-3 kalimat) dalam Bahasa Indonesia.
+      education: `Buatkan 3 opsi deskripsi pendidikan (1-3 kalimat) ${getLanguageInstruction(lang)}.
 ${currentContent ? `Deskripsi saat ini: ${currentContent}\nBuat opsi dengan gaya berbeda.` : "Buat 3 opsi dari awal."}
 ${additionalContext ? `Konteks: ${additionalContext}` : ""}
 ${regenerateIndex !== undefined ? `Opsi ke-${regenerateIndex + 1} sebelumnya kurang cocok. Buatkan opsi baru.` : ""}
@@ -70,7 +71,7 @@ HANYA JSON array.`,
     };
 
     const prompt = prompts[section] || prompts.summary;
-    const result = await aiComplete([{ role: "user", content: prompt }]);
+    const result = await aiComplete([{ role: "user", content: prompt }], {}, lang);
 
     await checkAndTrackQuota(admin, userId, "suggest", result.length);
 

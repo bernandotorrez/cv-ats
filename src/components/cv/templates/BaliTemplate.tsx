@@ -1,4 +1,5 @@
 import type { CvData } from "@/lib/cv-types";
+import { t, type CvUiLang } from "@/lib/cv-translations";
 import type { SectionDef } from "../editor/SectionsNav";
 import { Section } from "./Section";
 
@@ -6,6 +7,7 @@ interface Props {
   data: CvData;
   showHeader?: boolean;
   sectionOrder?: SectionDef[];
+  language?: CvUiLang;
 }
 
 const DEFAULT_SECTION_ORDER = [
@@ -16,7 +18,7 @@ const DEFAULT_SECTION_ORDER = [
   { id: "extras", label: "Bahasa & Sertifikat" },
 ] as const;
 
-export function BaliTemplate({ data, showHeader = true, sectionOrder }: Props) {
+export function BaliTemplate({ data, showHeader = true, sectionOrder, language = "id" }: Props) {
   const { personal, experiences, educations, skills, languages, certificates } = data;
   const orderedSections = sectionOrder?.filter(s => s.id !== "ats") || DEFAULT_SECTION_ORDER;
 
@@ -27,7 +29,7 @@ export function BaliTemplate({ data, showHeader = true, sectionOrder }: Props) {
       case "personal":
         if (personal.summary) {
           return (
-            <Section key="personal-summary" title="Profil">
+            <Section key="personal-summary" title={t(language, 'profile')}>
               <p style={{ whiteSpace: "pre-wrap", textAlign: personal.summaryAlign || "left" }}>{personal.summary}</p>
             </Section>
           );
@@ -37,7 +39,7 @@ export function BaliTemplate({ data, showHeader = true, sectionOrder }: Props) {
       case "experience":
         if (experiences.length > 0) {
           return (
-            <Section key="experience" title="Riwayat Pekerjaan">
+            <Section key="experience" title={t(language, 'workHistory')}>
               {experiences.map((e, idx) => (
                 <div key={e.id} style={{ marginBottom: 12 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 3 }}>
@@ -46,7 +48,7 @@ export function BaliTemplate({ data, showHeader = true, sectionOrder }: Props) {
                       <span style={{ fontSize: "10pt", color: "#64748b" }}> — {e.company}</span>
                     </div>
                     <span style={{ fontSize: "9pt", color: "#94a3b8", whiteSpace: "nowrap", marginLeft: 8 }}>
-                      {e.startDate} – {e.current ? "Sekarang" : e.endDate}
+                      {e.startDate} – {e.current ? t(language, 'current') : e.endDate}
                     </span>
                   </div>
                   {e.location && (
@@ -65,7 +67,7 @@ export function BaliTemplate({ data, showHeader = true, sectionOrder }: Props) {
       case "education":
         if (educations.length > 0) {
           return (
-            <Section key="education" title="Pendidikan">
+            <Section key="education" title={t(language, 'education')}>
               {educations.map((ed) => (
                 <div key={ed.id} style={{ marginBottom: 8 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
@@ -88,7 +90,7 @@ export function BaliTemplate({ data, showHeader = true, sectionOrder }: Props) {
       case "skills":
         if (skills.length > 0) {
           return (
-            <Section key="skills" title="Keahlian">
+            <Section key="skills" title={t(language, 'skills')}>
               <p style={{ fontSize: "10pt", lineHeight: 1.8 }}>
                 {skills.map((s, idx) => (
                   <span key={s.id}>
@@ -106,7 +108,7 @@ export function BaliTemplate({ data, showHeader = true, sectionOrder }: Props) {
         if (languages.length > 0) {
           extrasContent.push(
             <div key="languages" style={{ marginBottom: languages.length > 0 && certificates.length > 0 ? 6 : 0 }}>
-              <strong style={{ fontSize: "9.5pt" }}>Bahasa:</strong>
+              <strong style={{ fontSize: "9.5pt" }}>{t(language, 'languages')}:</strong>
               <span style={{ fontSize: "9.5pt", color: "#64748b" }}>
                 {" "}{languages.map((l) => `${l.name} (${l.level})`).join(", ")}
               </span>
@@ -116,7 +118,7 @@ export function BaliTemplate({ data, showHeader = true, sectionOrder }: Props) {
         if (certificates.length > 0) {
           extrasContent.push(
             <div key="certificates">
-              <strong style={{ fontSize: "9.5pt" }}>Sertifikat:</strong>
+              <strong style={{ fontSize: "9.5pt" }}>{t(language, 'certificates')}:</strong>
               {certificates.map((c) => (
                 <div key={c.id} style={{ fontSize: "9.5pt", color: "#64748b", marginLeft: 12 }}>
                   {c.name} — {c.issuer} ({c.date})
@@ -127,7 +129,7 @@ export function BaliTemplate({ data, showHeader = true, sectionOrder }: Props) {
         }
         if (extrasContent.length > 0) {
           return (
-            <Section key="extras" title="Bahasa & Sertifikat">
+            <Section key="extras" title={t(language, 'languagesAndCertificates')}>
               {extrasContent}
             </Section>
           );

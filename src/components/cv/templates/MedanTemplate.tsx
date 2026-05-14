@@ -1,4 +1,5 @@
 import type { CvData } from "@/lib/cv-types";
+import { t, type CvUiLang } from "@/lib/cv-translations";
 import type { SectionDef } from "../editor/SectionsNav";
 import { Section } from "./Section";
 
@@ -6,6 +7,7 @@ interface Props {
   data: CvData;
   showHeader?: boolean;
   sectionOrder?: SectionDef[];
+  language?: CvUiLang;
 }
 
 // Default section order
@@ -17,7 +19,7 @@ const DEFAULT_SECTION_ORDER = [
   { id: "extras", label: "Bahasa & Sertifikat" },
 ] as const;
 
-export function MedanTemplate({ data, showHeader = true, sectionOrder }: Props) {
+export function MedanTemplate({ data, showHeader = true, sectionOrder, language = "id" }: Props) {
   const { personal, experiences, educations, skills, languages, certificates } = data;
   const orderedSections = sectionOrder?.filter(s => s.id !== "ats") || DEFAULT_SECTION_ORDER;
 
@@ -28,7 +30,7 @@ export function MedanTemplate({ data, showHeader = true, sectionOrder }: Props) 
       case "personal":
         if (personal.summary) {
           return (
-            <Section key="personal-summary" title="Ringkasan Profil">
+            <Section key="personal-summary" title={t(language, 'profileSummary')}>
               <p style={{ whiteSpace: "pre-wrap", textAlign: personal.summaryAlign || "left" }}>{personal.summary}</p>
             </Section>
           );
@@ -38,12 +40,12 @@ export function MedanTemplate({ data, showHeader = true, sectionOrder }: Props) 
       case "experience":
         if (experiences.length > 0) {
           return (
-            <Section key="experience" title="Pengalaman Kerja">
+            <Section key="experience" title={t(language, 'workExperience')}>
               {experiences.map((e) => (
                 <div key={e.id} style={{ marginBottom: 12 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 2 }}>
                     <strong style={{ fontSize: "10.5pt" }}>{e.position}</strong>
-                    <span style={{ fontSize: "9pt", color: "#666" }}>{e.startDate} – {e.current ? "Sekarang" : e.endDate}</span>
+                    <span style={{ fontSize: "9pt", color: "#666" }}>{e.startDate} – {e.current ? t(language, 'current') : e.endDate}</span>
                   </div>
                   <div style={{ fontSize: "10pt", color: "#444", marginBottom: 3 }}>{e.company}{e.location ? ` • ${e.location}` : ""}</div>
                   <p style={{ fontSize: "9.5pt", whiteSpace: "pre-wrap", color: "#333", margin: 0, textAlign: e.descriptionAlign || "left" }}>{e.description}</p>
@@ -57,7 +59,7 @@ export function MedanTemplate({ data, showHeader = true, sectionOrder }: Props) 
       case "education":
         if (educations.length > 0) {
           return (
-            <Section key="education" title="Pendidikan">
+            <Section key="education" title={t(language, 'education')}>
               {educations.map((ed) => (
                 <div key={ed.id} style={{ marginBottom: 10 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
@@ -76,7 +78,7 @@ export function MedanTemplate({ data, showHeader = true, sectionOrder }: Props) 
       case "skills":
         if (skills.length > 0) {
           return (
-            <Section key="skills" title="Keahlian">
+            <Section key="skills" title={t(language, 'skills')}>
               <p style={{ fontSize: "10pt" }}>{skills.map((s) => s.name).join(" • ")}</p>
             </Section>
           );
@@ -88,14 +90,14 @@ export function MedanTemplate({ data, showHeader = true, sectionOrder }: Props) 
         if (languages.length > 0) {
           extrasContent.push(
             <p key="languages" style={{ marginBottom: languages.length > 0 && certificates.length > 0 ? 4 : 0 }}>
-              <strong>Bahasa:</strong> {languages.map((l) => `${l.name} (${l.level})`).join(" • ")}
+              <strong>{t(language, 'languages')}:</strong> {languages.map((l) => `${l.name} (${l.level})`).join(" • ")}
             </p>
           );
         }
         if (certificates.length > 0) {
           extrasContent.push(
             <div key="certificates" style={{ marginBottom: 4 }}>
-              <strong>Sertifikat:</strong>
+              <strong>{t(language, 'certificates')}:</strong>
               {certificates.map((c) => (
                 <div key={c.id} style={{ marginLeft: 8 }}>{c.name} — {c.issuer} <span style={{ color: "#555" }}>({c.date})</span></div>
               ))}
@@ -104,7 +106,7 @@ export function MedanTemplate({ data, showHeader = true, sectionOrder }: Props) 
         }
         if (extrasContent.length > 0) {
           return (
-            <Section key="extras" title="Bahasa & Sertifikat">
+            <Section key="extras" title={t(language, 'languagesAndCertificates')}>
               {extrasContent}
             </Section>
           );

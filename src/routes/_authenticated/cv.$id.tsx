@@ -18,6 +18,7 @@ import { DownloadDropdown } from "@/components/cv/DownloadDropdown";
 import { WhatsAppShare } from "@/components/share/WhatsAppShare";
 import { TemplateGallery } from "@/components/cv/TemplateGallery";
 import { TEMPLATES, type CvData, type TemplateId, emptyCv } from "@/lib/cv-types";
+import { type CvUiLang } from "@/lib/cv-translations";
 import { suggestSection, polishText, parseCvUpload, extractCvTextWithAi } from "@/lib/ai-functions";
 import { AiChatPanel } from "@/components/cv/AiChatPanel";
 import { AtsPreview } from "@/components/cv/AtsPreview";
@@ -42,7 +43,7 @@ import {
   TextAlignPicker,
   mutate,
   SectionsNav,
-  DEFAULT_SECTIONS,
+  getDefaultSections,
   PreviewToolbar,
 } from "@/components/cv/editor";
 import type { SectionDef, PreviewScale } from "@/components/cv/editor";
@@ -99,20 +100,21 @@ function CvEditorPage() {
   const [cvUploadParsing, setCvUploadParsing] = useState(false);
   const [cvUploadError, setCvUploadError] = useState<string | null>(null);
   const [userTier, setUserTier] = useState("free");
+  const [cvLanguage, setCvLanguage] = useState<CvUiLang>("id");
   const [allowedTemplates, setAllowedTemplates] = useState<string[] | null>(null);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "unsaved">("idle");
 
   // ─── 3-Panel Layout State ─────────────────────────────────────
   const [activeSection, setActiveSection] = useState("personal");
-  const [sections, setSections] = useState<SectionDef[]>(DEFAULT_SECTIONS);
+  const [sections, setSections] = useState<SectionDef[]>(getDefaultSections());
   const [previewScale, setPreviewScale] = useState<PreviewScale>(70);
   const [showNav, setShowNav] = useState(true);
   const [mobileTab, setMobileTab] = useState<EditorTab>("form");
 
   // ─── Auto-save ───────────────────────────────────────────────
   const saveCvToDb = useCallback(async (payload: unknown) => {
-    const { title: pTitle, templateId: pTemplateId, data: pData } =
-      (payload as { title: string; templateId: string; data: CvData }) || {};
+    const { title: pTitle, templateId: pTemplateId, data: pData, language: pLanguage } =
+      (payload as { title: string; templateId: string; data: CvData; language?: string }) || {};
     const finalTitle = pTitle ?? title;
     const finalTemplateId = pTemplateId ?? templateId;
     const finalData = pData ?? data;
@@ -134,6 +136,7 @@ function CvEditorPage() {
         title: finalTitle,
         template_id: finalTemplateId,
         data: finalData as any,
+        language: pLanguage ?? cvLanguage,
       })
       .eq("id", id)
       .select();
@@ -167,8 +170,8 @@ function CvEditorPage() {
 
   // Trigger debounced save whenever data changes
   useEffect(() => {
-    if (!loading) triggerSave({ title, templateId, data });
-  }, [data, title, templateId, loading, triggerSave]);
+    if (!loading) triggerSave({ title, templateId, data, language: cvLanguage });
+  }, [data, title, templateId, cvLanguage, loading, triggerSave]);
 
   useEffect(() => {
     (async () => {
@@ -179,6 +182,7 @@ function CvEditorPage() {
       setTemplateId(row.template_id as TemplateId);
       const cvData = { ...emptyCv, ...(row.data as unknown as CvData) };
       setData(cvData);
+      setCvLanguage((row.language === "en" ? "en" : "id") as CvUiLang);
       setTargetRole(cvData.personal.headline || "");
       setShareEnabled(row.share_enabled ?? false);
       setShareToken(row.share_token ?? null);
@@ -207,7 +211,7 @@ function CvEditorPage() {
     setSaving(true);
     const { error } = await (supabase as any)
       .from("cvs")
-      .update({ title, template_id: templateId, data: data as any })
+      .update({ title, template_id: templateId, data: data as any, language: cvLanguage })
       .eq("id", id)
       .select();
     setSaving(false);
@@ -328,7 +332,7 @@ function CvEditorPage() {
       setCvUploadExtracting(false);
       setCvUploadParsing(true);
 
-      const result = await parseCvUpload({ data: { rawText: finalText } });
+      const result = await parseCvUpload({ data: { rawText: finalText, language: cvLanguage } });
       const parsed = result.cvData as Partial<CvData>;
 
       // Merge with existing data (non-destructive)
@@ -373,7 +377,7 @@ function CvEditorPage() {
       setSuggestionPanel({ section, suggestions: null, acceptedIndex: null });
       try {
         const result = await suggestSection({
-          data: { cvId: id, section, targetRole: targetRole || undefined, currentContent: currentContent || undefined, additionalContext: additionalContext || undefined, regenerateIndex },
+          data: { cvId: id, section, targetRole: targetRole || undefined, currentContent: currentContent || undefined, additionalContext: additionalContext || undefined, regenerateIndex, language: cvLanguage },
         });
         setSuggestionPanel({ section, suggestions: result.suggestions, acceptedIndex: null });
       } catch (e: any) { toast.error(e.message || "Gagal menghasilkan saran AI"); return null; }
@@ -409,7 +413,7 @@ function CvEditorPage() {
     }
     setPolishingField(fieldKey);
     try {
-      const result = await polishText({ data: { text, context } });
+      const result = await polishText({ data: { text, context, language: cvLanguage } });
       return result.polished;
     } catch (e: any) {
       toast.error(e.message || "Gagal memperbaiki teks.");
@@ -454,6 +458,27 @@ function CvEditorPage() {
         onOpenCvUpload={() => { setShowCvUpload(true); setCvUploadFile(null); setCvUploadError(null); }}
       />
 
+      {/* Language Selector */}
+      <div className="flex items-center justify-end gap-2 px-4 py-1.5 border-b border-border bg-card/50 print:hidden">
+        <span className="text-xs text-muted-foreground mr-1">Bahasa CV:</span>
+        <Button
+          variant={cvLanguage === "id" ? "default" : "outline"}
+          size="sm"
+          className="h-7 text-xs px-2.5"
+          onClick={() => setCvLanguage("id")}
+        >
+          🇮🇩 ID
+        </Button>
+        <Button
+          variant={cvLanguage === "en" ? "default" : "outline"}
+          size="sm"
+          className="h-7 text-xs px-2.5"
+          onClick={() => setCvLanguage("en")}
+        >
+          🇬🇧 EN
+        </Button>
+      </div>
+
       {/* ─── MAIN CONTENT ─── */}
       <div className="flex-1 flex overflow-hidden print:block print:overflow-visible print:!visible">
         {/* Desktop: Sections Nav (3-panel) */}
@@ -479,7 +504,7 @@ function CvEditorPage() {
               handleLinkedInImport={handleLinkedInImport}
               suggestionPanel={suggestionPanel} onAcceptSuggestion={handleAcceptSuggestion}
               onRegenerateSuggestion={handleRegenerateSuggestion} onRegenerateAll={handleRegenerateAll}
-              onCloseSuggestion={closeSuggestionPanel} localScore={localScore}
+              onCloseSuggestion={closeSuggestionPanel} localScore={localScore} cvLanguage={cvLanguage}
             />
           </div>
         </div>
@@ -495,7 +520,7 @@ function CvEditorPage() {
               handleLinkedInImport={handleLinkedInImport}
               suggestionPanel={suggestionPanel} onAcceptSuggestion={handleAcceptSuggestion}
               onRegenerateSuggestion={handleRegenerateSuggestion} onRegenerateAll={handleRegenerateAll}
-              onCloseSuggestion={closeSuggestionPanel} localScore={localScore}
+              onCloseSuggestion={closeSuggestionPanel} localScore={localScore} cvLanguage={cvLanguage}
             />
           </div>
         )}
@@ -532,7 +557,7 @@ function CvEditorPage() {
                 }}
               >
                 <div className="print:!transform-none print:!w-auto">
-                  <CvPreview data={data} template={templateId} sectionOrder={sections} showWatermark={userTier === "free"} />
+                  <CvPreview data={data} template={templateId} sectionOrder={sections} showWatermark={userTier === "free"} language={cvLanguage} />
                 </div>
               </div>
             </div>
@@ -745,13 +770,13 @@ function EditorForm({
   handlePolishText, polishingField,
   updatePersonal, handleLinkedInImport,
   suggestionPanel, onAcceptSuggestion, onRegenerateSuggestion, onRegenerateAll, onCloseSuggestion,
-  localScore,
+  localScore, cvLanguage,
 }: {
   data: CvData; setData: React.Dispatch<React.SetStateAction<CvData>>;
   activeSection: string; setActiveSection: (s: string) => void; targetRole: string;
   aiLoading: SuggestSection | null;
   handleAiSuggest: (section: SuggestSection, currentContent?: string, additionalContext?: string, regenerateIndex?: number) => void;
-  handlePolishText: (fieldKey: string, text: string, context?: string) => Promise<string | null>;
+  handlePolishText: (fieldKey: string, text: string, context?: string) => Promise<string | null | undefined>;
   polishingField: string | null;
   updatePersonal: <K extends keyof CvData["personal"]>(k: K, v: CvData["personal"][K]) => void;
   handleLinkedInImport: (imported: Partial<CvData>) => void;
@@ -761,12 +786,13 @@ function EditorForm({
   onRegenerateAll: () => void;
   onCloseSuggestion: () => void;
   localScore: { overallScore: number; breakdown: Record<string, number>; strengths: string[]; weaknesses: string[]; suggestions: string[] };
+  cvLanguage: CvUiLang;
 }) {
   return (
     <div className="space-y-6">
       {/* Section Navigation for Mobile/Tablet */}
       <div className="lg:hidden flex gap-1.5 overflow-x-auto pb-2 -mx-1 px-1">
-        {DEFAULT_SECTIONS.map((s) => (
+        {getDefaultSections(cvLanguage).map((s) => (
           <Button
             key={s.id}
             variant={activeSection === s.id ? "default" : "ghost"}

@@ -12,7 +12,9 @@ import {
   corsResponse, 
   errorResponse, 
   getAdminClient, 
-  getUserId 
+  getUserId,
+  getLanguageInstruction,
+  type CvUiLang,
 } from "../_shared/ai-common.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 
@@ -39,7 +41,8 @@ Deno.serve(async (req: Request) => {
       }, 403, req);
     }
 
-    const { rawText, targetRole, jobDescription } = await req.json();
+    const { rawText, targetRole, jobDescription, language } = await req.json();
+    const lang: CvUiLang = language === "en" ? "en" : "id";
 
     if (!rawText || typeof rawText !== "string" || rawText.trim().length === 0) {
       throw new Error("Teks CV tidak ditemukan. Pastikan file CV berhasil diupload dan teks terekstrak.");
@@ -60,7 +63,7 @@ Deno.serve(async (req: Request) => {
 PENDEKATAN REVIEW:
 1. Kamu melihat CV dari Kacamata REKRUTER, bukan pelamar
 2. Dalam 6 detik pertama, rekruter sudah memutuskan - kamu bantuoptimalkan 6 detik itu
-3. Kamu paham budaya kerja Indonesia dan ekspektasi perusahaan lokal & multinasional
+3. ${lang === "en" ? "You understand international work culture and multinational company expectations" : "Kamu paham budaya kerja Indonesia dan ekspektasi perusahaan lokal & multinasional"}
 4. Kamu berikan feedback yang JUJUR, LANGSUNG, dan KONSTRUKTIF - bukan basa-basi
 
 FORMAT REVIEW:
@@ -90,7 +93,7 @@ Bandingkan CV dengan kandidat lain di level yang sama
 ## 🎯 KESIMPULAN HR
 Opini jujur tentang kelayakan CV ini untuk posisi target
 
-OUTPUT: WAJIB JSON valid dalam Bahasa Indonesia (tanpa markdown wrapper):
+OUTPUT: WAJIB JSON valid ${getLanguageInstruction(lang)} (tanpa markdown wrapper):
 {
   "reviewer": {
     "name": "Sari Dewi Lakshmana",
@@ -120,7 +123,7 @@ OUTPUT: WAJIB JSON valid dalam Bahasa Indonesia (tanpa markdown wrapper):
     "percentile": "perkiraan percentil CV ini"
   },
   "hrVerdict": {
-    "verdict": "Lolos Tahap Awal|Tahap Menengah|Tahap Akhir|Harus Revisi",
+    "verdict": ${lang === "en" ? '"Pass Initial|Mid Stage|Final Stage|Needs Revision"' : '"Lolos Tahap Awal|Tahap Menengah|Tahap Akhir|Harus Revisi"'},
     "reason": "alasan keputusan",
     "nextSteps": ["langkah selanjutnya"]
   },
@@ -136,6 +139,7 @@ ${hrPersonaPrompt}`;
     const result = await aiComplete(
       [{ role: "user", content: analysisPrompt }],
       { temperature: 0.4, maxTokens: 4000, jsonMode: true },
+      lang,
     );
 
     let parsed: Record<string, unknown>;

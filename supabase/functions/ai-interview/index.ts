@@ -7,7 +7,7 @@
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders } from "../_shared/cors.ts";
-import { aiComplete, type AiMessage } from "../_shared/ai-common.ts";
+import { aiComplete, type AiMessage, getLanguageInstruction, type CvUiLang } from "../_shared/ai-common.ts";
 
 const supabase = createClient(
   Deno.env.get("SUPABASE_URL") ?? "",
@@ -64,17 +64,18 @@ Deno.serve(async (req: Request) => {
     }
 
     const body = await req.json();
-    const { action, position, level, industry, questions, answers, cv } = body;
+    const { action, position, level, industry, questions, answers, cv, language } = body;
+    const lang: CvUiLang = language === "en" ? "en" : "id";
 
     if (action === "generate") {
-      const result = await generateQuestions(position, level, industry);
+      const result = await generateQuestions(position, level, industry, lang);
       return new Response(JSON.stringify(result), {
         headers: { ...corsHeaders(req), "Content-Type": "application/json" }
       });
     }
 
     if (action === "evaluate") {
-      const result = await evaluateAnswers(position, level, industry, questions, answers);
+      const result = await evaluateAnswers(position, level, industry, questions, answers, lang);
       return new Response(JSON.stringify(result), {
         headers: { ...corsHeaders(req), "Content-Type": "application/json" }
       });
@@ -102,20 +103,20 @@ Deno.serve(async (req: Request) => {
   }
 });
 
-async function generateQuestions(position: string, level: string, industry?: string) {
+async function generateQuestions(position: string, level: string, industry: string | undefined, lang: CvUiLang) {
   const messages: AiMessage[] = [
     {
       role: "system",
-      content: `Kamu adalah HR profesional Indonesia dengan 20 tahun pengalaman di ${industry || "berbagai industri"}. 
+      content: `Kamu adalah HR profesional dengan 20 tahun pengalaman di ${industry || "berbagai industri"}. 
 Buatlah 8 pertanyaan interview untuk posisi ${position} (${level}).
 Pertanyaan harus mencakup: behavioral, situational, technical, dan soft skills.
 Format output HARUS JSON array: [{"id": "q1", "question": "..."}, ...]
-Bahasa: Indonesia.`
+${lang === "en" ? "Language: English." : "Bahasa: Indonesia."}`
     },
     { role: "user", content: `Generate 8 interview questions untuk ${position} level ${level}.` }
   ];
 
-  const result = await aiComplete(messages, { temperature: 0.8, jsonMode: true });
+  const result = await aiComplete(messages, { temperature: 0.8, jsonMode: true }, lang);
   const parsed = JSON.parse(result);
   return { questions: Array.isArray(parsed) ? parsed : parsed.questions ?? [] };
 }
@@ -125,7 +126,8 @@ async function evaluateAnswers(
   level: string,
   industry: string | undefined,
   questions: Array<{ id: string; question: string }>,
-  answers: Array<{ id: string; answer: string }>
+  answers: Array<{ id: string; answer: string }>,
+  lang: CvUiLang,
 ) {
   const qaText = questions.map((q, i) => {
     const a = answers.find(a => a.id === q.id);
@@ -150,11 +152,11 @@ Format output HARUS JSON:
   "overall_score": 0-100,
   "feedback": "ringkasan feedback umum dalam 2-3 paragraf"
 }
-Bahasa: Indonesia.`
+${lang === "en" ? "Language: English." : "Bahasa: Indonesia."}`
     },
     { role: "user", content: qaText }
   ];
 
-  const result = await aiComplete(messages, { temperature: 0.5, jsonMode: true, maxTokens: 3000 });
+  const result = await aiComplete(messages, { temperature: 0.5, jsonMode: true, maxTokens: 3000 }, lang);
   return JSON.parse(result);
 }
