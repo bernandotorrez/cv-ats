@@ -97,34 +97,209 @@ export function EditorSkeleton() {
   );
 }
 
-export function DashboardSkeleton() {
+export function LandingPageSkeleton() {
   return (
-    <div className="container-page py-10 space-y-6">
-      <div className="flex justify-between">
-        <div className="space-y-2">
-          <Skeleton className="h-9 w-64" />
-          <Skeleton className="h-4 w-48" />
+    <>
+      {/* ── Hero Skeleton ── */}
+      <section className="overflow-x-clip bg-background">
+        <div className="container-page grid min-w-0 gap-12 py-14 md:grid-cols-[1.02fr_0.98fr] md:items-center md:py-20 lg:py-24">
+          <div className="min-w-0">
+            <Skeleton className="h-6 w-52 rounded-full" />
+            <Skeleton className="mt-5 h-10 w-full max-w-2xl sm:h-14" />
+            <Skeleton className="mt-3 h-10 w-4/5 max-w-xl sm:h-14" />
+            <Skeleton className="mt-5 h-4 w-full max-w-xl" />
+            <Skeleton className="mt-2 h-4 w-5/6 max-w-lg" />
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <Skeleton className="h-12 w-44" />
+              <Skeleton className="h-12 w-36" />
+            </div>
+            <div className="mt-6 grid gap-2 sm:grid-cols-3">
+              <Skeleton className="h-6 w-36" />
+              <Skeleton className="h-6 w-28" />
+              <Skeleton className="h-6 w-32" />
+            </div>
+          </div>
+          <div className="mx-auto w-full max-w-lg">
+            <Skeleton className="h-72 w-full rounded-lg sm:h-80" />
+          </div>
         </div>
-        <div className="flex gap-2">
-          <Skeleton className="h-10 w-36 rounded-lg" />
-          <Skeleton className="h-10 w-20 rounded-lg" />
-        </div>
-      </div>
-      <Skeleton className="h-16 w-full rounded-lg" />
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <CardSkeleton key={i} />
-        ))}
-      </div>
-      <div className="grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2 space-y-4">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <CvCardSkeleton key={i} />
+      </section>
+
+      {/* ── Proof Points Skeleton ── */}
+      <section className="border-y border-border bg-card">
+        <div className="container-page grid grid-cols-2 gap-px py-4 sm:grid-cols-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="px-3 py-5 text-center">
+              <Skeleton className="mx-auto h-8 w-20 md:h-9" />
+              <Skeleton className="mx-auto mt-1 h-3 w-16 md:h-4" />
+            </div>
           ))}
         </div>
-        <CardSkeleton />
-      </div>
-    </div>
+      </section>
+
+      {/* ── Problem Section Skeleton ── */}
+      <section className="container-page py-16 md:py-24">
+        <div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:items-end">
+          <div>
+            <Skeleton className="h-5 w-32 rounded-full" />
+            <Skeleton className="mt-3 h-9 w-full md:h-10" />
+          </div>
+          <Skeleton className="h-4 w-full max-w-3xl" />
+        </div>
+        <div className="mt-10 grid gap-4 md:grid-cols-3">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="rounded-lg border border-border bg-card p-6">
+              <Skeleton className="h-5 w-5" />
+              <Skeleton className="mt-4 h-5 w-32" />
+              <Skeleton className="mt-2 h-4 w-full" />
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── Features Section Skeleton ── */}
+      <section className="bg-muted/45 py-16 md:py-24">
+        <div className="container-page">
+          <div className="mx-auto max-w-2xl text-center">
+            <Skeleton className="mx-auto h-5 w-20 rounded-full" />
+            <Skeleton className="mx-auto mt-3 h-9 w-64 md:h-10" />
+            <Skeleton className="mx-auto mt-4 h-4 w-80" />
+          </div>
+          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 9 }).map((_, i) => (
+              <div key={i} className="rounded-lg border border-border bg-card p-6">
+                <Skeleton className="h-11 w-11 rounded-lg" />
+                <Skeleton className="mt-5 h-5 w-44" />
+                <Skeleton className="mt-2 h-4 w-full" />
+                <Skeleton className="mt-1 h-4 w-4/5" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── CV Review Section Skeleton ── */}
+      <section className="container-page py-16 md:py-24">
+        <div className="grid gap-10 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
+          <div>
+            <Skeleton className="h-5 w-36 rounded-full" />
+            <Skeleton className="mt-4 h-9 w-full md:h-10" />
+            <Skeleton className="mt-3 h-9 w-4/5 md:h-10" />
+            <Skeleton className="mt-4 h-4 w-full" />
+            <Skeleton className="mt-2 h-4 w-5/6" />
+            <div className="mt-7 grid gap-3 sm:grid-cols-2">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="rounded-lg border border-border bg-card p-4">
+                  <Skeleton className="h-5 w-5" />
+                  <Skeleton className="mt-3 h-4 w-28" />
+                  <Skeleton className="mt-1 h-3 w-full" />
+                </div>
+              ))}
+            </div>
+            <Skeleton className="mt-8 h-12 w-40" />
+          </div>
+          <div className="rounded-lg border border-border bg-card p-4">
+            <Skeleton className="h-96 w-full rounded-md" />
+          </div>
+        </div>
+      </section>
+
+      {/* ── Steps Section Skeleton ── */}
+      <section className="container-page py-16 md:py-24">
+        <div className="mx-auto max-w-2xl text-center">
+          <Skeleton className="mx-auto h-5 w-20 rounded-full" />
+          <Skeleton className="mx-auto mt-3 h-9 w-64 md:h-10" />
+          <Skeleton className="mx-auto mt-4 h-4 w-72" />
+        </div>
+        <div className="mt-10 grid gap-4 md:grid-cols-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="rounded-lg border border-border bg-card p-6">
+              <Skeleton className="h-4 w-8" />
+              <Skeleton className="mt-4 h-5 w-20" />
+              <Skeleton className="mt-2 h-4 w-full" />
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── Templates Section Skeleton ── */}
+      <section className="bg-card py-16 md:py-24">
+        <div className="container-page grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+          <div>
+            <Skeleton className="h-5 w-16 rounded-full" />
+            <Skeleton className="mt-3 h-9 w-full md:h-10" />
+            <Skeleton className="mt-3 h-9 w-3/4 md:h-10" />
+            <Skeleton className="mt-4 h-4 w-full" />
+            <Skeleton className="mt-7 h-10 w-36" />
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i}>
+                <Skeleton className="aspect-[3/4] w-full rounded-lg" />
+                <Skeleton className="mt-3 h-4 w-20" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Testimonials Section Skeleton ── */}
+      <section className="bg-muted/45 py-16 md:py-24">
+        <div className="container-page">
+          <div className="mx-auto max-w-2xl text-center">
+            <Skeleton className="mx-auto h-5 w-28 rounded-full" />
+            <Skeleton className="mx-auto mt-3 h-9 w-72 md:h-10" />
+            <Skeleton className="mx-auto mt-4 h-4 w-80" />
+          </div>
+          <div className="mt-10 grid gap-4 md:grid-cols-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="rounded-lg border border-border bg-card p-6">
+                <div className="flex items-center justify-between gap-4">
+                  <Skeleton className="h-6 w-6" />
+                  <div className="flex gap-0.5">
+                    {Array.from({ length: 5 }).map((_, j) => (
+                      <Skeleton key={j} className="h-4 w-4 rounded-full" />
+                    ))}
+                  </div>
+                </div>
+                <Skeleton className="mt-5 h-4 w-full" />
+                <Skeleton className="mt-2 h-4 w-5/6" />
+                <Skeleton className="mt-2 h-4 w-3/4" />
+                <div className="mt-5 border-t border-border pt-4">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="mt-1 h-3 w-32" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── FAQ Section Skeleton ── */}
+      <section className="container-page py-16 md:py-24">
+        <div className="grid gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:items-start">
+          <div>
+            <Skeleton className="h-5 w-12 rounded-full" />
+            <Skeleton className="mt-3 h-9 w-full md:h-10" />
+          </div>
+          <div className="space-y-3">
+            {[1, 2, 3, 4].map((i) => (
+              <Skeleton key={i} className="h-14 w-full rounded-xl" />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── CTA Section Skeleton ── */}
+      <section className="container-page pb-16 md:pb-24">
+        <div className="rounded-lg bg-primary px-6 py-12 text-center md:px-10 md:py-16">
+          <Skeleton className="mx-auto h-8 w-8 rounded-full bg-primary-foreground/20" />
+          <Skeleton className="mx-auto mt-5 h-9 w-full max-w-lg md:h-10 bg-primary-foreground/20" />
+          <Skeleton className="mx-auto mt-4 h-4 w-80 bg-primary-foreground/20" />
+          <Skeleton className="mx-auto mt-8 h-12 w-40 bg-primary-foreground/20" />
+        </div>
+      </section>
+    </>
   );
 }
 
