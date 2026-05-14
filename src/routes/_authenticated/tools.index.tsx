@@ -1,29 +1,45 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  BadgeCheck,
+  BookOpen,
+  ChevronRight,
+  FileText,
+  Key,
+  Lock,
+  Plus,
+  Sparkles,
+  Target,
+  WandSparkles,
+  Zap,
+  type LucideIcon,
+} from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { buildSeo } from "@/lib/seo";
+
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Skeleton } from "@/components/ui/skeleton-loading";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
-import {
-  BookOpen,
-  Key,
-  FileText,
-  ChevronRight,
-  Sparkles,
-  ArrowLeft,
-  Zap,
-  Lock,
-} from "lucide-react";
+import { checkFeatureAccess } from "@/lib/subscription";
+import { buildSeo } from "@/lib/seo";
 
 export const Route = createFileRoute("/_authenticated/tools/")({
   head: () =>
     buildSeo({
-      title: "AI Tools — CV Pintar",
-      description: "Tools AI untuk optimasi CV dan lamaran kerja.",
+      title: "AI Tools - CV Pintar",
+      description:
+        "Tools AI untuk membuat cover letter, mengekstrak keyword, dan mengoptimalkan lamaran kerja.",
       path: "/tools",
       noindex: true,
     }),
@@ -42,266 +58,266 @@ interface CvRow {
   updated_at: string;
 }
 
+type ToolId = "cover-letter" | "keyword-extractor";
+
+interface ToolItem {
+  id: ToolId;
+  icon: LucideIcon;
+  title: string;
+  eyebrow: string;
+  description: string;
+  bestFor: string;
+  result: string;
+  badge: string;
+  enabled: boolean;
+  locked: boolean;
+  upgradeTier: string;
+}
+
+const workflowNotes = [
+  "Pilih CV yang paling relevan dengan posisi target.",
+  "Tempel job description lengkap supaya output AI lebih spesifik.",
+  "Edit hasil akhir sebelum dipakai agar tetap terasa personal.",
+];
+
 function ToolsIndexPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [cvs, setCvs] = useState<CvRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showCvPicker, setShowCvPicker] = useState<{ tool: string } | null>(null);
-  const [featureFlags, setFeatureFlags] = useState<{
-    enable_cover_letter?: boolean;
-    enable_keyword_extractor?: boolean;
-  }>({});
+  const [showCvPicker, setShowCvPicker] = useState<{ tool: ToolId } | null>(null);
+  const [featureFlags, setFeatureFlags] = useState({
+    canCoverLetter: true,
+    canKeywordExtract: true,
+  });
 
   useEffect(() => {
     if (!user?.id) return;
-    Promise.all([
-      loadCvs(),
-      loadFeatureFlags(user.id),
-    ]);
+
+    (async () => {
+      setLoading(true);
+      const [cvRows, canCoverLetter, canKeywordExtract] = await Promise.all([
+        loadCvs(user.id),
+        checkFeatureAccess(user.id, "canCoverLetter"),
+        checkFeatureAccess(user.id, "canKeywordExtract"),
+      ]);
+
+      setCvs(cvRows);
+      setFeatureFlags({ canCoverLetter, canKeywordExtract });
+      setLoading(false);
+    })();
   }, [user?.id]);
 
-  const loadFeatureFlags = async (userId: string) => {
-    const { data } = await (supabase as any)
-      .from("user_subscriptions")
-      .select(`
-        subscription_tiers!inner(
-          enable_cover_letter,
-          enable_keyword_extractor
-        )
-      `)
-      .eq("user_id", userId)
-      .eq("status", "active")
-      .single();
+  const tools = useMemo<ToolItem[]>(
+    () => [
+      {
+        id: "cover-letter",
+        icon: BookOpen,
+        title: "Cover Letter Generator",
+        eyebrow: "Buat surat lamaran",
+        description:
+          "Ubah CV dan job description menjadi cover letter yang rapi, personal, dan siap diedit.",
+        bestFor: "Melamar posisi spesifik dengan cerita yang lebih nyambung.",
+        result: "Draft cover letter + preview + export TXT/PDF",
+        badge: "AI Writer",
+        enabled: featureFlags.canCoverLetter,
+        locked: !featureFlags.canCoverLetter,
+        upgradeTier: "Starter",
+      },
+      {
+        id: "keyword-extractor",
+        icon: Key,
+        title: "Keyword Extractor",
+        eyebrow: "Baca sinyal ATS",
+        description:
+          "Ambil hard skill, soft skill, kualifikasi, dan action verb penting dari lowongan target.",
+        bestFor: "Menyusun CV yang lebih relevan untuk ATS dan rekruter.",
+        result: "Keyword list + ringkasan prioritas optimasi",
+        badge: "ATS Optimizer",
+        enabled: featureFlags.canKeywordExtract,
+        locked: !featureFlags.canKeywordExtract,
+        upgradeTier: "Starter",
+      },
+    ],
+    [featureFlags],
+  );
 
-    if (data?.subscription_tiers) {
-      setFeatureFlags(data.subscription_tiers);
-    }
-  };
-
-  const loadCvs = async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from("cvs")
-      .select("id, title, template_id, updated_at")
-      .eq("user_id", user!.id)
-      .order("updated_at", { ascending: false });
-    setLoading(false);
-    if (error) return toast.error(error.message);
-    setCvs(data ?? []);
-  };
-
-  const tools = [
-    {
-      id: "cover-letter",
-      icon: BookOpen,
-      title: "Cover Letter Generator",
-      description: "Buat surat lamaran profesional otomatis dari CV dan job description",
-      badge: "AI Powered",
-      color: "bg-blue-500/10 text-blue-600 border-blue-200",
-      route: "/tools/cover-letter",
-      enabled: featureFlags.enable_cover_letter !== false,
-      locked: featureFlags.enable_cover_letter === false,
-      upgradeTier: "Starter",
-    },
-    {
-      id: "keyword-extractor",
-      icon: Key,
-      title: "Keyword Extractor",
-      description: "Ekstrak keyword penting dari job description untuk optimasi CV ATS",
-      badge: "ATS Optimizer",
-      color: "bg-purple-500/10 text-purple-600 border-purple-200",
-      route: "/tools/keyword",
-      enabled: featureFlags.enable_keyword_extractor !== false,
-      locked: featureFlags.enable_keyword_extractor === false,
-      upgradeTier: "Starter",
-    },
-  ]; // Show all tools, locked ones will be grayed out
-
-  const handleToolClick = (tool: typeof tools[0]) => {
-    // Check if tool is disabled (premium feature)
+  const handleToolClick = (tool: ToolItem) => {
     if (!tool.enabled) {
-      toast.error("Fitur ini memerlukan upgrade ke paket yang lebih tinggi.");
+      toast.error("Fitur ini tersedia setelah upgrade paket.");
       navigate({ to: "/harga" });
       return;
     }
-    
+
     if (cvs.length === 0) {
-      toast.error("Kamu belum punya CV. Buat CV dulu ya!");
+      toast.error("Kamu belum punya CV. Buat CV dulu ya.");
       navigate({ to: "/cv" });
       return;
     }
+
     setShowCvPicker({ tool: tool.id });
   };
 
   const handleCvSelect = (cvId: string) => {
     if (!showCvPicker) return;
-    const tool = tools.find((t) => t.id === showCvPicker.tool);
-    if (!tool) return;
-    
-    // Navigate to the specific tool page with cvId
-    if (tool.id === "cover-letter") {
+
+    if (showCvPicker.tool === "cover-letter") {
       navigate({ to: "/tools/cover-letter/$cvId", params: { cvId } });
-    } else if (tool.id === "keyword-extractor") {
+    } else {
       navigate({ to: "/tools/keyword/$cvId", params: { cvId } });
     }
-    
+
     setShowCvPicker(null);
   };
 
+  if (loading) return <ToolsPageSkeleton />;
+
+  const selectedTool = tools.find((tool) => tool.id === showCvPicker?.tool);
+
   return (
-    <div className="container-page py-10">
-      {/* Header */}
-      <div className="mb-8">
-        <Button asChild variant="ghost" size="sm" className="mb-4">
+    <main className="container-page py-6 sm:py-8 lg:py-10">
+      <div className="mb-6">
+        <Button asChild variant="ghost" size="sm" className="rounded-lg px-2">
           <Link to="/dashboard">
-            <ArrowLeft className="h-4 w-4" /> Kembali ke Dashboard
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Kembali ke dashboard
           </Link>
         </Button>
-        <div className="flex items-center gap-3 mb-2">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
-            <Zap className="h-6 w-6 text-primary" />
-          </div>
-          <div>
-            <h1 className="font-display text-3xl font-bold text-foreground">AI Tools</h1>
-            <p className="text-sm text-muted-foreground">
-              Tools AI untuk optimasi CV dan lamaran kerja
-            </p>
-          </div>
-        </div>
       </div>
 
-      {/* Tools Grid */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2">
-        {tools.map((tool) => (
-          <div key={tool.id} className={`relative ${tool.locked ? "cursor-not-allowed" : ""}`}>
-            {/* Blur overlay for locked tools */}
-            {tool.locked && (
-              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-background/60 backdrop-blur-sm rounded-xl">
-                <div className="flex flex-col items-center gap-2">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
-                    <Lock className="h-6 w-6 text-muted-foreground" />
-                  </div>
-                  <div className="text-center px-4">
-                    <p className="text-sm font-medium text-foreground">Fitur Terkunci</p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Upgrade ke <span className="font-semibold text-primary">{tool.upgradeTier}</span> untuk akses
-                    </p>
-                  </div>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    className="mt-2"
-                    onClick={() => navigate({ to: "/harga" })}
-                  >
-                    Lihat Paket
-                  </Button>
-                </div>
+      <section className="grid gap-6 lg:grid-cols-[1.12fr_0.88fr]">
+        <Card className="overflow-hidden border-border bg-card">
+          <CardContent className="relative p-5 sm:p-7 lg:p-8">
+            <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-primary-soft/80 to-transparent" />
+            <div className="relative">
+              <Badge className="gap-2 rounded-full px-3 py-1.5">
+                <WandSparkles className="h-3.5 w-3.5" />
+                AI Tools
+              </Badge>
+              <h1 className="mt-5 max-w-3xl text-balance font-display text-3xl font-bold leading-tight tracking-normal text-foreground sm:text-4xl lg:text-5xl">
+                Tools kecil yang bikin lamaranmu terasa lebih siap.
+              </h1>
+              <p className="mt-4 max-w-2xl text-pretty text-sm leading-6 text-muted-foreground sm:text-base">
+                Mulai dari cover letter sampai keyword ATS, semua dirancang untuk satu tujuan:
+                membuat CV dan lamaranmu lebih relevan, jelas, dan mudah dipahami rekruter.
+              </p>
+
+              <div className="mt-6 grid gap-3 sm:grid-cols-3">
+                <HeroStat icon={FileText} label="CV tersedia" value={`${cvs.length}`} />
+                <HeroStat
+                  icon={Sparkles}
+                  label="Tools aktif"
+                  value={`${tools.filter((tool) => tool.enabled).length}/2`}
+                />
+                <HeroStat icon={Target} label="Fokus" value="Apply lebih tajam" />
               </div>
-            )}
-            <button
-              onClick={() => handleToolClick(tool)}
-              disabled={!tool.enabled}
-              className={`group block text-left w-full h-full ${tool.locked ? "opacity-50" : ""}`}
-            >
-              <Card className={`h-full border-2 transition-all duration-300 ${tool.locked ? "hover:border-muted" : "hover:border-primary/40 hover:shadow-lg hover:-translate-y-1"} ${tool.color}`}>
-                <CardHeader>
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-background shadow-sm">
-                      <tool.icon className={`h-6 w-6 ${tool.locked ? "text-muted-foreground" : ""}`} />
-                    </div>
-                    <div className="flex flex-col items-end gap-1">
-                      {tool.locked ? (
-                        <Badge variant="outline" className="text-xs text-muted-foreground border-dashed">
-                          <Lock className="h-3 w-3 mr-1" />
-                          Premium
-                        </Badge>
-                      ) : (
-                        <Badge variant="secondary" className="text-xs">
-                          {tool.badge}
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                  <CardTitle className={`text-xl ${!tool.locked ? "group-hover:text-primary" : ""} transition-colors`}>
-                    {tool.title}
-                  </CardTitle>
-                  <CardDescription className="text-sm">
-                    {tool.description}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className={`flex items-center text-sm font-medium ${tool.locked ? "text-muted-foreground" : "text-primary"}`}>
-                    {tool.enabled ? (
-                      <>
-                        Gunakan Tool
-                        <ChevronRight className="ml-1 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                      </>
-                    ) : (
-                      <>
-                        Upgrade untuk akses
-                        <ChevronRight className="ml-1 h-4 w-4" />
-                      </>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            </button>
-          </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-border bg-primary text-primary-foreground">
+          <CardContent className="p-5 sm:p-7">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary-foreground/15">
+              <Zap className="h-6 w-6" />
+            </div>
+            <h2 className="mt-5 font-display text-2xl font-bold">
+              AI membantu menyusun. Kamu tetap yang menentukan suara akhirnya.
+            </h2>
+            <p className="mt-3 text-sm leading-6 text-primary-foreground/80">
+              Hasil terbaik muncul saat AI diberi konteks yang bagus: CV yang lengkap, posisi yang
+              jelas, dan job description yang nyata.
+            </p>
+            <div className="mt-6 space-y-3">
+              {workflowNotes.map((note) => (
+                <div key={note} className="flex gap-3 text-sm leading-6">
+                  <BadgeCheck className="mt-0.5 h-5 w-5 shrink-0" />
+                  <span className="text-primary-foreground/85">{note}</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </section>
+
+      <section className="mt-6 grid gap-4 lg:grid-cols-2">
+        {tools.map((tool) => (
+          <ToolCard key={tool.id} tool={tool} onClick={() => handleToolClick(tool)} />
         ))}
-      </div>
+      </section>
 
-      {/* Info Section */}
-      <Card className="mt-8 border-primary/20 bg-primary/5">
-        <CardContent className="p-6">
-          <div className="flex items-start gap-4">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
-              <Sparkles className="h-5 w-5 text-primary" />
+      <section className="mt-6 grid gap-4 rounded-2xl border border-border bg-card p-5 sm:p-6 lg:grid-cols-[0.85fr_1.15fr] lg:items-center">
+        <div>
+          <Badge variant="secondary" className="rounded-full">
+            Cara pakai yang enak
+          </Badge>
+          <h2 className="mt-4 font-display text-2xl font-bold">
+            Satu CV bisa jadi bahan kerja banyak tools.
+          </h2>
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">
+            Kalau CV belum lengkap, hasil AI akan ikut dangkal. Lengkapi dulu pengalaman, impact,
+            skill, dan headline sebelum menjalankan tools.
+          </p>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-3">
+          {[
+            { step: "01", title: "Pilih CV", text: "Gunakan CV yang paling relevan." },
+            { step: "02", title: "Beri konteks", text: "Masukkan posisi atau job description." },
+            { step: "03", title: "Edit hasil", text: "Sesuaikan dengan suara dan tujuanmu." },
+          ].map((item) => (
+            <div key={item.step} className="rounded-xl border border-border/70 bg-background p-4">
+              <p className="text-xs font-bold text-primary">{item.step}</p>
+              <h3 className="mt-3 font-display text-lg font-semibold">{item.title}</h3>
+              <p className="mt-1 text-sm leading-6 text-muted-foreground">{item.text}</p>
             </div>
-            <div>
-              <h3 className="font-semibold mb-1">Tips Menggunakan AI Tools</h3>
-              <ul className="space-y-1 text-sm text-muted-foreground">
-                <li>• Pastikan CV kamu sudah terisi dengan lengkap untuk hasil optimal</li>
-                <li>• Copy-paste job description lengkap untuk hasil yang lebih akurat</li>
-                <li>• Review dan edit hasil AI sebelum digunakan</li>
-                <li>• Sesuaikan dengan gaya bahasa dan konteks perusahaan target</li>
-              </ul>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          ))}
+        </div>
+      </section>
 
-      {/* CV Picker Modal */}
-      <Dialog open={showCvPicker !== null} onOpenChange={() => setShowCvPicker(null)}>
-        <DialogContent className="sm:max-w-md">
+      <Dialog
+        open={showCvPicker !== null}
+        onOpenChange={(open) => {
+          if (!open) setShowCvPicker(null);
+        }}
+      >
+        <DialogContent className="rounded-2xl sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>Pilih CV</DialogTitle>
-            <DialogDescription>
-              Pilih CV yang ingin kamu gunakan untuk tool ini.
+            <DialogTitle className="flex items-center gap-2 font-display text-2xl">
+              <Sparkles className="h-5 w-5 text-primary" />
+              Pilih CV untuk {selectedTool?.title ?? "AI Tool"}
+            </DialogTitle>
+            <DialogDescription className="leading-6">
+              Tool ini akan memakai data dari CV pilihanmu sebagai konteks utama.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-2 py-2">
-            {loading ? (
-              <div className="py-8 text-center text-sm text-muted-foreground">
-                Memuat CV...
-              </div>
-            ) : cvs.length === 0 ? (
-              <div className="py-8 text-center text-sm text-muted-foreground">
-                Belum ada CV. Buat CV dulu ya.
+
+          <div className="max-h-[44vh] space-y-2 overflow-y-auto py-2">
+            {cvs.length === 0 ? (
+              <div className="flex flex-col items-center gap-4 py-10 text-center">
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-soft text-primary">
+                  <FileText className="h-7 w-7" />
+                </div>
+                <div>
+                  <p className="font-semibold text-foreground">Belum ada CV.</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Buat CV dulu agar AI punya bahan untuk bekerja.
+                  </p>
+                </div>
               </div>
             ) : (
               cvs.map((cv) => (
                 <button
                   key={cv.id}
+                  type="button"
                   onClick={() => handleCvSelect(cv.id)}
-                  className="flex w-full items-center gap-3 rounded-lg border border-border p-3 text-left transition-colors hover:border-primary/50 hover:bg-primary/5"
+                  className="group flex w-full items-center gap-3 rounded-xl border border-border p-4 text-left transition hover:border-primary/50 hover:bg-primary-soft/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary-soft">
-                    <FileText className="h-4 w-4 text-primary" />
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary">
+                    <FileText className="h-5 w-5" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium truncate">{cv.title}</p>
+                    <p className="truncate text-sm font-semibold text-foreground">{cv.title}</p>
                     <p className="text-xs text-muted-foreground">
+                      Update{" "}
                       {new Date(cv.updated_at).toLocaleDateString("id-ID", {
                         day: "numeric",
                         month: "short",
@@ -309,20 +325,194 @@ function ToolsIndexPage() {
                       })}
                     </p>
                   </div>
-                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                  <ChevronRight className="h-4 w-4 text-muted-foreground transition group-hover:translate-x-1 group-hover:text-primary" />
                 </button>
               ))
             )}
           </div>
-          {cvs.length === 0 && !loading && (
+
+          {cvs.length === 0 && (
             <div className="flex justify-center pb-2">
-              <Button asChild size="sm">
-                <Link to="/cv">Buat CV Baru</Link>
+              <Button asChild className="rounded-lg">
+                <Link to="/cv">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Buat CV baru
+                </Link>
               </Button>
             </div>
           )}
         </DialogContent>
       </Dialog>
+    </main>
+  );
+}
+
+async function loadCvs(userId: string): Promise<CvRow[]> {
+  const { data, error } = await supabase
+    .from("cvs")
+    .select("id, title, template_id, updated_at")
+    .eq("user_id", userId)
+    .order("updated_at", { ascending: false });
+
+  if (error) {
+    toast.error(error.message);
+    return [];
+  }
+
+  return data ?? [];
+}
+
+function ToolCard({ tool, onClick }: { tool: ToolItem; onClick: () => void }) {
+  return (
+    <Card
+      className={
+        tool.locked
+          ? "relative overflow-hidden border-border bg-card"
+          : "group overflow-hidden border-border bg-card transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md"
+      }
+    >
+      {tool.locked && (
+        <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/70 p-6 backdrop-blur-sm">
+          <div className="max-w-xs text-center">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-muted text-muted-foreground">
+              <Lock className="h-6 w-6" />
+            </div>
+            <p className="mt-3 text-sm font-semibold text-foreground">Fitur premium</p>
+            <p className="mt-1 text-xs leading-5 text-muted-foreground">
+              Upgrade ke {tool.upgradeTier} untuk membuka tool ini.
+            </p>
+            <Button asChild size="sm" variant="outline" className="mt-4 rounded-lg">
+              <Link to="/harga">Lihat paket</Link>
+            </Button>
+          </div>
+        </div>
+      )}
+
+      <button
+        type="button"
+        onClick={onClick}
+        disabled={!tool.enabled}
+        className={
+          tool.locked
+            ? "block h-full w-full cursor-not-allowed text-left opacity-45"
+            : "block h-full w-full text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        }
+      >
+        <CardHeader className="pb-4">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary-soft text-primary">
+              <tool.icon className="h-6 w-6" />
+            </div>
+            <Badge variant={tool.locked ? "outline" : "secondary"} className="rounded-full">
+              {tool.locked ? "Locked" : tool.badge}
+            </Badge>
+          </div>
+          <p className="mt-2 text-xs font-semibold uppercase tracking-normal text-primary">
+            {tool.eyebrow}
+          </p>
+          <CardTitle className="font-display text-2xl transition group-hover:text-primary">
+            {tool.title}
+          </CardTitle>
+          <CardDescription className="text-sm leading-6">{tool.description}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="rounded-xl border border-border/70 bg-background p-4">
+              <p className="text-xs font-semibold text-muted-foreground">Cocok untuk</p>
+              <p className="mt-2 text-sm leading-6 text-foreground">{tool.bestFor}</p>
+            </div>
+            <div className="rounded-xl border border-border/70 bg-background p-4">
+              <p className="text-xs font-semibold text-muted-foreground">Output</p>
+              <p className="mt-2 text-sm leading-6 text-foreground">{tool.result}</p>
+            </div>
+          </div>
+          <div className="flex items-center text-sm font-semibold text-primary">
+            {tool.enabled ? "Gunakan tool" : "Upgrade untuk akses"}
+            <ArrowRight className="ml-2 h-4 w-4 transition group-hover:translate-x-1" />
+          </div>
+        </CardContent>
+      </button>
+    </Card>
+  );
+}
+
+function HeroStat({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: LucideIcon;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="rounded-xl border border-border/80 bg-background/90 p-4">
+      <Icon className="h-5 w-5 text-primary" />
+      <p className="mt-3 text-xs font-medium uppercase tracking-normal text-muted-foreground">
+        {label}
+      </p>
+      <p className="mt-1 line-clamp-2 text-sm font-semibold text-foreground">{value}</p>
     </div>
+  );
+}
+
+function ToolsPageSkeleton() {
+  return (
+    <main className="container-page space-y-6 py-6 sm:py-8 lg:py-10">
+      <Skeleton className="h-9 w-44 rounded-lg" />
+
+      <div className="grid gap-6 lg:grid-cols-[1.12fr_0.88fr]">
+        <div className="rounded-xl border border-border bg-card p-5 sm:p-7 lg:p-8">
+          <Skeleton className="h-7 w-32 rounded-full" />
+          <Skeleton className="mt-5 h-10 w-full max-w-3xl sm:h-12" />
+          <Skeleton className="mt-3 h-10 w-4/5 max-w-2xl sm:h-12" />
+          <Skeleton className="mt-5 h-4 w-full max-w-2xl" />
+          <Skeleton className="mt-2 h-4 w-5/6 max-w-xl" />
+          <div className="mt-6 grid gap-3 sm:grid-cols-3">
+            {[1, 2, 3].map((item) => (
+              <div key={item} className="rounded-xl border border-border p-4">
+                <Skeleton className="h-5 w-5" />
+                <Skeleton className="mt-3 h-3 w-24" />
+                <Skeleton className="mt-2 h-5 w-full" />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-border bg-card p-5 sm:p-7">
+          <Skeleton className="h-12 w-12 rounded-xl" />
+          <Skeleton className="mt-5 h-8 w-full max-w-sm" />
+          <Skeleton className="mt-3 h-4 w-full" />
+          <Skeleton className="mt-2 h-4 w-5/6" />
+          <div className="mt-6 space-y-3">
+            {[1, 2, 3].map((item) => (
+              <Skeleton key={item} className="h-8 w-full rounded-lg" />
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        {[1, 2].map((item) => (
+          <div key={item} className="rounded-xl border border-border bg-card p-5">
+            <div className="flex justify-between gap-4">
+              <Skeleton className="h-12 w-12 rounded-xl" />
+              <Skeleton className="h-6 w-24 rounded-full" />
+            </div>
+            <Skeleton className="mt-5 h-4 w-32" />
+            <Skeleton className="mt-3 h-8 w-64 max-w-full" />
+            <Skeleton className="mt-3 h-4 w-full" />
+            <Skeleton className="mt-2 h-4 w-5/6" />
+            <div className="mt-5 grid gap-3 sm:grid-cols-2">
+              <Skeleton className="h-28 rounded-xl" />
+              <Skeleton className="h-28 rounded-xl" />
+            </div>
+            <Skeleton className="mt-5 h-5 w-32" />
+          </div>
+        ))}
+      </div>
+
+      <Skeleton className="h-48 rounded-2xl" />
+    </main>
   );
 }

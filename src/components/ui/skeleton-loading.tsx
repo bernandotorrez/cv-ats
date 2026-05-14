@@ -5,15 +5,7 @@ interface SkeletonProps {
 }
 
 export function Skeleton({ className }: SkeletonProps) {
-  return (
-    <div
-      className={cn(
-        "animate-pulse rounded-md bg-muted",
-        className,
-      )}
-      aria-hidden="true"
-    />
-  );
+  return <div className={cn("animate-pulse rounded-md bg-muted", className)} aria-hidden="true" />;
 }
 
 export function CardSkeleton() {
@@ -335,29 +327,87 @@ export function PricingPageSkeleton() {
 
 export function ScorePageSkeleton() {
   return (
-    <div className="container-page py-10 space-y-8">
-      <div className="space-y-2">
-        <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-4 w-64" />
-      </div>
-      <div className="grid gap-8 lg:grid-cols-3">
-        <div className="lg:col-span-2 space-y-6">
-          <div className="rounded-xl border border-border p-6 space-y-4">
-            <Skeleton className="h-6 w-40" />
-            <Skeleton className="h-24 w-full rounded-lg" />
-            <Skeleton className="h-10 w-48 rounded-lg" />
+    <div className="container-page space-y-6 py-6 sm:py-8 lg:py-10">
+      <Skeleton className="h-9 w-40 rounded-lg" />
+
+      <div className="grid gap-6 lg:grid-cols-[1.12fr_0.88fr]">
+        <div className="rounded-xl border border-border bg-card p-5 sm:p-7 lg:p-8">
+          <Skeleton className="h-7 w-36 rounded-full" />
+          <Skeleton className="mt-5 h-10 w-full max-w-3xl sm:h-12" />
+          <Skeleton className="mt-3 h-10 w-4/5 max-w-2xl sm:h-12" />
+          <Skeleton className="mt-5 h-4 w-full max-w-2xl" />
+          <Skeleton className="mt-2 h-4 w-5/6 max-w-xl" />
+          <div className="mt-6 grid gap-3 sm:grid-cols-3">
+            {[1, 2, 3].map((item) => (
+              <div key={item} className="rounded-xl border border-border p-4">
+                <Skeleton className="h-5 w-5" />
+                <Skeleton className="mt-3 h-3 w-24" />
+                <Skeleton className="mt-2 h-5 w-full" />
+              </div>
+            ))}
           </div>
-          <div className="rounded-xl border border-border p-6 space-y-4">
-            <div className="flex items-center gap-6">
-              <Skeleton className="h-24 w-24 rounded-full" />
-              <div className="flex-1 space-y-2">
-                <Skeleton className="h-5 w-48" />
-                <Skeleton className="h-4 w-full" />
+        </div>
+
+        <div className="rounded-xl border border-border bg-card p-5 sm:p-7">
+          <Skeleton className="h-12 w-12 rounded-xl" />
+          <Skeleton className="mt-5 h-8 w-full max-w-sm" />
+          <Skeleton className="mt-3 h-4 w-full" />
+          <Skeleton className="mt-2 h-4 w-5/6" />
+          <div className="mt-6 space-y-3">
+            {[1, 2, 3].map((item) => (
+              <Skeleton key={item} className="h-8 w-full rounded-lg" />
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_390px]">
+        <div className="space-y-6">
+          <div className="rounded-xl border border-border bg-card p-5 sm:p-6">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <Skeleton className="h-6 w-28 rounded-full" />
+                <Skeleton className="mt-3 h-8 w-64" />
+                <Skeleton className="mt-2 h-4 w-80 max-w-full" />
+              </div>
+              <Skeleton className="h-11 w-full rounded-lg sm:w-32" />
+            </div>
+            <Skeleton className="mt-5 h-11 w-full rounded-lg" />
+            <Skeleton className="mt-4 h-40 w-full rounded-lg" />
+          </div>
+
+          <div className="rounded-xl border border-border bg-card p-5 sm:p-6">
+            <div className="grid gap-6 lg:grid-cols-[240px_minmax(0,1fr)]">
+              <div className="rounded-2xl border border-border p-5 text-center">
+                <Skeleton className="mx-auto h-4 w-24" />
+                <Skeleton className="mx-auto mt-3 h-16 w-24" />
+                <Skeleton className="mx-auto mt-4 h-7 w-28 rounded-full" />
+              </div>
+              <div>
+                <Skeleton className="h-6 w-28 rounded-full" />
+                <Skeleton className="mt-3 h-8 w-72 max-w-full" />
+                <Skeleton className="mt-2 h-4 w-full" />
+                <div className="mt-6 grid gap-3">
+                  {[1, 2, 3, 4, 5].map((item) => (
+                    <Skeleton key={item} className="h-16 w-full rounded-xl" />
+                  ))}
+                </div>
               </div>
             </div>
           </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <Skeleton className="h-56 rounded-xl" />
+            <Skeleton className="h-56 rounded-xl" />
+          </div>
         </div>
-        <Skeleton className="aspect-[210/297] w-full rounded-lg" />
+
+        <div className="rounded-xl border border-border bg-card p-5">
+          <Skeleton className="h-6 w-24 rounded-full" />
+          <Skeleton className="mt-3 h-7 w-56" />
+          <Skeleton className="mt-4 aspect-[210/297] w-full rounded-xl" />
+          <Skeleton className="mt-4 h-10 w-full rounded-lg" />
+        </div>
       </div>
     </div>
   );
