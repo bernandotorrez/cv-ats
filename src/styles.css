@@ -208,6 +208,7 @@
 
 @layer utilities {
   .container-page {
+    box-sizing: border-box;
     width: 100%;
     margin-inline: auto;
     padding-inline: 1rem;
