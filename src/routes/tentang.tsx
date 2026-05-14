@@ -1,184 +1,272 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { buildSeo } from "@/lib/seo";
-import { PageHero } from "@/components/site/PageHero";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Button } from "@/components/ui/button";
 import {
+  ArrowRight,
+  BadgeCheck,
+  Bot,
+  BriefcaseBusiness,
+  CheckCircle2,
   FileCheck,
-  Users,
-  TrendingUp,
-  Target,
-  Shield,
-  Zap,
-  Sparkles,
+  FileText,
   Globe,
   Heart,
-  ArrowRight,
+  Shield,
+  Sparkles,
+  Target,
+  TrendingUp,
+  Users,
+  Zap,
 } from "lucide-react";
 
-const stats = [
-  { icon: Users, value: "10.000+", label: "CV telah dibuat" },
-  { icon: FileCheck, value: "85%", label: "lolos screening ATS" },
-  { icon: TrendingUp, value: "3×", label: "lebih banyak interview" },
-  { icon: Target, value: "2024", label: "melayani pencari kerja" },
-];
-
-const values = [
-  {
-    icon: Heart,
-    title: "Akses Setara",
-    description:
-      "Kami percaya setiap orang — fresh graduate, career switcher, atau profesional senior — berhak atas CV berkualitas tanpa biaya selangit.",
-  },
-  {
-    icon: Shield,
-    title: "By Indonesian, For Indonesian",
-    description:
-      "Dibangun oleh tim yang paham pasar kerja Indonesia. HRD di sini punya ekspektasi berbeda — dan kami tahu persis apa yang mereka cari.",
-  },
-  {
-    icon: Zap,
-    title: "AI yang Ngerti Konteks Lokal",
-    description:
-      "AI kami dilatih memahami istilah, jabatan, dan preferensi industri di Indonesia. Bukan sekadar terjemahan template luar negeri.",
-  },
-  {
-    icon: Sparkles,
-    title: "Simpel Tapi Powerful",
-    description:
-      "Gak perlu belajar desain. Tulis pengalamanmu, pilih template, dan CV siap kirim dalam hitungan menit.",
-  },
-  {
-    icon: Globe,
-    title: "Bahasa Indonesia Dulu",
-    description:
-      "Mayoritas tools CV berbahasa Inggris. Kami hadir sepenuhnya dalam Bahasa Indonesia — dari UI sampai konten panduan.",
-  },
-  {
-    icon: TrendingUp,
-    title: "Terbukti Meningkatkan Peluang",
-    description:
-      "Rata-rata pengguna kami melaporkan peningkatan panggilan interview hingga 3× lipat setelah pakai CV ATS-friendly.",
-  },
-];
-
-const storyParagraphs = [
-  {
-    highlight: "Awalnya dari frustrasi.",
-    text: "Tim kami pernah duduk di sisi perekrut — menyortir ratusan CV per minggu untuk startup dan korporat di Indonesia. Polanya selalu sama: kandidat hebat gugur bukan karena skill, tapi karena CV mereka berantakan di mata ATS.",
-  },
-  {
-    highlight: "Lalu kami riset.",
-    text: "Kami wawancarai 50+ HRD dan hiring manager di Jakarta, Bandung, Surabaya. Kami pelajari pola screening ATS yang dipakai perusahaan Indonesia. Hasilnya mengejutkan: 70% CV yang masuk tidak terformat dengan benar untuk mesin.",
-  },
-  {
-    highlight: "Dari situ kami membangun solusi.",
-    text: "CV Pintar lahir dari perpaduan pengalaman sebagai rekruter dan engineer. Kami menggabungkan pemahaman mendalam tentang pasar kerja lokal dengan teknologi AI untuk menciptakan tools yang sederhana, terjangkau, dan benar-benar bekerja.",
-  },
-];
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { buildSeo } from "@/lib/seo";
 
 export const Route = createFileRoute("/tentang")({
   head: () =>
     buildSeo({
-      title: "Tentang Kami — CV Pintar",
+      title: "Tentang Kami - CV Pintar",
       description:
-        "Misi kami: bantu setiap pencari kerja Indonesia bikin CV yang lolos ATS dan dapat panggilan interview lebih banyak.",
+        "Misi CV Pintar: bantu pencari kerja Indonesia membuat CV ATS friendly yang jelas, kuat, dan lebih siap mendapat panggilan interview.",
       path: "/tentang",
     }),
   component: TentangPage,
 });
 
+const stats = [
+  { icon: Users, value: "5.000+", label: "pengguna aktif" },
+  { icon: FileCheck, value: "10.000+", label: "CV dibuat" },
+  { icon: TrendingUp, value: "92%", label: "skor ATS rata-rata" },
+  { icon: Target, value: "4.9/5", label: "rating pengguna" },
+] as const;
+
+const values = [
+  {
+    icon: Heart,
+    title: "Akses yang lebih setara",
+    description:
+      "Fresh graduate, career switcher, dan profesional senior sama-sama berhak punya CV yang terlihat serius tanpa biaya yang terasa berat.",
+  },
+  {
+    icon: Shield,
+    title: "Dibangun untuk pasar Indonesia",
+    description:
+      "Kami memperhatikan cara HR lokal membaca CV, istilah jabatan yang umum dipakai, dan kebiasaan apply di perusahaan Indonesia.",
+  },
+  {
+    icon: Bot,
+    title: "AI yang paham konteks",
+    description:
+      "Bukan sekadar merapikan kalimat. AI membantu membuat pengalamanmu terdengar jelas, relevan, dan tetap manusiawi.",
+  },
+  {
+    icon: Zap,
+    title: "Simpel, tapi berguna",
+    description:
+      "Kami menghindari fitur yang ramai tanpa manfaat. Setiap alat harus membantu kamu menulis, mengukur, memperbaiki, atau mengirim CV.",
+  },
+  {
+    icon: Globe,
+    title: "Bahasa Indonesia dan Inggris",
+    description:
+      "Kamu bisa membangun CV dalam bahasa yang sesuai dengan target perusahaan, tanpa kehilangan nada profesional.",
+  },
+  {
+    icon: BadgeCheck,
+    title: "Dari CV sampai interview",
+    description:
+      "CV Pintar tidak berhenti di dokumen. Kami juga membantu review HR, simulasi wawancara, dan private coaching.",
+  },
+] as const;
+
+const storyParagraphs = [
+  {
+    label: "Masalah",
+    title: "Kandidat bagus sering gugur terlalu cepat.",
+    text: "Banyak pelamar punya skill dan pengalaman yang layak, tapi CV mereka gagal menunjukkan nilai itu dalam beberapa detik pertama. Format berantakan, keyword kurang pas, atau pencapaian tidak terlihat konkret.",
+  },
+  {
+    label: "Insight",
+    title: "Rekruter butuh bukti yang cepat dipahami.",
+    text: "CV yang kuat bukan yang paling panjang. CV yang kuat membuat rekruter langsung tahu role targetmu, kekuatan utamamu, dan dampak kerja yang pernah kamu hasilkan.",
+  },
+  {
+    label: "Solusi",
+    title: "Kami membuat alur yang lebih tenang.",
+    text: "CV Pintar menggabungkan template ATS, AI writing, scoring, review HR, dan latihan interview agar proses apply terasa lebih jelas dari awal sampai siap kirim.",
+  },
+] as const;
+
+const promises = [
+  "Tidak menjual data CV pengguna.",
+  "Mengutamakan format yang ramah ATS dan nyaman dibaca manusia.",
+  "Membuat copywriting CV yang jelas, bukan berlebihan.",
+  "Membangun fitur berdasarkan kebutuhan nyata pencari kerja.",
+] as const;
+
 function TentangPage() {
   return (
     <>
-      {/* ── Hero ── */}
-      <PageHero
-        eyebrow="Tentang Kami"
-        title="CV kamu pantas dilihat manusia, bukan cuma dilewatin mesin."
-        description="Kami bikin tools CV yang bikin lamaranmu lolos ATS, dilirik HRD, dan berujung panggilan interview — tanpa ribet dan tanpa mahal."
-      />
+      <section className="overflow-hidden bg-background">
+        <div className="container-page grid gap-10 py-14 md:grid-cols-[1.03fr_0.97fr] md:items-center md:py-20 lg:py-24">
+          <div>
+            <Badge className="gap-1.5 bg-info text-info-foreground hover:bg-info">
+              <Sparkles className="h-3.5 w-3.5" aria-hidden />
+              Tentang CV Pintar
+            </Badge>
+            <h1 className="mt-5 max-w-3xl font-display text-4xl font-extrabold leading-tight tracking-tight text-foreground sm:text-5xl lg:text-6xl">
+              Kami ingin CV bagus tidak cuma dimiliki orang yang sudah tahu caranya.
+            </h1>
+            <p className="mt-5 max-w-2xl text-base leading-8 text-muted-foreground sm:text-lg">
+              CV Pintar dibuat untuk membantu pencari kerja Indonesia menulis CV yang rapi, relevan,
+              lolos ATS, dan lebih mudah dipahami rekruter.
+            </p>
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <Button asChild size="lg" className="h-12 px-6 text-base">
+                <Link to="/register">
+                  Buat CV Gratis
+                  <ArrowRight className="h-4 w-4" aria-hidden />
+                </Link>
+              </Button>
+              <Button asChild size="lg" variant="outline" className="h-12 px-6 text-base">
+                <Link to="/private-coaching">Lihat Private Coaching</Link>
+              </Button>
+            </div>
+          </div>
 
-      
+          <div className="rounded-lg border border-border bg-card p-4 shadow-xl shadow-primary/10">
+            <div className="rounded-md bg-background p-5">
+              <div className="flex items-center gap-4 border-b border-border pb-5">
+                <div className="grid h-14 w-14 place-items-center rounded-lg bg-primary text-primary-foreground">
+                  <FileText className="h-7 w-7" aria-hidden />
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Our belief
+                  </p>
+                  <h2 className="font-display text-xl font-bold">CV adalah pintu pertama.</h2>
+                </div>
+              </div>
+              <div className="mt-5 space-y-3">
+                {[
+                  ["Jelas", "Rekruter cepat paham kamu melamar sebagai apa."],
+                  ["Relevan", "Isi CV nyambung dengan role dan industri target."],
+                  ["Terukur", "Pencapaian punya bukti, angka, atau konteks."],
+                ].map(([title, desc]) => (
+                  <div key={title} className="rounded-lg border border-border p-4">
+                    <div className="flex items-start gap-3">
+                      <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-primary" aria-hidden />
+                      <div>
+                        <p className="text-sm font-semibold text-foreground">{title}</p>
+                        <p className="mt-1 text-sm leading-6 text-muted-foreground">{desc}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
-      {/* ── Misi ── */}
+      <section aria-label="Dampak CV Pintar" className="border-y border-border bg-card">
+        <div className="container-page grid grid-cols-2 gap-px py-4 sm:grid-cols-4">
+          {stats.map((item) => (
+            <div key={item.label} className="px-3 py-5 text-center">
+              <item.icon className="mx-auto h-5 w-5 text-primary" aria-hidden />
+              <div className="mt-3 font-display text-2xl font-bold text-primary md:text-3xl">
+                {item.value}
+              </div>
+              <p className="mt-1 text-xs font-medium text-muted-foreground md:text-sm">
+                {item.label}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
+
       <section className="container-page py-16 md:py-24">
-        <div className="mx-auto max-w-3xl text-center">
-          <Badge variant="secondary" className="mb-3">
-            Misi Kami
-          </Badge>
-          <h2 className="font-display text-3xl font-bold tracking-tight md:text-4xl">
-            Nggak ada lagi CV bagus cuma buat yang bisa bayar mahal.
-          </h2>
-          <p className="mt-4 text-lg text-muted-foreground">
-            Tools profesional. Harga terjangkau. Dibuat khusus buat pencari
-            kerja Indonesia. Karena kami percaya kesempatan kerja yang adil
-            dimulai dari CV yang setara.
+        <div className="grid gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:items-center">
+          <div>
+            <Badge variant="secondary">Misi Kami</Badge>
+            <h2 className="mt-3 font-display text-3xl font-bold tracking-tight md:text-4xl">
+              Membuat proses apply terasa lebih adil, jelas, dan bisa dikerjakan.
+            </h2>
+          </div>
+          <p className="text-base leading-8 text-muted-foreground">
+            Kami percaya kesempatan kerja yang lebih baik dimulai dari dokumen pertama yang benar.
+            CV bukan tempat untuk menebak-nebak. CV harus membantu kamu menjelaskan pengalaman
+            dengan struktur yang rapi, bahasa yang kuat, dan bukti yang mudah dipindai.
           </p>
         </div>
       </section>
 
-      {/* ── Nilai / Value Cards ── */}
-      <section className="bg-muted/30 py-16 md:py-24">
+      <section className="bg-muted/45 py-16 md:py-24">
         <div className="container-page">
-          <div className="mx-auto max-w-3xl text-center">
-            <Badge variant="secondary" className="mb-3">
-              Yang Bikin Kami Beda
-            </Badge>
-            <h2 className="font-display text-3xl font-bold tracking-tight md:text-4xl">
-              Dibangun oleh orang yang ngerti dua sisi meja interview.
-            </h2>
-          </div>
-          <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {values.map((v) => (
-              <Card key={v.title} className="border bg-card transition-shadow hover:shadow-md">
-                <CardContent className="p-6">
-                  <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-primary-soft">
-                    <v.icon className="h-5 w-5 text-primary" />
-                  </div>
-                  <h3 className="font-display text-lg font-semibold">
-                    {v.title}
-                  </h3>
-                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                    {v.description}
-                  </p>
-                </CardContent>
-              </Card>
+          <SectionIntro
+            eyebrow="Cerita Kami"
+            title="Dari masalah yang sering terlihat, jadi produk yang bisa dipakai."
+            desc="Kami membangun CV Pintar dari pola yang sama: kandidat layak sering kalah bukan karena kurang mampu, tapi karena CV-nya tidak menyampaikan nilai dengan jelas."
+          />
+
+          <div className="mt-10 grid gap-4 md:grid-cols-3">
+            {storyParagraphs.map((item, index) => (
+              <article key={item.title} className="rounded-lg border border-border bg-card p-6">
+                <div className="flex items-center justify-between gap-4">
+                  <Badge variant="outline">{item.label}</Badge>
+                  <span className="font-display text-sm font-bold text-primary">0{index + 1}</span>
+                </div>
+                <h3 className="mt-5 font-display text-xl font-bold text-foreground">
+                  {item.title}
+                </h3>
+                <p className="mt-3 text-sm leading-7 text-muted-foreground">{item.text}</p>
+              </article>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── Cerita Kami ── */}
       <section className="container-page py-16 md:py-24">
-        <div className="mx-auto max-w-3xl">
-          <div className="text-center">
-            <Badge variant="secondary" className="mb-3">
-              Cerita Kami
-            </Badge>
-            <h2 className="font-display text-3xl font-bold tracking-tight md:text-4xl">
-              Dari meja rekruter, untuk meja pelamar.
-            </h2>
-          </div>
-          <div className="mt-12 space-y-10">
-            {storyParagraphs.map((p, i) => (
-              <div key={i} className="flex gap-5">
-                <div className="hidden flex-col items-center sm:flex">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
-                    {i + 1}
-                  </div>
-                  {i < storyParagraphs.length - 1 && (
-                    <div className="mt-1 h-full w-px bg-border" />
-                  )}
+        <SectionIntro
+          eyebrow="Yang Bikin Kami Beda"
+          title="Teknologi yang membantu, bukan membuat proses makin ramai."
+          desc="Kami memilih fitur yang benar-benar dekat dengan kebutuhan pelamar: menulis lebih baik, mengukur kesiapan, dan berlatih sebelum kesempatan datang."
+        />
+
+        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {values.map((value) => (
+            <Card key={value.title} className="rounded-lg border-border bg-card shadow-none">
+              <CardContent className="p-6">
+                <div className="grid h-11 w-11 place-items-center rounded-lg bg-primary/10 text-primary">
+                  <value.icon className="h-5 w-5" aria-hidden />
                 </div>
-                <div className="pt-1">
-                  <p className="text-lg leading-relaxed">
-                    <span className="font-semibold text-primary">
-                      {p.highlight}{" "}
-                    </span>
-                    {p.text}
-                  </p>
+                <h3 className="mt-5 font-display text-lg font-semibold">{value.title}</h3>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">{value.description}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </section>
+
+      <section className="bg-card py-16 md:py-24">
+        <div className="container-page grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+          <div>
+            <Badge variant="secondary">Komitmen</Badge>
+            <h2 className="mt-3 font-display text-3xl font-bold tracking-tight md:text-4xl">
+              Kami ingin kamu merasa lebih siap, bukan lebih bingung.
+            </h2>
+            <p className="mt-4 text-base leading-8 text-muted-foreground">
+              Setiap fitur yang kami bangun harus punya satu tujuan: membantu kamu mengambil langkah
+              berikutnya dengan lebih percaya diri.
+            </p>
+          </div>
+
+          <div className="grid gap-3">
+            {promises.map((item) => (
+              <div key={item} className="rounded-lg border border-border bg-background p-4">
+                <div className="flex items-start gap-3">
+                  <Shield className="mt-0.5 h-5 w-5 shrink-0 text-primary" aria-hidden />
+                  <p className="text-sm leading-6 text-muted-foreground">{item}</p>
                 </div>
               </div>
             ))}
@@ -186,26 +274,60 @@ function TentangPage() {
         </div>
       </section>
 
-      {/* ── CTA ── */}
-      <section className="bg-grad-hero py-16 md:py-20">
-        <div className="container-page text-center">
-          <h2 className="font-display text-3xl font-bold tracking-tight md:text-4xl">
-            Siap bikin CV yang beneran dilirik?
-          </h2>
-          <p className="mx-auto mt-3 max-w-xl text-lg text-muted-foreground">
-            Mulai gratis sekarang. Gak perlu kartu kredit. Cukup ceritain
-            pengalamanmu dan biarin AI kami yang susun.
-          </p>
-          <div className="mt-6">
-            <Button asChild size="lg" className="gap-2">
-              <Link to="/cv">
-                Buat CV Gratis
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </Button>
+      <section className="container-page py-16 md:py-24">
+        <div className="grid gap-6 rounded-lg border border-border bg-card p-6 shadow-sm md:p-8 lg:grid-cols-[1fr_1fr] lg:items-center">
+          <div>
+            <Badge className="bg-info text-info-foreground hover:bg-info">Next step</Badge>
+            <h2 className="mt-4 font-display text-3xl font-bold tracking-tight md:text-4xl">
+              Dari CV rapi ke strategi apply yang lebih kuat.
+            </h2>
+            <p className="mt-4 text-base leading-8 text-muted-foreground">
+              Setelah CV dibuat, kamu bisa lanjut ke scoring, review HR, simulasi wawancara, atau
+              private coaching bersama HR Recruiter.
+            </p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {[
+              [BriefcaseBusiness, "Private Coaching", "Bimbingan 1-on-1 dengan HR Recruiter."],
+              [FileCheck, "Review CV", "Analisis mendalam dari perspektif HR."],
+            ].map(([Icon, title, desc]) => (
+              <div key={title as string} className="rounded-lg border border-border p-4">
+                <Icon className="h-5 w-5 text-primary" aria-hidden />
+                <h3 className="mt-3 text-sm font-semibold text-foreground">{title as string}</h3>
+                <p className="mt-1 text-sm leading-6 text-muted-foreground">{desc as string}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
+
+      <section className="container-page pb-16 md:pb-24">
+        <div className="rounded-lg bg-primary px-6 py-12 text-center text-primary-foreground md:px-10 md:py-16">
+          <FileText className="mx-auto h-8 w-8" aria-hidden />
+          <h2 className="mx-auto mt-5 max-w-2xl font-display text-3xl font-bold tracking-tight md:text-4xl">
+            Siap membuat CV yang lebih mudah dipercaya?
+          </h2>
+          <p className="mx-auto mt-4 max-w-xl text-sm leading-7 text-primary-foreground/90 md:text-base">
+            Mulai gratis, rapikan isi dengan AI, lalu cek apakah CV kamu sudah siap dikirim.
+          </p>
+          <Button asChild size="lg" variant="secondary" className="mt-8 h-12 px-7 text-base">
+            <Link to="/register">
+              Mulai sekarang
+              <ArrowRight className="h-4 w-4" aria-hidden />
+            </Link>
+          </Button>
+        </div>
+      </section>
     </>
+  );
+}
+
+function SectionIntro({ eyebrow, title, desc }: { eyebrow: string; title: string; desc: string }) {
+  return (
+    <div className="mx-auto max-w-2xl text-center">
+      <Badge variant="secondary">{eyebrow}</Badge>
+      <h2 className="mt-3 font-display text-3xl font-bold tracking-tight md:text-4xl">{title}</h2>
+      <p className="mt-4 text-base leading-8 text-muted-foreground">{desc}</p>
+    </div>
   );
 }

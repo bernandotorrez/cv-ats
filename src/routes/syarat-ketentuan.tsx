@@ -1,287 +1,333 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { buildSeo } from "@/lib/seo";
-import { PageHero } from "@/components/site/PageHero";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import {
-  FileCheck,
-  User,
-  Shield,
-  CreditCard,
-  Scale,
   AlertTriangle,
-  BookOpen,
-  Mail,
-  Clock,
+  ArrowRight,
+  BadgeCheck,
   Ban,
+  Clock,
+  CreditCard,
+  FileCheck,
+  Mail,
   RefreshCw,
+  Scale,
+  Shield,
+  Sparkles,
+  User,
+  type LucideIcon,
 } from "lucide-react";
+import type { ReactNode } from "react";
 
-const sections = [
-  {
-    icon: FileCheck,
-    title: "Penggunaan Layanan",
-    content: (
-      <>
-        <p>
-          CV Pintar adalah tools untuk membantu kamu membuat CV
-          personal. Simpel, jujur, dan sesuai peruntukannya.
-        </p>
-        <div className="mt-4 grid gap-3 sm:grid-cols-2">
-          {[
-            {
-              icon: FileCheck,
-              label: "Yang boleh",
-              variant: "allow" as const,
-              items: [
-                "Membuat CV untuk dirimu sendiri.",
-                "Pakai AI untuk perbaikan tata bahasa dan struktur.",
-                "Download CV dalam format ATS-friendly.",
-              ],
-            },
-            {
-              icon: Ban,
-              label: "Yang tidak boleh",
-              variant: "deny" as const,
-              items: [
-                "Membuat CV palsu atau konten menyesatkan.",
-                "Menyalahgunakan AI untuk plagiarisme atau penipuan.",
-                "Mengunggah konten yang melanggar hukum Indonesia.",
-              ],
-            },
-          ].map((group) => (
-            <Card
-              key={group.label}
-              className="border bg-card"
-            >
-              <CardContent className="p-5">
-                <div className="mb-3 flex items-center gap-2">
-                  <div
-                    className={`flex h-8 w-8 items-center justify-center rounded-lg ${
-                      group.variant === "allow"
-                        ? "bg-primary-soft text-primary"
-                        : "bg-destructive/10 text-destructive"
-                    }`}
-                  >
-                    <group.icon className="h-4 w-4" />
-                  </div>
-                  <h4 className="text-sm font-semibold">{group.label}</h4>
-                </div>
-                <ul className="space-y-1.5">
-                  {group.items.map((item) => (
-                    <li key={item} className="flex gap-2 text-sm">
-                      <span
-                        className={`mt-0.5 shrink-0 text-[11px] font-bold ${
-                          group.variant === "allow"
-                            ? "text-primary"
-                            : "text-destructive"
-                        }`}
-                      >
-                        {group.variant === "allow" ? "✓" : "✗"}
-                      </span>
-                      <span className="text-muted-foreground">{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </>
-    ),
-  },
-  {
-    icon: User,
-    title: "Akun & Keamanan",
-    content: (
-      <>
-        <p>Akunmu adalah pintu ke seluruh layanan. Jaga baik-baik.</p>
-        <ul className="mt-3 space-y-2">
-          {[
-            "Kamu bertanggung jawab penuh atas semua aktivitas di akunmu.",
-            "OTP login dikirim ke email — jangan dibagikan ke siapa pun.",
-            "Kalau ada aktivitas mencurigakan, laporkan segera ke halo@cvpintar.web.id.",
-            "Kami berhak menangguhkan akun yang melanggar ketentuan ini.",
-          ].map((item) => (
-            <li key={item} className="flex gap-3 text-sm">
-              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary-soft text-[11px] font-bold text-primary">
-                →
-              </span>
-              <span>{item}</span>
-            </li>
-          ))}
-        </ul>
-      </>
-    ),
-  },
-  {
-    icon: CreditCard,
-    title: "Pembayaran & Refund",
-    content: (
-      <>
-        <p>Kami percaya kamu harus bisa coba dulu sebelum komitmen.</p>
-        <div className="mt-4 grid gap-3 sm:grid-cols-3">
-          {[
-            {
-              icon: Clock,
-              label: "7 Hari Refund",
-              desc: "Full refund, no questions asked, dalam 7 hari pertama setelah pembayaran.",
-            },
-            {
-              icon: RefreshCw,
-              label: "Cancel Kapan Saja",
-              desc: "Berhenti berlangganan kapan saja. Akses tetap aktif sampai periode habis.",
-            },
-            {
-              icon: CreditCard,
-              label: "Transaksi Aman",
-              desc: "Pembayaran diproses oleh partner terpercaya. Kami tidak menyimpan data kartu.",
-            },
-          ].map((item) => (
-            <Card
-              key={item.label}
-              className="border bg-card text-center transition-shadow hover:shadow-md"
-            >
-              <CardContent className="p-5">
-                <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-primary-soft">
-                  <item.icon className="h-5 w-5 text-primary" />
-                </div>
-                <h4 className="font-semibold">{item.label}</h4>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {item.desc}
-                </p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </>
-    ),
-  },
-  {
-    icon: Scale,
-    title: "Pembatasan Tanggung Jawab",
-    content: (
-      <>
-        <p>
-          Kami bikin tools terbaik. Tapi tetap ada hal yang di luar kendali
-          kami — dan kami ingin jujur soal itu.
-        </p>
-        <div className="mt-4 grid gap-3 sm:grid-cols-2">
-          {[
-            {
-              icon: AlertTriangle,
-              label: "Yang tidak kami jamin",
-              items: [
-                "Kamu diterima di posisi atau perusahaan tertentu.",
-                "CV kamu 100% bebas dari kesalahan AI.",
-                "Layanan selalu tersedia tanpa gangguan.",
-              ],
-            },
-            {
-              icon: Shield,
-              label: "Yang kami jamin",
-              items: [
-                "Tools dibangun dengan standar industri.",
-                "Data kamu aman dan terenkripsi.",
-                "Support yang beneran responsif.",
-              ],
-            },
-          ].map((group) => (
-            <Card key={group.label} className="border bg-card">
-              <CardContent className="p-5">
-                <div className="mb-3 flex items-center gap-2">
-                  <group.icon className="h-5 w-5 text-primary" />
-                  <h4 className="text-sm font-semibold">{group.label}</h4>
-                </div>
-                <ul className="space-y-1.5">
-                  {group.items.map((item) => (
-                    <li key={item} className="flex gap-2 text-sm text-muted-foreground">
-                      <span className="mt-0.5 shrink-0 text-[10px]">•</span>
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-        <p className="mt-4 text-sm text-muted-foreground">
-          Layanan disediakan &ldquo;as-is&rdquo;. Kami terus meningkatkan
-          kualitas, tapi kamu paham bahwa hasil akhir lamaran tetap
-          tergantung banyak faktor di luar tools ini.
-        </p>
-      </>
-    ),
-  },
-];
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { buildSeo } from "@/lib/seo";
 
 export const Route = createFileRoute("/syarat-ketentuan")({
   head: () =>
     buildSeo({
-      title: "Syarat & Ketentuan — CV Pintar",
-      description: "Ketentuan penggunaan layanan CV Pintar.",
+      title: "Syarat & Ketentuan - CV Pintar",
+      description:
+        "Ketentuan penggunaan layanan CV Pintar dalam bahasa yang jelas, ringkas, dan mudah dipahami.",
       path: "/syarat-ketentuan",
     }),
   component: SyaratKetentuanPage,
 });
 
+const summary = [
+  "Gunakan CV Pintar untuk membuat dokumen karier yang jujur dan relevan.",
+  "Jaga akun dan kode loginmu. Jangan bagikan akses ke orang lain.",
+  "AI membantu memperbaiki kualitas, tapi keputusan akhir tetap ada padamu.",
+];
+
+const usageGroups = [
+  {
+    icon: FileCheck,
+    label: "Yang boleh",
+    tone: "positive",
+    items: [
+      "Membuat CV, surat lamaran, dan materi karier untuk dirimu sendiri.",
+      "Memakai AI untuk memperbaiki struktur, bahasa, dan kejelasan cerita.",
+      "Mengunduh CV ATS-friendly untuk kebutuhan lamaran kerja.",
+    ],
+  },
+  {
+    icon: Ban,
+    label: "Yang tidak boleh",
+    tone: "negative",
+    items: [
+      "Membuat informasi palsu, menyesatkan, atau melanggar hukum.",
+      "Menyalahgunakan AI untuk plagiarisme, penipuan, atau spam.",
+      "Mengganggu keamanan, sistem, atau pengalaman pengguna lain.",
+    ],
+  },
+];
+
+const accountRules = [
+  "Kamu bertanggung jawab atas aktivitas yang terjadi di akunmu.",
+  "Kode OTP dan akses login tidak boleh dibagikan ke siapa pun.",
+  "Laporkan aktivitas mencurigakan ke halo@cvpintar.web.id.",
+  "Kami dapat menangguhkan akun yang terbukti melanggar ketentuan.",
+];
+
+const paymentRules = [
+  {
+    icon: Clock,
+    label: "Refund 7 hari",
+    desc: "Kamu bisa mengajukan refund penuh dalam 7 hari pertama setelah pembayaran, selama tidak ada penyalahgunaan layanan.",
+  },
+  {
+    icon: RefreshCw,
+    label: "Berhenti kapan saja",
+    desc: "Langganan dapat dihentikan kapan saja. Akses aktif tetap berjalan sampai periode berakhir.",
+  },
+  {
+    icon: CreditCard,
+    label: "Pembayaran aman",
+    desc: "Transaksi diproses oleh partner pembayaran. Kami tidak menyimpan detail kartu pembayaran.",
+  },
+];
+
+const liabilityCards = [
+  {
+    icon: AlertTriangle,
+    title: "Yang tidak bisa kami jamin",
+    items: [
+      "Diterima kerja di posisi atau perusahaan tertentu.",
+      "Setiap saran AI selalu sempurna tanpa perlu ditinjau ulang.",
+      "Layanan bebas gangguan setiap saat.",
+    ],
+  },
+  {
+    icon: Shield,
+    title: "Yang kami upayakan",
+    items: [
+      "Produk yang berguna, aman, dan terus diperbaiki.",
+      "Data pengguna diproses dengan standar keamanan yang wajar.",
+      "Support yang responsif dan manusiawi.",
+    ],
+  },
+];
+
 function SyaratKetentuanPage() {
   return (
-    <>
-      <PageHero
-        eyebrow="Syarat & Ketentuan"
-        title="Aturan mainnya simpel. Biar kita sama-sama nyaman."
-        description="Bukan dokumen hukum 20 halaman yang bikin mata berkunang. Kami jelasin dengan bahasa yang kamu ngerti — poin per poin."
-      />
+    <main className="bg-background text-foreground">
+      <section className="relative overflow-hidden border-b border-border/70">
+        <div className="absolute inset-x-0 top-0 h-48 bg-gradient-to-b from-primary-soft/70 to-transparent" />
+        <div className="container-page relative grid gap-10 py-16 sm:py-20 lg:grid-cols-[1.08fr_0.92fr] lg:items-end lg:py-24">
+          <div className="max-w-3xl">
+            <Badge className="mb-5 gap-2 rounded-full px-3 py-1.5">
+              <Scale className="h-3.5 w-3.5" />
+              Syarat & Ketentuan
+            </Badge>
+            <h1 className="text-balance font-display text-4xl font-bold leading-tight tracking-normal text-foreground sm:text-5xl lg:text-6xl">
+              Aturan main yang jelas, supaya pengalamanmu tetap nyaman.
+            </h1>
+            <p className="mt-5 max-w-2xl text-pretty text-base leading-7 text-muted-foreground sm:text-lg">
+              Dokumen ini menjelaskan cara menggunakan CV Pintar dengan aman, adil, dan bertanggung
+              jawab. Kami buat ringkas tanpa mengurangi hal penting.
+            </p>
+            <p className="mt-5 text-sm font-medium text-muted-foreground">
+              Terakhir diperbarui: 1 Mei 2026
+            </p>
+          </div>
 
-      <article className="container-page max-w-3xl py-12 md:py-16">
-        <p className="text-sm text-muted-foreground">
-          Terakhir diperbarui: 1 Mei 2026
-        </p>
-
-        <p className="mt-4 leading-relaxed">
-          Dengan menggunakan CV Pintar, kamu menyetujui ketentuan di
-          bawah ini. Kalau ada yang kurang sreg, drop email — kami terbuka
-          buat diskusi.
-        </p>
-
-        <div className="mt-10 space-y-14">
-          {sections.map((section) => (
-            <section key={section.title}>
-              <div className="mb-4 flex items-center gap-3">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary-soft">
-                  <section.icon className="h-5 w-5 text-primary" />
-                </div>
-                <h2 className="font-display text-xl font-semibold">
-                  {section.title}
-                </h2>
+          <Card className="border-border/80 bg-card/95 shadow-sm">
+            <CardContent className="p-5 sm:p-6">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary-soft text-primary">
+                <Sparkles className="h-5 w-5" />
               </div>
-              <div className="ml-12 text-foreground">{section.content}</div>
-            </section>
-          ))}
+              <h2 className="mt-5 font-display text-xl font-semibold">Versi singkatnya</h2>
+              <div className="mt-4 space-y-3">
+                {summary.map((item) => (
+                  <div key={item} className="flex gap-3 text-sm leading-6">
+                    <BadgeCheck className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                    <span className="text-muted-foreground">{item}</span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         </div>
+      </section>
 
-        {/* ── Penutup ── */}
-        <div className="mt-16 rounded-xl border bg-muted/30 p-6 text-center sm:p-8">
-          <Badge variant="secondary" className="mb-3">
-            Ada Pertanyaan?
-          </Badge>
-          <p className="text-lg leading-relaxed">
-            Syarat & ketentuan ini bisa berubah sewaktu-waktu. Tapi kami
-            janji: selalu kasih tahu kamu dulu sebelum perubahan berlaku.
-          </p>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Kirim email kapan aja. Kami baca semua. Beneran.
-          </p>
-          <a
-            href="mailto:halo@cvpintar.web.id"
-            className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-primary underline underline-offset-2"
+      <article className="container-page py-14 sm:py-16">
+        <div className="space-y-6">
+          <TermsSection
+            icon={FileCheck}
+            number="01"
+            title="Penggunaan layanan"
+            description="CV Pintar membantu kamu membuat dokumen karier yang lebih rapi, relevan, dan mudah dipahami."
           >
-            <Mail className="h-4 w-4" />
-            halo@cvpintar.web.id
-          </a>
+            <div className="grid gap-4 md:grid-cols-2">
+              {usageGroups.map((group) => (
+                <Card key={group.label} className="border-border/80 bg-background">
+                  <CardContent className="p-5">
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={
+                          group.tone === "positive"
+                            ? "flex h-10 w-10 items-center justify-center rounded-lg bg-primary-soft text-primary"
+                            : "flex h-10 w-10 items-center justify-center rounded-lg bg-destructive/10 text-destructive"
+                        }
+                      >
+                        <group.icon className="h-5 w-5" />
+                      </div>
+                      <h3 className="font-display text-lg font-semibold">{group.label}</h3>
+                    </div>
+                    <ul className="mt-4 space-y-3">
+                      {group.items.map((item) => (
+                        <li key={item} className="flex gap-3 text-sm leading-6">
+                          <span
+                            className={
+                              group.tone === "positive"
+                                ? "mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-primary"
+                                : "mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-destructive"
+                            }
+                          />
+                          <span className="text-muted-foreground">{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </TermsSection>
+
+          <TermsSection
+            icon={User}
+            number="02"
+            title="Akun dan keamanan"
+            description="Akunmu adalah pintu ke CV, review, dan fitur berbayar. Jaga aksesnya baik-baik."
+          >
+            <div className="grid gap-3 sm:grid-cols-2">
+              {accountRules.map((rule) => (
+                <div
+                  key={rule}
+                  className="flex gap-3 rounded-xl border border-border/70 bg-background p-4 text-sm leading-6"
+                >
+                  <ArrowRight className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                  <span className="text-muted-foreground">{rule}</span>
+                </div>
+              ))}
+            </div>
+          </TermsSection>
+
+          <TermsSection
+            icon={CreditCard}
+            number="03"
+            title="Pembayaran dan refund"
+            description="Kami ingin proses pembayaran terasa jelas sejak awal: harga, akses, dan opsi berhenti."
+          >
+            <div className="grid gap-4 md:grid-cols-3">
+              {paymentRules.map((item) => (
+                <Card key={item.label} className="border-border/80 bg-background">
+                  <CardContent className="p-5">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-soft text-primary">
+                      <item.icon className="h-5 w-5" />
+                    </div>
+                    <h3 className="mt-4 font-display text-lg font-semibold">{item.label}</h3>
+                    <p className="mt-2 text-sm leading-6 text-muted-foreground">{item.desc}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </TermsSection>
+
+          <TermsSection
+            icon={Scale}
+            number="04"
+            title="Batas tanggung jawab"
+            description="Kami membangun alat bantu karier. Hasil akhir proses rekrutmen tetap dipengaruhi banyak faktor di luar aplikasi."
+          >
+            <div className="grid gap-4 md:grid-cols-2">
+              {liabilityCards.map((card) => (
+                <Card key={card.title} className="border-border/80 bg-background">
+                  <CardContent className="p-5">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-soft text-primary">
+                        <card.icon className="h-5 w-5" />
+                      </div>
+                      <h3 className="font-display text-lg font-semibold">{card.title}</h3>
+                    </div>
+                    <ul className="mt-4 space-y-3">
+                      {card.items.map((item) => (
+                        <li key={item} className="flex gap-3 text-sm leading-6">
+                          <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                          <span className="text-muted-foreground">{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+            <p className="mt-5 rounded-xl border border-border/70 bg-background p-4 text-sm leading-6 text-muted-foreground">
+              Layanan disediakan sebagaimana adanya. Kami terus meningkatkan kualitas, tetapi kamu
+              tetap perlu meninjau hasil akhir sebelum dipakai untuk melamar kerja.
+            </p>
+          </TermsSection>
+
+          <section className="rounded-2xl border border-border bg-card p-5 text-center sm:p-8">
+            <Badge variant="secondary" className="rounded-full">
+              Ada pertanyaan?
+            </Badge>
+            <h2 className="mx-auto mt-4 max-w-2xl font-display text-2xl font-bold sm:text-3xl">
+              Kalau ada yang kurang jelas, kami bantu jelaskan tanpa bahasa rumit.
+            </h2>
+            <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">
+              Ketentuan ini dapat diperbarui dari waktu ke waktu. Jika ada perubahan penting, kami
+              akan mengomunikasikannya lewat kanal yang tersedia.
+            </p>
+            <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
+              <Button asChild className="rounded-lg">
+                <a href="mailto:halo@cvpintar.web.id">
+                  <Mail className="mr-2 h-4 w-4" />
+                  halo@cvpintar.web.id
+                </a>
+              </Button>
+              <Button asChild variant="outline" className="rounded-lg">
+                <Link to="/kebijakan-privasi">
+                  Baca kebijakan privasi
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
+          </section>
         </div>
       </article>
-    </>
+    </main>
+  );
+}
+
+function TermsSection({
+  icon: Icon,
+  number,
+  title,
+  description,
+  children,
+}: {
+  icon: LucideIcon;
+  number: string;
+  title: string;
+  description: string;
+  children: ReactNode;
+}) {
+  return (
+    <section className="rounded-2xl border border-border bg-card p-5 sm:p-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary">
+          <Icon className="h-5 w-5" />
+        </div>
+        <div>
+          <Badge variant="secondary" className="rounded-full">
+            {number}
+          </Badge>
+          <h2 className="mt-3 font-display text-2xl font-bold">{title}</h2>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">{description}</p>
+        </div>
+      </div>
+      <div className="mt-6">{children}</div>
+    </section>
   );
 }

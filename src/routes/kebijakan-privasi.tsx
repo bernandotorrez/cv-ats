@@ -1,236 +1,330 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { buildSeo } from "@/lib/seo";
-import { PageHero } from "@/components/site/PageHero";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import {
-  Shield,
-  Lock,
-  Eye,
+  ArrowRight,
+  BadgeCheck,
   Database,
-  FileText,
-  Mail,
-  Trash2,
   Download,
+  Eye,
+  FileText,
+  Lock,
+  Mail,
   Server,
+  Shield,
+  Sparkles,
+  Trash2,
   UserCheck,
+  type LucideIcon,
 } from "lucide-react";
+import type { ReactNode } from "react";
 
-const sections = [
-  {
-    icon: Database,
-    title: "Data yang Kami Kumpulkan",
-    content: (
-      <>
-        <p>
-          Kami hanya mengumpulkan data yang benar-benar diperlukan untuk
-          menjalankan layanan. Tidak lebih, tidak kurang.
-        </p>
-        <ul className="mt-3 space-y-2">
-          {[
-            { label: "Email", desc: "Untuk login dan komunikasi penting seputar akunmu." },
-            { label: "Nama", desc: "Supaya kami bisa menyapa dengan personal." },
-            { label: "Konten CV", desc: "Pengalaman, pendidikan, dan skill yang kamu tulis sendiri di platform." },
-          ].map((item) => (
-            <li key={item.label} className="flex gap-3 text-sm">
-              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary-soft text-[11px] font-bold text-primary">
-                ✓
-              </span>
-              <span>
-                <strong>{item.label}</strong> — {item.desc}
-              </span>
-            </li>
-          ))}
-        </ul>
-        <p className="mt-3 text-sm text-muted-foreground">
-          Kami <strong>tidak pernah</strong> meminta KTP, SIM, nomor telepon,
-          atau data sensitif lain yang tidak relevan dengan pembuatan CV.
-        </p>
-      </>
-    ),
-  },
-  {
-    icon: Eye,
-    title: "Cara Kami Menggunakan Data",
-    content: (
-      <>
-        <p>
-          Data kamu digunakan <strong>satu tujuan saja</strong>: menjalankan
-          dan meningkatkan layanan CV Pintar.
-        </p>
-        <ul className="mt-3 space-y-2">
-          {[
-            "Menyimpan dan menampilkan CV yang kamu buat di dashboard.",
-            "Menjalankan fitur AI untuk saran perbaikan dan review CV.",
-            "Mengelola akun dan preferensi kamu.",
-            "Menganalisis tren penggunaan secara anonim untuk pengembangan produk.",
-          ].map((item) => (
-            <li key={item} className="flex gap-3 text-sm">
-              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary-soft text-[11px] font-bold text-primary">
-                →
-              </span>
-              <span>{item}</span>
-            </li>
-          ))}
-        </ul>
-        <div className="mt-4 rounded-lg border bg-muted/50 p-4">
-          <p className="text-sm font-semibold">
-            🚫 Kami <span className="text-destructive">tidak menjual</span>,
-            menyewakan, atau membagikan data kamu ke pihak ketiga.
-          </p>
-        </div>
-      </>
-    ),
-  },
-  {
-    icon: Lock,
-    title: "Keamanan Data",
-    content: (
-      <>
-        <p>
-          Keamanan data bukan fitur tambahan — ini fondasi dari setiap fitur
-          yang kami bangun.
-        </p>
-        <div className="mt-4 grid gap-3 sm:grid-cols-2">
-          {[
-            {
-              icon: Shield,
-              label: "Enkripsi Penuh",
-              desc: "Data dienkripsi saat transit (TLS) dan saat disimpan (encryption at rest).",
-            },
-            {
-              icon: Server,
-              label: "Row Level Security",
-              desc: "Akses database dibatasi per pengguna — hanya kamu yang bisa membaca datamu sendiri.",
-            },
-            {
-              icon: Lock,
-              label: "Autentikasi Aman",
-              desc: "Login melalui OTP email tanpa password yang rentan bocor.",
-            },
-            {
-              icon: UserCheck,
-              label: "Akses Terbatas",
-              desc: "Hanya engineer yang perlu akses untuk debugging yang bisa menyentuh sistem produksi.",
-            },
-          ].map((item) => (
-            <Card key={item.label} className="border bg-card">
-              <CardContent className="flex gap-3 p-4">
-                <item.icon className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                <div>
-                  <h4 className="text-sm font-semibold">{item.label}</h4>
-                  <p className="text-xs text-muted-foreground">{item.desc}</p>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </>
-    ),
-  },
-  {
-    icon: FileText,
-    title: "Hak Kamu atas Data",
-    content: (
-      <>
-        <p>
-          Data CV adalah milikmu. Kami hanya penjaganya. Kamu punya kendali
-          penuh kapan saja.
-        </p>
-        <div className="mt-4 grid gap-3 sm:grid-cols-3">
-          {[
-            { icon: Eye, label: "Akses", desc: "Lihat semua data kamu di halaman akun kapan saja." },
-            { icon: Download, label: "Ekspor", desc: "Unduh seluruh data kamu dalam format yang mudah dibaca." },
-            { icon: Trash2, label: "Hapus", desc: "Hapus permanen akun dan seluruh data dengan satu klik." },
-          ].map((item) => (
-            <Card key={item.label} className="border bg-card text-center transition-shadow hover:shadow-md">
-              <CardContent className="p-5">
-                <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-primary-soft">
-                  <item.icon className="h-5 w-5 text-primary" />
-                </div>
-                <h4 className="font-semibold">{item.label}</h4>
-                <p className="mt-1 text-xs text-muted-foreground">{item.desc}</p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-        <p className="mt-4 text-sm text-muted-foreground">
-          Atau kirim email ke{" "}
-          <a
-            href="mailto:halo@cvpintar.web.id"
-            className="font-medium text-primary underline underline-offset-2"
-          >
-            halo@cvpintar.web.id
-          </a>{" "}
-          — kami proses maksimal 2×24 jam kerja.
-        </p>
-      </>
-    ),
-  },
-];
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { buildSeo } from "@/lib/seo";
 
 export const Route = createFileRoute("/kebijakan-privasi")({
   head: () =>
     buildSeo({
-      title: "Kebijakan Privasi — CV Pintar",
+      title: "Kebijakan Privasi - CV Pintar",
       description:
-        "Bagaimana kami mengumpulkan, menggunakan, dan melindungi data pribadi pengguna CV Pintar.",
+        "Bagaimana CV Pintar mengumpulkan, menggunakan, melindungi, dan menghormati data pengguna.",
       path: "/kebijakan-privasi",
     }),
   component: KebijakanPrivasiPage,
 });
 
+const privacyPrinciples = [
+  "Kami hanya mengumpulkan data yang diperlukan untuk menjalankan layanan.",
+  "Data CV tetap milik kamu. Kami tidak menjual atau menyewakannya.",
+  "Kamu bisa meminta akses, ekspor, koreksi, atau penghapusan data.",
+];
+
+const dataTypes = [
+  {
+    label: "Email dan nama",
+    desc: "Dipakai untuk login, komunikasi akun, dan pengalaman produk yang lebih personal.",
+  },
+  {
+    label: "Konten CV",
+    desc: "Pengalaman kerja, pendidikan, skill, dan informasi yang kamu tulis sendiri di platform.",
+  },
+  {
+    label: "Aktivitas layanan",
+    desc: "Data teknis seperti fitur yang dipakai untuk membantu kami memperbaiki produk secara anonim.",
+  },
+];
+
+const usageItems = [
+  "Menyimpan dan menampilkan CV di dashboard kamu.",
+  "Menjalankan fitur AI untuk saran penulisan, review CV, dan simulasi wawancara.",
+  "Mengelola akun, langganan, dukungan pelanggan, dan keamanan layanan.",
+  "Menganalisis pola penggunaan secara agregat untuk meningkatkan kualitas produk.",
+];
+
+const securityItems = [
+  {
+    icon: Shield,
+    label: "Enkripsi",
+    desc: "Data dilindungi saat transit dan saat disimpan dengan praktik keamanan modern.",
+  },
+  {
+    icon: Server,
+    label: "Akses terbatas",
+    desc: "Akses internal dibatasi hanya untuk kebutuhan operasional yang sah.",
+  },
+  {
+    icon: Lock,
+    label: "Login aman",
+    desc: "Autentikasi dirancang untuk mengurangi risiko akses tidak sah.",
+  },
+  {
+    icon: UserCheck,
+    label: "Kontrol pengguna",
+    desc: "Kamu tetap punya kendali atas data dan akunmu.",
+  },
+];
+
+const rights = [
+  {
+    icon: Eye,
+    label: "Akses",
+    desc: "Minta salinan data yang terkait dengan akunmu.",
+  },
+  {
+    icon: Download,
+    label: "Ekspor",
+    desc: "Unduh data penting dalam format yang mudah dibaca.",
+  },
+  {
+    icon: Trash2,
+    label: "Hapus",
+    desc: "Ajukan penghapusan akun dan data yang tidak lagi dibutuhkan.",
+  },
+];
+
 function KebijakanPrivasiPage() {
   return (
-    <>
-      <PageHero
-        eyebrow="Privasi"
-        title="Datamu aman. Ceritamu milikmu."
-        description="Kami transparan soal data yang kami kumpulkan, kenapa kami butuh, dan bagaimana kami menjaganya. Tanpa jargon hukum yang bikin pusing."
-      />
+    <main className="bg-background text-foreground">
+      <section className="relative overflow-hidden border-b border-border/70">
+        <div className="absolute inset-x-0 top-0 h-48 bg-gradient-to-b from-primary-soft/70 to-transparent" />
+        <div className="container-page relative grid gap-10 py-16 sm:py-20 lg:grid-cols-[1.08fr_0.92fr] lg:items-end lg:py-24">
+          <div className="max-w-3xl">
+            <Badge className="mb-5 gap-2 rounded-full px-3 py-1.5">
+              <Shield className="h-3.5 w-3.5" />
+              Kebijakan Privasi
+            </Badge>
+            <h1 className="text-balance font-display text-4xl font-bold leading-tight tracking-normal text-foreground sm:text-5xl lg:text-6xl">
+              Datamu aman. Cerita kariermu tetap milikmu.
+            </h1>
+            <p className="mt-5 max-w-2xl text-pretty text-base leading-7 text-muted-foreground sm:text-lg">
+              Kami menulis kebijakan ini dengan bahasa yang jelas: data apa yang kami pakai, kenapa
+              dibutuhkan, dan bagaimana kami menjaganya.
+            </p>
+            <p className="mt-5 text-sm font-medium text-muted-foreground">
+              Terakhir diperbarui: 1 Mei 2026
+            </p>
+          </div>
 
-      <article className="container-page max-w-3xl py-12 md:py-16">
-        <p className="text-sm text-muted-foreground">
-          Terakhir diperbarui: 1 Mei 2026
-        </p>
-
-        <div className="mt-10 space-y-12">
-          {sections.map((section) => (
-            <section key={section.title}>
-              <div className="mb-4 flex items-center gap-3">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary-soft">
-                  <section.icon className="h-5 w-5 text-primary" />
-                </div>
-                <h2 className="font-display text-xl font-semibold">
-                  {section.title}
-                </h2>
+          <Card className="border-border/80 bg-card/95 shadow-sm">
+            <CardContent className="p-5 sm:p-6">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary-soft text-primary">
+                <Sparkles className="h-5 w-5" />
               </div>
-              <div className="ml-12 text-foreground">{section.content}</div>
-            </section>
-          ))}
+              <h2 className="mt-5 font-display text-xl font-semibold">Prinsip singkat kami</h2>
+              <div className="mt-4 space-y-3">
+                {privacyPrinciples.map((item) => (
+                  <div key={item} className="flex gap-3 text-sm leading-6">
+                    <BadgeCheck className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                    <span className="text-muted-foreground">{item}</span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         </div>
+      </section>
 
-        {/* ── Komitmen ── */}
-        <div className="mt-16 rounded-xl border bg-muted/30 p-6 text-center sm:p-8">
-          <Badge variant="secondary" className="mb-3">
-            Komitmen Kami
-          </Badge>
-          <p className="text-lg leading-relaxed">
-            Privasi kamu bukan formalitas hukum buat kami — ini adalah janji.
-          </p>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Kalau ada yang kurang jelas, atau kamu punya pertanyaan —
-            langsung aja kirim email. Kami beneran baca dan balas.
-          </p>
-          <a
-            href="mailto:halo@cvpintar.web.id"
-            className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-primary underline underline-offset-2"
-          >
-            <Mail className="h-4 w-4" />
-            halo@cvpintar.web.id
-          </a>
+      <article className="container-page py-14 sm:py-16">
+        <div className="grid gap-6 lg:grid-cols-[0.78fr_1.22fr]">
+          <aside className="lg:sticky lg:top-24 lg:self-start">
+            <Card className="border-border/80 bg-card">
+              <CardContent className="p-5">
+                <p className="text-sm font-semibold text-foreground">Isi kebijakan</p>
+                <nav className="mt-4 grid gap-2 text-sm">
+                  {[
+                    "Data yang dikumpulkan",
+                    "Cara penggunaan",
+                    "Keamanan data",
+                    "Hak pengguna",
+                    "Kontak privasi",
+                  ].map((item) => (
+                    <a
+                      key={item}
+                      href={`#${item.toLowerCase().replaceAll(" ", "-")}`}
+                      className="rounded-lg px-3 py-2 text-muted-foreground transition hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      {item}
+                    </a>
+                  ))}
+                </nav>
+              </CardContent>
+            </Card>
+          </aside>
+
+          <div className="space-y-6">
+            <PolicySection
+              id="data-yang-dikumpulkan"
+              icon={Database}
+              eyebrow="01"
+              title="Data yang kami kumpulkan"
+              description="Kami tidak meminta data sensitif yang tidak relevan dengan pembuatan CV dan layanan karier."
+            >
+              <div className="grid gap-3 sm:grid-cols-3">
+                {dataTypes.map((item) => (
+                  <Card key={item.label} className="border-border/80 bg-background">
+                    <CardContent className="p-4">
+                      <p className="font-semibold text-foreground">{item.label}</p>
+                      <p className="mt-2 text-sm leading-6 text-muted-foreground">{item.desc}</p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </PolicySection>
+
+            <PolicySection
+              id="cara-penggunaan"
+              icon={Eye}
+              eyebrow="02"
+              title="Cara kami menggunakan data"
+              description="Tujuan utamanya sederhana: membuat layanan bekerja, lebih aman, dan lebih bermanfaat untukmu."
+            >
+              <div className="space-y-3">
+                {usageItems.map((item) => (
+                  <div
+                    key={item}
+                    className="flex gap-3 rounded-xl border border-border/70 bg-background p-4 text-sm leading-6"
+                  >
+                    <ArrowRight className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                    <span className="text-muted-foreground">{item}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-5 rounded-xl border border-primary/20 bg-primary-soft/50 p-4 text-sm font-semibold text-foreground">
+                Kami tidak menjual, menyewakan, atau memperdagangkan data CV kamu kepada pihak
+                ketiga.
+              </div>
+            </PolicySection>
+
+            <PolicySection
+              id="keamanan-data"
+              icon={Lock}
+              eyebrow="03"
+              title="Keamanan data"
+              description="Keamanan bukan tempelan. Ini bagian dari cara kami membangun produk."
+            >
+              <div className="grid gap-3 sm:grid-cols-2">
+                {securityItems.map((item) => (
+                  <Card key={item.label} className="border-border/80 bg-background">
+                    <CardContent className="flex gap-3 p-4">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary">
+                        <item.icon className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-foreground">{item.label}</p>
+                        <p className="mt-1 text-sm leading-6 text-muted-foreground">{item.desc}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </PolicySection>
+
+            <PolicySection
+              id="hak-pengguna"
+              icon={FileText}
+              eyebrow="04"
+              title="Hak kamu atas data"
+              description="Kamu bisa meminta akses, ekspor, koreksi, atau penghapusan data lewat email support."
+            >
+              <div className="grid gap-3 sm:grid-cols-3">
+                {rights.map((right) => (
+                  <Card key={right.label} className="border-border/80 bg-background">
+                    <CardContent className="p-4">
+                      <right.icon className="h-5 w-5 text-primary" />
+                      <p className="mt-4 font-semibold text-foreground">{right.label}</p>
+                      <p className="mt-2 text-sm leading-6 text-muted-foreground">{right.desc}</p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </PolicySection>
+
+            <section
+              id="kontak-privasi"
+              className="rounded-2xl border border-border bg-card p-5 text-center sm:p-8"
+            >
+              <Badge variant="secondary" className="rounded-full">
+                Kontak privasi
+              </Badge>
+              <h2 className="mx-auto mt-4 max-w-2xl font-display text-2xl font-bold sm:text-3xl">
+                Ada pertanyaan soal data? Kami bantu jawab dengan jelas.
+              </h2>
+              <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">
+                Kirim email ke tim kami. Untuk permintaan akses atau penghapusan data, kami akan
+                memproses maksimal 2x24 jam kerja setelah verifikasi akun.
+              </p>
+              <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
+                <Button asChild className="rounded-lg">
+                  <a href="mailto:halo@cvpintar.web.id">
+                    <Mail className="mr-2 h-4 w-4" />
+                    halo@cvpintar.web.id
+                  </a>
+                </Button>
+                <Button asChild variant="outline" className="rounded-lg">
+                  <Link to="/kontak">
+                    Halaman kontak
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+              </div>
+            </section>
+          </div>
         </div>
       </article>
-    </>
+    </main>
+  );
+}
+
+function PolicySection({
+  id,
+  icon: Icon,
+  eyebrow,
+  title,
+  description,
+  children,
+}: {
+  id: string;
+  icon: LucideIcon;
+  eyebrow: string;
+  title: string;
+  description: string;
+  children: ReactNode;
+}) {
+  return (
+    <section id={id} className="rounded-2xl border border-border bg-card p-5 sm:p-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary">
+          <Icon className="h-5 w-5" />
+        </div>
+        <div>
+          <Badge variant="secondary" className="rounded-full">
+            {eyebrow}
+          </Badge>
+          <h2 className="mt-3 font-display text-2xl font-bold">{title}</h2>
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">{description}</p>
+        </div>
+      </div>
+      <div className="mt-6">{children}</div>
+    </section>
   );
 }
