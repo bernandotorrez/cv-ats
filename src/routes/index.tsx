@@ -117,7 +117,7 @@ const features = [
   },
   {
     icon: UserRoundCheck,
-    title: "Review CV by HR Expert",
+    title: "Review CV by HR Expert AI",
     desc: "Analisis mendalam dari HR profesional 20+ tahun: temukan kekuatan, kelemahan, dan quick wins.",
   },
   {
@@ -334,7 +334,7 @@ function LandingPage() {
         <div className="grid gap-10 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
           <div>
             <Badge className="bg-info text-info-foreground hover:bg-info">
-              Review CV by HR Expert
+              Review CV by HR Expert AI
             </Badge>
             <h2 className="mt-4 font-display text-3xl font-bold tracking-tight md:text-4xl">
               Feedback tajam sebelum CV kamu dikirim.

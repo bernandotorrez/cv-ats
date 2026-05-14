@@ -69,7 +69,7 @@ const responseNotes = [
 
 const quickTopics = [
   "Akun dan login",
-  "Review CV by HR Expert",
+  "Review CV by HR Expert AI",
   "Simulasi wawancara AI",
   "Private coaching",
   "Template dan export PDF",

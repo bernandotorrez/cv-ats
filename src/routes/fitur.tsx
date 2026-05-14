@@ -85,7 +85,7 @@ const featureGroups = [
       },
       {
         icon: UserRoundCheck,
-        name: "Review CV by HR Expert",
+        name: "Review CV by HR Expert AI",
         desc: "Analisis mendalam dari perspektif HR profesional 20+ tahun, lengkap dengan quick wins.",
         badge: "Starter",
       },

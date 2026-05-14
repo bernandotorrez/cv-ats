@@ -194,7 +194,7 @@ export function CVReviewPanel({ cvData, cvId, onReviewComplete, className }: CVR
               <Lock className="h-6 w-6 text-primary" />
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold">Review CV by HR Expert</h3>
+              <h3 className="font-semibold">Review CV by HR Expert AI</h3>
               <p className="text-sm text-muted-foreground">
                 Fitur eksklusif untuk paket Starter & Pro
               </p>
@@ -224,7 +224,7 @@ export function CVReviewPanel({ cvData, cvId, onReviewComplete, className }: CVR
               <UserCircle className="h-7 w-7 text-white" />
             </div>
             <div>
-              <DialogTitle className="text-xl">Review CV by HR Expert</DialogTitle>
+              <DialogTitle className="text-xl">Review CV by HR Expert AI</DialogTitle>
               <DialogDescription>
                 Analisis mendalam dari HR profesional dengan pengalaman 20+ tahun
               </DialogDescription>

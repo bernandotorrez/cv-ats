@@ -276,7 +276,7 @@ function CvReviewPage() {
             Starter ke atas
           </Badge>
           <h1 className="mt-4 font-display text-3xl font-bold leading-tight text-foreground">
-            Review CV by HR Expert tersedia di paket Starter.
+            Review CV by HR Expert AI tersedia di paket Starter.
           </h1>
           <p className="mx-auto mt-3 max-w-xl text-sm leading-7 text-muted-foreground sm:text-base">
             Upgrade untuk membuka review mendalam dari AI HR profesional dengan pengalaman 20+
