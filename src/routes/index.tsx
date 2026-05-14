@@ -8,17 +8,14 @@ import {
   FileText,
   Gauge,
   LockKeyhole,
-  MessageSquareText,
   Mic,
   Quote,
   Search,
   ShieldCheck,
   Sparkles,
   Star,
-  Target,
   TrendingUp,
   UserRoundCheck,
-  Wand2,
 } from "lucide-react";
 
 import { BaliTemplate } from "@/components/cv/templates/BaliTemplate";
@@ -190,21 +187,30 @@ const testimonials = [
 function LandingPage() {
   return (
     <>
-      <section className="overflow-x-clip bg-background">
-        <div className="container-page grid min-w-0 gap-12 py-14 md:grid-cols-[1.02fr_0.98fr] md:items-center md:py-20 lg:py-24">
-          <div className="min-w-0">
-            <Badge className="gap-1.5 bg-info text-info-foreground hover:bg-info">
+      <section className="relative isolate min-h-[calc(100svh-5rem)] overflow-hidden bg-foreground text-white">
+        <img
+          src="/hero-banner.webp"
+          alt="Orang-orang bergembira setelah diterima kerja di perusahaan impian"
+          className="absolute inset-0 -z-20 h-full w-full object-cover object-center"
+          fetchPriority="high"
+        />
+        <div className="absolute inset-0 -z-10 bg-gradient-to-r from-black/78 via-black/54 to-black/18" />
+        <div className="absolute inset-x-0 bottom-0 -z-10 h-40 bg-gradient-to-t from-background to-transparent" />
+
+        <div className="container-page flex min-h-[calc(100svh-5rem)] items-end pb-10 pt-20 md:pb-14 md:pt-24">
+          <div className="w-full max-w-4xl">
+            <Badge className="gap-1.5 border-white/20 bg-white/15 text-white hover:bg-white/15">
               <Sparkles className="h-3.5 w-3.5" aria-hidden />
-              AI career toolkit untuk pelamar Indonesia
+              Dari CV siap kirim ke kabar diterima kerja
             </Badge>
 
-            <h1 className="mt-5 max-w-3xl break-words font-display text-3xl font-extrabold leading-[1.08] tracking-tight text-foreground sm:text-5xl lg:text-6xl">
-              CV rapi. Pesan kuat. <span className="block sm:inline">Peluang interview naik.</span>
+            <h1 className="mt-5 max-w-4xl break-words font-display text-4xl font-extrabold leading-[1.04] tracking-tight text-white sm:text-5xl lg:text-7xl">
+              CV yang membuat rekruter paham kenapa kamu layak dipanggil.
             </h1>
 
-            <p className="mt-5 max-w-2xl break-words text-base leading-8 text-muted-foreground sm:text-lg">
-              CV Pintar membantu kamu membuat CV ATS friendly yang terasa profesional, jelas, dan
-              percaya diri. Mulai dari draft kosong sampai PDF siap kirim.
+            <p className="mt-5 max-w-2xl break-words text-base leading-8 text-white/86 sm:text-lg">
+              Buat CV ATS friendly, perkuat pesan dengan AI, cek skor, review dari perspektif HR,
+              lalu export PDF yang siap dikirim ke perusahaan impian.
             </p>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -217,24 +223,35 @@ function LandingPage() {
               <Button
                 asChild
                 size="lg"
-                variant="outline"
-                className="h-12 w-full px-6 text-base sm:w-auto"
+                variant="secondary"
+                className="h-12 w-full bg-white/92 px-6 text-base text-foreground hover:bg-white sm:w-auto"
               >
                 <Link to="/template">Lihat template</Link>
               </Button>
             </div>
 
-            <ul className="mt-6 grid gap-2 text-sm text-muted-foreground sm:grid-cols-3">
+            <ul className="mt-6 grid max-w-2xl gap-2 text-sm text-white/86 sm:grid-cols-3">
               {heroChecks.map((item) => (
                 <li key={item} className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 shrink-0 text-primary" aria-hidden />
+                  <CheckCircle2 className="h-4 w-4 shrink-0 text-white" aria-hidden />
                   <span>{item}</span>
                 </li>
               ))}
             </ul>
-          </div>
 
-          <HeroPreview />
+            <div className="mt-8 grid gap-3 rounded-lg border border-white/18 bg-black/28 p-3 backdrop-blur sm:max-w-2xl sm:grid-cols-3">
+              {[
+                ["92%", "skor ATS rata-rata"],
+                ["10.000+", "CV dibuat"],
+                ["4.9/5", "rating pengguna"],
+              ].map(([value, label]) => (
+                <div key={label} className="rounded-md bg-white/12 px-4 py-3">
+                  <div className="font-display text-2xl font-bold text-white">{value}</div>
+                  <div className="mt-1 text-xs font-medium text-white/78">{label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 
@@ -570,75 +587,6 @@ function SectionIntro({ eyebrow, title, desc }: { eyebrow: string; title: string
       <Badge variant="secondary">{eyebrow}</Badge>
       <h2 className="mt-3 font-display text-3xl font-bold tracking-tight md:text-4xl">{title}</h2>
       <p className="mt-4 text-base leading-8 text-muted-foreground">{desc}</p>
-    </div>
-  );
-}
-
-function HeroPreview() {
-  return (
-    <div className="relative mx-auto w-full max-w-[calc(100vw-2rem)] min-w-0 pb-10 sm:max-w-lg sm:pb-5">
-      <div className="rounded-lg border border-border bg-card p-4 shadow-xl shadow-primary/10">
-        <div className="rounded-md border border-border bg-background p-5">
-          <div className="flex items-start justify-between gap-4 border-b border-border pb-5">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                CV Preview
-              </p>
-              <h2 className="mt-1 font-display text-xl font-bold">Nadia Rahma</h2>
-              <p className="mt-1 text-sm text-muted-foreground">Product Marketer - Jakarta</p>
-            </div>
-            <div className="shrink-0 rounded-md bg-primary px-3 py-2 text-center text-primary-foreground">
-              <div className="text-xs font-medium">ATS</div>
-              <div className="font-display text-xl font-bold">94</div>
-            </div>
-          </div>
-
-          <div className="mt-5 space-y-4">
-            {[
-              ["Impact", "96%"],
-              ["Keyword", "91%"],
-              ["Format", "100%"],
-            ].map(([label, value]) => (
-              <div key={label}>
-                <div className="mb-1.5 flex items-center justify-between text-sm">
-                  <span className="font-medium text-foreground">{label}</span>
-                  <span className="text-muted-foreground">{value}</span>
-                </div>
-                <div className="h-2.5 overflow-hidden rounded-full bg-muted">
-                  <div className="h-full rounded-full bg-primary" style={{ width: value }} />
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-5 rounded-lg bg-info p-4 text-info-foreground">
-            <div className="flex items-start gap-3">
-              <Wand2 className="mt-0.5 h-5 w-5 shrink-0" aria-hidden />
-              <p className="text-sm leading-6">
-                Tambahkan angka hasil kerja: "menaikkan conversion rate 18% dalam 3 bulan".
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="absolute bottom-0 left-4 right-4 grid grid-cols-3 gap-2 rounded-lg border border-border bg-card p-3 shadow-lg sm:-bottom-5 sm:-right-4 sm:left-auto sm:w-72">
-        {[
-          [Target, "Keyword"],
-          [MessageSquareText, "Copy"],
-          [Download, "PDF"],
-        ].map(([Icon, label]) => (
-          <div key={label as string} className="rounded-md bg-muted/70 p-3 text-center">
-            <Icon className="mx-auto h-4 w-4 text-primary" aria-hidden />
-            <div className="mt-1 text-xs font-semibold text-foreground">{label as string}</div>
-          </div>
-        ))}
-      </div>
-
-      <div className="absolute -top-4 right-4 hidden rounded-full border border-border bg-card px-3 py-1 text-xs font-semibold text-foreground shadow-sm sm:flex sm:items-center sm:gap-1">
-        <Star className="h-3.5 w-3.5 fill-warning text-warning" aria-hidden />
-        HR-friendly
-      </div>
     </div>
   );
 }
