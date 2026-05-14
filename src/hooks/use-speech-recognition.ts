@@ -80,6 +80,7 @@ export function useSpeechRecognition(options?: { lang?: string }) {
     recognition.interimResults = true;
     recognition.lang = lang;
     finalTranscriptRef.current = "";
+    setTranscript("");
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
       let interim = "";
@@ -106,7 +107,11 @@ export function useSpeechRecognition(options?: { lang?: string }) {
         if (shouldListenRef.current) {
           restartTimerRef.current = setTimeout(() => {
             if (shouldListenRef.current && recognitionRef.current) {
-              try { recognitionRef.current.start(); } catch { /* retry on next end */ }
+              try {
+                recognitionRef.current.start();
+              } catch {
+                /* retry on next end */
+              }
             }
           }, 300);
         }
@@ -126,7 +131,9 @@ export function useSpeechRecognition(options?: { lang?: string }) {
       if (shouldListenRef.current && recognitionRef.current) {
         restartTimerRef.current = setTimeout(() => {
           if (shouldListenRef.current && recognitionRef.current) {
-            try { recognitionRef.current.start(); } catch {
+            try {
+              recognitionRef.current.start();
+            } catch {
               shouldListenRef.current = false;
               setIsListening(false);
             }
@@ -174,5 +181,12 @@ export function useSpeechRecognition(options?: { lang?: string }) {
     };
   }, []);
 
-  return { isListening, transcript, error, isSupported, startListening, stopListening };
+  return {
+    isListening,
+    transcript,
+    error,
+    isSupported,
+    startListening,
+    stopListening,
+  };
 }

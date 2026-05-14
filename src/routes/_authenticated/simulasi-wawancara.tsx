@@ -1,32 +1,78 @@
 import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { buildSeo } from "@/lib/seo";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { getUserTier } from "@/lib/subscription";
 import { Skeleton } from "@/components/ui/skeleton-loading";
 import { cn } from "@/lib/utils";
 import {
-  Mic, ArrowLeft, Play, History, Star, Clock, Sparkles,
-  BarChart3, TrendingUp, Loader2, Zap, MessageSquare,
-  Target, Brain, ArrowRight, Trophy, FileText,
+  Mic,
+  ArrowLeft,
+  Play,
+  History,
+  Star,
+  Clock,
+  Sparkles,
+  BarChart3,
+  TrendingUp,
+  Loader2,
+  Zap,
+  MessageSquare,
+  Target,
+  Brain,
+  ArrowRight,
+  Trophy,
+  FileText,
 } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/simulasi-wawancara")({
-  head: () => buildSeo({ title: "Simulasi Wawancara — CV Pintar", description: "Latihan interview dengan AI.", path: "/simulasi-wawancara", noindex: true }),
+  head: () =>
+    buildSeo({
+      title: "Simulasi Wawancara — CV Pintar",
+      description: "Latihan interview dengan AI.",
+      path: "/simulasi-wawancara",
+      noindex: true,
+    }),
   component: SimulasiWawancaraPage,
 });
 
 const LEVELS = ["entry", "mid", "senior", "manager", "director"];
-const INDUSTRIES = ["Teknologi", "Finance", "Marketing", "FMCG", "Startup", "BUMN", "Konsultan", "Healthcare", "Pendidikan", "Lainnya"];
-const QUICK_POSITIONS = ["Software Engineer", "Product Manager", "Data Analyst", "UI/UX Designer", "Marketing Manager", "Business Development", "HR Manager", "Finance Analyst"];
+const INDUSTRIES = [
+  "Teknologi",
+  "Finance",
+  "Marketing",
+  "FMCG",
+  "Startup",
+  "BUMN",
+  "Konsultan",
+  "Healthcare",
+  "Pendidikan",
+  "Lainnya",
+];
+const QUICK_POSITIONS = [
+  "Software Engineer",
+  "Product Manager",
+  "Data Analyst",
+  "UI/UX Designer",
+  "Marketing Manager",
+  "Business Development",
+  "HR Manager",
+  "Finance Analyst",
+];
 
 interface Session {
   id: string;
@@ -50,29 +96,31 @@ function SimulasiWawancaraPage() {
   const [industry, setIndustry] = useState("");
   const [starting, setStarting] = useState(false);
 
-  useEffect(() => {
+  const loadData = useCallback(async () => {
     if (!user?.id) return;
-    loadData();
-  }, [user?.id]);
 
-  if (pathname !== "/simulasi-wawancara") {
-    return <Outlet />;
-  }
-
-  const loadData = async () => {
-    const t = await getUserTier(user!.id);
+    const t = await getUserTier(user.id);
     setTier(t);
 
     const { data } = await (supabase as any)
       .from("interview_sessions")
       .select("id, position, level, industry, overall_score, questions, created_at")
-      .eq("user_id", user!.id)
+      .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .limit(10);
 
     setSessions(data ?? []);
     setLoading(false);
-  };
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    loadData();
+  }, [user?.id, loadData]);
+
+  if (pathname !== "/simulasi-wawancara") {
+    return <Outlet />;
+  }
 
   const handleStart = async () => {
     if (!position.trim()) {
@@ -95,27 +143,43 @@ function SimulasiWawancaraPage() {
       .single();
 
     setStarting(false);
-    if (error) { toast.error("Gagal memulai sesi."); return; }
+    if (error) {
+      toast.error("Gagal memulai sesi.");
+      return;
+    }
 
     navigate({ to: "/simulasi-wawancara/$id", params: { id: data.id } });
   };
 
   const levelLabel = (l: string) => {
-    const map: Record<string, string> = { entry: "Entry", mid: "Mid", senior: "Senior", manager: "Manager", director: "Director" };
+    const map: Record<string, string> = {
+      entry: "Entry",
+      mid: "Mid",
+      senior: "Senior",
+      manager: "Manager",
+      director: "Director",
+    };
     return map[l] ?? l;
   };
 
-  const scoredSessions = sessions.filter(s => s.overall_score != null);
-  const avgScore = scoredSessions.length > 0
-    ? Math.round(scoredSessions.reduce((sum, s) => sum + s.overall_score, 0) / scoredSessions.length)
-    : 0;
-  const bestScore = scoredSessions.length > 0
-    ? Math.max(...scoredSessions.map(s => s.overall_score))
-    : 0;
+  const scoredSessions = sessions.filter((s) => s.overall_score != null);
+  const avgScore =
+    scoredSessions.length > 0
+      ? Math.round(
+          scoredSessions.reduce((sum, s) => sum + s.overall_score, 0) / scoredSessions.length,
+        )
+      : 0;
+  const bestScore =
+    scoredSessions.length > 0 ? Math.max(...scoredSessions.map((s) => s.overall_score)) : 0;
   const totalQuestions = sessions.reduce((sum, s) => sum + (s.questions?.length || 0), 0);
 
   if (loading) {
-    return <div className="container-page py-10"><Skeleton className="h-8 w-64 mb-4" /><Skeleton className="h-96" /></div>;
+    return (
+      <div className="container-page py-10">
+        <Skeleton className="h-8 w-64 mb-4" />
+        <Skeleton className="h-96" />
+      </div>
+    );
   }
 
   if (tier !== "pro") {
@@ -130,7 +194,8 @@ function SimulasiWawancaraPage() {
           </div>
           <h1 className="font-display text-2xl font-bold">Fitur Pro</h1>
           <p className="mt-2 text-muted-foreground">
-            Simulasi Wawancara AI tersedia untuk pengguna Pro. Latih kemampuan interview kamu dengan pertanyaan realistis dan feedback instan dari AI.
+            Simulasi Wawancara AI tersedia untuk pengguna Pro. Latih kemampuan interview kamu dengan
+            pertanyaan realistis dan feedback instan dari AI.
           </p>
           <Button asChild size="lg" className="mt-6 gap-2 shadow-lg shadow-primary/20">
             <Link to="/harga">
@@ -162,7 +227,8 @@ function SimulasiWawancaraPage() {
                   Simulasi Wawancara AI
                 </h1>
                 <p className="mt-1 text-sm text-white/80">
-                  Latihan interview realistis dengan AI — dapatkan feedback instan & tingkatkan kepercayaan dirimu.
+                  Latihan interview realistis dengan AI — dapatkan feedback instan & tingkatkan
+                  kepercayaan dirimu.
                 </p>
               </div>
             </div>
@@ -191,7 +257,9 @@ function SimulasiWawancaraPage() {
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Total Sesi</p>
-                  <p className="text-lg font-bold font-display text-foreground">{sessions.length}</p>
+                  <p className="text-lg font-bold font-display text-foreground">
+                    {sessions.length}
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -204,7 +272,9 @@ function SimulasiWawancaraPage() {
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Rata-rata Skor</p>
-                  <p className="text-lg font-bold font-display text-foreground">{avgScore || "-"}</p>
+                  <p className="text-lg font-bold font-display text-foreground">
+                    {avgScore || "-"}
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -217,7 +287,9 @@ function SimulasiWawancaraPage() {
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Skor Tertinggi</p>
-                  <p className="text-lg font-bold font-display text-foreground">{bestScore || "-"}</p>
+                  <p className="text-lg font-bold font-display text-foreground">
+                    {bestScore || "-"}
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -230,7 +302,9 @@ function SimulasiWawancaraPage() {
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Total Latihan</p>
-                  <p className="text-lg font-bold font-display text-foreground">{totalQuestions} soal</p>
+                  <p className="text-lg font-bold font-display text-foreground">
+                    {totalQuestions} soal
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -249,7 +323,7 @@ function SimulasiWawancaraPage() {
             {/* Quick Picks */}
             <p className="text-xs font-medium text-muted-foreground mb-3">Posisi Populer:</p>
             <div className="flex flex-wrap gap-2 mb-5">
-              {QUICK_POSITIONS.map(p => (
+              {QUICK_POSITIONS.map((p) => (
                 <button
                   key={p}
                   type="button"
@@ -258,7 +332,7 @@ function SimulasiWawancaraPage() {
                     "px-3 py-1.5 text-xs font-medium rounded-full border transition-all",
                     position === p
                       ? "border-rose-500/50 bg-rose-500/10 text-rose-600"
-                      : "border-border bg-card hover:border-rose-500/30 hover:bg-rose-500/5 text-muted-foreground hover:text-foreground"
+                      : "border-border bg-card hover:border-rose-500/30 hover:bg-rose-500/5 text-muted-foreground hover:text-foreground",
                   )}
                 >
                   {p}
@@ -274,7 +348,7 @@ function SimulasiWawancaraPage() {
                 <Input
                   id="position"
                   value={position}
-                  onChange={e => setPosition(e.target.value)}
+                  onChange={(e) => setPosition(e.target.value)}
                   placeholder="cth: Software Engineer"
                 />
               </div>
@@ -283,9 +357,15 @@ function SimulasiWawancaraPage() {
                   <BarChart3 className="h-3.5 w-3.5 text-amber-500" /> Level
                 </Label>
                 <Select value={level} onValueChange={setLevel}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
-                    {LEVELS.map(l => <SelectItem key={l} value={l}>{levelLabel(l)} Level</SelectItem>)}
+                    {LEVELS.map((l) => (
+                      <SelectItem key={l} value={l}>
+                        {levelLabel(l)} Level
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -294,9 +374,15 @@ function SimulasiWawancaraPage() {
                   <FileText className="h-3.5 w-3.5 text-blue-500" /> Industri (opsional)
                 </Label>
                 <Select value={industry} onValueChange={setIndustry}>
-                  <SelectTrigger><SelectValue placeholder="Pilih industri" /></SelectTrigger>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Pilih industri" />
+                  </SelectTrigger>
                   <SelectContent>
-                    {INDUSTRIES.map(i => <SelectItem key={i} value={i}>{i}</SelectItem>)}
+                    {INDUSTRIES.map((i) => (
+                      <SelectItem key={i} value={i}>
+                        {i}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -348,25 +434,31 @@ function SimulasiWawancaraPage() {
           <div className="space-y-2">
             {sessions.map((s) => {
               const score = s.overall_score;
-              const scoreVariant = score != null
-                ? score >= 75 ? "green" : score >= 50 ? "warning" : "red"
-                : null;
+              const scoreVariant =
+                score != null ? (score >= 75 ? "green" : score >= 50 ? "warning" : "red") : null;
 
               return (
                 <Link key={s.id} to="/simulasi-wawancara/$id" params={{ id: s.id }}>
                   <div className="flex items-center justify-between rounded-2xl border bg-card p-4 transition-all hover:border-primary/30 hover:shadow-md hover:-translate-y-0.5 group">
                     <div className="flex items-center gap-4 min-w-0">
-                      <div className={cn(
-                        "flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br",
-                        scoreVariant === "green" ? "from-emerald-500/20 to-green-500/20" :
-                        scoreVariant === "warning" ? "from-amber-500/20 to-orange-500/20" :
-                        scoreVariant === "red" ? "from-rose-500/20 to-red-500/20" :
-                        "from-rose-500/20 to-pink-500/20"
-                      )}>
+                      <div
+                        className={cn(
+                          "flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br",
+                          scoreVariant === "green"
+                            ? "from-emerald-500/20 to-green-500/20"
+                            : scoreVariant === "warning"
+                              ? "from-amber-500/20 to-orange-500/20"
+                              : scoreVariant === "red"
+                                ? "from-rose-500/20 to-red-500/20"
+                                : "from-rose-500/20 to-pink-500/20",
+                        )}
+                      >
                         <Mic className="h-5 w-5 text-rose-500" />
                       </div>
                       <div className="min-w-0">
-                        <p className="text-sm font-semibold truncate group-hover:text-primary transition-colors">{s.position}</p>
+                        <p className="text-sm font-semibold truncate group-hover:text-primary transition-colors">
+                          {s.position}
+                        </p>
                         <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
                           <span>{levelLabel(s.level)}</span>
                           {s.industry && (
@@ -378,7 +470,10 @@ function SimulasiWawancaraPage() {
                           <span>·</span>
                           <span className="flex items-center gap-1">
                             <Clock className="h-3 w-3" />
-                            {new Date(s.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "short" })}
+                            {new Date(s.created_at).toLocaleDateString("id-ID", {
+                              day: "numeric",
+                              month: "short",
+                            })}
                           </span>
                         </div>
                       </div>
@@ -386,17 +481,23 @@ function SimulasiWawancaraPage() {
                     <div className="flex items-center gap-3 shrink-0">
                       {score != null ? (
                         <div className="text-right">
-                          <Badge className={cn(
-                            "font-bold text-xs",
-                            scoreVariant === "green" ? "bg-emerald-100 text-emerald-700" :
-                            scoreVariant === "warning" ? "bg-warning/20 text-warning" :
-                            "bg-red-100 text-red-700"
-                          )}>
+                          <Badge
+                            className={cn(
+                              "font-bold text-xs",
+                              scoreVariant === "green"
+                                ? "bg-emerald-100 text-emerald-700"
+                                : scoreVariant === "warning"
+                                  ? "bg-warning/20 text-warning"
+                                  : "bg-red-100 text-red-700",
+                            )}
+                          >
                             {score}/100
                           </Badge>
                         </div>
                       ) : (
-                        <Badge variant="secondary" className="text-[10px]">Belum dinilai</Badge>
+                        <Badge variant="secondary" className="text-[10px]">
+                          Belum dinilai
+                        </Badge>
                       )}
                       <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
                     </div>
