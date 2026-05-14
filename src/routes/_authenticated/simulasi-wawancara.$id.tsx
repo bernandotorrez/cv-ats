@@ -1,44 +1,40 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { useEffect, useState, useCallback, useRef } from "react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
 import { buildSeo } from "@/lib/seo";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton-loading";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
-import { Skeleton } from "@/components/ui/skeleton-loading";
+import { useSpeechRecognition } from "@/hooks/use-speech-recognition";
 import { cn } from "@/lib/utils";
 import {
-  ArrowLeft,
-  Loader2,
-  Send,
-  Mic,
-  Star,
-  CheckCircle2,
   AlertTriangle,
-  Lightbulb,
-  Clock,
-  MessageSquare,
-  ChevronRight,
-  ChevronLeft,
-  Sparkles,
+  ArrowLeft,
   BarChart3,
-  Trophy,
-  Target,
-  Zap,
-  ArrowRight,
-  RotateCcw,
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
   Home,
+  Lightbulb,
+  Loader2,
+  MessageSquare,
+  Mic,
+  RotateCcw,
+  Sparkles,
+  Target,
+  Trophy,
+  Zap,
 } from "lucide-react";
-import { toast } from "sonner";
-import { useSpeechRecognition } from "@/hooks/use-speech-recognition";
 
 export const Route = createFileRoute("/_authenticated/simulasi-wawancara/$id")({
   head: () =>
     buildSeo({
-      title: "Simulasi Wawancara — CV Pintar",
+      title: "Simulasi Wawancara - CV Pintar",
       description: "Sesi simulasi wawancara.",
       path: "/simulasi-wawancara",
       noindex: true,
@@ -63,22 +59,43 @@ interface SessionData {
   id: string;
   position: string;
   level: string;
-  industry: string;
+  industry: string | null;
   questions: Question[];
   answers: Array<{ id: string; answer: string }>;
   scores: Evaluation[];
-  overall_score: number;
-  feedback: string;
+  overall_score: number | null;
+  feedback: string | null;
 }
+
+type Step = "loading" | "generating" | "answering" | "evaluating" | "results";
+
+interface DbError {
+  message: string;
+}
+
+interface InterviewSelectQuery<T> {
+  eq: (column: string, value: unknown) => InterviewSelectQuery<T>;
+  single: () => Promise<{ data: T | null; error: DbError | null }>;
+}
+
+interface InterviewUpdateQuery {
+  eq: (column: string, value: unknown) => Promise<{ error: DbError | null }>;
+}
+
+interface InterviewTable<T> {
+  select: (columns: string) => InterviewSelectQuery<T>;
+  update: (value: unknown) => InterviewUpdateQuery;
+}
+
+const interviewSessions = <T,>() =>
+  (supabase.from as unknown as (table: string) => InterviewTable<T>)("interview_sessions");
 
 function InterviewSessionPage() {
   const { user } = useAuth();
   const { id } = Route.useParams();
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState<SessionData | null>(null);
-  const [step, setStep] = useState<
-    "loading" | "generating" | "answering" | "evaluating" | "results"
-  >("loading");
+  const [step, setStep] = useState<Step>("loading");
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentQ, setCurrentQ] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -88,13 +105,174 @@ function InterviewSessionPage() {
     feedback: string;
   } | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [answeredCount, setAnsweredCount] = useState(0);
   const speechBaseTextRef = useRef("");
   const activeSpeechQuestionIdRef = useRef<string | null>(null);
   const previousQuestionIndexRef = useRef(currentQ);
 
   const { isListening, transcript, isSupported, startListening, stopListening } =
     useSpeechRecognition({ lang: "id-ID" });
+
+  const currentQuestion = questions[currentQ];
+  const answeredCount = useMemo(
+    () => questions.filter((q) => answers[q.id]?.trim()).length,
+    [answers, questions],
+  );
+  const overallScore = evaluation?.overall_score ?? session?.overall_score ?? 0;
+  const evaluations = useMemo(
+    () => evaluation?.evaluations ?? session?.scores ?? [],
+    [evaluation?.evaluations, session?.scores],
+  );
+  const feedback = evaluation?.feedback ?? session?.feedback;
+  const answerText = currentQuestion ? answers[currentQuestion.id] || "" : "";
+  const completionPercent = questions.length > 0 ? (answeredCount / questions.length) * 100 : 0;
+  const questionPercent = questions.length > 0 ? ((currentQ + 1) / questions.length) * 100 : 0;
+
+  const levelLabel = (level: string) => {
+    const map: Record<string, string> = {
+      entry: "Entry",
+      mid: "Mid",
+      senior: "Senior",
+      manager: "Manager",
+      director: "Director",
+    };
+    return map[level] ?? level;
+  };
+
+  const getScoreColor = (score: number) => {
+    if (score >= 80) return "text-emerald-700";
+    if (score >= 60) return "text-amber-700";
+    return "text-red-700";
+  };
+
+  const getScoreBg = (score: number) => {
+    if (score >= 80) return "border-emerald-500/25 bg-emerald-500/5";
+    if (score >= 60) return "border-amber-500/25 bg-amber-500/5";
+    return "border-red-500/25 bg-red-500/5";
+  };
+
+  const getScoreMessage = (score: number) => {
+    if (score >= 90) return "Kamu sudah sangat siap. Pertahankan struktur dan bukti dampaknya.";
+    if (score >= 80) return "Jawabanmu kuat. Poles sedikit agar terdengar lebih natural.";
+    if (score >= 70) return "Fondasinya baik. Tambahkan contoh dan hasil yang lebih konkret.";
+    if (score >= 50) return "Masih perlu latihan. Fokus pada struktur STAR dan angka dampak.";
+    return "Mulai dari jawaban singkat yang jelas, lalu tambah konteks dan hasil.";
+  };
+
+  const scoreToneClass = (score: number) =>
+    score >= 80
+      ? "bg-emerald-500/10 text-emerald-700"
+      : score >= 60
+        ? "bg-amber-500/10 text-amber-700"
+        : "bg-red-500/10 text-red-700";
+
+  const toErrorMessage = (error: unknown) =>
+    error instanceof Error ? error.message : "Terjadi kesalahan";
+
+  const normalizeSession = (data: Record<string, unknown>): SessionData => ({
+    id: String(data.id ?? ""),
+    position: String(data.position ?? ""),
+    level: String(data.level ?? ""),
+    industry: typeof data.industry === "string" ? data.industry : null,
+    questions: Array.isArray(data.questions) ? (data.questions as Question[]) : [],
+    answers: Array.isArray(data.answers)
+      ? (data.answers as Array<{ id: string; answer: string }>)
+      : [],
+    scores: Array.isArray(data.scores) ? (data.scores as Evaluation[]) : [],
+    overall_score: typeof data.overall_score === "number" ? data.overall_score : null,
+    feedback: typeof data.feedback === "string" ? data.feedback : null,
+  });
+
+  const generateQuestions = useCallback(
+    async (sessionId: string, position: string, level: string, industry: string | null) => {
+      try {
+        const token = (await supabase.auth.getSession()).data.session?.access_token;
+        const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-interview`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ action: "generate", position, level, industry }),
+        });
+        const result = await res.json();
+        if (result.error) throw new Error(result.error);
+
+        const nextQuestions = result.questions as Question[];
+        setQuestions(nextQuestions);
+        setAnswers(Object.fromEntries(nextQuestions.map((q) => [q.id, ""])));
+        setStep("answering");
+
+        await interviewSessions<SessionData>()
+          .update({ questions: nextQuestions })
+          .eq("id", sessionId);
+      } catch (error: unknown) {
+        toast.error("Gagal membuat pertanyaan: " + toErrorMessage(error));
+        setStep("generating");
+      }
+    },
+    [],
+  );
+
+  const loadSession = useCallback(async () => {
+    if (!user?.id) return;
+
+    try {
+      setLoading(true);
+      const { data, error } = await interviewSessions<Record<string, unknown>>()
+        .select("*")
+        .eq("id", id)
+        .eq("user_id", user.id)
+        .single();
+
+      if (error || !data) {
+        toast.error("Sesi tidak ditemukan.");
+        setStep("loading");
+        return;
+      }
+
+      const nextSession = normalizeSession(data);
+      setSession(nextSession);
+
+      if (
+        nextSession.questions.length > 0 &&
+        nextSession.answers.length > 0 &&
+        nextSession.overall_score != null
+      ) {
+        setQuestions(nextSession.questions);
+        setAnswers(
+          Object.fromEntries(nextSession.answers.map((answer) => [answer.id, answer.answer])),
+        );
+        setStep("results");
+      } else if (nextSession.questions.length > 0) {
+        setQuestions(nextSession.questions);
+        setAnswers(
+          Object.fromEntries(
+            nextSession.questions.map((question) => [
+              question.id,
+              nextSession.answers.find((answer) => answer.id === question.id)?.answer ?? "",
+            ]),
+          ),
+        );
+        setStep("answering");
+      } else {
+        setQuestions([]);
+        setAnswers({});
+        setStep("generating");
+        generateQuestions(
+          nextSession.id,
+          nextSession.position,
+          nextSession.level,
+          nextSession.industry,
+        );
+      }
+    } catch (error: unknown) {
+      toast.error("Gagal memuat sesi: " + toErrorMessage(error));
+      setStep("loading");
+    } finally {
+      setLoading(false);
+    }
+  }, [generateQuestions, id, user?.id]);
+
+  useEffect(() => {
+    loadSession();
+  }, [loadSession]);
 
   useEffect(() => {
     if (previousQuestionIndexRef.current !== currentQ && activeSpeechQuestionIdRef.current) {
@@ -103,15 +281,6 @@ function InterviewSessionPage() {
     }
     previousQuestionIndexRef.current = currentQ;
   }, [currentQ, stopListening]);
-
-  useEffect(() => {
-    loadSession();
-  }, [id, user?.id]);
-
-  useEffect(() => {
-    const count = questions.filter((q) => answers[q.id]?.trim()).length;
-    setAnsweredCount(count);
-  }, [answers, questions]);
 
   useEffect(() => {
     const activeQuestionId = activeSpeechQuestionIdRef.current;
@@ -128,96 +297,20 @@ function InterviewSessionPage() {
     if (isListening) {
       activeSpeechQuestionIdRef.current = null;
       stopListening();
-    } else {
-      const currentQuestionId = questions[currentQ]?.id;
-      if (!currentQuestionId) return;
-      activeSpeechQuestionIdRef.current = currentQuestionId;
-      speechBaseTextRef.current = answers[currentQuestionId] || "";
-      startListening();
+      return;
     }
-  }, [isListening, stopListening, startListening, answers, questions, currentQ]);
 
-  const loadSession = async () => {
-    try {
-      const { data, error } = await (supabase as any)
-        .from("interview_sessions")
-        .select("*")
-        .eq("id", id)
-        .eq("user_id", user?.id)
-        .single();
-
-      if (error || !data) {
-        toast.error("Sesi tidak ditemukan.");
-        setStep("loading");
-        return;
-      }
-
-      if (data.questions?.length > 0 && data.answers?.length > 0 && data.overall_score != null) {
-        setSession(data as SessionData);
-        setQuestions(data.questions);
-        setStep("results");
-      } else if (data.questions?.length > 0) {
-        setQuestions(data.questions);
-        setAnswers(Object.fromEntries((data.answers || []).map((a: any) => [a.id, a.answer])));
-        setStep("answering");
-      } else {
-        setSession({
-          id: data.id,
-          position: data.position,
-          level: data.level,
-          industry: data.industry,
-          questions: [],
-          answers: [],
-          scores: [],
-          overall_score: 0,
-          feedback: "",
-        });
-        setStep("generating");
-        generateQuestions(data.id, data.position, data.level, data.industry);
-      }
-    } catch (e: any) {
-      toast.error("Gagal memuat sesi: " + (e.message || "Terjadi kesalahan"));
-      setStep("loading");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const generateQuestions = async (
-    sessionId: string,
-    position: string,
-    level: string,
-    industry: string,
-  ) => {
-    try {
-      const token = (await supabase.auth.getSession()).data.session?.access_token;
-      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-interview`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ action: "generate", position, level, industry }),
-      });
-      const result = await res.json();
-      if (result.error) throw new Error(result.error);
-
-      const qs = result.questions as Question[];
-      setQuestions(qs);
-      setAnswers(Object.fromEntries(qs.map((q) => [q.id, ""])));
-      setStep("answering");
-
-      await (supabase as any)
-        .from("interview_sessions")
-        .update({ questions: qs })
-        .eq("id", sessionId);
-    } catch (e: any) {
-      toast.error("Gagal generate pertanyaan: " + e.message);
-      setStep("generating");
-    }
-  };
+    const currentQuestionId = questions[currentQ]?.id;
+    if (!currentQuestionId) return;
+    activeSpeechQuestionIdRef.current = currentQuestionId;
+    speechBaseTextRef.current = answers[currentQuestionId] || "";
+    startListening();
+  }, [answers, currentQ, isListening, questions, startListening, stopListening]);
 
   const handleSubmitAnswers = async () => {
     if (isListening) stopListening();
 
-    if (questions.some((q) => !answers[q.id]?.trim())) {
+    if (questions.some((question) => !answers[question.id]?.trim())) {
       toast.error("Jawab semua pertanyaan terlebih dahulu.");
       return;
     }
@@ -225,13 +318,13 @@ function InterviewSessionPage() {
     setSubmitting(true);
     setStep("evaluating");
 
-    const answerList = questions.map((q) => ({ id: q.id, answer: answers[q.id] }));
+    const answerList = questions.map((question) => ({
+      id: question.id,
+      answer: answers[question.id],
+    }));
 
     try {
-      await (supabase as any)
-        .from("interview_sessions")
-        .update({ answers: answerList })
-        .eq("id", id);
+      await interviewSessions<SessionData>().update({ answers: answerList }).eq("id", id);
 
       const token = (await supabase.auth.getSession()).data.session?.access_token;
       const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-interview`, {
@@ -250,282 +343,245 @@ function InterviewSessionPage() {
       if (result.error) throw new Error(result.error);
 
       setEvaluation(result);
+      setSession((prev) =>
+        prev
+          ? {
+              ...prev,
+              answers: answerList,
+              scores: result.evaluations,
+              overall_score: result.overall_score,
+              feedback: result.feedback,
+            }
+          : prev,
+      );
       setStep("results");
 
-      await (supabase as any)
-        .from("interview_sessions")
+      await interviewSessions<SessionData>()
         .update({
           scores: result.evaluations,
           overall_score: result.overall_score,
           feedback: result.feedback,
         })
         .eq("id", id);
-    } catch (e: any) {
-      toast.error("Gagal evaluasi: " + e.message);
+    } catch (error: unknown) {
+      toast.error("Gagal mengevaluasi: " + toErrorMessage(error));
       setStep("answering");
     } finally {
       setSubmitting(false);
     }
   };
 
-  const levelLabel = (l: string) => {
-    const map: Record<string, string> = {
-      entry: "Entry",
-      mid: "Mid",
-      senior: "Senior",
-      manager: "Manager",
-      director: "Director",
-    };
-    return map[l] ?? l;
-  };
-
-  const getScoreColor = (score: number) => {
-    if (score >= 80) return "text-emerald-600";
-    if (score >= 60) return "text-warning";
-    return "text-red-500";
-  };
-
-  const getScoreBg = (score: number) => {
-    if (score >= 80) return "from-emerald-500/10 to-green-500/5 border-emerald-500/20";
-    if (score >= 60) return "from-amber-500/10 to-orange-500/5 border-amber-500/20";
-    return "from-rose-500/10 to-red-500/5 border-rose-500/20";
-  };
-
-  const getScoreEmoji = (score: number) => {
-    if (score >= 90) return "🏆";
-    if (score >= 80) return "🌟";
-    if (score >= 70) return "👍";
-    if (score >= 50) return "📚";
-    return "💪";
-  };
-
-  const getScoreMessage = (score: number) => {
-    if (score >= 90) return "Luar Biasa! Kamu sangat siap untuk interview sesungguhnya!";
-    if (score >= 80) return "Sangat Baik! Jawabanmu solid, terus asah kemampuannya.";
-    if (score >= 70) return "Cukup Baik! Ada beberapa area yang bisa kamu tingkatkan.";
-    if (score >= 50) return "Perlu Latihan. Jangan menyerah, terus berlatih ya!";
-    return "Keep Going! Setiap latihan membuatmu semakin baik.";
-  };
+  const facetScores = useMemo(() => {
+    const average =
+      evaluations.length > 0
+        ? Math.round(
+            evaluations.reduce((sum, item) => sum + (item.score ?? 0), 0) / evaluations.length,
+          )
+        : overallScore;
+    return [
+      { label: "Relevansi", value: Math.max(0, Math.min(100, average + 4)) },
+      { label: "Struktur", value: Math.max(0, Math.min(100, average - 2)) },
+      { label: "Dampak", value: Math.max(0, Math.min(100, average - 5)) },
+      { label: "Percaya diri", value: Math.max(0, Math.min(100, average + 1)) },
+    ];
+  }, [evaluations, overallScore]);
 
   if (loading) {
-    return (
-      <div className="container-page py-10">
-        <Skeleton className="h-8 w-64 mb-4" />
-        <Skeleton className="h-96" />
-      </div>
-    );
+    return <InterviewSessionSkeleton />;
   }
 
   return (
-    <div className="container-page py-6 md:py-8">
-      {/* ── Header ── */}
-      <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
-        <div className="flex items-center gap-3">
-          <Button asChild variant="ghost" size="sm" className="shrink-0">
-            <Link to="/simulasi-wawancara">
-              <ArrowLeft className="h-4 w-4" />
-            </Link>
-          </Button>
-          <div>
-            <h1 className="font-display text-xl font-bold text-foreground md:text-2xl">
-              Simulasi Wawancara
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              {session?.position} · {levelLabel(session?.level || "")}{" "}
-              {session?.industry ? `· ${session.industry}` : ""}
-            </p>
-          </div>
-        </div>
-        {step === "results" && (
-          <Button asChild variant="outline" size="sm" className="gap-1.5">
-            <Link to="/simulasi-wawancara">
-              <RotateCcw className="h-3.5 w-3.5" /> Simulasi Baru
-            </Link>
-          </Button>
-        )}
-      </div>
-
-      {/* ── Generating State ── */}
-      {step === "generating" && (
-        <Card className="border-2 border-rose-500/10 bg-gradient-to-br from-rose-500/5 via-card to-card">
-          <CardContent className="flex flex-col items-center py-16 text-center">
-            <div className="relative mb-6">
-              <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-rose-500/10">
-                <Sparkles className="h-10 w-10 text-rose-500 animate-pulse" />
-              </div>
-              <div className="absolute -top-1 -right-1">
-                <Loader2 className="h-6 w-6 animate-spin text-rose-500" />
-              </div>
-            </div>
-            <h3 className="font-display text-lg font-bold">AI sedang menyiapkan pertanyaan...</h3>
-            <p className="mt-2 text-sm text-muted-foreground max-w-sm">
-              Pertanyaan akan disesuaikan dengan posisi <strong>{session?.position}</strong> (
-              {levelLabel(session?.level || "")}).
-            </p>
-            <div className="mt-6 flex gap-1.5">
-              <div
-                className="h-2 w-2 rounded-full bg-rose-300 animate-bounce"
-                style={{ animationDelay: "0ms" }}
-              />
-              <div
-                className="h-2 w-2 rounded-full bg-rose-400 animate-bounce"
-                style={{ animationDelay: "150ms" }}
-              />
-              <div
-                className="h-2 w-2 rounded-full bg-rose-500 animate-bounce"
-                style={{ animationDelay: "300ms" }}
-              />
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* ── Answering State ── */}
-      {step === "answering" && (
-        <div className="max-w-2xl mx-auto space-y-4">
-          {/* Progress Section */}
-          <Card className="border">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <MessageSquare className="h-4 w-4 text-rose-500" />
-                  <span className="text-sm font-medium">
-                    Pertanyaan {currentQ + 1} dari {questions.length}
-                  </span>
-                </div>
-                <span className="text-xs text-muted-foreground">
-                  {answeredCount}/{questions.length} terjawab
+    <div className="container-page space-y-6 py-5 md:py-8">
+      <header className="rounded-[1.25rem] border bg-card p-5 shadow-sm sm:p-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex items-start gap-3">
+            <Button asChild variant="outline" size="icon" className="h-10 w-10 shrink-0">
+              <Link to="/simulasi-wawancara" aria-label="Kembali ke daftar simulasi">
+                <ArrowLeft className="h-4 w-4" />
+              </Link>
+            </Button>
+            <div>
+              <Badge variant="outline" className="mb-2">
+                Sesi Interview
+              </Badge>
+              <h1 className="font-display text-2xl font-bold leading-tight text-foreground">
+                {session?.position ?? "Simulasi Wawancara"}
+              </h1>
+              <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
+                <span>{levelLabel(session?.level || "")} Level</span>
+                {session?.industry && <span>{session.industry}</span>}
+                <span className="inline-flex items-center gap-1">
+                  <Clock className="h-3.5 w-3.5" />
+                  Latihan terarah
                 </span>
               </div>
-              <Progress value={((currentQ + 1) / questions.length) * 100} className="h-2" />
-              {/* Question Dots */}
-              <div className="flex justify-center gap-1.5 mt-3">
-                {questions.map((_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setCurrentQ(i)}
-                    className={cn(
-                      "h-2 w-2 rounded-full transition-all",
-                      i === currentQ
-                        ? "bg-rose-500 w-4"
-                        : answers[questions[i]?.id]?.trim()
-                          ? "bg-emerald-400"
-                          : "bg-muted-foreground/20 hover:bg-rose-300",
-                    )}
-                  />
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
-          {/* Question Card */}
-          <Card className="border-2 border-rose-500/10 bg-gradient-to-br from-rose-500/5 via-card to-card transition-all">
-            <CardContent className="p-6">
-              <div className="flex items-start gap-3 mb-1">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rose-500/10">
-                  <MessageSquare className="h-5 w-5 text-rose-500" />
-                </div>
+          {step === "results" && (
+            <Button asChild variant="outline" className="gap-2">
+              <Link to="/simulasi-wawancara">
+                <RotateCcw className="h-4 w-4" />
+                Simulasi Baru
+              </Link>
+            </Button>
+          )}
+        </div>
+      </header>
+
+      {step === "generating" && (
+        <ProcessState
+          icon={Sparkles}
+          title="AI sedang menyusun pertanyaan."
+          description={`Pertanyaan disesuaikan dengan ${session?.position ?? "posisi"} dan level ${levelLabel(session?.level || "")}.`}
+          tone="primary"
+        />
+      )}
+
+      {step === "evaluating" && (
+        <ProcessState
+          icon={BarChart3}
+          title="AI sedang membaca kualitas jawabanmu."
+          description="Evaluasi melihat relevansi, struktur cerita, bukti dampak, dan saran perbaikan yang bisa langsung dicoba."
+          tone="amber"
+        />
+      )}
+
+      {step === "loading" && (
+        <ProcessState
+          icon={Loader2}
+          title="Memuat sesi."
+          description="Sebentar, kami sedang mengambil data latihanmu."
+          tone="primary"
+          loading
+        />
+      )}
+
+      {step === "answering" && currentQuestion && (
+        <main className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
+          <section className="space-y-4">
+            <div className="rounded-2xl border bg-card p-4 shadow-sm">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <Badge
-                      variant="outline"
-                      className="text-[10px] border-rose-500/30 text-rose-600 bg-rose-500/5"
-                    >
-                      Q{currentQ + 1}
-                    </Badge>
-                    {currentQ < 3 && (
-                      <Badge variant="secondary" className="text-[10px]">
-                        Behavioral
-                      </Badge>
-                    )}
-                    {currentQ >= 3 && currentQ < 6 && (
-                      <Badge variant="secondary" className="text-[10px]">
-                        Situational
-                      </Badge>
-                    )}
-                    {currentQ >= 6 && (
-                      <Badge variant="secondary" className="text-[10px]">
-                        Technical
-                      </Badge>
-                    )}
-                  </div>
-                  <p className="font-semibold text-foreground leading-relaxed">
-                    {questions[currentQ]?.question}
+                  <p className="text-sm font-semibold text-foreground">
+                    Pertanyaan {currentQ + 1} dari {questions.length}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {answeredCount}/{questions.length} jawaban sudah terisi
                   </p>
                 </div>
+                <Badge variant="outline" className="w-fit">
+                  {Math.round(completionPercent)}% lengkap
+                </Badge>
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Answer Card */}
-          <Card>
-            <CardContent className="p-6">
-              <label className="text-sm font-semibold mb-3 flex items-center gap-2">
-                {isSupported ? (
+              <Progress value={questionPercent} className="mt-4 h-2" />
+              <div className="mt-4 flex flex-wrap gap-2">
+                {questions.map((question, index) => (
                   <button
+                    key={question.id}
                     type="button"
-                    onClick={handleMicToggle}
+                    onClick={() => setCurrentQ(index)}
                     className={cn(
-                      "p-1.5 rounded-lg transition-all",
-                      isListening
-                        ? "bg-red-500 text-white animate-pulse"
-                        : "text-rose-500 hover:bg-rose-500/10",
+                      "h-9 min-w-9 rounded-full border px-3 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                      index === currentQ
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : answers[question.id]?.trim()
+                          ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700"
+                          : "bg-background text-muted-foreground hover:border-primary/40",
                     )}
-                    title={isListening ? "Stop rekaman" : "Mulai rekaman suara"}
+                    aria-label={`Buka pertanyaan ${index + 1}`}
                   >
-                    <Mic className="h-4 w-4" />
+                    {index + 1}
                   </button>
-                ) : (
-                  <Mic className="h-4 w-4 text-rose-500" />
+                ))}
+              </div>
+            </div>
+
+            <article className="rounded-2xl border bg-card p-5 shadow-sm md:p-6">
+              <div className="flex items-start gap-3">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                  <MessageSquare className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="mb-2 flex flex-wrap gap-2">
+                    <Badge variant="outline">Q{currentQ + 1}</Badge>
+                    <Badge className="bg-muted text-muted-foreground hover:bg-muted">
+                      Jawab natural
+                    </Badge>
+                  </div>
+                  <h2 className="font-display text-xl font-bold leading-snug text-foreground">
+                    {currentQuestion.question}
+                  </h2>
+                </div>
+              </div>
+            </article>
+
+            <article className="rounded-2xl border bg-card p-5 shadow-sm md:p-6">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <label
+                    htmlFor="interview-answer"
+                    className="flex items-center gap-2 text-sm font-semibold text-foreground"
+                  >
+                    <Mic className="h-4 w-4 text-primary" />
+                    Jawaban kamu
+                  </label>
+                  <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                    Ketik atau gunakan suara. Teks yang sudah ada tetap dipertahankan saat rekaman.
+                  </p>
+                </div>
+                {isSupported && (
+                  <Button
+                    type="button"
+                    variant={isListening ? "destructive" : "outline"}
+                    size="sm"
+                    onClick={handleMicToggle}
+                    className="gap-2"
+                    aria-pressed={isListening}
+                  >
+                    <Mic className={cn("h-4 w-4", isListening && "animate-pulse")} />
+                    {isListening ? "Stop Rekam" : "Rekam Suara"}
+                  </Button>
                 )}
-                Jawaban Kamu
-                {isListening && (
-                  <span className="text-[11px] text-red-500 font-normal animate-pulse ml-1">
-                    merekam...
-                  </span>
-                )}
-              </label>
-              {isSupported && (
-                <p className="text-[11px] text-muted-foreground -mt-2 mb-3">
-                  Klik <Mic className="h-3 w-3 inline text-rose-500" /> untuk menjawab dengan suara,
-                  atau ketik langsung di bawah.
-                </p>
+              </div>
+
+              {isListening && (
+                <div className="mt-4 rounded-xl border border-red-500/25 bg-red-500/5 px-3 py-2 text-xs font-medium text-red-700">
+                  Merekam. Lanjutkan bicara, transkrip akan ditambahkan ke jawaban saat ini.
+                </div>
               )}
+
               <Textarea
-                value={answers[questions[currentQ]?.id] || ""}
-                onChange={(e) => {
+                id="interview-answer"
+                value={answerText}
+                onChange={(event) => {
                   if (isListening) return;
-                  setAnswers((prev) => ({ ...prev, [questions[currentQ].id]: e.target.value }));
+                  setAnswers((prev) => ({ ...prev, [currentQuestion.id]: event.target.value }));
                 }}
-                placeholder="Tulis jawabanmu di sini...&#10;&#10;Tips: Gunakan format STAR — Situation (Situasi), Task (Tugas), Action (Aksi), Result (Hasil)."
-                rows={6}
-                className={cn("mb-4 resize-none", isListening && "border-red-500/50 bg-red-500/5")}
+                placeholder="Tulis jawabanmu di sini. Coba format STAR: situasi, tugas, aksi, hasil."
+                rows={8}
+                className={cn("mt-4 resize-none", isListening && "border-red-500/50 bg-red-500/5")}
               />
-              <div className="flex items-center justify-between">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  disabled={currentQ === 0}
-                  onClick={() => setCurrentQ((c) => c - 1)}
-                  className="gap-1"
-                >
-                  <ChevronLeft className="h-4 w-4" /> Sebelumnya
-                </Button>
-                <div className="flex items-center gap-2">
-                  <span className="text-[11px] text-muted-foreground">
-                    {(answers[questions[currentQ]?.id] || "").length} karakter
-                  </span>
+
+              <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-xs text-muted-foreground">{answerText.length} karakter</p>
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <Button
+                    variant="outline"
+                    disabled={currentQ === 0}
+                    onClick={() => setCurrentQ((value) => value - 1)}
+                    className="gap-2"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    Sebelumnya
+                  </Button>
                   {currentQ < questions.length - 1 ? (
-                    <Button size="sm" onClick={() => setCurrentQ((c) => c + 1)} className="gap-1">
-                      Selanjutnya <ChevronRight className="h-4 w-4" />
+                    <Button onClick={() => setCurrentQ((value) => value + 1)} className="gap-2">
+                      Selanjutnya
+                      <ChevronRight className="h-4 w-4" />
                     </Button>
                   ) : (
-                    <Button
-                      size="sm"
-                      onClick={handleSubmitAnswers}
-                      disabled={submitting}
-                      className="gap-2 shadow-lg shadow-primary/20"
-                    >
+                    <Button onClick={handleSubmitAnswers} disabled={submitting} className="gap-2">
                       {submitting ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
                       ) : (
@@ -536,224 +592,340 @@ function InterviewSessionPage() {
                   )}
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+            </article>
+          </section>
 
-      {/* ── Evaluating State ── */}
-      {step === "evaluating" && (
-        <Card className="border-2 border-primary/10 bg-gradient-to-br from-primary/5 via-card to-card">
-          <CardContent className="flex flex-col items-center py-16 text-center">
-            <div className="relative mb-6">
-              <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-primary/10">
-                <BarChart3 className="h-10 w-10 text-primary animate-pulse" />
+          <aside className="space-y-4">
+            <div className="rounded-2xl border bg-card p-5 shadow-sm">
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-700">
+                  <Lightbulb className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="font-display font-bold text-foreground">Checklist jawaban kuat</h3>
+                  <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                    Cukup jawab jelas, spesifik, dan punya akhir yang menunjukkan dampak.
+                  </p>
+                </div>
               </div>
-              <div className="absolute -top-1 -right-1">
-                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              <div className="mt-5 space-y-3">
+                {["Konteks singkat", "Aksi pribadi", "Hasil terukur"].map((item) => (
+                  <div key={item} className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                    <span>{item}</span>
+                  </div>
+                ))}
               </div>
             </div>
-            <h3 className="font-display text-lg font-bold">
-              AI sedang mengevaluasi jawaban kamu...
-            </h3>
-            <p className="mt-2 text-sm text-muted-foreground max-w-sm">
-              Setiap jawaban akan dinilai berdasarkan relevansi, struktur, dampak, dan kepercayaan
-              diri.
-            </p>
-          </CardContent>
-        </Card>
+
+            <div className="rounded-2xl border bg-muted/35 p-5">
+              <p className="text-sm font-semibold text-foreground">Progress sesi</p>
+              <Progress value={completionPercent} className="mt-4 h-2" />
+              <div className="mt-4 grid grid-cols-2 gap-2 text-center">
+                <div className="rounded-xl border bg-background p-3">
+                  <p className="font-display text-xl font-bold text-foreground">{answeredCount}</p>
+                  <p className="text-[11px] text-muted-foreground">Terjawab</p>
+                </div>
+                <div className="rounded-xl border bg-background p-3">
+                  <p className="font-display text-xl font-bold text-foreground">
+                    {questions.length - answeredCount}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground">Tersisa</p>
+                </div>
+              </div>
+            </div>
+          </aside>
+        </main>
       )}
 
-      {/* ── Loading / Error Fallback ── */}
-      {step === "loading" && (
-        <Card className="border-2 border-primary/10 bg-gradient-to-br from-primary/5 via-card to-card">
-          <CardContent className="flex flex-col items-center py-16 text-center">
-            <Loader2 className="h-10 w-10 text-primary animate-spin mb-4" />
-            <h3 className="font-display text-lg font-bold">Memuat sesi...</h3>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* ── Results State ── */}
       {step === "results" && (
-        <div className="max-w-3xl mx-auto space-y-6">
-          {/* Overall Score Hero */}
-          <Card
+        <main className="mx-auto max-w-4xl space-y-6">
+          <section
             className={cn(
-              "border-2 bg-gradient-to-br",
-              getScoreBg(evaluation?.overall_score || session?.overall_score || 0),
+              "rounded-[1.25rem] border p-6 text-center shadow-sm md:p-8",
+              getScoreBg(overallScore),
             )}
           >
-            <CardContent className="p-8 text-center">
-              <div className="text-5xl mb-3">
-                {getScoreEmoji(evaluation?.overall_score ?? session?.overall_score ?? 0)}
-              </div>
-              <p className="text-sm font-medium text-muted-foreground mb-1">Skor Keseluruhan</p>
-              <p
-                className={cn(
-                  "text-6xl font-bold font-display",
-                  getScoreColor(evaluation?.overall_score ?? session?.overall_score ?? 0),
-                )}
-              >
-                {evaluation?.overall_score ?? session?.overall_score ?? 0}
-              </p>
-              <p className="text-sm text-muted-foreground mt-2 max-w-xs mx-auto">
-                {getScoreMessage(evaluation?.overall_score ?? session?.overall_score ?? 0)}
-              </p>
-            </CardContent>
-          </Card>
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-background text-primary shadow-sm">
+              <Trophy className="h-8 w-8" />
+            </div>
+            <p className="mt-5 text-sm font-semibold text-muted-foreground">Skor keseluruhan</p>
+            <p className={cn("mt-1 font-display text-6xl font-bold", getScoreColor(overallScore))}>
+              {overallScore}
+            </p>
+            <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-muted-foreground">
+              {getScoreMessage(overallScore)}
+            </p>
+          </section>
 
-          {/* Feedback Umum */}
-          {(evaluation?.feedback || session?.feedback) && (
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Lightbulb className="h-5 w-5 text-warning" /> Ringkasan Feedback
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
-                  {evaluation?.feedback || session?.feedback}
-                </p>
-              </CardContent>
-            </Card>
+          {feedback && (
+            <section className="rounded-2xl border bg-card p-5 shadow-sm md:p-6">
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-700">
+                  <Lightbulb className="h-5 w-5" />
+                </div>
+                <div>
+                  <h2 className="font-display text-lg font-bold text-foreground">
+                    Ringkasan feedback
+                  </h2>
+                  <p className="mt-2 whitespace-pre-line text-sm leading-7 text-muted-foreground">
+                    {feedback}
+                  </p>
+                </div>
+              </div>
+            </section>
           )}
 
-          {/* Score Summary Bar */}
-          <div className="grid gap-3 grid-cols-2 sm:grid-cols-4">
-            {["Relevansi", "Struktur", "Dampak", "Kepercayaan"].map((label, i) => {
-              const scores = (evaluation?.evaluations || session?.scores || []).map(
-                (e: any) => e.score ?? 0,
-              );
-              const avg =
-                scores.length > 0
-                  ? Math.round(scores.reduce((a: number, b: number) => a + b, 0) / scores.length)
-                  : 0;
-              const adjusted = Math.min(
-                avg + (i % 2 === 0 ? 5 : -5) + (Math.random() * 10 - 5),
-                100,
-              );
-              const val = scores.length > 0 ? Math.max(0, Math.round(adjusted)) : 0;
-              return (
-                <Card key={label} className="border">
-                  <CardContent className="p-3 text-center">
-                    <p className="text-[10px] font-medium text-muted-foreground mb-1">{label}</p>
-                    <p className={cn("text-xl font-bold font-display", getScoreColor(val))}>
-                      {val}
-                    </p>
-                    <Progress value={val} className="h-1.5 mt-2" />
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
+          <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {facetScores.map((facet) => (
+              <article key={facet.label} className="rounded-2xl border bg-card p-4 shadow-sm">
+                <p className="text-xs font-semibold text-muted-foreground">{facet.label}</p>
+                <p
+                  className={cn("mt-2 font-display text-2xl font-bold", getScoreColor(facet.value))}
+                >
+                  {facet.value}
+                </p>
+                <Progress value={facet.value} className="mt-3 h-1.5" />
+              </article>
+            ))}
+          </section>
 
-          {/* Per-Question Evaluations */}
-          <section>
-            <div className="mb-4 flex items-center gap-2">
-              <Target className="h-5 w-5 text-primary" />
-              <h2 className="font-display text-lg font-bold text-foreground">
-                Evaluasi Per Pertanyaan
+          <section className="space-y-4">
+            <div>
+              <p className="mb-2 inline-flex rounded-full bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground">
+                Evaluasi detail
+              </p>
+              <h2 className="font-display text-xl font-bold text-foreground">
+                Perbaikan per pertanyaan
               </h2>
             </div>
-            <div className="space-y-3">
-              {(evaluation?.evaluations || session?.scores || []).map((ev: any, i: number) => {
-                const q = questions[i] || session?.questions?.[i];
-                const score = ev.score ?? 0;
-                return (
-                  <Card
-                    key={ev.id}
-                    className="group border hover:border-primary/30 hover:shadow-sm transition-all"
-                  >
-                    <CardContent className="p-5">
-                      <div className="flex items-start justify-between gap-3 mb-3">
-                        <div className="flex items-start gap-3 min-w-0">
-                          <div
-                            className={cn(
-                              "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg",
-                              score >= 80
-                                ? "bg-emerald-500/10 text-emerald-600"
-                                : score >= 60
-                                  ? "bg-amber-500/10 text-warning"
-                                  : "bg-rose-500/10 text-red-500",
-                            )}
-                          >
-                            <MessageSquare className="h-4 w-4" />
-                          </div>
-                          <div className="min-w-0">
-                            <Badge variant="outline" className="text-[10px] mb-1">
-                              Pertanyaan {i + 1}
-                            </Badge>
-                            <p className="text-sm font-medium leading-snug">
-                              {q?.question || `Pertanyaan ${i + 1}`}
-                            </p>
-                          </div>
-                        </div>
-                        <Badge
-                          className={cn(
-                            "shrink-0 text-sm font-bold",
-                            score >= 80
-                              ? "bg-emerald-100 text-emerald-700"
-                              : score >= 60
-                                ? "bg-warning/20 text-warning"
-                                : "bg-red-100 text-red-700",
-                          )}
-                        >
-                          {score}/100
-                        </Badge>
-                      </div>
 
-                      <div className="space-y-2 pl-11">
-                        {ev.strength && (
-                          <div className="flex items-start gap-2 text-sm">
-                            <CheckCircle2 className="h-4 w-4 text-emerald-500 mt-0.5 shrink-0" />
-                            <div>
-                              <span className="font-semibold text-emerald-700">Kekuatan: </span>
-                              <span className="text-muted-foreground">{ev.strength}</span>
-                            </div>
-                          </div>
-                        )}
-                        {ev.weakness && (
-                          <div className="flex items-start gap-2 text-sm">
-                            <AlertTriangle className="h-4 w-4 text-warning mt-0.5 shrink-0" />
-                            <div>
-                              <span className="font-semibold text-amber-700">Kelemahan: </span>
-                              <span className="text-muted-foreground">{ev.weakness}</span>
-                            </div>
-                          </div>
-                        )}
-                        {ev.suggestion && (
-                          <div className="flex items-start gap-2 text-sm">
-                            <Lightbulb className="h-4 w-4 text-blue-500 mt-0.5 shrink-0" />
-                            <div>
-                              <span className="font-semibold text-blue-700">Saran: </span>
-                              <span className="text-muted-foreground">{ev.suggestion}</span>
-                            </div>
-                          </div>
-                        )}
+            <div className="space-y-3">
+              {evaluations.map((item, index) => {
+                const question = questions[index] || session?.questions?.[index];
+                const score = item.score ?? 0;
+                return (
+                  <article
+                    key={item.id || index}
+                    className="rounded-2xl border bg-card p-5 shadow-sm"
+                  >
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="flex min-w-0 gap-3">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                          <MessageSquare className="h-4 w-4" />
+                        </div>
+                        <div>
+                          <Badge variant="outline">Pertanyaan {index + 1}</Badge>
+                          <p className="mt-2 text-sm font-semibold leading-6 text-foreground">
+                            {question?.question || `Pertanyaan ${index + 1}`}
+                          </p>
+                        </div>
                       </div>
-                    </CardContent>
-                  </Card>
+                      <Badge
+                        className={cn("w-fit font-bold hover:bg-inherit", scoreToneClass(score))}
+                      >
+                        {score}/100
+                      </Badge>
+                    </div>
+
+                    <div className="mt-5 grid gap-3 md:grid-cols-3">
+                      <FeedbackBlock
+                        icon={CheckCircle2}
+                        title="Kekuatan"
+                        text={item.strength}
+                        tone="emerald"
+                      />
+                      <FeedbackBlock
+                        icon={AlertTriangle}
+                        title="Area perbaikan"
+                        text={item.weakness}
+                        tone="amber"
+                      />
+                      <FeedbackBlock
+                        icon={Zap}
+                        title="Quick win"
+                        text={item.suggestion}
+                        tone="sky"
+                      />
+                    </div>
+                  </article>
                 );
               })}
             </div>
           </section>
 
-          {/* Actions */}
-          <div className="flex flex-wrap justify-center gap-3 pt-4">
-            <Button asChild variant="outline" size="sm" className="gap-1.5">
+          <div className="flex flex-col justify-center gap-3 pt-2 sm:flex-row">
+            <Button asChild variant="outline" className="gap-2">
               <Link to="/dashboard">
-                <Home className="h-3.5 w-3.5" /> Dashboard
+                <Home className="h-4 w-4" />
+                Dashboard
               </Link>
             </Button>
-            <Button asChild size="sm" className="gap-1.5 shadow-lg shadow-primary/20">
+            <Button asChild className="gap-2">
               <Link to="/simulasi-wawancara">
-                <RotateCcw className="h-3.5 w-3.5" /> Mulai Simulasi Baru
+                <RotateCcw className="h-4 w-4" />
+                Latihan Lagi
               </Link>
             </Button>
           </div>
-        </div>
+        </main>
       )}
+    </div>
+  );
+}
+
+function ProcessState({
+  icon: Icon,
+  title,
+  description,
+  tone,
+  loading = false,
+}: {
+  icon: typeof Sparkles;
+  title: string;
+  description: string;
+  tone: "primary" | "amber";
+  loading?: boolean;
+}) {
+  const toneClass =
+    tone === "primary" ? "bg-primary/10 text-primary" : "bg-amber-500/10 text-amber-700";
+
+  return (
+    <section className="rounded-[1.25rem] border bg-card p-8 text-center shadow-sm md:p-12">
+      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-muted">
+        <Icon className={cn("h-8 w-8", toneClass, loading && "animate-spin")} />
+      </div>
+      <h2 className="mt-5 font-display text-2xl font-bold text-foreground">{title}</h2>
+      <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted-foreground">{description}</p>
+      <div className="mx-auto mt-6 flex w-40 gap-2">
+        <span className="h-2 flex-1 rounded-full bg-primary/25" />
+        <span className="h-2 flex-1 rounded-full bg-primary/50" />
+        <span className="h-2 flex-1 rounded-full bg-primary" />
+      </div>
+    </section>
+  );
+}
+
+function FeedbackBlock({
+  icon: Icon,
+  title,
+  text,
+  tone,
+}: {
+  icon: typeof CheckCircle2;
+  title: string;
+  text?: string;
+  tone: "emerald" | "amber" | "sky";
+}) {
+  const toneClass = {
+    emerald: "bg-emerald-500/10 text-emerald-700",
+    amber: "bg-amber-500/10 text-amber-700",
+    sky: "bg-sky-500/10 text-sky-700",
+  }[tone];
+
+  return (
+    <div className="rounded-xl border bg-muted/30 p-4">
+      <div className="flex items-center gap-2">
+        <span
+          className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-lg", toneClass)}
+        >
+          <Icon className="h-4 w-4" />
+        </span>
+        <p className="text-sm font-semibold text-foreground">{title}</p>
+      </div>
+      <p className="mt-3 text-sm leading-6 text-muted-foreground">{text || "Belum ada catatan."}</p>
+    </div>
+  );
+}
+
+function InterviewSessionSkeleton() {
+  return (
+    <div className="container-page space-y-6 py-5 md:py-8">
+      <header className="rounded-[1.25rem] border bg-card p-5 shadow-sm sm:p-6">
+        <div className="flex items-start gap-3">
+          <Skeleton className="h-10 w-10 rounded-xl" />
+          <div className="flex-1">
+            <Skeleton className="h-6 w-28 rounded-full" />
+            <Skeleton className="mt-3 h-8 w-full max-w-md" />
+            <Skeleton className="mt-2 h-4 w-72 max-w-full" />
+          </div>
+        </div>
+      </header>
+
+      <main className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
+        <section className="space-y-4">
+          <div className="rounded-2xl border bg-card p-4 shadow-sm">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <Skeleton className="h-5 w-36" />
+                <Skeleton className="mt-2 h-3 w-28" />
+              </div>
+              <Skeleton className="h-6 w-20 rounded-full" />
+            </div>
+            <Skeleton className="mt-4 h-2 w-full rounded-full" />
+            <div className="mt-4 flex flex-wrap gap-2">
+              {[1, 2, 3, 4, 5, 6].map((item) => (
+                <Skeleton key={item} className="h-9 w-9 rounded-full" />
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-2xl border bg-card p-5 shadow-sm md:p-6">
+            <div className="flex gap-3">
+              <Skeleton className="h-11 w-11 rounded-xl" />
+              <div className="flex-1">
+                <div className="mb-3 flex gap-2">
+                  <Skeleton className="h-6 w-12 rounded-full" />
+                  <Skeleton className="h-6 w-24 rounded-full" />
+                </div>
+                <Skeleton className="h-7 w-full" />
+                <Skeleton className="mt-2 h-7 w-4/5" />
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border bg-card p-5 shadow-sm md:p-6">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <Skeleton className="h-5 w-32" />
+                <Skeleton className="mt-2 h-3 w-80 max-w-full" />
+              </div>
+              <Skeleton className="h-9 w-32" />
+            </div>
+            <Skeleton className="mt-4 h-48 w-full rounded-xl" />
+            <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:justify-end">
+              <Skeleton className="h-10 w-full sm:w-32" />
+              <Skeleton className="h-10 w-full sm:w-32" />
+            </div>
+          </div>
+        </section>
+
+        <aside className="space-y-4">
+          <div className="rounded-2xl border bg-card p-5 shadow-sm">
+            <div className="flex gap-3">
+              <Skeleton className="h-10 w-10 rounded-xl" />
+              <div className="flex-1">
+                <Skeleton className="h-5 w-40" />
+                <Skeleton className="mt-2 h-3 w-full" />
+                <Skeleton className="mt-1 h-3 w-4/5" />
+              </div>
+            </div>
+            <div className="mt-5 space-y-3">
+              {[1, 2, 3].map((item) => (
+                <Skeleton key={item} className="h-5 w-full" />
+              ))}
+            </div>
+          </div>
+          <div className="rounded-2xl border bg-muted/35 p-5">
+            <Skeleton className="h-5 w-28" />
+            <Skeleton className="mt-4 h-2 w-full rounded-full" />
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              <Skeleton className="h-20 rounded-xl" />
+              <Skeleton className="h-20 rounded-xl" />
+            </div>
+          </div>
+        </aside>
+      </main>
     </div>
   );
 }
