@@ -1,35 +1,42 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { buildSeo } from "@/lib/seo";
-import { PageHero } from "@/components/site/PageHero";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { 
-  CheckCircle2, 
-  Zap,
+import {
+  ArrowRight,
+  BadgeCheck,
+  CheckCircle2,
+  CreditCard,
+  FileText,
+  Gift,
+  LockKeyhole,
+  MessageSquareText,
+  ShieldCheck,
   Sparkles,
   Star,
-  Shield,
-  Users,
+  Target,
   TrendingUp,
-  Gift,
-  ArrowRight,
-  CreditCard,
-  Smartphone,
-  Lock,
-  FileText,
-  Crown,
-  BookOpen
+  Users,
+  Wand2,
+  Zap,
 } from "lucide-react";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { buildSeo } from "@/lib/seo";
 
 const tiers = [
   {
     name: "Free",
     price: "Rp 0",
     period: "selamanya",
-    desc: "Untuk eksplorasi & bikin CV pertamamu tanpa biaya.",
-    highlight: "Tidak kartu kredit",
+    desc: "Untuk mulai bikin CV pertama tanpa risiko.",
+    highlight: "Tidak perlu kartu kredit",
+    tone: "calm",
     features: [
       "1 CV aktif",
       "2 template basic",
@@ -38,18 +45,19 @@ const tiers = [
       "5x perbaiki teks / bulan",
       "10x guided mode / bulan",
       "5x AI chat / bulan",
-      "Export PDF (watermark)",
+      "Export PDF dengan watermark",
     ],
-    cta: "Mulai Gratis Sekarang",
+    cta: "Mulai gratis",
     ctaVariant: "outline" as const,
   },
   {
     name: "Starter",
     price: "Rp 14.900",
     period: "/bulan",
-    badge: "Paling Populer",
-    desc: "Pas untuk pencari kerja aktif yang butuh hasil maksimal.",
-    highlight: "Setara 1 kopi kekinian",
+    badge: "Paling pas untuk apply kerja",
+    desc: "Untuk pencari kerja aktif yang ingin CV lebih rapi, tajam, dan siap kirim.",
+    highlight: "Setara 1 kopi, tapi bantu banyak lamaran",
+    tone: "featured",
     features: [
       "3 CV aktif",
       "Semua template premium",
@@ -61,9 +69,9 @@ const tiers = [
       "10x CV review HR / bulan",
       "20x keyword extractor / bulan",
       "50x AI chat / bulan",
-      "Tanpa watermark sama sekali",
+      "Export PDF tanpa watermark",
     ],
-    cta: "Pilih Paket Starter",
+    cta: "Pilih Starter",
     ctaVariant: "default" as const,
     popular: true,
   },
@@ -71,9 +79,10 @@ const tiers = [
     name: "Pro",
     price: "Rp 39.000",
     period: "/bulan",
-    badge: "Best Value",
-    desc: "Untuk profesional yang serius naikkan level karir.",
-    highlight: "Semua fitur premium",
+    badge: "Untuk karier yang serius naik kelas",
+    desc: "Untuk profesional yang butuh banyak versi CV, simulasi interview, dan insight lengkap.",
+    highlight: "Paket paling lengkap",
+    tone: "sharp",
     features: [
       "10 CV aktif",
       "200x saran AI / bulan",
@@ -85,48 +94,101 @@ const tiers = [
       "100x keyword extractor / bulan",
       "50x simulasi wawancara / bulan",
       "200x AI chat / bulan",
-      "CV comparison",
-      "Analitik CV",
+      "CV comparison dan analitik CV",
       "Dukungan prioritas 24/7",
     ],
-    cta: "Pilih Paket Pro",
+    cta: "Pilih Pro",
     ctaVariant: "outline" as const,
   },
 ];
 
-const socialProof = [
-  { icon: Users, stat: "5.000+", label: "Pengguna Aktif" },
-  { icon: FileText, stat: "10.000+", label: "CV Dibuat" },
-  { icon: TrendingUp, stat: "92%", label: "Lolos Screening ATS" },
-  { icon: Star, stat: "4.9/5", label: "Rating Pengguna" },
+const proof = [
+  { icon: Users, stat: "5.000+", label: "pengguna aktif" },
+  { icon: FileText, stat: "10.000+", label: "CV dibuat" },
+  { icon: TrendingUp, stat: "92%", label: "skor ATS rata-rata" },
+  { icon: Star, stat: "4.9/5", label: "rating pengguna" },
+] as const;
+
+const quickFit = [
+  {
+    icon: Gift,
+    title: "Mulai dari Free",
+    desc: "Coba alurnya dulu, buat CV pertama, dan lihat bagaimana AI membantu.",
+  },
+  {
+    icon: Target,
+    title: "Naik ke Starter",
+    desc: "Pilihan paling masuk akal kalau kamu sedang aktif apply beberapa lowongan.",
+  },
+  {
+    icon: Zap,
+    title: "Pakai Pro",
+    desc: "Untuk banyak role, banyak versi CV, dan latihan interview yang lebih intens.",
+  },
+] as const;
+
+const comparison = [
+  ["CV aktif", "1", "3", "10"],
+  ["Template", "2 basic", "Semua", "Semua"],
+  ["AI suggestions", "5x", "50x", "200x"],
+  ["ATS scoring", "1x", "10x", "50x"],
+  ["Perbaiki teks AI", "5x", "50x", "200x"],
+  ["Cover letter", "-", "10x", "50x"],
+  ["Keyword extractor", "-", "20x", "100x"],
+  ["Review CV HR", "-", "10x", "50x"],
+  ["Simulasi wawancara", "-", "-", "50x"],
+  ["Export PDF", "Watermark", "Bersih", "Bersih"],
+  ["CV comparison", "-", "-", "Ada"],
+  ["Analitik CV", "-", "-", "Ada"],
 ];
 
+const guarantees = [
+  { icon: ShieldCheck, label: "Refund 7 hari" },
+  { icon: LockKeyhole, label: "Data terenkripsi" },
+  { icon: CreditCard, label: "QRIS, e-wallet, VA bank" },
+] as const;
+
 const faqs = [
-  { q: "Apakah ada uji coba gratis?", a: "Paket Free bisa dipakai selamanya tanpa batas waktu. Tidak perlu kartu kredit sama sekali. Untuk Starter & Pro, kamu bisa berhenti kapan saja tanpa penalti biaya." },
-  { q: "Metode pembayaran apa saja?", a: "Kami menerima QRIS, e-wallet (GoPay, OVO, Dana, ShopeePay), dan transfer VA bank lokal (BCA, Mandiri, BNI, BRI). Semua aman & terenkripsi." },
-  { q: "Bisa ganti atau berhenti paket kapan saja?", a: "Tentu! Upgrade langsung aktif setelah pembayaran. Downgrade berlaku di periode tagihan berikutnya. Berhenti? Tidak ada biaya tersembunyi." },
-  { q: "Bagaimana jika tidak cocok? Apakah bisa refund?", a: "Kami berikan refund 100% dalam 7 hari pertama jika kamu merasa tidak cocok. Tanpa pertanyaan. Kepuasan kamu adalah prioritas kami." },
-  { q: "Apakah CV saya aman dan privasi?", a: "Ya! Semua data dienkripsi dan tidak pernah dibagikan ke pihak ketiga. Kamu bisa hapus semua data kapan saja." },
+  {
+    q: "Apakah ada uji coba gratis?",
+    a: "Ada. Paket Free bisa dipakai selamanya tanpa kartu kredit. Kamu bisa upgrade saat butuh kuota dan fitur yang lebih lengkap.",
+  },
+  {
+    q: "Metode pembayaran apa saja?",
+    a: "Kami menerima QRIS, e-wallet seperti GoPay, OVO, Dana, ShopeePay, serta transfer VA bank lokal. Pembayaran diproses aman.",
+  },
+  {
+    q: "Bisa ganti atau berhenti paket kapan saja?",
+    a: "Bisa. Upgrade aktif setelah pembayaran. Downgrade berlaku di periode tagihan berikutnya. Tidak ada biaya tersembunyi.",
+  },
+  {
+    q: "Bagaimana jika tidak cocok?",
+    a: "Kamu bisa meminta refund 100% dalam 7 hari pertama untuk paket berbayar jika merasa fiturnya belum cocok.",
+  },
+  {
+    q: "Apakah CV dan data saya aman?",
+    a: "Ya. Data disimpan dengan proteksi keamanan, tidak dijual ke pihak ketiga, dan bisa kamu hapus kapan saja dari akunmu.",
+  },
 ];
 
 export const Route = createFileRoute("/harga")({
-  pendingComponent: () => <div className="container-page py-20"><div className="animate-pulse space-y-4"><div className="h-64 bg-muted rounded-xl" /><div className="grid md:grid-cols-3 gap-4"><div className="h-96 bg-muted rounded-xl" /><div className="h-96 bg-muted rounded-xl" /><div className="h-96 bg-muted rounded-xl" /></div></div></div>,
+  pendingComponent: HargaLoading,
   head: () =>
     buildSeo({
-      title: "Harga — CV Pintar",
+      title: "Harga CV Pintar - Mulai Gratis, Upgrade Saat Siap",
       description:
-        "Mulai gratis selamanya. Paket berbayar mulai Rp 14.900/bulan dengan AI saran, scoring, dan cover letter untuk tingkatkan peluang interview.",
+        "Pilih paket CV Pintar: Free selamanya, Starter Rp 14.900/bulan, atau Pro Rp 39.000/bulan untuk AI CV, scoring ATS, review HR, cover letter, dan interview.",
       path: "/harga",
-      keywords: "harga cv builder, cv ats murah, langganan cv ai indonesia",
+      keywords: "harga cv builder, cv ats murah, langganan cv ai indonesia, paket cv pintar",
       jsonLd: [
         {
           "@context": "https://schema.org",
           "@type": "Product",
           name: "CV Pintar Subscription",
-          offers: tiers.map((t) => ({
+          offers: tiers.map((tier) => ({
             "@type": "Offer",
-            name: t.name,
-            price: t.name === "Free" ? "0" : t.name === "Starter" ? "19000" : "49000",
+            name: tier.name,
+            price: tier.name === "Free" ? "0" : tier.name === "Starter" ? "14900" : "39000",
             priceCurrency: "IDR",
             availability: "https://schema.org/InStock",
           })),
@@ -134,10 +196,10 @@ export const Route = createFileRoute("/harga")({
         {
           "@context": "https://schema.org",
           "@type": "FAQPage",
-          mainEntity: faqs.map((f) => ({
+          mainEntity: faqs.map((faq) => ({
             "@type": "Question",
-            name: f.q,
-            acceptedAnswer: { "@type": "Answer", text: f.a },
+            name: faq.q,
+            acceptedAnswer: { "@type": "Answer", text: faq.a },
           })),
         },
       ],
@@ -147,250 +209,393 @@ export const Route = createFileRoute("/harga")({
 
 function HargaPage() {
   return (
-    <>
-      <PageHero
-        eyebrow="Harga Transparan"
-        title="Investasi Kecil, Peluang Besar"
-        description="Tidak ada biaya tersembunyi. Tidak perlu kartu kredit untuk mulai. Berhenti kapan saja, tanpa drama."
-      />
-      
-      <div className="container-page py-12 space-y-16">
-        {/* Social Proof Stats */}
-        <section className="space-y-6">
-          <div className="text-center space-y-2">
-            <p className="text-sm text-primary font-medium uppercase tracking-wide">Dipercaya Pencaker Indonesia</p>
-            <h2 className="text-2xl md:text-3xl font-bold">Hasil yang Sudah Terbukti</h2>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {socialProof.map((item, i) => (
-              <Card key={i} className="text-center py-6">
-                <CardContent>
-                  <div className="p-3 rounded-full bg-primary/10 w-fit mx-auto mb-3">
-                    <item.icon className="w-6 h-6 text-primary" />
-                  </div>
-                  <div className="text-2xl md:text-3xl font-bold text-primary">{item.stat}</div>
-                  <p className="text-sm text-muted-foreground">{item.label}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </section>
+    <main className="overflow-x-clip bg-background">
+      <section className="border-b border-border/70">
+        <div className="container-page grid gap-12 py-16 md:grid-cols-[minmax(0,1fr)_minmax(320px,0.86fr)] md:items-center md:py-24">
+          <div>
+            <Badge className="mb-6 gap-2 border-yellow-200 bg-yellow-100 px-4 py-2 text-sm text-yellow-950 shadow-sm hover:bg-yellow-100">
+              <Sparkles className="h-4 w-4" aria-hidden="true" />
+              Harga sederhana, hasilnya serius
+            </Badge>
 
-        {/* Pricing Cards */}
-        <section className="space-y-6">
-          <div className="text-center space-y-3 max-w-2xl mx-auto">
-            <h2 className="text-3xl md:text-4xl font-bold">
-              Pilih Paket yang Tepat untukmu
-            </h2>
-            <p className="text-muted-foreground text-lg">
-              Mulai dari gratis, upgrade kapan siap. Tidak ada tekanan, tidak ada kontrak mengikat.
+            <h1 className="max-w-3xl font-display text-4xl font-bold leading-[1.02] text-foreground sm:text-5xl lg:text-6xl">
+              Mulai gratis. Upgrade saat CV kamu mulai bekerja lebih keras.
+            </h1>
+
+            <p className="mt-6 max-w-2xl text-lg leading-8 text-muted-foreground">
+              Pilih paket sesuai ritme lamaranmu. Tidak ada kontrak panjang, tidak ada biaya
+              tersembunyi, dan kamu tetap bisa berhenti kapan saja.
             </p>
-          </div>
-          <br />
-          <div className="grid md:grid-cols-3 gap-6 items-start">
-            {tiers.map((t) => (
-              <Card 
-                key={t.name} 
-                className={`relative transition-all duration-300 ${
-                  t.popular 
-                    ? "border-2 border-primary shadow-2xl shadow-primary/20 scale-105" 
-                    : "hover:shadow-lg hover:-translate-y-1"
-                }`}
-              >
-                {t.badge && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                    <Badge className={`${t.popular ? "bg-primary" : "bg-amber-500"} text-white px-4 py-1 text-sm shadow-lg`}>
-                      {t.badge}
-                    </Badge>
-                  </div>
-                )}
-                
-                <CardHeader className="text-center pb-4">
-                  <CardTitle className="flex items-center justify-center gap-2 text-xl">
-                    {t.popular && <Crown className="w-5 h-5 text-primary" />}
-                    {t.name}
-                  </CardTitle>
-                  <p className="text-sm text-muted-foreground mt-1">{t.desc}</p>
-                  
-                  <div className="mt-4">
-                    <div className="flex items-baseline justify-center gap-1">
-                      <span className="text-4xl md:text-5xl font-bold">{t.price}</span>
-                      <span className="text-muted-foreground">{t.period}</span>
-                    </div>
-                    <p className="flex items-center justify-center gap-1 mt-2 text-sm text-green-600 dark:text-green-400">
-                      <CheckCircle2 className="w-4 h-4" />
-                      {t.highlight}
-                    </p>
-                  </div>
-                </CardHeader>
-                
-                <CardContent className="space-y-6">
-                  <Button 
-                    asChild 
-                    size="lg" 
-                    className={`w-full ${t.popular ? "shadow-lg shadow-primary/30" : ""}`}
-                    variant={t.ctaVariant}
-                  >
-                    <Link to="/register" className="flex items-center justify-center gap-2">
-                      {t.cta}
-                      <ArrowRight className="w-4 h-4" />
-                    </Link>
-                  </Button>
-                  
-                  <ul className="space-y-3">
-                    {t.features.map((f) => (
-                      <li key={f} className="flex items-start gap-3 text-sm">
-                        <CheckCircle2 className="w-5 h-5 shrink-0 text-green-500 mt-0.5" />
-                        <span>{f}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </section>
 
-        {/* Comparison Table */}
-        <section className="space-y-6">
-          <div className="text-center">
-            <h2 className="text-2xl md:text-3xl font-bold">Perbandingan Fitur</h2>
-            <p className="text-muted-foreground mt-2">Lihat detail perbedaan setiap paket</p>
-          </div>
-          
-          <Card className="overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b bg-muted/50">
-                    <th className="text-left p-4 font-semibold">Fitur</th>
-                    <th className="text-center p-4 font-semibold">Free</th>
-                    <th className="text-center p-4 font-semibold bg-primary/5">Starter</th>
-                    <th className="text-center p-4 font-semibold">Pro</th>
-                  </tr>
-                </thead>
-                <tbody className="text-sm">
-                  {[
-                    ["Jumlah CV aktif", "1", "3", "10"],
-                    ["Template tersedia", "2 basic", "Semua", "Semua"],
-                    ["AI suggestions/bulan", "5x", "50x", "200x"],
-                    ["ATS Scoring/bulan", "1x", "10x", "50x"],
-                    ["Perbaiki Teks AI/bulan", "5x", "50x", "200x"],
-                    ["Guided Mode/bulan", "10x", "30x", "100x"],
-                    ["AI Chat/bulan", "5x", "50x", "200x"],
-                    ["Cover Letter AI/bulan", "—", "10x", "50x"],
-                    ["Keyword Extractor/bulan", "—", "20x", "100x"],
-                    ["CV Review HR/bulan", "—", "10x", "50x"],
-                    ["Simulasi Wawancara/bulan", "—", "—", "50x"],
-                    ["Export PDF", "Watermark", "Bersih", "Bersih"],
-                    ["Bandingkan versi CV", "—", "—", "✓"],
-                    ["Analitik CV", "—", "—", "✓"],
-                    ["Support prioritas", "—", "—", "✓"],
-                  ].map((row, i) => (
-                    <tr key={i} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
-                      <td className="p-4 font-medium">{row[0]}</td>
-                      <td className="p-4 text-center">{row[1]}</td>
-                      <td className="p-4 text-center bg-primary/5 font-medium">{row[2]}</td>
-                      <td className="p-4 text-center">{row[3]}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <Button asChild size="lg" className="h-12 px-6 text-base">
+                <a href="#pilih-paket">
+                  Bandingkan paket
+                  <ArrowRight className="h-5 w-5" aria-hidden="true" />
+                </a>
+              </Button>
+              <Button asChild variant="outline" size="lg" className="h-12 px-6 text-base">
+                <Link to="/register">Mulai gratis</Link>
+              </Button>
             </div>
-          </Card>
-        </section>
 
-        {/* Money Back Guarantee */}
-        <section className="space-y-6">
-          <Card className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 border-green-200">
-            <CardContent className="p-8 text-center">
-              <div className="p-4 rounded-full bg-green-100 dark:bg-green-900/50 w-fit mx-auto mb-4">
-                <Shield className="w-10 h-10 text-green-600" />
-              </div>
-              <h2 className="text-2xl md:text-3xl font-bold text-green-800 dark:text-green-400 mb-3">
-                Jaminan 7 Hari Uang Kembali
-              </h2>
-              <p className="text-green-700/80 dark:text-green-400/80 max-w-xl mx-auto text-lg">
-                Tidak puas dengan fitur premium? Kami refund 100% tanpa pertanyaan dalam 7 hari pertama. 
-                <span className="font-semibold"> Risikonya nol.</span>
-              </p>
-            </CardContent>
-          </Card>
-        </section>
-
-        {/* Payment Methods */}
-        <section className="space-y-4">
-          <div className="text-center">
-            <p className="text-sm text-muted-foreground mb-3">Pembayaran mudah & aman</p>
-            <div className="flex flex-wrap items-center justify-center gap-4">
-              {[
-                { icon: Smartphone, label: "QRIS" },
-                { icon: CreditCard, label: "E-Wallet" },
-                { icon: Lock, label: "VA Bank" },
-              ].map((item, i) => (
-                <div key={i} className="flex items-center gap-2 px-4 py-2 rounded-full bg-muted text-sm">
-                  <item.icon className="w-4 h-4" />
-                  <span>{item.label}</span>
+            <dl className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {proof.map((item) => (
+                <div
+                  key={item.label}
+                  className="rounded-lg border border-border bg-card p-3 shadow-sm"
+                >
+                  <item.icon className="mb-3 h-5 w-5 text-primary" aria-hidden="true" />
+                  <dt className="font-display text-xl font-bold text-foreground">{item.stat}</dt>
+                  <dd className="mt-1 text-sm text-muted-foreground">{item.label}</dd>
                 </div>
               ))}
-            </div>
+            </dl>
           </div>
-        </section>
 
-        {/* CTA */}
-        <section className="space-y-6">
-          <Card className="bg-gradient-to-br from-primary via-primary/90 to-blue-600 border-0 text-white">
-            <CardContent className="p-8 md:p-12 text-center">
-              <div className="p-4 rounded-full bg-white/20 w-fit mx-auto mb-6">
-                <Sparkles className="w-12 h-12" />
-              </div>
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                Buatkan CV ATS-mu Sekarang!
-              </h2>
-              <p className="text-lg text-white/80 mb-8 max-w-xl mx-auto">
-                Tak perlu repot-edit manual. AI kami otomatis menyarankan keyword, mengoreksi struktur, dan memberi skor ATS sebelum kamu kirim lamaran.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <a 
-                  href="/cv" 
-                  className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white text-primary font-semibold rounded-xl hover:bg-white/90 transition-all hover:scale-105 shadow-lg"
-                >
-                  <Zap className="w-5 h-5" />
-                  Buat CV dengan AI
-                </a>
-                <a 
-                  href="/template" 
-                  className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-transparent border-2 border-white text-white font-semibold rounded-xl hover:bg-white/10 transition-all"
-                >
-                  <BookOpen className="w-5 h-5" />
-                  Lihat Templates
-                </a>
-              </div>
-            </CardContent>
-          </Card>
-        </section>
+          <PriceSignal />
+        </div>
+      </section>
 
-        {/* FAQ */}
-        <section className="space-y-6 max-w-3xl mx-auto">
-          <div className="text-center">
-            <h2 className="text-2xl md:text-3xl font-bold">Pertanyaan Umum</h2>
-            <p className="text-muted-foreground mt-2">Masih punya pertanyaan? Hubungi kami</p>
+      <section className="container-page py-14 md:py-20">
+        <div className="grid gap-4 md:grid-cols-3">
+          {quickFit.map((item) => (
+            <Card key={item.title} className="border-border/80 shadow-sm">
+              <CardContent className="p-6">
+                <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <item.icon className="h-5 w-5" aria-hidden="true" />
+                </div>
+                <h2 className="font-display text-xl font-bold text-foreground">{item.title}</h2>
+                <p className="mt-3 leading-7 text-muted-foreground">{item.desc}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </section>
+
+      <section id="pilih-paket" className="bg-muted/45 py-16 md:py-24">
+        <div className="container-page">
+          <SectionIntro
+            eyebrow="Pilih paket"
+            title="Bayar untuk momentum, bukan untuk fitur yang membingungkan."
+            desc="Free cukup untuk mulai. Starter cocok untuk apply aktif. Pro memberi ruang lebih besar saat kamu mengejar beberapa peluang sekaligus."
+          />
+
+          <div className="mt-10 grid gap-6 lg:grid-cols-3 lg:items-stretch">
+            {tiers.map((tier) => (
+              <PricingCard key={tier.name} tier={tier} />
+            ))}
           </div>
-          
-          <Accordion type="single" collapsible className="bg-card rounded-xl border">
-            {faqs.map((f, i) => (
-              <AccordionItem key={i} value={`f-${i}`} className="px-4">
-                <AccordionTrigger className="text-left hover:no-underline py-4">
-                  <span className="font-medium">{f.q}</span>
+        </div>
+      </section>
+
+      <section className="container-page py-16 md:py-24">
+        <SectionIntro
+          eyebrow="Detail fitur"
+          title="Perbedaan paket yang mudah dibaca."
+          desc="Fokus pada kuota yang benar-benar memengaruhi proses apply: jumlah CV, bantuan AI, scoring, review, dan interview."
+        />
+
+        <Card className="mt-10 overflow-hidden border-border/80 shadow-sm">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[720px] text-sm">
+              <caption className="sr-only">Perbandingan fitur paket CV Pintar</caption>
+              <thead>
+                <tr className="border-b bg-muted/70">
+                  <th scope="col" className="p-4 text-left font-bold text-foreground">
+                    Fitur
+                  </th>
+                  <th scope="col" className="p-4 text-center font-bold text-foreground">
+                    Free
+                  </th>
+                  <th
+                    scope="col"
+                    className="bg-primary/10 p-4 text-center font-bold text-foreground"
+                  >
+                    Starter
+                  </th>
+                  <th scope="col" className="p-4 text-center font-bold text-foreground">
+                    Pro
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {comparison.map((row) => (
+                  <tr key={row[0]} className="border-b last:border-0">
+                    <th scope="row" className="p-4 text-left font-semibold text-foreground">
+                      {row[0]}
+                    </th>
+                    <td className="p-4 text-center text-muted-foreground">{row[1]}</td>
+                    <td className="bg-primary/5 p-4 text-center font-semibold text-foreground">
+                      {row[2]}
+                    </td>
+                    <td className="p-4 text-center text-muted-foreground">{row[3]}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      </section>
+
+      <section className="bg-primary py-16 text-primary-foreground md:py-20">
+        <div className="container-page grid gap-8 md:grid-cols-[1fr_0.9fr] md:items-center">
+          <div>
+            <Badge className="mb-5 border-white/25 bg-white/15 text-white hover:bg-white/15">
+              Aman untuk dicoba
+            </Badge>
+            <h2 className="font-display text-3xl font-bold leading-tight md:text-4xl">
+              Coba premium tanpa rasa was-was.
+            </h2>
+            <p className="mt-4 max-w-2xl text-lg leading-8 text-primary-foreground/85">
+              Kalau dalam 7 hari pertama kamu merasa fiturnya belum cocok, kamu bisa minta refund
+              100%. Praktis, jelas, dan tidak diputar-putar.
+            </p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-3 md:grid-cols-1">
+            {guarantees.map((item) => (
+              <div
+                key={item.label}
+                className="flex items-center gap-3 rounded-lg border border-white/20 bg-white/10 p-4"
+              >
+                <item.icon className="h-5 w-5 shrink-0" aria-hidden="true" />
+                <span className="font-semibold">{item.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="container-page py-16 md:py-24">
+        <div className="grid gap-10 lg:grid-cols-[0.82fr_1fr] lg:items-start">
+          <div>
+            <Badge variant="secondary" className="mb-4 px-3 py-1.5">
+              FAQ
+            </Badge>
+            <h2 className="font-display text-3xl font-bold leading-tight text-foreground md:text-4xl">
+              Pertanyaan sebelum memilih paket.
+            </h2>
+            <p className="mt-4 text-lg leading-8 text-muted-foreground">
+              Pricing yang baik harus jelas dari awal. Ini beberapa hal yang biasanya ditanyakan
+              sebelum upgrade.
+            </p>
+          </div>
+
+          <Accordion
+            type="single"
+            collapsible
+            className="rounded-xl border border-border bg-card px-4"
+          >
+            {faqs.map((faq, index) => (
+              <AccordionItem key={faq.q} value={`faq-${index}`}>
+                <AccordionTrigger className="text-left text-base font-semibold hover:no-underline">
+                  {faq.q}
                 </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground pb-4">
-                  {f.a}
+                <AccordionContent className="leading-7 text-muted-foreground">
+                  {faq.a}
                 </AccordionContent>
               </AccordionItem>
             ))}
           </Accordion>
-        </section>
+        </div>
+      </section>
+
+      <section className="container-page pb-16 md:pb-24">
+        <div className="grid gap-8 rounded-2xl border border-border bg-card p-6 shadow-sm md:grid-cols-[1fr_auto] md:items-center md:p-10">
+          <div>
+            <Badge className="mb-5 bg-primary text-primary-foreground">Mulai hari ini</Badge>
+            <h2 className="max-w-2xl font-display text-3xl font-bold leading-tight text-foreground md:text-4xl">
+              CV yang lebih siap bisa dimulai tanpa bayar dulu.
+            </h2>
+            <p className="mt-4 max-w-2xl text-lg leading-8 text-muted-foreground">
+              Buat akun, pilih template, isi CV, lalu upgrade hanya saat kamu butuh kuota dan fitur
+              yang lebih kuat.
+            </p>
+          </div>
+          <div className="flex flex-col gap-3 sm:flex-row md:flex-col">
+            <Button asChild size="lg" className="h-12 px-6 text-base">
+              <Link to="/register">
+                Mulai gratis
+                <ArrowRight className="h-5 w-5" aria-hidden="true" />
+              </Link>
+            </Button>
+            <Button asChild variant="outline" size="lg" className="h-12 px-6 text-base">
+              <Link to="/template">Lihat template</Link>
+            </Button>
+          </div>
+        </div>
+      </section>
+    </main>
+  );
+}
+
+function PricingCard({ tier }: { tier: (typeof tiers)[number] }) {
+  const featured = tier.popular;
+
+  return (
+    <Card
+      className={`relative h-full border-border/80 shadow-sm ${
+        featured ? "border-primary bg-background shadow-lg shadow-primary/10" : "bg-card"
+      }`}
+    >
+      {tier.badge && (
+        <div className="absolute -top-4 left-5 right-5 flex justify-center">
+          <Badge
+            className={
+              featured
+                ? "bg-primary px-4 py-1.5 text-primary-foreground"
+                : "border-yellow-200 bg-yellow-100 px-4 py-1.5 text-yellow-950 hover:bg-yellow-100"
+            }
+          >
+            {tier.badge}
+          </Badge>
+        </div>
+      )}
+
+      <CardContent className="flex h-full flex-col p-6 pt-9">
+        <div>
+          <div className="mb-5 flex items-start justify-between gap-4">
+            <div>
+              <h3 className="font-display text-2xl font-bold text-foreground">{tier.name}</h3>
+              <p className="mt-2 leading-7 text-muted-foreground">{tier.desc}</p>
+            </div>
+            <div
+              className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-lg ${
+                featured ? "bg-primary text-primary-foreground" : "bg-primary/10 text-primary"
+              }`}
+            >
+              {tier.name === "Free" ? (
+                <Gift className="h-5 w-5" aria-hidden="true" />
+              ) : tier.name === "Starter" ? (
+                <Wand2 className="h-5 w-5" aria-hidden="true" />
+              ) : (
+                <BadgeCheck className="h-5 w-5" aria-hidden="true" />
+              )}
+            </div>
+          </div>
+
+          <div className="border-y border-border py-5">
+            <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+              <span className="font-display text-4xl font-bold text-foreground">{tier.price}</span>
+              <span className="font-medium text-muted-foreground">{tier.period}</span>
+            </div>
+            <p className="mt-3 flex items-start gap-2 text-sm font-semibold text-primary">
+              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+              {tier.highlight}
+            </p>
+          </div>
+        </div>
+
+        <Button
+          asChild
+          size="lg"
+          variant={tier.ctaVariant}
+          className={`mt-6 h-12 w-full text-base ${featured ? "shadow-sm" : ""}`}
+        >
+          <Link to="/register">
+            {tier.cta}
+            <ArrowRight className="h-4 w-4" aria-hidden="true" />
+          </Link>
+        </Button>
+
+        <ul className="mt-6 space-y-3">
+          {tier.features.map((feature) => (
+            <li key={feature} className="flex items-start gap-3 text-sm leading-6">
+              <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-primary" aria-hidden="true" />
+              <span className="text-foreground">{feature}</span>
+            </li>
+          ))}
+        </ul>
+      </CardContent>
+    </Card>
+  );
+}
+
+function PriceSignal() {
+  return (
+    <Card className="overflow-hidden border-border/80 bg-card shadow-sm">
+      <CardContent className="p-4 sm:p-6">
+        <div className="rounded-xl border border-border bg-background p-4">
+          <div className="mb-5 flex items-center justify-between gap-4 border-b border-border pb-4">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">
+                Rekomendasi cepat
+              </p>
+              <h2 className="mt-2 font-display text-2xl font-bold text-foreground">Starter</h2>
+            </div>
+            <Badge className="bg-primary text-primary-foreground">Rp 14.900</Badge>
+          </div>
+
+          <div className="space-y-3">
+            {[
+              { icon: Wand2, title: "Banyak apply", desc: "50x saran AI dan 10x scoring" },
+              {
+                icon: MessageSquareText,
+                title: "Lebih siap kirim",
+                desc: "Cover letter dan keyword extractor",
+              },
+              {
+                icon: ShieldCheck,
+                title: "CV lebih percaya diri",
+                desc: "Review HR dan PDF bersih",
+              },
+            ].map((item) => (
+              <div key={item.title} className="flex items-center gap-4 rounded-lg bg-muted/70 p-4">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <item.icon className="h-5 w-5" aria-hidden="true" />
+                </div>
+                <div>
+                  <p className="font-bold text-foreground">{item.title}</p>
+                  <p className="text-sm text-muted-foreground">{item.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-5 rounded-lg bg-primary p-5 text-primary-foreground">
+            <p className="font-bold">Untuk kebanyakan pencari kerja aktif:</p>
+            <p className="mt-2 leading-7 text-primary-foreground/90">
+              Starter biasanya sudah cukup untuk memperbaiki CV, menyesuaikan lamaran, dan menjaga
+              PDF tetap bersih tanpa watermark.
+            </p>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function SectionIntro({ eyebrow, title, desc }: { eyebrow: string; title: string; desc: string }) {
+  return (
+    <div className="mx-auto max-w-3xl text-center">
+      <Badge variant="secondary" className="mb-4 px-3 py-1.5">
+        {eyebrow}
+      </Badge>
+      <h2 className="font-display text-3xl font-bold leading-tight text-foreground md:text-4xl">
+        {title}
+      </h2>
+      <p className="mt-4 text-lg leading-8 text-muted-foreground">{desc}</p>
+    </div>
+  );
+}
+
+function HargaLoading() {
+  return (
+    <main className="overflow-x-clip bg-background">
+      <section className="border-b border-border/70">
+        <div className="container-page py-16 md:py-24">
+          <div className="h-9 w-64 animate-pulse rounded-full bg-muted" />
+          <div className="mt-8 h-14 max-w-3xl animate-pulse rounded-lg bg-muted" />
+          <div className="mt-4 h-8 max-w-2xl animate-pulse rounded-lg bg-muted" />
+        </div>
+      </section>
+      <div className="container-page py-16">
+        <div className="grid gap-6 lg:grid-cols-3">
+          {Array.from({ length: 3 }).map((_, index) => (
+            <div key={index} className="h-96 animate-pulse rounded-xl bg-muted" />
+          ))}
+        </div>
       </div>
-    </>
+    </main>
   );
 }
