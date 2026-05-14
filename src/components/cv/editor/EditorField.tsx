@@ -17,12 +17,24 @@ interface FieldProps {
   icon?: ReactNode;
 }
 
-export function Field({ label, value, onChange, type = "text", placeholder, className, disabled, extra, icon }: FieldProps) {
+export function Field({
+  label,
+  value,
+  onChange,
+  type = "text",
+  placeholder,
+  className,
+  disabled,
+  extra,
+  icon,
+}: FieldProps) {
   return (
-    <div className={cn("space-y-1.5", className)}>
-      <div className="flex items-center justify-between">
-        <Label className="text-sm font-medium flex items-center gap-1.5">
-          {icon && <span className="flex h-4 w-4 items-center justify-center text-muted-foreground">{icon}</span>}
+    <div className={cn("space-y-2", className)}>
+      <div className="flex items-center justify-between gap-3">
+        <Label className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
+          {icon && (
+            <span className="flex h-4 w-4 items-center justify-center text-primary">{icon}</span>
+          )}
           {label}
         </Label>
         {extra}
@@ -33,7 +45,7 @@ export function Field({ label, value, onChange, type = "text", placeholder, clas
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         disabled={disabled}
-        className="h-10 border-2 focus:border-primary/50 transition-all"
+        className="h-11 rounded-xl border-border bg-background text-sm shadow-sm transition-all placeholder:text-muted-foreground/70 hover:border-primary/30 focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/15"
       />
     </div>
   );
@@ -52,12 +64,25 @@ interface TextareaFieldProps {
   hint?: string;
 }
 
-export function TextareaField({ label, value, onChange, placeholder, rows = 4, maxLength, className, extra, icon, hint }: TextareaFieldProps) {
+export function TextareaField({
+  label,
+  value,
+  onChange,
+  placeholder,
+  rows = 4,
+  maxLength,
+  className,
+  extra,
+  icon,
+  hint,
+}: TextareaFieldProps) {
   return (
-    <div className={cn("space-y-1.5", className)}>
-      <div className="flex items-center justify-between">
-        <Label className="text-sm font-medium flex items-center gap-1.5">
-          {icon && <span className="flex h-4 w-4 items-center justify-center text-muted-foreground">{icon}</span>}
+    <div className={cn("space-y-2", className)}>
+      <div className="flex items-center justify-between gap-3">
+        <Label className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
+          {icon && (
+            <span className="flex h-4 w-4 items-center justify-center text-primary">{icon}</span>
+          )}
           {label}
         </Label>
         {extra}
@@ -68,16 +93,22 @@ export function TextareaField({ label, value, onChange, placeholder, rows = 4, m
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="border-2 focus:border-primary/50 transition-all resize-y min-h-[80px]"
+        className="min-h-[96px] resize-y rounded-xl border-border bg-background text-sm shadow-sm transition-all placeholder:text-muted-foreground/70 hover:border-primary/30 focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/15"
       />
-      {hint && <p className="text-[11px] text-muted-foreground">{hint}</p>}
+      {hint && <p className="text-xs leading-relaxed text-muted-foreground">{hint}</p>}
     </div>
   );
 }
 
 type TextAlign = "left" | "center" | "right" | "justify";
 
-export function TextAlignPicker({ value, onChange }: { value?: TextAlign; onChange: (v: TextAlign) => void }) {
+export function TextAlignPicker({
+  value,
+  onChange,
+}: {
+  value?: TextAlign;
+  onChange: (v: TextAlign) => void;
+}) {
   const options: { value: TextAlign; label: string }[] = [
     { value: "left", label: "Kiri" },
     { value: "center", label: "Tengah" },
@@ -85,19 +116,19 @@ export function TextAlignPicker({ value, onChange }: { value?: TextAlign; onChan
     { value: "justify", label: "Rata" },
   ];
   return (
-    <div className="flex items-center gap-1.5">
-      <span className="text-[11px] text-muted-foreground">Rata teks:</span>
-      <div className="flex gap-0.5">
+    <div className="flex flex-wrap items-center gap-2">
+      <span className="text-xs font-medium text-muted-foreground">Rata teks</span>
+      <div className="flex rounded-xl border border-border bg-muted/40 p-1">
         {options.map((opt) => (
           <button
             key={opt.value}
             type="button"
             onClick={() => onChange(opt.value)}
             className={cn(
-              "px-2 py-1 text-[11px] rounded-lg border-2 transition-all font-medium",
+              "min-h-8 rounded-lg px-2.5 text-xs font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25",
               value === opt.value
-                ? "bg-primary text-primary-foreground border-primary shadow-sm"
-                : "bg-background border-border hover:border-primary/30 hover:bg-muted text-muted-foreground",
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground",
             )}
             title={opt.label}
           >
@@ -117,7 +148,10 @@ export function mutate<K extends keyof CvData>(
   value: unknown,
 ) {
   setData((d) => {
-    const arr = [...(d[key] as any[])];
+    const current = d[key];
+    if (!Array.isArray(current)) return d;
+
+    const arr = [...current] as Array<Record<string, unknown>>;
     arr[index] = { ...arr[index], [field]: value };
     return { ...d, [key]: arr } as CvData;
   });

@@ -9,7 +9,13 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { CvPreview } from "@/components/cv/CvPreview";
@@ -49,18 +55,58 @@ import {
 import type { SectionDef, PreviewScale } from "@/components/cv/editor";
 
 import {
-  Plus, Trash2, Save, Loader2, Sparkles, MessageSquare,
-  BarChart3, Wrench, Share2, Copy, Check, Palette,
-  CheckCircle2, FileText, Eye, Upload, ExternalLink,
-  Linkedin, Wand2, Star, Zap, Crown,
-  Crosshair, User, Pencil, Mail, Phone, MapPin,
-  Briefcase, Building2, Calendar, GraduationCap, ScrollText,
-  BookOpen, Globe, Languages, Award, Trophy, Landmark,
-  Link2, ShieldX, RefreshCw,
+  Plus,
+  Trash2,
+  Save,
+  Loader2,
+  Sparkles,
+  MessageSquare,
+  BarChart3,
+  Wrench,
+  Share2,
+  Copy,
+  Check,
+  Palette,
+  CheckCircle2,
+  FileText,
+  Eye,
+  Upload,
+  ExternalLink,
+  Linkedin,
+  Wand2,
+  Star,
+  Zap,
+  Crown,
+  Crosshair,
+  User,
+  Pencil,
+  Mail,
+  Phone,
+  MapPin,
+  Briefcase,
+  Building2,
+  Calendar,
+  GraduationCap,
+  ScrollText,
+  BookOpen,
+  Globe,
+  Languages,
+  Award,
+  Trophy,
+  Landmark,
+  Link2,
+  ShieldX,
+  RefreshCw,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/cv/$id")({
-  head: () => buildSeo({ title: "Edit CV — CV Pintar", description: "Editor CV.", path: "/cv", noindex: true }),
+  head: () =>
+    buildSeo({
+      title: "Edit CV — CV Pintar",
+      description: "Editor CV.",
+      path: "/cv",
+      noindex: true,
+    }),
   component: CvEditorPage,
 });
 
@@ -112,54 +158,61 @@ function CvEditorPage() {
   const [mobileTab, setMobileTab] = useState<EditorTab>("form");
 
   // ─── Auto-save ───────────────────────────────────────────────
-  const saveCvToDb = useCallback(async (payload: unknown) => {
-    const { title: pTitle, templateId: pTemplateId, data: pData, language: pLanguage } =
-      (payload as { title: string; templateId: string; data: CvData; language?: string }) || {};
-    const finalTitle = pTitle ?? title;
-    const finalTemplateId = pTemplateId ?? templateId;
-    const finalData = pData ?? data;
+  const saveCvToDb = useCallback(
+    async (payload: unknown) => {
+      const {
+        title: pTitle,
+        templateId: pTemplateId,
+        data: pData,
+        language: pLanguage,
+      } = (payload as { title: string; templateId: string; data: CvData; language?: string }) || {};
+      const finalTitle = pTitle ?? title;
+      const finalTemplateId = pTemplateId ?? templateId;
+      const finalData = pData ?? data;
 
-    console.log("[Save CV] Sending to DB:", {
-      id,
-      title: finalTitle,
-      templateId: finalTemplateId,
-      personalName: finalData.personal?.fullName || "(empty)",
-      experienceCount: finalData.experiences?.length || 0,
-      educationCount: finalData.educations?.length || 0,
-      skillsCount: finalData.skills?.length || 0,
-    });
-
-    setSaveStatus("saving");
-    const { error, status } = await (supabase as any)
-      .from("cvs")
-      .update({
+      console.log("[Save CV] Sending to DB:", {
+        id,
         title: finalTitle,
-        template_id: finalTemplateId,
-        data: finalData as any,
-        language: pLanguage ?? cvLanguage,
-      })
-      .eq("id", id)
-      .select();
-
-    if (error) {
-      console.error("[Save CV] ❌ DB Error:", {
-        message: error.message,
-        code: error.code,
-        details: error.details,
-        hint: error.hint,
-        status,
+        templateId: finalTemplateId,
+        personalName: finalData.personal?.fullName || "(empty)",
+        experienceCount: finalData.experiences?.length || 0,
+        educationCount: finalData.educations?.length || 0,
+        skillsCount: finalData.skills?.length || 0,
       });
-      setSaveStatus("unsaved");
-      toast.error(`Gagal menyimpan: ${error.message || error.code}`, { id: "save-error" });
-      return false;
-    }
 
-    console.log("[Save CV] ✅ Saved to DB successfully");
-    setSaveStatus("saved");
-    toast.dismiss("save-error");
-    setTimeout(() => setSaveStatus((s) => (s === "saved" ? "idle" : s)), 3000);
-    return true;
-  }, [id, title, templateId, data]);
+      setSaveStatus("saving");
+      const { error, status } = await (supabase as any)
+        .from("cvs")
+        .update({
+          title: finalTitle,
+          template_id: finalTemplateId,
+          data: finalData as any,
+          language: pLanguage ?? cvLanguage,
+        })
+        .eq("id", id)
+        .select();
+
+      if (error) {
+        console.error("[Save CV] ❌ DB Error:", {
+          message: error.message,
+          code: error.code,
+          details: error.details,
+          hint: error.hint,
+          status,
+        });
+        setSaveStatus("unsaved");
+        toast.error(`Gagal menyimpan: ${error.message || error.code}`, { id: "save-error" });
+        return false;
+      }
+
+      console.log("[Save CV] ✅ Saved to DB successfully");
+      setSaveStatus("saved");
+      toast.dismiss("save-error");
+      setTimeout(() => setSaveStatus((s) => (s === "saved" ? "idle" : s)), 3000);
+      return true;
+    },
+    [id, title, templateId, data],
+  );
 
   // ─── Auto-save (onChange-triggered, debounced) ─────────────
   const { triggerSave } = useAutosave({
@@ -176,8 +229,14 @@ function CvEditorPage() {
   useEffect(() => {
     (async () => {
       const { data: row, error } = await (supabase as any)
-        .from("cvs").select("*").eq("id", id).single();
-      if (error) { toast.error(error.message); return; }
+        .from("cvs")
+        .select("*")
+        .eq("id", id)
+        .single();
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
       setTitle(row.title);
       setTemplateId(row.template_id as TemplateId);
       const cvData = { ...emptyCv, ...(row.data as unknown as CvData) };
@@ -189,7 +248,9 @@ function CvEditorPage() {
       const { data: sub } = await (supabase as any)
         .from("user_subscriptions")
         .select("subscription_tiers!inner(slug, template_access_detail)")
-        .eq("user_id", row.user_id).eq("status", "active").single();
+        .eq("user_id", row.user_id)
+        .eq("status", "active")
+        .single();
       if (sub) {
         setUserTier(sub.subscription_tiers?.slug ?? "free");
         // Set allowed templates
@@ -247,7 +308,9 @@ function CvEditorPage() {
       }
 
       const { error } = await (supabase as any)
-        .from("cvs").update({ share_enabled: true, share_token: token }).eq("id", id);
+        .from("cvs")
+        .update({ share_enabled: true, share_token: token })
+        .eq("id", id);
       if (error) throw new Error(error.message);
 
       setShareEnabled(true);
@@ -275,11 +338,15 @@ function CvEditorPage() {
 
   const handleLinkedInImport = (imported: Partial<CvData>) => {
     const merged = { ...data, ...imported };
-    if (imported.experiences?.length && data.experiences.length === 0) merged.experiences = imported.experiences as any;
-    if (imported.educations?.length && data.educations.length === 0) merged.educations = imported.educations as any;
+    if (imported.experiences?.length && data.experiences.length === 0)
+      merged.experiences = imported.experiences as any;
+    if (imported.educations?.length && data.educations.length === 0)
+      merged.educations = imported.educations as any;
     if (imported.skills?.length && data.skills.length === 0) merged.skills = imported.skills as any;
-    if (imported.languages?.length && data.languages.length === 0) merged.languages = imported.languages as any;
-    if (imported.certificates?.length && data.certificates.length === 0) merged.certificates = imported.certificates as any;
+    if (imported.languages?.length && data.languages.length === 0)
+      merged.languages = imported.languages as any;
+    if (imported.certificates?.length && data.certificates.length === 0)
+      merged.certificates = imported.certificates as any;
     if (imported.personal) merged.personal = { ...data.personal, ...imported.personal };
     setData(merged as CvData);
     toast.success("Profil LinkedIn berhasil diimpor!");
@@ -310,7 +377,9 @@ function CvEditorPage() {
             const aiText = aiResult.text.trim();
             if (aiText.length >= minChars) {
               finalText = aiText;
-              toast.success(`CV berhasil dibaca dengan AI OCR — ${aiText.length.toLocaleString()} karakter`);
+              toast.success(
+                `CV berhasil dibaca dengan AI OCR — ${aiText.length.toLocaleString()} karakter`,
+              );
             } else {
               throw new Error("Teks hasil OCR terlalu sedikit");
             }
@@ -318,14 +387,18 @@ function CvEditorPage() {
         } catch (aiErr: any) {
           console.warn("AI OCR fallback gagal:", aiErr);
           setCvUploadExtracting(false);
-          setCvUploadError("CV ini tampaknya berupa gambar/scanned dan tidak bisa diekstrak teksnya. Gunakan CV berbasis teks (bukan hasil scan gambar).");
+          setCvUploadError(
+            "CV ini tampaknya berupa gambar/scanned dan tidak bisa diekstrak teksnya. Gunakan CV berbasis teks (bukan hasil scan gambar).",
+          );
           return;
         }
       }
 
       if (finalText.trim().length < minChars) {
         setCvUploadExtracting(false);
-        setCvUploadError("Teks yang diekstrak terlalu sedikit. Pastikan CV berisi teks yang cukup.");
+        setCvUploadError(
+          "Teks yang diekstrak terlalu sedikit. Pastikan CV berisi teks yang cukup.",
+        );
         return;
       }
 
@@ -337,7 +410,11 @@ function CvEditorPage() {
 
       // Merge with existing data (non-destructive)
       const merged = { ...data, ...parsed };
-      if (parsed.experiences && Array.isArray(parsed.experiences) && parsed.experiences.length > 0) {
+      if (
+        parsed.experiences &&
+        Array.isArray(parsed.experiences) &&
+        parsed.experiences.length > 0
+      ) {
         merged.experiences = parsed.experiences as any;
       }
       if (parsed.educations && Array.isArray(parsed.educations) && parsed.educations.length > 0) {
@@ -349,7 +426,11 @@ function CvEditorPage() {
       if (parsed.languages && Array.isArray(parsed.languages) && parsed.languages.length > 0) {
         merged.languages = parsed.languages as any;
       }
-      if (parsed.certificates && Array.isArray(parsed.certificates) && parsed.certificates.length > 0) {
+      if (
+        parsed.certificates &&
+        Array.isArray(parsed.certificates) &&
+        parsed.certificates.length > 0
+      ) {
         merged.certificates = parsed.certificates as any;
       }
       if (parsed.personal) {
@@ -372,29 +453,54 @@ function CvEditorPage() {
     setData((d) => ({ ...d, personal: { ...d.personal, [k]: v } }));
 
   const handleAiSuggest = useCallback(
-    async (section: SuggestSection, currentContent?: string, additionalContext?: string, regenerateIndex?: number) => {
+    async (
+      section: SuggestSection,
+      currentContent?: string,
+      additionalContext?: string,
+      regenerateIndex?: number,
+    ) => {
       setAiLoading(section);
       setSuggestionPanel({ section, suggestions: null, acceptedIndex: null });
       try {
         const result = await suggestSection({
-          data: { cvId: id, section, targetRole: targetRole || undefined, currentContent: currentContent || undefined, additionalContext: additionalContext || undefined, regenerateIndex, language: cvLanguage },
+          data: {
+            cvId: id,
+            section,
+            targetRole: targetRole || undefined,
+            currentContent: currentContent || undefined,
+            additionalContext: additionalContext || undefined,
+            regenerateIndex,
+            language: cvLanguage,
+          },
         });
         setSuggestionPanel({ section, suggestions: result.suggestions, acceptedIndex: null });
-      } catch (e: any) { toast.error(e.message || "Gagal menghasilkan saran AI"); return null; }
-      finally { setAiLoading(null); }
-    }, [id, targetRole]);
+      } catch (e: any) {
+        toast.error(e.message || "Gagal menghasilkan saran AI");
+        return null;
+      } finally {
+        setAiLoading(null);
+      }
+    },
+    [id, targetRole],
+  );
 
-  const handleAcceptSuggestion = useCallback((index: number, option: { option: string; explanation: string }) => {
-    setSuggestionPanel((prev) => ({ ...prev, acceptedIndex: index }));
-    toast.success("Saran AI diterapkan");
-    return option.option;
-  }, []);
+  const handleAcceptSuggestion = useCallback(
+    (index: number, option: { option: string; explanation: string }) => {
+      setSuggestionPanel((prev) => ({ ...prev, acceptedIndex: index }));
+      toast.success("Saran AI diterapkan");
+      return option.option;
+    },
+    [],
+  );
 
-  const handleRegenerateSuggestion = useCallback((index: number) => {
-    const s = suggestionPanel.section;
-    // Regenerate single option — pass regenerateIndex
-    handleAiSuggest(s, undefined, undefined, index);
-  }, [suggestionPanel.section, handleAiSuggest]);
+  const handleRegenerateSuggestion = useCallback(
+    (index: number) => {
+      const s = suggestionPanel.section;
+      // Regenerate single option — pass regenerateIndex
+      handleAiSuggest(s, undefined, undefined, index);
+    },
+    [suggestionPanel.section, handleAiSuggest],
+  );
 
   const handleRegenerateAll = useCallback(() => {
     handleAiSuggest(suggestionPanel.section);
@@ -424,14 +530,15 @@ function CvEditorPage() {
   }, []);
 
   // Local/instant ATS score (recalculated on data change)
-  const localScore = useMemo(() => scoreCvLocally(data, targetRole || undefined), [data, targetRole]);
+  const localScore = useMemo(
+    () => scoreCvLocally(data, targetRole || undefined),
+    [data, targetRole],
+  );
 
   if (loading) return <EditorSkeleton />;
 
-  const scaleStyle = { transform: `scale(${previewScale / 100})`, transformOrigin: "top left", width: `${210 / (previewScale / 100)}mm` };
-
   return (
-    <div className="cv-editor-page h-[calc(100vh-4rem)] flex flex-col">
+    <div className="cv-editor-page flex h-[calc(100vh-4rem)] min-h-0 flex-col bg-muted/30">
       <style>{cvPrintStyles}</style>
       {/* ─── TOOLBAR ─── */}
       <EditorToolbar
@@ -455,35 +562,55 @@ function CvEditorPage() {
         cvData={data}
         userTier={userTier}
         userId={user?.id}
-        onOpenCvUpload={() => { setShowCvUpload(true); setCvUploadFile(null); setCvUploadError(null); }}
+        onOpenCvUpload={() => {
+          setShowCvUpload(true);
+          setCvUploadFile(null);
+          setCvUploadError(null);
+        }}
       />
 
       {/* Language Selector */}
-      <div className="flex items-center justify-end gap-2 px-4 py-1.5 border-b border-border bg-card/50 print:hidden">
-        <span className="text-xs text-muted-foreground mr-1">Bahasa CV:</span>
-        <Button
-          variant={cvLanguage === "id" ? "default" : "outline"}
-          size="sm"
-          className="h-7 text-xs px-2.5"
-          onClick={() => setCvLanguage("id")}
-        >
-          🇮🇩 ID
-        </Button>
-        <Button
-          variant={cvLanguage === "en" ? "default" : "outline"}
-          size="sm"
-          className="h-7 text-xs px-2.5"
-          onClick={() => setCvLanguage("en")}
-        >
-          🇬🇧 EN
-        </Button>
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-border bg-background/90 px-4 py-3 print:hidden">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
+              <Sparkles className="h-3.5 w-3.5" />
+              Editor CV ATS
+            </span>
+            <span className="text-xs font-medium text-muted-foreground">
+              Skor cepat: {localScore.overallScore}/100
+            </span>
+          </div>
+          <p className="mt-1 hidden text-sm text-muted-foreground sm:block">
+            Rapikan isi, pilih bahasa, lalu cek preview sebelum dikirim ke rekruter.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="mr-1 text-xs font-medium text-muted-foreground">Bahasa CV</span>
+          <Button
+            variant={cvLanguage === "id" ? "default" : "outline"}
+            size="sm"
+            className="h-9 rounded-xl px-3 text-xs font-semibold"
+            onClick={() => setCvLanguage("id")}
+          >
+            ID
+          </Button>
+          <Button
+            variant={cvLanguage === "en" ? "default" : "outline"}
+            size="sm"
+            className="h-9 rounded-xl px-3 text-xs font-semibold"
+            onClick={() => setCvLanguage("en")}
+          >
+            EN
+          </Button>
+        </div>
       </div>
 
       {/* ─── MAIN CONTENT ─── */}
-      <div className="flex-1 flex overflow-hidden print:block print:overflow-visible print:!visible">
+      <div className="flex flex-1 overflow-hidden print:block print:overflow-visible print:!visible">
         {/* Desktop: Sections Nav (3-panel) */}
         {showNav && (
-          <aside className="hidden lg:block w-[260px] shrink-0 border-r border-border bg-gradient-to-b from-card/80 to-card/50 overflow-y-auto p-4 print:hidden">
+          <aside className="hidden w-[272px] shrink-0 overflow-y-auto border-r border-border bg-background/70 p-4 print:hidden lg:block">
             <SectionsNav
               sections={sections}
               activeSection={activeSection}
@@ -494,43 +621,73 @@ function CvEditorPage() {
         )}
 
         {/* Form Panel (Desktop + Tablet) */}
-        <div className={cn("hidden md:flex flex-col overflow-y-auto print:hidden", showNav ? "lg:w-[440px] shrink-0 border-r border-border" : "lg:w-[500px] shrink-0")}>
-          <div className="p-5">
+        <div
+          className={cn(
+            "hidden flex-col overflow-y-auto bg-background/80 print:hidden md:flex",
+            showNav ? "shrink-0 border-r border-border lg:w-[460px]" : "shrink-0 lg:w-[520px]",
+          )}
+        >
+          <div className="p-4 lg:p-5">
             <EditorForm
-              data={data} setData={setData} activeSection={activeSection} setActiveSection={setActiveSection}
-              targetRole={targetRole} aiLoading={aiLoading} handleAiSuggest={handleAiSuggest}
-              handlePolishText={handlePolishText} polishingField={polishingField}
+              data={data}
+              setData={setData}
+              activeSection={activeSection}
+              setActiveSection={setActiveSection}
+              targetRole={targetRole}
+              aiLoading={aiLoading}
+              handleAiSuggest={handleAiSuggest}
+              handlePolishText={handlePolishText}
+              polishingField={polishingField}
               updatePersonal={updatePersonal}
               handleLinkedInImport={handleLinkedInImport}
-              suggestionPanel={suggestionPanel} onAcceptSuggestion={handleAcceptSuggestion}
-              onRegenerateSuggestion={handleRegenerateSuggestion} onRegenerateAll={handleRegenerateAll}
-              onCloseSuggestion={closeSuggestionPanel} localScore={localScore} cvLanguage={cvLanguage}
+              suggestionPanel={suggestionPanel}
+              onAcceptSuggestion={handleAcceptSuggestion}
+              onRegenerateSuggestion={handleRegenerateSuggestion}
+              onRegenerateAll={handleRegenerateAll}
+              onCloseSuggestion={closeSuggestionPanel}
+              localScore={localScore}
+              cvLanguage={cvLanguage}
             />
           </div>
         </div>
 
         {/* Mobile: Form */}
         {mobileTab === "form" && (
-          <div className="md:hidden flex-1 overflow-y-auto p-5 print:hidden">
+          <div className="flex-1 overflow-y-auto bg-background/85 p-4 print:hidden md:hidden">
             <EditorForm
-              data={data} setData={setData} activeSection={activeSection} setActiveSection={setActiveSection}
-              targetRole={targetRole} aiLoading={aiLoading} handleAiSuggest={handleAiSuggest}
-              handlePolishText={handlePolishText} polishingField={polishingField}
+              data={data}
+              setData={setData}
+              activeSection={activeSection}
+              setActiveSection={setActiveSection}
+              targetRole={targetRole}
+              aiLoading={aiLoading}
+              handleAiSuggest={handleAiSuggest}
+              handlePolishText={handlePolishText}
+              polishingField={polishingField}
               updatePersonal={updatePersonal}
               handleLinkedInImport={handleLinkedInImport}
-              suggestionPanel={suggestionPanel} onAcceptSuggestion={handleAcceptSuggestion}
-              onRegenerateSuggestion={handleRegenerateSuggestion} onRegenerateAll={handleRegenerateAll}
-              onCloseSuggestion={closeSuggestionPanel} localScore={localScore} cvLanguage={cvLanguage}
+              suggestionPanel={suggestionPanel}
+              onAcceptSuggestion={handleAcceptSuggestion}
+              onRegenerateSuggestion={handleRegenerateSuggestion}
+              onRegenerateAll={handleRegenerateAll}
+              onCloseSuggestion={closeSuggestionPanel}
+              localScore={localScore}
+              cvLanguage={cvLanguage}
             />
           </div>
         )}
 
         {/* Preview Panel (Desktop + Tablet + Mobile preview tab) */}
-        <div className={cn("flex-1 flex flex-col overflow-hidden print:flex print:overflow-visible print:!visible", mobileTab !== "preview" && "hidden md:flex")}>
+        <div
+          className={cn(
+            "flex flex-1 flex-col overflow-hidden print:flex print:overflow-visible print:!visible",
+            mobileTab !== "preview" && "hidden md:flex",
+          )}
+        >
           {/* Preview Toolbar */}
-          <div className="shrink-0 flex items-center justify-between px-4 py-2 border-b border-border bg-muted/30 print:hidden">
-            <span className="text-xs text-muted-foreground flex items-center gap-2">
-              <Eye className="h-3.5 w-3.5" /> Preview CV
+          <div className="flex shrink-0 items-center justify-between border-b border-border bg-background/80 px-4 py-3 print:hidden">
+            <span className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
+              <Eye className="h-3.5 w-3.5" /> Preview live
             </span>
             <PreviewToolbar scale={previewScale} onChange={setPreviewScale} />
           </div>
@@ -545,10 +702,10 @@ function CvEditorPage() {
           )}
 
           {/* Preview Area */}
-          <div className="flex-1 overflow-auto bg-muted/40 print:bg-white print:overflow-visible">
-            <div className="cv-print-area flex justify-center p-4 print:p-0">
+          <div className="flex-1 overflow-auto bg-muted/50 print:bg-white print:overflow-visible">
+            <div className="cv-print-area flex justify-center p-4 sm:p-6 print:p-0">
               <div
-                className="rounded-lg border border-border bg-white shadow-lg print:!shadow-none print:!border-0 print:!rounded-none print:!transform-none print:!w-auto print:!h-auto print:!min-w-0"
+                className="rounded-2xl border border-border bg-white shadow-xl shadow-slate-900/10 print:!h-auto print:!w-auto print:!min-w-0 print:!transform-none print:!rounded-none print:!border-0 print:!shadow-none"
                 style={{
                   transform: `scale(${previewScale / 100})`,
                   transformOrigin: "top center",
@@ -557,7 +714,13 @@ function CvEditorPage() {
                 }}
               >
                 <div className="print:!transform-none print:!w-auto">
-                  <CvPreview data={data} template={templateId} sectionOrder={sections} showWatermark={userTier === "free"} language={cvLanguage} />
+                  <CvPreview
+                    data={data}
+                    template={templateId}
+                    sectionOrder={sections}
+                    showWatermark={userTier === "free"}
+                    language={cvLanguage}
+                  />
                 </div>
               </div>
             </div>
@@ -566,7 +729,7 @@ function CvEditorPage() {
 
         {/* Mobile: Score Tab */}
         {mobileTab === "score" && (
-          <div className="md:hidden flex-1 overflow-y-auto p-4 print:hidden">
+          <div className="flex-1 overflow-y-auto bg-background/85 p-4 print:hidden md:hidden">
             <AtsPreview data={data} />
             <div className="mt-4">
               <Button asChild variant="outline" size="sm" className="w-full gap-2">
@@ -580,7 +743,10 @@ function CvEditorPage() {
       </div>
 
       {/* ─── MOBILE TAB BAR ─── */}
-      <nav className="md:hidden shrink-0 border-t border-border bg-background/95 backdrop-blur-lg flex print:hidden shadow-[0_-4px_20px_rgba(0,0,0,0.05)]" aria-label="Navigasi editor mobile">
+      <nav
+        className="flex shrink-0 border-t border-border bg-background/95 shadow-[0_-4px_20px_rgba(15,23,42,0.08)] backdrop-blur-lg print:hidden md:hidden"
+        aria-label="Navigasi editor mobile"
+      >
         {[
           { id: "form" as EditorTab, icon: FileText, label: "Form" },
           { id: "preview" as EditorTab, icon: Eye, label: "Preview" },
@@ -591,7 +757,7 @@ function CvEditorPage() {
             type="button"
             onClick={() => setMobileTab(tab.id)}
             className={cn(
-              "flex-1 flex flex-col items-center justify-center py-3 text-xs transition-all relative",
+              "relative flex min-h-[64px] flex-1 flex-col items-center justify-center py-3 text-xs transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25",
               mobileTab === tab.id
                 ? "text-primary font-semibold"
                 : "text-muted-foreground hover:text-foreground",
@@ -600,10 +766,12 @@ function CvEditorPage() {
             aria-pressed={mobileTab === tab.id}
           >
             {mobileTab === tab.id && (
-              <span className="absolute -top-px left-1/4 right-1/4 h-0.5 bg-primary rounded-full" />
+              <span className="absolute -top-px left-1/4 right-1/4 h-0.5 rounded-full bg-primary" />
             )}
-            <span className="text-base mb-0.5"><tab.icon className="h-5 w-5" /></span>
-            <span className="text-[10px]">{tab.label}</span>
+            <span className="mb-0.5 text-base">
+              <tab.icon className="h-5 w-5" />
+            </span>
+            <span className="text-[11px] font-semibold">{tab.label}</span>
           </button>
         ))}
       </nav>
@@ -613,12 +781,17 @@ function CvEditorPage() {
         <DialogContent className="sm:max-w-4xl max-h-[90vh] flex flex-col">
           <DialogHeader className="shrink-0">
             <DialogTitle>Pilih Template</DialogTitle>
-            <DialogDescription>Pilih template CV yang sesuai dengan gaya dan kebutuhanmu.</DialogDescription>
+            <DialogDescription>
+              Pilih template CV yang sesuai dengan gaya dan kebutuhanmu.
+            </DialogDescription>
           </DialogHeader>
           <div className="flex-1 overflow-y-auto -mx-6 px-6 py-2">
             <TemplateGallery
               selected={templateId}
-              onSelect={(id) => { setTemplateId(id); setShowTemplatePicker(false); }}
+              onSelect={(id) => {
+                setTemplateId(id);
+                setShowTemplatePicker(false);
+              }}
               tier={userTier}
               allowedTemplates={allowedTemplates}
             />
@@ -638,11 +811,11 @@ function CvEditorPage() {
               Masukkan URL profil atau tempel teks LinkedIn, AI akan parse ke struktur CV.
             </DialogDescription>
           </DialogHeader>
-          <LinkedInImport 
+          <LinkedInImport
             onImport={(imported) => {
               handleLinkedInImport(imported);
               setShowLinkedInImport(false);
-            }} 
+            }}
           />
         </DialogContent>
       </Dialog>
@@ -664,7 +837,16 @@ function CvEditorPage() {
       </Dialog>
 
       {/* Upload CV Dialog */}
-      <Dialog open={showCvUpload} onOpenChange={(open) => { setShowCvUpload(open); if (!open) { setCvUploadFile(null); setCvUploadError(null); } }}>
+      <Dialog
+        open={showCvUpload}
+        onOpenChange={(open) => {
+          setShowCvUpload(open);
+          if (!open) {
+            setCvUploadFile(null);
+            setCvUploadError(null);
+          }
+        }}
+      >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-lg">
@@ -681,7 +863,10 @@ function CvEditorPage() {
               extracting={cvUploadExtracting}
               error={cvUploadError}
               currentFile={cvUploadFile}
-              onClear={() => { setCvUploadFile(null); setCvUploadError(null); }}
+              onClear={() => {
+                setCvUploadFile(null);
+                setCvUploadError(null);
+              }}
             />
             <Button
               className="w-full gap-2"
@@ -689,11 +874,17 @@ function CvEditorPage() {
               onClick={handleCvUploadParse}
             >
               {cvUploadParsing ? (
-                <><Loader2 className="h-4 w-4 animate-spin" /> AI membaca CV...</>
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" /> AI membaca CV...
+                </>
               ) : cvUploadExtracting ? (
-                <><Loader2 className="h-4 w-4 animate-spin" /> Mengekstrak teks...</>
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" /> Mengekstrak teks...
+                </>
               ) : (
-                <><Sparkles className="h-4 w-4" /> Parse & Isi CV</>
+                <>
+                  <Sparkles className="h-4 w-4" /> Parse & Isi CV
+                </>
               )}
             </Button>
           </div>
@@ -701,15 +892,23 @@ function CvEditorPage() {
       </Dialog>
 
       {/* Share Dialog */}
-      <Dialog open={showShareDialog} onOpenChange={(open) => { setShowShareDialog(open); if (!open) setCopied(false); }}>
+      <Dialog
+        open={showShareDialog}
+        onOpenChange={(open) => {
+          setShowShareDialog(open);
+          if (!open) setCopied(false);
+        }}
+      >
         <DialogContent className="sm:max-w-md rounded-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-3 text-lg">
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10"><Link2 className="h-5 w-5 text-primary" /></span>
+              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10">
+                <Link2 className="h-5 w-5 text-primary" />
+              </span>
               <span>CV Siap Dibagikan!</span>
             </DialogTitle>
             <DialogDescription className="text-sm">
-              Bagikan link ini agar orang lain bisa melihat CV kamu. 
+              Bagikan link ini agar orang lain bisa melihat CV kamu.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
@@ -722,7 +921,11 @@ function CvEditorPage() {
                   className="font-mono text-sm h-11 border-0 bg-transparent focus-visible:ring-0"
                   onClick={(e) => (e.target as HTMLInputElement).select()}
                 />
-                <Button size="sm" className="h-10 gap-1.5 shrink-0 rounded-xl" onClick={handleCopyShareLink}>
+                <Button
+                  size="sm"
+                  className="h-10 gap-1.5 shrink-0 rounded-xl"
+                  onClick={handleCopyShareLink}
+                >
                   {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                   {copied ? "Tersalin!" : "Salin"}
                 </Button>
@@ -741,7 +944,9 @@ function CvEditorPage() {
                   variant="outline"
                   size="sm"
                   className="gap-1.5 rounded-xl"
-                  onClick={() => window.open(`https://cvpintar.web.id/share/${shareToken}`, "_blank")}
+                  onClick={() =>
+                    window.open(`https://cvpintar.web.id/share/${shareToken}`, "_blank")
+                  }
                 >
                   <ExternalLink className="h-3.5 w-3.5" />
                   Buka
@@ -766,38 +971,80 @@ function CvEditorPage() {
 // ─── FORM PANEL ────────────────────────────────────────────────────────
 
 function EditorForm({
-  data, setData, activeSection, setActiveSection, targetRole, aiLoading, handleAiSuggest,
-  handlePolishText, polishingField,
-  updatePersonal, handleLinkedInImport,
-  suggestionPanel, onAcceptSuggestion, onRegenerateSuggestion, onRegenerateAll, onCloseSuggestion,
-  localScore, cvLanguage,
+  data,
+  setData,
+  activeSection,
+  setActiveSection,
+  targetRole,
+  aiLoading,
+  handleAiSuggest,
+  handlePolishText,
+  polishingField,
+  updatePersonal,
+  handleLinkedInImport,
+  suggestionPanel,
+  onAcceptSuggestion,
+  onRegenerateSuggestion,
+  onRegenerateAll,
+  onCloseSuggestion,
+  localScore,
+  cvLanguage,
 }: {
-  data: CvData; setData: React.Dispatch<React.SetStateAction<CvData>>;
-  activeSection: string; setActiveSection: (s: string) => void; targetRole: string;
+  data: CvData;
+  setData: React.Dispatch<React.SetStateAction<CvData>>;
+  activeSection: string;
+  setActiveSection: (s: string) => void;
+  targetRole: string;
   aiLoading: SuggestSection | null;
-  handleAiSuggest: (section: SuggestSection, currentContent?: string, additionalContext?: string, regenerateIndex?: number) => void;
-  handlePolishText: (fieldKey: string, text: string, context?: string) => Promise<string | null | undefined>;
+  handleAiSuggest: (
+    section: SuggestSection,
+    currentContent?: string,
+    additionalContext?: string,
+    regenerateIndex?: number,
+  ) => void;
+  handlePolishText: (
+    fieldKey: string,
+    text: string,
+    context?: string,
+  ) => Promise<string | null | undefined>;
   polishingField: string | null;
   updatePersonal: <K extends keyof CvData["personal"]>(k: K, v: CvData["personal"][K]) => void;
   handleLinkedInImport: (imported: Partial<CvData>) => void;
-  suggestionPanel: { section: SuggestSection; suggestions: Array<{ option: string; explanation: string }> | null; acceptedIndex: number | null };
+  suggestionPanel: {
+    section: SuggestSection;
+    suggestions: Array<{ option: string; explanation: string }> | null;
+    acceptedIndex: number | null;
+  };
   onAcceptSuggestion: (index: number, option: { option: string; explanation: string }) => string;
   onRegenerateSuggestion: (index: number) => void;
   onRegenerateAll: () => void;
   onCloseSuggestion: () => void;
-  localScore: { overallScore: number; breakdown: Record<string, number>; strengths: string[]; weaknesses: string[]; suggestions: string[] };
+  localScore: {
+    overallScore: number;
+    breakdown: Record<string, number>;
+    strengths: string[];
+    weaknesses: string[];
+    suggestions: string[];
+  };
   cvLanguage: CvUiLang;
 }) {
   return (
     <div className="space-y-6">
       {/* Section Navigation for Mobile/Tablet */}
-      <div className="lg:hidden flex gap-1.5 overflow-x-auto pb-2 -mx-1 px-1">
+      <div
+        className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-2 lg:hidden"
+        aria-label="Pilih section CV"
+      >
         {getDefaultSections(cvLanguage).map((s) => (
           <Button
             key={s.id}
             variant={activeSection === s.id ? "default" : "ghost"}
             size="sm"
-            className="h-8 text-xs shrink-0 gap-1.5"
+            className={cn(
+              "h-10 shrink-0 gap-1.5 rounded-xl px-3 text-xs font-semibold",
+              activeSection !== s.id &&
+                "border border-border/70 bg-background shadow-sm hover:bg-muted",
+            )}
             onClick={() => setActiveSection?.(s.id)}
           >
             {s.icon}
@@ -808,11 +1055,29 @@ function EditorForm({
 
       {/* Personal */}
       {activeSection === "personal" && (
-        <SectionCard title="Data Pribadi" icon={<User className="h-5 w-5" />} accentColor="from-blue-500/5 to-purple-500/5">
+        <SectionCard
+          title="Data Pribadi"
+          icon={<User className="h-5 w-5" />}
+          accentColor="from-blue-500/5 to-purple-500/5"
+        >
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Nama Lengkap" value={data.personal.fullName} onChange={(v) => updatePersonal("fullName", v)} icon={<Pencil className="h-4 w-4" />} />
-            <Field label="Posisi / Headline" value={data.personal.headline} onChange={(v) => updatePersonal("headline", v)} placeholder="Frontend Developer"
-              extra={<AiSuggestBtn loading={aiLoading === "headline"} onClick={() => handleAiSuggest("headline", data.personal.headline)} />}
+            <Field
+              label="Nama Lengkap"
+              value={data.personal.fullName}
+              onChange={(v) => updatePersonal("fullName", v)}
+              icon={<Pencil className="h-4 w-4" />}
+            />
+            <Field
+              label="Posisi / Headline"
+              value={data.personal.headline}
+              onChange={(v) => updatePersonal("headline", v)}
+              placeholder="Frontend Developer"
+              extra={
+                <AiSuggestBtn
+                  loading={aiLoading === "headline"}
+                  onClick={() => handleAiSuggest("headline", data.personal.headline)}
+                />
+              }
               icon={<Crosshair className="h-4 w-4" />}
             />
           </div>
@@ -834,13 +1099,37 @@ function EditorForm({
           )}
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Email" type="email" value={data.personal.email} onChange={(v) => updatePersonal("email", v)} icon={<Mail className="h-4 w-4" />} />
-            <Field label="No. HP" value={data.personal.phone} onChange={(v) => updatePersonal("phone", v)} placeholder="+62..." icon={<Phone className="h-4 w-4" />} />
+            <Field
+              label="Email"
+              type="email"
+              value={data.personal.email}
+              onChange={(v) => updatePersonal("email", v)}
+              icon={<Mail className="h-4 w-4" />}
+            />
+            <Field
+              label="No. HP"
+              value={data.personal.phone}
+              onChange={(v) => updatePersonal("phone", v)}
+              placeholder="+62..."
+              icon={<Phone className="h-4 w-4" />}
+            />
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Lokasi" value={data.personal.location} onChange={(v) => updatePersonal("location", v)} placeholder="Jakarta" icon={<MapPin className="h-4 w-4" />} />
-            <Field label="LinkedIn" value={data.personal.linkedin ?? ""} onChange={(v) => updatePersonal("linkedin", v)} placeholder="linkedin.com/in/..." icon={<Linkedin className="h-4 w-4" />} />
+            <Field
+              label="Lokasi"
+              value={data.personal.location}
+              onChange={(v) => updatePersonal("location", v)}
+              placeholder="Jakarta"
+              icon={<MapPin className="h-4 w-4" />}
+            />
+            <Field
+              label="LinkedIn"
+              value={data.personal.linkedin ?? ""}
+              onChange={(v) => updatePersonal("linkedin", v)}
+              placeholder="linkedin.com/in/..."
+              icon={<Linkedin className="h-4 w-4" />}
+            />
           </div>
 
           <TextareaField
@@ -848,16 +1137,23 @@ function EditorForm({
             value={data.personal.summary}
             onChange={(v) => updatePersonal("summary", v)}
             placeholder="2-4 kalimat ringkas tentang dirimu..."
-            rows={4} maxLength={1000}
+            rows={4}
+            maxLength={1000}
             hint="Tip: Fokus pada pencapaian & skill utama yang relevan dengan target posisi"
             icon={<FileText className="h-4 w-4" />}
             extra={
               <div className="flex items-center gap-1">
-                <AiSuggestBtn loading={aiLoading === "summary"} onClick={() => handleAiSuggest("summary", data.personal.summary)} />
+                <AiSuggestBtn
+                  loading={aiLoading === "summary"}
+                  onClick={() => handleAiSuggest("summary", data.personal.summary)}
+                />
               </div>
             }
           />
-          <TextAlignPicker value={data.personal.summaryAlign} onChange={(v) => updatePersonal("summaryAlign", v)} />
+          <TextAlignPicker
+            value={data.personal.summaryAlign}
+            onChange={(v) => updatePersonal("summaryAlign", v)}
+          />
 
           {suggestionPanel.section === "summary" && (
             <SuggestionPanel
@@ -881,23 +1177,69 @@ function EditorForm({
       {/* Experience */}
       {activeSection === "experience" && (
         <ListSectionCard
-          title="Pengalaman Kerja" icon={<Briefcase className="h-5 w-5" />} items={data.experiences}
+          title="Pengalaman Kerja"
+          icon={<Briefcase className="h-5 w-5" />}
+          items={data.experiences}
           accentColor="from-amber-500/5 to-orange-500/5"
-          onAdd={() => setData((d) => ({ ...d, experiences: [...d.experiences, { id: uid(), company: "", position: "", startDate: "", endDate: "", description: "" }] }))}
-          onRemove={(i) => setData((d) => ({ ...d, experiences: d.experiences.filter((_, idx) => idx !== i) }))}
+          onAdd={() =>
+            setData((d) => ({
+              ...d,
+              experiences: [
+                ...d.experiences,
+                {
+                  id: uid(),
+                  company: "",
+                  position: "",
+                  startDate: "",
+                  endDate: "",
+                  description: "",
+                },
+              ],
+            }))
+          }
+          onRemove={(i) =>
+            setData((d) => ({ ...d, experiences: d.experiences.filter((_, idx) => idx !== i) }))
+          }
           renderItem={(item, i) => (
             <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Posisi" value={item.position} onChange={(v) => mutate(setData, "experiences", i, "position", v)} icon={<Crosshair className="h-4 w-4" />} />
-              <Field label="Perusahaan" value={item.company} onChange={(v) => mutate(setData, "experiences", i, "company", v)} icon={<Building2 className="h-4 w-4" />} />
-              <Field label="Mulai" value={item.startDate} onChange={(v) => mutate(setData, "experiences", i, "startDate", v)} icon={<Calendar className="h-4 w-4" />} />
-              <Field label="Selesai" value={item.endDate} onChange={(v) => mutate(setData, "experiences", i, "endDate", v)} disabled={item.current} icon={<Calendar className="h-4 w-4" />} />
+              <Field
+                label="Posisi"
+                value={item.position}
+                onChange={(v) => mutate(setData, "experiences", i, "position", v)}
+                icon={<Crosshair className="h-4 w-4" />}
+              />
+              <Field
+                label="Perusahaan"
+                value={item.company}
+                onChange={(v) => mutate(setData, "experiences", i, "company", v)}
+                icon={<Building2 className="h-4 w-4" />}
+              />
+              <Field
+                label="Mulai"
+                value={item.startDate}
+                onChange={(v) => mutate(setData, "experiences", i, "startDate", v)}
+                icon={<Calendar className="h-4 w-4" />}
+              />
+              <Field
+                label="Selesai"
+                value={item.endDate}
+                onChange={(v) => mutate(setData, "experiences", i, "endDate", v)}
+                disabled={item.current}
+                icon={<Calendar className="h-4 w-4" />}
+              />
               <label className="sm:col-span-2 flex items-center gap-2 text-sm rounded-xl bg-muted/50 px-3 py-2 cursor-pointer hover:bg-muted transition-colors">
-                <Checkbox checked={!!item.current} onCheckedChange={(c) => mutate(setData, "experiences", i, "current", !!c)} />
-                <span className="flex items-center gap-1.5"><RefreshCw className="h-3.5 w-3.5" /> Masih bekerja di sini</span>
+                <Checkbox
+                  checked={!!item.current}
+                  onCheckedChange={(c) => mutate(setData, "experiences", i, "current", !!c)}
+                />
+                <span className="flex items-center gap-1.5">
+                  <RefreshCw className="h-3.5 w-3.5" /> Masih bekerja di sini
+                </span>
               </label>
               <div className="sm:col-span-2 space-y-2">
                 <TextareaField
-                  label="Deskripsi" value={item.description}
+                  label="Deskripsi"
+                  value={item.description}
                   onChange={(v) => mutate(setData, "experiences", i, "description", v)}
                   placeholder="Deskripsikan pencapaian dengan metrik..."
                   rows={3}
@@ -911,7 +1253,11 @@ function EditorForm({
                         className="h-7 gap-1 text-xs rounded-lg text-muted-foreground hover:text-primary"
                         disabled={polishingField === `exp-${i}`}
                         onClick={async () => {
-                          const result = await handlePolishText(`exp-${i}`, item.description, `Posisi: ${item.position} di ${item.company}`);
+                          const result = await handlePolishText(
+                            `exp-${i}`,
+                            item.description,
+                            `Posisi: ${item.position} di ${item.company}`,
+                          );
                           if (result) mutate(setData, "experiences", i, "description", result);
                         }}
                       >
@@ -922,11 +1268,23 @@ function EditorForm({
                         )}
                         Perbaiki
                       </Button>
-                      <AiSuggestBtn loading={aiLoading === "experience"} onClick={() => handleAiSuggest("experience", item.description, `Posisi: ${item.position} di ${item.company}`)} />
+                      <AiSuggestBtn
+                        loading={aiLoading === "experience"}
+                        onClick={() =>
+                          handleAiSuggest(
+                            "experience",
+                            item.description,
+                            `Posisi: ${item.position} di ${item.company}`,
+                          )
+                        }
+                      />
                     </div>
                   }
                 />
-                <TextAlignPicker value={item.descriptionAlign} onChange={(v) => mutate(setData, "experiences", i, "descriptionAlign", v)} />
+                <TextAlignPicker
+                  value={item.descriptionAlign}
+                  onChange={(v) => mutate(setData, "experiences", i, "descriptionAlign", v)}
+                />
                 {suggestionPanel.section === "experience" && (
                   <SuggestionPanel
                     open={suggestionPanel.suggestions !== null}
@@ -952,19 +1310,54 @@ function EditorForm({
       {/* Education */}
       {activeSection === "education" && (
         <ListSectionCard
-          title="Pendidikan" icon={<GraduationCap className="h-5 w-5" />} items={data.educations}
+          title="Pendidikan"
+          icon={<GraduationCap className="h-5 w-5" />}
+          items={data.educations}
           accentColor="from-emerald-500/5 to-green-500/5"
-          onAdd={() => setData((d) => ({ ...d, educations: [...d.educations, { id: uid(), school: "", degree: "", startDate: "", endDate: "" }] }))}
-          onRemove={(i) => setData((d) => ({ ...d, educations: d.educations.filter((_, idx) => idx !== i) }))}
+          onAdd={() =>
+            setData((d) => ({
+              ...d,
+              educations: [
+                ...d.educations,
+                { id: uid(), school: "", degree: "", startDate: "", endDate: "" },
+              ],
+            }))
+          }
+          onRemove={(i) =>
+            setData((d) => ({ ...d, educations: d.educations.filter((_, idx) => idx !== i) }))
+          }
           renderItem={(item, i) => (
             <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Sekolah/Universitas" value={item.school} onChange={(v) => mutate(setData, "educations", i, "school", v)} icon={<Building2 className="h-4 w-4" />} />
-              <Field label="Gelar" value={item.degree} onChange={(v) => mutate(setData, "educations", i, "degree", v)} placeholder="S1" icon={<ScrollText className="h-4 w-4" />} />
-              <Field label="Jurusan" value={item.field ?? ""} onChange={(v) => mutate(setData, "educations", i, "field", v)} icon={<BookOpen className="h-4 w-4" />} />
-              <Field label="Periode" value={`${item.startDate}${item.endDate ? " - " + item.endDate : ""}`} onChange={(v) => {}} placeholder="2020 - 2024" icon={<Calendar className="h-4 w-4" />} />
+              <Field
+                label="Sekolah/Universitas"
+                value={item.school}
+                onChange={(v) => mutate(setData, "educations", i, "school", v)}
+                icon={<Building2 className="h-4 w-4" />}
+              />
+              <Field
+                label="Gelar"
+                value={item.degree}
+                onChange={(v) => mutate(setData, "educations", i, "degree", v)}
+                placeholder="S1"
+                icon={<ScrollText className="h-4 w-4" />}
+              />
+              <Field
+                label="Jurusan"
+                value={item.field ?? ""}
+                onChange={(v) => mutate(setData, "educations", i, "field", v)}
+                icon={<BookOpen className="h-4 w-4" />}
+              />
+              <Field
+                label="Periode"
+                value={`${item.startDate}${item.endDate ? " - " + item.endDate : ""}`}
+                onChange={(v) => {}}
+                placeholder="2020 - 2024"
+                icon={<Calendar className="h-4 w-4" />}
+              />
               <div className="sm:col-span-2 space-y-2">
                 <TextareaField
-                  label="Deskripsi" value={item.description ?? ""}
+                  label="Deskripsi"
+                  value={item.description ?? ""}
                   onChange={(v) => mutate(setData, "educations", i, "description", v)}
                   rows={2}
                   extra={
@@ -975,7 +1368,11 @@ function EditorForm({
                         className="h-7 gap-1 text-xs rounded-lg text-muted-foreground hover:text-primary"
                         disabled={polishingField === `edu-${i}`}
                         onClick={async () => {
-                          const result = await handlePolishText(`edu-${i}`, item.description || "", `${item.degree} ${item.field || ""} di ${item.school}`);
+                          const result = await handlePolishText(
+                            `edu-${i}`,
+                            item.description || "",
+                            `${item.degree} ${item.field || ""} di ${item.school}`,
+                          );
                           if (result) mutate(setData, "educations", i, "description", result);
                         }}
                       >
@@ -986,11 +1383,23 @@ function EditorForm({
                         )}
                         Perbaiki
                       </Button>
-                      <AiSuggestBtn loading={aiLoading === "education"} onClick={() => handleAiSuggest("education", item.description || "", `${item.degree} ${item.field || ""} di ${item.school}`)} />
+                      <AiSuggestBtn
+                        loading={aiLoading === "education"}
+                        onClick={() =>
+                          handleAiSuggest(
+                            "education",
+                            item.description || "",
+                            `${item.degree} ${item.field || ""} di ${item.school}`,
+                          )
+                        }
+                      />
                     </div>
                   }
                 />
-                <TextAlignPicker value={item.descriptionAlign} onChange={(v) => mutate(setData, "educations", i, "descriptionAlign", v)} />
+                <TextAlignPicker
+                  value={item.descriptionAlign}
+                  onChange={(v) => mutate(setData, "educations", i, "descriptionAlign", v)}
+                />
                 {suggestionPanel.section === "education" && (
                   <SuggestionPanel
                     open={suggestionPanel.suggestions !== null}
@@ -1016,15 +1425,29 @@ function EditorForm({
       {/* Skills */}
       {activeSection === "skills" && (
         <ListSectionCard
-          title="Keahlian" icon={<Wrench className="h-5 w-5" />} items={data.skills} compact
+          title="Keahlian"
+          icon={<Wrench className="h-5 w-5" />}
+          items={data.skills}
+          compact
           accentColor="from-violet-500/5 to-purple-500/5"
           onAdd={() => setData((d) => ({ ...d, skills: [...d.skills, { id: uid(), name: "" }] }))}
-          onRemove={(i) => setData((d) => ({ ...d, skills: d.skills.filter((_, idx) => idx !== i) }))}
+          onRemove={(i) =>
+            setData((d) => ({ ...d, skills: d.skills.filter((_, idx) => idx !== i) }))
+          }
           renderItem={(item, i) => (
-            <Field label="Nama Skill" value={item.name} onChange={(v) => mutate(setData, "skills", i, "name", v)} placeholder="React, SQL, Komunikasi..." icon={<Zap className="h-4 w-4" />} />
+            <Field
+              label="Nama Skill"
+              value={item.name}
+              onChange={(v) => mutate(setData, "skills", i, "name", v)}
+              placeholder="React, SQL, Komunikasi..."
+              icon={<Zap className="h-4 w-4" />}
+            />
           )}
           extraAction={
-            <AiSuggestBtn loading={aiLoading === "skills"} onClick={() => handleAiSuggest("skills", data.skills.map((s) => s.name).join(", "))} />
+            <AiSuggestBtn
+              loading={aiLoading === "skills"}
+              onClick={() => handleAiSuggest("skills", data.skills.map((s) => s.name).join(", "))}
+            />
           }
         />
       )}
@@ -1038,8 +1461,14 @@ function EditorForm({
           acceptedIndex={suggestionPanel.acceptedIndex}
           onAccept={(i, opt) => {
             const accepted = onAcceptSuggestion(i, opt);
-            const names = accepted.split("\n").filter(Boolean).map((n: string) => n.trim());
-            setData((d) => ({ ...d, skills: names.map((name) => ({ id: uid(), name, level: "Intermediate" as const })) }));
+            const names = accepted
+              .split("\n")
+              .filter(Boolean)
+              .map((n: string) => n.trim());
+            setData((d) => ({
+              ...d,
+              skills: names.map((name) => ({ id: uid(), name, level: "Intermediate" as const })),
+            }));
           }}
           onRegenerate={onRegenerateSuggestion}
           onRegenerateAll={onRegenerateAll}
@@ -1050,27 +1479,72 @@ function EditorForm({
       {activeSection === "extras" && (
         <div className="space-y-6">
           <ListSectionCard
-            title="Bahasa" icon={<Globe className="h-5 w-5" />} items={data.languages} compact
+            title="Bahasa"
+            icon={<Globe className="h-5 w-5" />}
+            items={data.languages}
+            compact
             accentColor="from-teal-500/5 to-cyan-500/5"
-            onAdd={() => setData((d) => ({ ...d, languages: [...d.languages, { id: uid(), name: "", level: "Mahir" }] }))}
-            onRemove={(i) => setData((d) => ({ ...d, languages: d.languages.filter((_, idx) => idx !== i) }))}
+            onAdd={() =>
+              setData((d) => ({
+                ...d,
+                languages: [...d.languages, { id: uid(), name: "", level: "Mahir" }],
+              }))
+            }
+            onRemove={(i) =>
+              setData((d) => ({ ...d, languages: d.languages.filter((_, idx) => idx !== i) }))
+            }
             renderItem={(item, i) => (
               <div className="grid grid-cols-2 gap-3">
-                <Field label="Bahasa" value={item.name} onChange={(v) => mutate(setData, "languages", i, "name", v)} icon={<Languages className="h-4 w-4" />} />
-                <Field label="Level" value={item.level} onChange={(v) => mutate(setData, "languages", i, "level", v)} icon={<BarChart3 className="h-4 w-4" />} />
+                <Field
+                  label="Bahasa"
+                  value={item.name}
+                  onChange={(v) => mutate(setData, "languages", i, "name", v)}
+                  icon={<Languages className="h-4 w-4" />}
+                />
+                <Field
+                  label="Level"
+                  value={item.level}
+                  onChange={(v) => mutate(setData, "languages", i, "level", v)}
+                  icon={<BarChart3 className="h-4 w-4" />}
+                />
               </div>
             )}
           />
           <ListSectionCard
-            title="Sertifikat" icon={<Award className="h-5 w-5" />} items={data.certificates} compact
+            title="Sertifikat"
+            icon={<Award className="h-5 w-5" />}
+            items={data.certificates}
+            compact
             accentColor="from-rose-500/5 to-pink-500/5"
-            onAdd={() => setData((d) => ({ ...d, certificates: [...d.certificates, { id: uid(), name: "", issuer: "", date: "" }] }))}
-            onRemove={(i) => setData((d) => ({ ...d, certificates: d.certificates.filter((_, idx) => idx !== i) }))}
+            onAdd={() =>
+              setData((d) => ({
+                ...d,
+                certificates: [...d.certificates, { id: uid(), name: "", issuer: "", date: "" }],
+              }))
+            }
+            onRemove={(i) =>
+              setData((d) => ({ ...d, certificates: d.certificates.filter((_, idx) => idx !== i) }))
+            }
             renderItem={(item, i) => (
               <div className="grid gap-3 sm:grid-cols-3">
-                <Field label="Nama" value={item.name} onChange={(v) => mutate(setData, "certificates", i, "name", v)} icon={<Trophy className="h-4 w-4" />} />
-                <Field label="Penerbit" value={item.issuer} onChange={(v) => mutate(setData, "certificates", i, "issuer", v)} icon={<Landmark className="h-4 w-4" />} />
-                <Field label="Tanggal" value={item.date} onChange={(v) => mutate(setData, "certificates", i, "date", v)} icon={<Calendar className="h-4 w-4" />} />
+                <Field
+                  label="Nama"
+                  value={item.name}
+                  onChange={(v) => mutate(setData, "certificates", i, "name", v)}
+                  icon={<Trophy className="h-4 w-4" />}
+                />
+                <Field
+                  label="Penerbit"
+                  value={item.issuer}
+                  onChange={(v) => mutate(setData, "certificates", i, "issuer", v)}
+                  icon={<Landmark className="h-4 w-4" />}
+                />
+                <Field
+                  label="Tanggal"
+                  value={item.date}
+                  onChange={(v) => mutate(setData, "certificates", i, "date", v)}
+                  icon={<Calendar className="h-4 w-4" />}
+                />
               </div>
             )}
           />
@@ -1078,9 +1552,7 @@ function EditorForm({
       )}
 
       {/* ATS View */}
-      {activeSection === "ats" && (
-        <AtsPreview data={data} />
-      )}
+      {activeSection === "ats" && <AtsPreview data={data} />}
 
       {/* Local Score Widget — always visible in form panel */}
       <AtsScoreWidget
@@ -1093,7 +1565,3 @@ function EditorForm({
     </div>
   );
 }
-
-
-
-
