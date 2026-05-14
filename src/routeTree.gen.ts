@@ -16,6 +16,7 @@ import { Route as TemplateRouteImport } from './routes/template'
 import { Route as SyaratKetentuanRouteImport } from './routes/syarat-ketentuan'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as RegisterRouteImport } from './routes/register'
+import { Route as PrivateCoachingRouteImport } from './routes/private-coaching'
 import { Route as PanduanCvAtsRouteImport } from './routes/panduan-cv-ats'
 import { Route as LupaPasswordRouteImport } from './routes/lupa-password'
 import { Route as LowonganRouteImport } from './routes/lowongan'
@@ -91,6 +92,11 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
   path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivateCoachingRoute = PrivateCoachingRouteImport.update({
+  id: '/private-coaching',
+  path: '/private-coaching',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PanduanCvAtsRoute = PanduanCvAtsRouteImport.update({
@@ -316,6 +322,7 @@ export interface FileRoutesByFullPath {
   '/lowongan': typeof LowonganRouteWithChildren
   '/lupa-password': typeof LupaPasswordRoute
   '/panduan-cv-ats': typeof PanduanCvAtsRoute
+  '/private-coaching': typeof PrivateCoachingRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/syarat-ketentuan': typeof SyaratKetentuanRoute
@@ -365,6 +372,7 @@ export interface FileRoutesByTo {
   '/lowongan': typeof LowonganRouteWithChildren
   '/lupa-password': typeof LupaPasswordRoute
   '/panduan-cv-ats': typeof PanduanCvAtsRoute
+  '/private-coaching': typeof PrivateCoachingRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/syarat-ketentuan': typeof SyaratKetentuanRoute
@@ -415,6 +423,7 @@ export interface FileRoutesById {
   '/lowongan': typeof LowonganRouteWithChildren
   '/lupa-password': typeof LupaPasswordRoute
   '/panduan-cv-ats': typeof PanduanCvAtsRoute
+  '/private-coaching': typeof PrivateCoachingRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/syarat-ketentuan': typeof SyaratKetentuanRoute
@@ -466,6 +475,7 @@ export interface FileRouteTypes {
     | '/lowongan'
     | '/lupa-password'
     | '/panduan-cv-ats'
+    | '/private-coaching'
     | '/register'
     | '/reset-password'
     | '/syarat-ketentuan'
@@ -515,6 +525,7 @@ export interface FileRouteTypes {
     | '/lowongan'
     | '/lupa-password'
     | '/panduan-cv-ats'
+    | '/private-coaching'
     | '/register'
     | '/reset-password'
     | '/syarat-ketentuan'
@@ -564,6 +575,7 @@ export interface FileRouteTypes {
     | '/lowongan'
     | '/lupa-password'
     | '/panduan-cv-ats'
+    | '/private-coaching'
     | '/register'
     | '/reset-password'
     | '/syarat-ketentuan'
@@ -615,6 +627,7 @@ export interface RootRouteChildren {
   LowonganRoute: typeof LowonganRouteWithChildren
   LupaPasswordRoute: typeof LupaPasswordRoute
   PanduanCvAtsRoute: typeof PanduanCvAtsRoute
+  PrivateCoachingRoute: typeof PrivateCoachingRoute
   RegisterRoute: typeof RegisterRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SyaratKetentuanRoute: typeof SyaratKetentuanRoute
@@ -680,6 +693,13 @@ declare module '@tanstack/react-router' {
       path: '/register'
       fullPath: '/register'
       preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/private-coaching': {
+      id: '/private-coaching'
+      path: '/private-coaching'
+      fullPath: '/private-coaching'
+      preLoaderRoute: typeof PrivateCoachingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/panduan-cv-ats': {
@@ -1092,6 +1112,7 @@ const rootRouteChildren: RootRouteChildren = {
   LowonganRoute: LowonganRouteWithChildren,
   LupaPasswordRoute: LupaPasswordRoute,
   PanduanCvAtsRoute: PanduanCvAtsRoute,
+  PrivateCoachingRoute: PrivateCoachingRoute,
   RegisterRoute: RegisterRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SyaratKetentuanRoute: SyaratKetentuanRoute,

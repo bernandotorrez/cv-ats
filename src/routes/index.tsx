@@ -3,11 +3,13 @@ import {
   ArrowRight,
   Bot,
   Briefcase,
+  CalendarClock,
   CheckCircle2,
   Download,
   FileText,
   Gauge,
   LockKeyhole,
+  MessageCircle,
   Mic,
   Quote,
   Search,
@@ -16,6 +18,7 @@ import {
   Star,
   TrendingUp,
   UserRoundCheck,
+  Video,
 } from "lucide-react";
 
 import { BaliTemplate } from "@/components/cv/templates/BaliTemplate";
@@ -436,6 +439,92 @@ function LandingPage() {
                       </div>
                     </div>
                   ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-muted/45 py-16 md:py-24">
+        <div className="container-page grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+          <div>
+            <Badge className="bg-info text-info-foreground hover:bg-info">
+              Private Coaching by HR Recruiter
+            </Badge>
+            <h2 className="mt-4 font-display text-3xl font-bold tracking-tight md:text-4xl">
+              Butuh arahan manusia setelah CV kamu siap?
+            </h2>
+            <p className="mt-4 text-base leading-8 text-muted-foreground">
+              Konsultasi 1-on-1 dengan HR Recruiter untuk membedah CV, strategi apply, dan jawaban
+              interview. Cocok kalau kamu ingin feedback yang lebih personal sebelum mengirim
+              lamaran penting.
+            </p>
+            <div className="mt-7 grid gap-3 sm:grid-cols-2">
+              {[
+                [MessageCircle, "Chat Session", "Rp25.000 via WhatsApp"],
+                [Video, "Video Session", "Rp50.000 via Zoom"],
+              ].map(([Icon, title, desc]) => (
+                <div key={title as string} className="rounded-lg border border-border bg-card p-4">
+                  <Icon className="h-5 w-5 text-primary" aria-hidden />
+                  <h3 className="mt-3 text-sm font-semibold text-foreground">{title as string}</h3>
+                  <p className="mt-1 text-sm leading-6 text-muted-foreground">{desc as string}</p>
+                </div>
+              ))}
+            </div>
+            <Button asChild size="lg" className="mt-8 h-12 px-6 text-base">
+              <Link to="/private-coaching">
+                Lihat Private Coaching
+                <ArrowRight className="h-4 w-4" aria-hidden />
+              </Link>
+            </Button>
+          </div>
+
+          <div className="rounded-lg border border-border bg-card p-4 shadow-xl shadow-primary/10">
+            <div className="rounded-md bg-background p-5">
+              <div className="flex flex-col gap-4 border-b border-border pb-5 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="grid h-14 w-14 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground">
+                    <UserRoundCheck className="h-7 w-7" aria-hidden />
+                  </div>
+                  <div>
+                    <h3 className="font-display text-lg font-bold">HR Recruiter 1-on-1</h3>
+                    <p className="text-sm text-muted-foreground">CV, apply strategy, interview</p>
+                  </div>
+                </div>
+                <Badge variant="secondary" className="w-fit">
+                  Mulai Rp25.000
+                </Badge>
+              </div>
+
+              <div className="mt-5 space-y-3">
+                {[
+                  ["Review CV personal", "Cari pesan utama yang harus terlihat oleh recruiter."],
+                  [
+                    "Strategi apply",
+                    "Pilih target role, keyword, dan angle pengalaman yang tepat.",
+                  ],
+                  ["Latihan interview", "Rapikan cara menjawab agar lebih jelas dan percaya diri."],
+                ].map(([title, desc]) => (
+                  <div key={title} className="rounded-lg border border-border p-4">
+                    <div className="flex items-start gap-3">
+                      <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-primary" aria-hidden />
+                      <div>
+                        <p className="text-sm font-semibold text-foreground">{title}</p>
+                        <p className="mt-1 text-sm leading-6 text-muted-foreground">{desc}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-5 rounded-lg bg-primary/10 p-4">
+                <div className="flex items-start gap-3">
+                  <CalendarClock className="mt-0.5 h-5 w-5 shrink-0 text-primary" aria-hidden />
+                  <p className="text-sm leading-6 text-muted-foreground">
+                    Chat berjalan via WhatsApp. Untuk video session, link Zoom dikirim setelah
+                    pembayaran dan jadwal dikonfirmasi.
+                  </p>
                 </div>
               </div>
             </div>

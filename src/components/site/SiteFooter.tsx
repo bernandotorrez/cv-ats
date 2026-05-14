@@ -19,23 +19,32 @@ export function SiteFooter() {
             </p>
           </div>
 
-          <FooterCol title="Produk" links={[
-            { to: "/fitur", label: "Fitur" },
-            { to: "/template", label: "Template" },
-            { to: "/lowongan", label: "Lowongan" },
-            { to: "/harga", label: "Harga" },
-          ]} />
-          <FooterCol title="Belajar" links={[
-            { to: "/panduan-cv-ats", label: "Panduan CV ATS" },
-            { to: "/tips-interview", label: "Tips Interview" },
-            { to: "/blog", label: "Blog" },
-          ]} />
-          <FooterCol title="Perusahaan" links={[
-            { to: "/tentang", label: "Tentang" },
-            { to: "/kontak", label: "Kontak" },
-            { to: "/kebijakan-privasi", label: "Kebijakan Privasi" },
-            { to: "/syarat-ketentuan", label: "Syarat & Ketentuan" },
-          ]} />
+          <FooterCol
+            title="Produk"
+            links={[
+              { to: "/fitur", label: "Fitur" },
+              { to: "/template", label: "Template" },
+              { to: "/private-coaching", label: "Private Coaching" },
+              { to: "/harga", label: "Harga" },
+            ]}
+          />
+          <FooterCol
+            title="Belajar"
+            links={[
+              { to: "/panduan-cv-ats", label: "Panduan CV ATS" },
+              { to: "/tips-interview", label: "Tips Interview" },
+              { to: "/blog", label: "Blog" },
+            ]}
+          />
+          <FooterCol
+            title="Perusahaan"
+            links={[
+              { to: "/tentang", label: "Tentang" },
+              { to: "/kontak", label: "Kontak" },
+              { to: "/kebijakan-privasi", label: "Kebijakan Privasi" },
+              { to: "/syarat-ketentuan", label: "Syarat & Ketentuan" },
+            ]}
+          />
         </div>
 
         <div className="mt-10 flex flex-col items-start justify-between gap-2 border-t border-border pt-6 text-sm text-muted-foreground md:flex-row md:items-center">

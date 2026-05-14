@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 const nav = [
   { to: "/fitur", label: "Fitur" },
   { to: "/template", label: "Template" },
-  { to: "/lowongan", label: "Lowongan" },
+  { to: "/private-coaching", label: "Private Coaching" },
   { to: "/harga", label: "Harga" },
   { to: "/panduan-cv-ats", label: "Panduan" },
   { to: "/tips-interview", label: "Tips Interview" },
@@ -29,7 +29,10 @@ export function SiteHeader() {
         </div>
       )}
       <div className="container-page flex h-16 items-center justify-between gap-4">
-        <Link to="/" className="flex items-center gap-2 font-display text-lg font-bold text-foreground">
+        <Link
+          to="/"
+          className="flex items-center gap-2 font-display text-lg font-bold text-foreground"
+        >
           <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary text-primary-foreground">
             <FileText className="h-4 w-4" aria-hidden />
           </span>
@@ -42,7 +45,9 @@ export function SiteHeader() {
               key={item.to}
               to={item.to}
               className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-              activeProps={{ className: "rounded-md px-3 py-2 text-sm font-medium text-foreground bg-muted" }}
+              activeProps={{
+                className: "rounded-md px-3 py-2 text-sm font-medium text-foreground bg-muted",
+              }}
             >
               {item.label}
             </Link>
@@ -53,14 +58,20 @@ export function SiteHeader() {
           {user ? (
             <>
               <Button asChild variant="ghost" size="sm">
-                <Link to="/dashboard"><LayoutDashboard className="h-4 w-4" /> Dashboard</Link>
+                <Link to="/dashboard">
+                  <LayoutDashboard className="h-4 w-4" /> Dashboard
+                </Link>
               </Button>
-              <Button size="sm" variant="outline" onClick={() => signOut()}>Keluar</Button>
+              <Button size="sm" variant="outline" onClick={() => signOut()}>
+                Keluar
+              </Button>
             </>
           ) : (
             <>
               <Button asChild variant="ghost" size="sm">
-                <Link to="/login" search={{ redirect: "/dashboard" }}>Masuk</Link>
+                <Link to="/login" search={{ redirect: "/dashboard" }}>
+                  Masuk
+                </Link>
               </Button>
               <Button asChild size="sm">
                 <Link to="/register">Daftar Gratis</Link>
@@ -95,10 +106,18 @@ export function SiteHeader() {
             ))}
             <div className="mt-2 flex flex-col gap-2">
               <Button asChild variant="outline">
-                <Link to="/login" search={{ redirect: "/dashboard" }} onClick={() => setOpen(false)}>Masuk</Link>
+                <Link
+                  to="/login"
+                  search={{ redirect: "/dashboard" }}
+                  onClick={() => setOpen(false)}
+                >
+                  Masuk
+                </Link>
               </Button>
               <Button asChild>
-                <Link to="/register" onClick={() => setOpen(false)}>Daftar Gratis</Link>
+                <Link to="/register" onClick={() => setOpen(false)}>
+                  Daftar Gratis
+                </Link>
               </Button>
             </div>
           </nav>

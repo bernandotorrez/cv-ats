@@ -11,7 +11,6 @@ import {
   Languages,
   LockKeyhole,
   Mic,
-  Search,
   Share2,
   ShieldCheck,
   Sparkles,
@@ -115,12 +114,6 @@ const featureGroups = [
         icon: Briefcase,
         name: "Pelacak Lamaran",
         desc: "Simpan posisi, perusahaan, status, catatan, dan next step dalam satu dashboard.",
-        badge: "Baru",
-      },
-      {
-        icon: Search,
-        name: "Lowongan Pekerjaan",
-        desc: "Temukan peluang yang relevan dengan skill, level, dan arah kariermu.",
         badge: "Baru",
       },
       {
