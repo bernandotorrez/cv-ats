@@ -17,7 +17,6 @@ import { isAdmin } from "@/lib/admin";
 import { supabase } from "@/integrations/supabase/client";
 import { getUserTier, getTierLimits, type Tier, type TierLimits } from "@/lib/subscription";
 import { Crown, AlertCircle } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { TemplateGallery } from "@/components/cv/TemplateGallery";
 import { emptyCv, TEMPLATES, type TemplateId } from "@/lib/cv-types";
 import { DashboardSkeleton } from "@/components/ui/dashboard-skeleton";
@@ -51,14 +50,13 @@ import {
   Edit3,
   ArrowLeftRight,
   Loader2,
-  LayoutTemplate,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () =>
     buildSeo({
-      title: "Dashboard — CV Pintar",
-      description: "Dashboard akun.",
+      title: "Dashboard - CV Pintar",
+      description: "Kelola CV, AI tools, skor ATS, cover letter, dan simulasi interview.",
       path: "/dashboard",
       noindex: true,
     }),
@@ -227,9 +225,7 @@ function DashboardPage() {
   const handleCreate = async (guided = false) => {
     if (!user) return;
     if (atCvLimit) {
-      toast.error(
-        `Paket ${tierName} hanya bisa ${limits.maxCvs} CV. Upgrade untuk lebih banyak.`,
-      );
+      toast.error(`Paket ${tierName} hanya bisa ${limits.maxCvs} CV. Upgrade untuk lebih banyak.`);
       return;
     }
     setCreating(true);
@@ -257,84 +253,256 @@ function DashboardPage() {
   const atCvLimit = limits.maxCvs !== null && cvCount >= limits.maxCvs;
   const tierName = tier === "free" ? "Free" : tier === "starter" ? "Starter" : "Pro";
 
-  // Build usage bars
   const usageBars = [
-    { icon: FileText, label: "CV", used: cvCount, max: limits.maxCvs, color: "bg-primary-soft text-primary", visible: true },
-    { icon: Sparkles, label: "AI Saran", used: aiUsageCount, max: tierQuotas?.quota_ai_suggest ?? limits.maxAiSuggestions, color: "bg-violet-500/10 text-violet-600", visible: limits.enableAiSuggest },
-    { icon: BarChart3, label: "CV Scoring", used: scoreUsageCount, max: tierQuotas?.quota_ai_score ?? limits.maxAtsScores, color: "bg-amber-500/10 text-amber-600", visible: limits.enableAiScore },
-    { icon: Brain, label: "Guided Mode", used: guidedUsageCount, max: tierQuotas?.quota_guided_mode ?? limits.maxGuidedSessions, color: "bg-emerald-500/10 text-emerald-600", visible: tierQuotas?.enable_guided_mode ?? limits.enableGuidedMode },
     {
-      icon: FileCheck, label: "Cover Letter", used: coverLetterUsageCount,
-      max: tierQuotas?.quota_ai_cover_letter ?? (tierQuotas?.enable_cover_letter ? (tier === "free" ? 1 : tier === "starter" ? 10 : null) : 0),
-      color: "bg-teal-500/10 text-teal-600", visible: tierQuotas?.enable_cover_letter ?? limits.canCoverLetter,
+      icon: FileText,
+      label: "CV",
+      used: cvCount,
+      max: limits.maxCvs,
+      color: "bg-primary-soft text-primary",
+      visible: true,
     },
     {
-      icon: Target, label: "CV Review", used: cvReviewUsageCount,
-      max: tierQuotas?.quota_cv_review ?? (tierQuotas?.enable_cv_review ? (tier === "starter" ? 10 : null) : 0),
-      color: "bg-rose-500/10 text-rose-600", visible: tierQuotas?.enable_cv_review ?? limits.enableCvReview,
+      icon: Sparkles,
+      label: "AI Saran",
+      used: aiUsageCount,
+      max: tierQuotas?.quota_ai_suggest ?? limits.maxAiSuggestions,
+      color: "bg-violet-500/10 text-violet-600",
+      visible: limits.enableAiSuggest,
     },
     {
-      icon: Key, label: "Keyword Extract", used: keywordExtractUsageCount,
-      max: tierQuotas?.quota_ai_keyword_extract ?? (tierQuotas?.enable_keyword_extractor ? (tier === "free" ? 2 : tier === "starter" ? 20 : null) : 0),
-      color: "bg-blue-500/10 text-blue-600", visible: tierQuotas?.enable_keyword_extractor ?? limits.canKeywordExtract,
+      icon: BarChart3,
+      label: "CV Scoring",
+      used: scoreUsageCount,
+      max: tierQuotas?.quota_ai_score ?? limits.maxAtsScores,
+      color: "bg-amber-500/10 text-amber-600",
+      visible: limits.enableAiScore,
     },
-    { icon: Type, label: "Text Polish", used: textPolishUsageCount, max: tierQuotas?.quota_ai_polish ?? limits.maxTextPolish, color: "bg-purple-500/10 text-purple-600", visible: tierQuotas?.enable_text_polish ?? limits.enableTextPolish },
-    { icon: MessageSquare, label: "AI Chat", used: chatUsageCount, max: tierQuotas?.quota_ai_chat ?? (tier === "free" ? 5 : tier === "starter" ? 50 : null), color: "bg-cyan-500/10 text-cyan-600", visible: true },
+    {
+      icon: Brain,
+      label: "Guided Mode",
+      used: guidedUsageCount,
+      max: tierQuotas?.quota_guided_mode ?? limits.maxGuidedSessions,
+      color: "bg-emerald-500/10 text-emerald-600",
+      visible: tierQuotas?.enable_guided_mode ?? limits.enableGuidedMode,
+    },
+    {
+      icon: FileCheck,
+      label: "Cover Letter",
+      used: coverLetterUsageCount,
+      max:
+        tierQuotas?.quota_ai_cover_letter ??
+        (tierQuotas?.enable_cover_letter
+          ? tier === "free"
+            ? 1
+            : tier === "starter"
+              ? 10
+              : null
+          : 0),
+      color: "bg-teal-500/10 text-teal-600",
+      visible: tierQuotas?.enable_cover_letter ?? limits.canCoverLetter,
+    },
+    {
+      icon: Target,
+      label: "CV Review",
+      used: cvReviewUsageCount,
+      max:
+        tierQuotas?.quota_cv_review ??
+        (tierQuotas?.enable_cv_review ? (tier === "starter" ? 10 : null) : 0),
+      color: "bg-rose-500/10 text-rose-600",
+      visible: tierQuotas?.enable_cv_review ?? limits.enableCvReview,
+    },
+    {
+      icon: Key,
+      label: "Keyword Extract",
+      used: keywordExtractUsageCount,
+      max:
+        tierQuotas?.quota_ai_keyword_extract ??
+        (tierQuotas?.enable_keyword_extractor
+          ? tier === "free"
+            ? 2
+            : tier === "starter"
+              ? 20
+              : null
+          : 0),
+      color: "bg-blue-500/10 text-blue-600",
+      visible: tierQuotas?.enable_keyword_extractor ?? limits.canKeywordExtract,
+    },
+    {
+      icon: Type,
+      label: "Text Polish",
+      used: textPolishUsageCount,
+      max: tierQuotas?.quota_ai_polish ?? limits.maxTextPolish,
+      color: "bg-purple-500/10 text-purple-600",
+      visible: tierQuotas?.enable_text_polish ?? limits.enableTextPolish,
+    },
+    {
+      icon: MessageSquare,
+      label: "AI Chat",
+      used: chatUsageCount,
+      max: tierQuotas?.quota_ai_chat ?? (tier === "free" ? 5 : tier === "starter" ? 50 : null),
+      color: "bg-cyan-500/10 text-cyan-600",
+      visible: true,
+    },
   ];
 
-  // Build power features
   const powerFeatures = [
     {
-      icon: Brain, label: "CV Review AI",
-      desc: "AI analisis CV-mu seperti HR profesional — skor, saran perbaikan, dan rekomendasi kata kunci.",
-      action: "cv-review", badge: "Powerful", visible: true,
-      locked: (tierQuotas?.enable_cv_review ?? limits.enableCvReview) === false, upgradeTier: "Starter",
+      icon: Brain,
+      label: "CV Review AI",
+      desc: "Baca CV seperti HR: temukan bagian kuat, bagian lemah, dan quick wins sebelum apply.",
+      action: "cv-review",
+      badge: "Powerful",
+      visible: true,
+      locked: (tierQuotas?.enable_cv_review ?? limits.enableCvReview) === false,
+      upgradeTier: "Starter",
       gradient: "bg-gradient-to-r from-rose-500 to-pink-500",
     },
     {
-      icon: BarChart3, label: "CV Scoring",
-      desc: "Lihat skor ATS CV-mu secara instan. Ketahui bagian mana yang perlu diperbaiki.",
-      action: "score", badge: "Analitik", visible: true, locked: false,
+      icon: BarChart3,
+      label: "CV Scoring",
+      desc: "Ukur kesiapan ATS secara instan, lalu perbaiki bagian yang paling menahan peluangmu.",
+      action: "score",
+      badge: "Analitik",
+      visible: true,
+      locked: false,
       gradient: "bg-gradient-to-r from-amber-500 to-orange-500",
     },
     {
-      icon: Mic, label: "Simulasi Wawancara",
-      desc: "Latihan interview dengan AI. Pertanyaan realistis dan feedback instan.",
-      action: "simulasi", badge: "Pro", visible: true,
-      locked: (tierQuotas?.enable_interview_simulator ?? limits.canInterviewSimulator) === false, upgradeTier: "Pro",
+      icon: Mic,
+      label: "Simulasi Wawancara",
+      desc: "Latihan menjawab pertanyaan realistis dan dapatkan feedback yang bisa langsung dipakai.",
+      action: "simulasi",
+      badge: "Pro",
+      visible: true,
+      locked: (tierQuotas?.enable_interview_simulator ?? limits.canInterviewSimulator) === false,
+      upgradeTier: "Pro",
       gradient: "bg-gradient-to-r from-rose-500 to-red-500",
     },
     {
-      icon: FileCheck, label: "Cover Letter AI",
-      desc: "Generate surat lamaran yang personalize dari CV dan job description.",
-      action: "cover-letter", badge: "Baru", visible: true,
-      locked: (tierQuotas?.enable_cover_letter ?? limits.canCoverLetter) === false, upgradeTier: "Starter",
+      icon: FileCheck,
+      label: "Cover Letter AI",
+      desc: "Buat surat lamaran yang nyambung dengan CV, role, dan bahasa perusahaan target.",
+      action: "cover-letter",
+      badge: "Baru",
+      visible: true,
+      locked: (tierQuotas?.enable_cover_letter ?? limits.canCoverLetter) === false,
+      upgradeTier: "Starter",
       gradient: "bg-gradient-to-r from-teal-500 to-cyan-500",
     },
     {
-      icon: Key, label: "Keyword Extractor",
-      desc: "Ekstrak keyword dari job description untuk optimasi CV ATS. Auto-suggest keyword berdasarkan posisi target.",
-      action: "keyword-extractor", badge: "ATS", visible: true,
-      locked: (tierQuotas?.enable_keyword_extractor ?? limits.canKeywordExtract) === false, upgradeTier: "Starter",
+      icon: Key,
+      label: "Keyword Extractor",
+      desc: "Ambil keyword penting dari job description agar CV lebih relevan untuk ATS dan rekruter.",
+      action: "keyword-extractor",
+      badge: "ATS",
+      visible: true,
+      locked: (tierQuotas?.enable_keyword_extractor ?? limits.canKeywordExtract) === false,
+      upgradeTier: "Starter",
       gradient: "bg-gradient-to-r from-blue-500 to-indigo-500",
     },
   ];
 
-  // Build quick actions
-  const quickActions: { icon: typeof FileText; label: string; action: string; color: string; visible: boolean; locked?: boolean; upgradeTier?: string }[] = [
-    { icon: FileText, label: "Kelola CV", action: "manage", color: "bg-primary-soft text-primary", visible: true },
-    { icon: Sparkles, label: "AI Saran", action: "ai-suggest", color: "bg-violet-500/10 text-violet-600", visible: true },
-    { icon: BarChart3, label: "CV Scoring", action: "score", color: "bg-amber-500/10 text-amber-600", visible: true },
-    { icon: Briefcase, label: "Pelamaran", action: "lamaran", color: "bg-blue-500/10 text-blue-600", visible: true },
-    { icon: Mic, label: "Simulasi", action: "simulasi", color: "bg-rose-500/10 text-rose-600", visible: true, locked: (tierQuotas?.enable_interview_simulator ?? limits.canInterviewSimulator) === false, upgradeTier: "Pro" },
-    { icon: FileCheck, label: "Cover Letter", action: "cover-letter", color: "bg-teal-500/10 text-teal-600", visible: true, locked: (tierQuotas?.enable_cover_letter ?? limits.canCoverLetter) === false, upgradeTier: "Starter" },
-    { icon: Key, label: "Keyword", action: "keyword-extractor", color: "bg-blue-500/10 text-blue-600", visible: true, locked: (tierQuotas?.enable_keyword_extractor ?? limits.canKeywordExtract) === false, upgradeTier: "Starter" },
-    { icon: Gift, label: "Referral", action: "referral", color: "bg-pink-500/10 text-pink-600", visible: true },
-    { icon: TrendingUp, label: "Analitik", action: "analitik", color: "bg-indigo-500/10 text-indigo-600", visible: true, locked: (tierQuotas?.enable_analytics ?? limits.canAnalytics) === false, upgradeTier: "Pro" },
-    ...(admin ? [{ icon: Shield, label: "Admin", action: "admin" as const, color: "bg-red-500/10 text-red-600", visible: true }] : []),
+  const quickActions: {
+    icon: typeof FileText;
+    label: string;
+    action: string;
+    color: string;
+    visible: boolean;
+    locked?: boolean;
+    upgradeTier?: string;
+  }[] = [
+    {
+      icon: FileText,
+      label: "Kelola CV",
+      action: "manage",
+      color: "bg-primary-soft text-primary",
+      visible: true,
+    },
+    {
+      icon: Sparkles,
+      label: "AI Saran",
+      action: "ai-suggest",
+      color: "bg-violet-500/10 text-violet-600",
+      visible: true,
+    },
+    {
+      icon: BarChart3,
+      label: "CV Scoring",
+      action: "score",
+      color: "bg-amber-500/10 text-amber-600",
+      visible: true,
+    },
+    {
+      icon: Briefcase,
+      label: "Pelamaran",
+      action: "lamaran",
+      color: "bg-blue-500/10 text-blue-600",
+      visible: true,
+    },
+    {
+      icon: Mic,
+      label: "Simulasi",
+      action: "simulasi",
+      color: "bg-rose-500/10 text-rose-600",
+      visible: true,
+      locked: (tierQuotas?.enable_interview_simulator ?? limits.canInterviewSimulator) === false,
+      upgradeTier: "Pro",
+    },
+    {
+      icon: FileCheck,
+      label: "Cover Letter",
+      action: "cover-letter",
+      color: "bg-teal-500/10 text-teal-600",
+      visible: true,
+      locked: (tierQuotas?.enable_cover_letter ?? limits.canCoverLetter) === false,
+      upgradeTier: "Starter",
+    },
+    {
+      icon: Key,
+      label: "Keyword",
+      action: "keyword-extractor",
+      color: "bg-blue-500/10 text-blue-600",
+      visible: true,
+      locked: (tierQuotas?.enable_keyword_extractor ?? limits.canKeywordExtract) === false,
+      upgradeTier: "Starter",
+    },
+    {
+      icon: Gift,
+      label: "Referral",
+      action: "referral",
+      color: "bg-pink-500/10 text-pink-600",
+      visible: true,
+    },
+    {
+      icon: TrendingUp,
+      label: "Analitik",
+      action: "analitik",
+      color: "bg-indigo-500/10 text-indigo-600",
+      visible: true,
+      locked: (tierQuotas?.enable_analytics ?? limits.canAnalytics) === false,
+      upgradeTier: "Pro",
+    },
+    ...(admin
+      ? [
+          {
+            icon: Shield,
+            label: "Admin",
+            action: "admin" as const,
+            color: "bg-red-500/10 text-red-600",
+            visible: true,
+          },
+        ]
+      : []),
   ];
 
-  const CV_PICKER_ACTIONS = ["cv-review", "score", "ai-suggest", "cover-letter", "keyword-extractor"];
+  const CV_PICKER_ACTIONS = [
+    "cv-review",
+    "score",
+    "ai-suggest",
+    "cover-letter",
+    "keyword-extractor",
+  ];
 
   const handleFeatureClick = (action: string) => {
     if (CV_PICKER_ACTIONS.includes(action)) {
@@ -377,7 +545,7 @@ function DashboardPage() {
   }
 
   return (
-    <div className="container-page py-6 md:py-8 space-y-6">
+    <div className="container-page space-y-7 py-5 md:space-y-8 md:py-8">
       {/* ── Welcome Hero ── */}
       <WelcomeHeader user={user} onCreateCv={() => setShowCreateDialog(true)} />
 
@@ -402,10 +570,17 @@ function DashboardPage() {
       )}
 
       {/* ── Usage Stats ── */}
-      <section>
-        <div className="mb-4 flex items-center gap-2">
-          <BarChart3 className="h-5 w-5 text-primary" />
-          <h2 className="font-display text-lg font-bold text-foreground">Penggunaan Bulan Ini</h2>
+      <section className="space-y-4">
+        <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="mb-2 inline-flex rounded-full bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground">
+              Kuota bulan ini
+            </p>
+            <h2 className="font-display text-xl font-bold text-foreground">Pantau penggunaan</h2>
+          </div>
+          <p className="max-w-md text-sm leading-6 text-muted-foreground">
+            Lihat sisa kuota sebelum membuat banyak versi CV, cover letter, atau latihan interview.
+          </p>
         </div>
         <UsageBars bars={usageBars} />
       </section>
@@ -448,7 +623,7 @@ function DashboardPage() {
       <Dialog open={showModeDialog} onOpenChange={setShowModeDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Pilih Mode Pengisian CV</DialogTitle>
+            <DialogTitle>Pilih cara mulai</DialogTitle>
             <DialogDescription>
               Template:{" "}
               <strong>
@@ -474,8 +649,7 @@ function DashboardPage() {
                   </Badge>
                 </h3>
                 <p className="text-xs text-muted-foreground mt-1">
-                  AI akan memandumu langkah demi langkah. Cocok untuk yang baru
-                  pertama membuat CV atau bingung mulai dari mana.
+                  Cocok kalau kamu ingin dibantu menyusun isi CV langkah demi langkah.
                 </p>
                 {creating && <Loader2 className="h-4 w-4 animate-spin mt-2" />}
               </div>
@@ -491,10 +665,9 @@ function DashboardPage() {
                 <Edit3 className="h-5 w-5 text-muted-foreground" />
               </div>
               <div>
-                <h3 className="font-semibold text-sm">Isi Sendiri atau Upload CV Kamu yang sudah ada</h3>
+                <h3 className="font-semibold text-sm">Isi sendiri atau upload CV</h3>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Langsung isi CV dari editor. Cocok untuk yang sudah tahu apa
-                  yang ingin ditulis. dan bisa Upload CV yang kamu punya.
+                  Cocok kalau kamu sudah punya bahan dan ingin langsung masuk editor.
                 </p>
                 {creating && <Loader2 className="h-4 w-4 animate-spin mt-2" />}
               </div>
@@ -509,7 +682,7 @@ function DashboardPage() {
           <DialogHeader className="shrink-0">
             <DialogTitle>Pilih Template CV</DialogTitle>
             <DialogDescription>
-              Pilih template untuk CV barumu. Template bisa diubah nanti di editor.
+              Pilih tampilan awal. Struktur dan isi tetap bisa kamu ubah di editor.
             </DialogDescription>
           </DialogHeader>
           <div className="flex-1 overflow-y-auto -mx-6 px-6 py-2">

@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { Tier, TierLimits } from "@/lib/subscription";
-import { Crown, Star, Sparkles, Zap } from "lucide-react";
+import { Crown, Sparkles, Star, Zap } from "lucide-react";
 
 interface TierBannerProps {
   tier: Tier;
@@ -12,67 +12,85 @@ interface TierBannerProps {
   aiUsageCount: number;
 }
 
-const tierConfig: Record<Tier, { label: string; gradient: string; badgeClass: string }> = {
-  free: { label: "Free", gradient: "from-muted/80 to-card", badgeClass: "bg-muted-foreground/20 text-foreground" },
-  starter: { label: "Starter", gradient: "from-blue-500/10 to-card", badgeClass: "bg-info text-info-foreground" },
-  pro: { label: "Pro", gradient: "from-warning/10 to-card", badgeClass: "bg-warning text-warning-foreground" },
+const tierConfig: Record<Tier, { label: string; note: string; className: string }> = {
+  free: {
+    label: "Free",
+    note: "Mulai rapi dulu. Upgrade saat ritme apply mulai kencang.",
+    className: "border-border bg-card",
+  },
+  starter: {
+    label: "Starter",
+    note: "Kuota lebih lega untuk iterasi CV dan cover letter.",
+    className: "border-primary/25 bg-primary/5",
+  },
+  pro: {
+    label: "Pro",
+    note: "Siap untuk banyak role, banyak versi CV, dan interview practice.",
+    className: "border-amber-400/40 bg-amber-50/70",
+  },
 };
 
 export function TierBanner({ tier, limits, cvCount, aiUsageCount }: TierBannerProps) {
   const config = tierConfig[tier];
+  const Icon = tier === "pro" ? Crown : tier === "starter" ? Zap : Star;
 
   return (
-    <div className={cn(
-      "relative overflow-hidden rounded-2xl border bg-gradient-to-r p-5",
-      config.gradient,
-    )}>
-      <div className="pointer-events-none absolute inset-0 opacity-5">
-        <div className="absolute right-0 top-0 h-24 w-24 rounded-full bg-current blur-2xl" />
-      </div>
-
-      <div className="relative flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div className={cn(
-            "flex h-12 w-12 items-center justify-center rounded-2xl",
-            tier === "pro" ? "bg-warning/20 text-warning" : tier === "starter" ? "bg-info/20 text-info-foreground" : "bg-muted text-muted-foreground",
-          )}>
-            {tier === "pro" ? <Crown className="h-6 w-6" /> : tier === "starter" ? <Zap className="h-6 w-6" /> : <Star className="h-6 w-6" />}
+    <section className={cn("rounded-2xl border p-4 shadow-sm sm:p-5", config.className)}>
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="flex items-start gap-3">
+          <div
+            className={cn(
+              "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl",
+              tier === "pro"
+                ? "bg-amber-500 text-white"
+                : tier === "starter"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-foreground",
+            )}
+          >
+            <Icon className="h-5 w-5" />
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <Badge className={cn("text-xs font-semibold", config.badgeClass)}>
-                {config.label} Plan
-              </Badge>
-              {tier === "free" && (
-                <span className="text-xs text-muted-foreground">Paket gratis — mulai berkreasi!</span>
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant={tier === "free" ? "secondary" : "default"}>{config.label} Plan</Badge>
+              {tier !== "free" && (
+                <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary">
+                  <Sparkles className="h-3 w-3" />
+                  Premium aktif
+                </span>
               )}
             </div>
-            <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1">
-                <Star className="h-3 w-3" /> {limits.maxCvs === null ? "CV ∞" : `${cvCount}/${limits.maxCvs} CV`}
-              </span>
-              <span className="flex items-center gap-1">
-                <Sparkles className="h-3 w-3" /> {limits.maxAiSuggestions === null ? "AI ∞" : `${aiUsageCount}/${limits.maxAiSuggestions} AI`}
-              </span>
-            </div>
+            <p className="mt-1 text-sm leading-6 text-muted-foreground">{config.note}</p>
           </div>
         </div>
 
-        {tier === "free" && (
-          <Button asChild className="gap-2 shadow-md shadow-primary/20">
-            <Link to="/harga">
-              <Sparkles className="h-4 w-4" /> Upgrade Plan
-            </Link>
-          </Button>
-        )}
-        {tier !== "free" && (
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1.5 font-medium text-primary">
-              <Sparkles className="h-3 w-3" /> Fitur premium aktif
-            </span>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            <div className="rounded-xl border bg-background px-3 py-2">
+              <span className="block font-semibold text-foreground">
+                {limits.maxCvs === null ? "Unlimited" : `${cvCount}/${limits.maxCvs}`}
+              </span>
+              <span className="text-muted-foreground">CV</span>
+            </div>
+            <div className="rounded-xl border bg-background px-3 py-2">
+              <span className="block font-semibold text-foreground">
+                {limits.maxAiSuggestions === null
+                  ? "Unlimited"
+                  : `${aiUsageCount}/${limits.maxAiSuggestions}`}
+              </span>
+              <span className="text-muted-foreground">AI saran</span>
+            </div>
           </div>
-        )}
+          {tier === "free" && (
+            <Button asChild className="gap-2">
+              <Link to="/harga">
+                Upgrade
+                <Zap className="h-4 w-4" />
+              </Link>
+            </Button>
+          )}
+        </div>
       </div>
-    </div>
+    </section>
   );
 }

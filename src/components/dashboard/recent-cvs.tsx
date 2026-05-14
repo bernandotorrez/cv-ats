@@ -1,8 +1,7 @@
 import { Link } from "@tanstack/react-router";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, FileText, Pencil, ChevronRight, Clock, FileEdit, CheckCircle2 } from "lucide-react";
+import { CheckCircle2, ChevronRight, Clock, FileEdit, FileText, Pencil, Plus } from "lucide-react";
 import { TEMPLATES } from "@/lib/cv-types";
 import { cn } from "@/lib/utils";
 
@@ -20,107 +19,120 @@ interface RecentCvsProps {
   onCreateCv?: () => void;
 }
 
-const templateColors = [
-  "from-primary/20 to-secondary/20",
-  "from-blue-500/20 to-cyan-500/20",
-  "from-violet-500/20 to-purple-500/20",
-  "from-amber-500/20 to-orange-500/20",
-  "from-rose-500/20 to-pink-500/20",
+const accentClasses = [
+  "bg-primary/10 text-primary",
+  "bg-sky-500/10 text-sky-700",
+  "bg-violet-500/10 text-violet-700",
+  "bg-amber-500/10 text-amber-700",
 ];
 
-export function RecentCvs({ cvs, loading, onCreateCv }: RecentCvsProps) {
+export function RecentCvs({ cvs, onCreateCv }: RecentCvsProps) {
   return (
-    <section>
-      <div className="mb-4 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <FileText className="h-5 w-5 text-primary" />
-          <h2 className="font-display text-lg font-bold text-foreground">CV Terbaru</h2>
+    <section className="space-y-4">
+      <div className="flex items-end justify-between gap-4">
+        <div>
+          <p className="mb-2 inline-flex rounded-full bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground">
+            CV workspace
+          </p>
+          <h2 className="font-display text-xl font-bold text-foreground">CV terbaru</h2>
         </div>
-        <Button asChild variant="ghost" size="sm" className="gap-1 text-xs text-muted-foreground hover:text-primary">
+        <Button asChild variant="ghost" size="sm" className="gap-1">
           <Link to="/cv">
-            Lihat semua <ChevronRight className="h-3.5 w-3.5" />
+            Lihat semua
+            <ChevronRight className="h-4 w-4" />
           </Link>
         </Button>
       </div>
 
       {cvs.length === 0 ? (
-        <Card className="border-dashed border-2">
-          <CardContent className="flex flex-col items-center gap-4 py-12 text-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary-soft">
-              <FileText className="h-8 w-8 text-primary" />
-            </div>
-            <div>
-              <h3 className="font-display font-bold text-foreground">Belum ada CV</h3>
-              <p className="mt-1 text-sm text-muted-foreground max-w-xs">
-                Buat CV pertamamu sekarang — gratis, cepat, dan mudah!
-              </p>
-            </div>
-            {onCreateCv ? (
-              <Button onClick={onCreateCv} className="gap-2">
-                <Plus className="h-4 w-4" /> Buat CV Pertamamu
-              </Button>
-            ) : (
-              <Button asChild className="gap-2">
-                <Link to="/cv">
-                  <Plus className="h-4 w-4" /> Buat CV Pertamamu
-                </Link>
-              </Button>
-            )}
-          </CardContent>
-        </Card>
+        <div className="rounded-2xl border border-dashed bg-card p-8 text-center shadow-sm">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10">
+            <FileText className="h-7 w-7 text-primary" />
+          </div>
+          <h3 className="mt-4 font-display text-lg font-bold text-foreground">
+            Mulai dari satu CV kuat
+          </h3>
+          <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-muted-foreground">
+            Buat CV pertamamu, lalu gunakan AI untuk memperjelas pengalaman, bukti, dan keyword.
+          </p>
+          {onCreateCv ? (
+            <Button onClick={onCreateCv} className="mt-5 gap-2">
+              <Plus className="h-4 w-4" />
+              Buat CV Pertama
+            </Button>
+          ) : (
+            <Button asChild className="mt-5 gap-2">
+              <Link to="/cv">
+                <Plus className="h-4 w-4" />
+                Buat CV Pertama
+              </Link>
+            </Button>
+          )}
+        </div>
       ) : (
-        <div className="space-y-2">
+        <div className="grid gap-3">
           {cvs.slice(0, 4).map((cv, idx) => {
             const tpl = TEMPLATES.find((t) => t.id === cv.template_id);
-            const colorClass = templateColors[idx % templateColors.length];
             const isDraft = cv.status === "draft";
             const updatedDate = new Date(cv.updated_at);
-            const now = new Date();
-            const diffMs = now.getTime() - updatedDate.getTime();
+            const diffMs = new Date().getTime() - updatedDate.getTime();
             const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-            let timeAgo = "";
-            if (diffDays === 0) timeAgo = "Hari ini";
-            else if (diffDays === 1) timeAgo = "Kemarin";
-            else if (diffDays < 7) timeAgo = `${diffDays} hari lalu`;
-            else timeAgo = updatedDate.toLocaleDateString("id-ID", { day: "numeric", month: "short" });
+            const timeAgo =
+              diffDays === 0
+                ? "Hari ini"
+                : diffDays === 1
+                  ? "Kemarin"
+                  : diffDays < 7
+                    ? `${diffDays} hari lalu`
+                    : updatedDate.toLocaleDateString("id-ID", { day: "numeric", month: "short" });
 
             return (
               <Link
                 key={cv.id}
                 to="/cv/$id"
                 params={{ id: cv.id }}
-                className="group flex items-center gap-4 rounded-2xl border bg-card p-4 transition-all hover:border-primary/30 hover:shadow-md hover:-translate-y-0.5"
+                className="group rounded-2xl border bg-card p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-md"
               >
-                <div className={cn(
-                  "flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br",
-                  colorClass,
-                )}>
-                  <FileText className="h-5 w-5 text-primary" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold truncate text-foreground group-hover:text-primary transition-colors">
-                    {cv.title}
-                  </p>
-                  <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
-                    <span>{tpl?.name ?? cv.template_id}</span>
-                    <span>·</span>
-                    <span className="flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      {timeAgo}
-                    </span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge
-                    variant="outline"
+                <div className="flex items-center gap-4">
+                  <div
                     className={cn(
-                      "text-[10px] font-semibold",
-                      isDraft ? "border-warning/30 text-warning" : "border-primary/30 text-primary",
+                      "flex h-12 w-12 shrink-0 items-center justify-center rounded-xl",
+                      accentClasses[idx % accentClasses.length],
                     )}
                   >
-                    <>{isDraft ? <FileEdit className="h-3 w-3" /> : <CheckCircle2 className="h-3 w-3" />} {isDraft ? "Draft" : "Selesai"}</>
-                  </Badge>
-                  <Pencil className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                    <FileText className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-bold text-foreground transition-colors group-hover:text-primary">
+                      {cv.title}
+                    </p>
+                    <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                      <span>{tpl?.name ?? cv.template_id}</span>
+                      <span className="flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        {timeAgo}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <Badge
+                      variant="outline"
+                      className={cn(
+                        "hidden gap-1 text-[10px] font-semibold sm:inline-flex",
+                        isDraft
+                          ? "border-amber-400/50 text-amber-700"
+                          : "border-primary/30 text-primary",
+                      )}
+                    >
+                      {isDraft ? (
+                        <FileEdit className="h-3 w-3" />
+                      ) : (
+                        <CheckCircle2 className="h-3 w-3" />
+                      )}
+                      {isDraft ? "Draft" : "Selesai"}
+                    </Badge>
+                    <Pencil className="h-4 w-4 text-muted-foreground transition-colors group-hover:text-primary" />
+                  </div>
                 </div>
               </Link>
             );

@@ -1,7 +1,6 @@
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { ArrowUpRight, Lock, Zap } from "lucide-react";
+import { ArrowRight, Lock, Zap } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 interface PowerFeature {
@@ -28,70 +27,71 @@ export function PowerFeatures({ features, onFeatureClick, onUpgrade }: PowerFeat
   if (visible.length === 0) return null;
 
   return (
-    <section>
-      <div className="mb-4 flex items-center gap-2">
-        <Zap className="h-5 w-5 text-warning" />
-        <h2 className="font-display text-lg font-bold text-foreground">Fitur Andalan</h2>
+    <section className="space-y-4">
+      <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-700">
+            <Zap className="h-3.5 w-3.5" />
+            Tools paling berdampak
+          </div>
+          <h2 className="font-display text-xl font-bold text-foreground">
+            Pilih langkah berikutnya
+          </h2>
+        </div>
+        <p className="max-w-md text-sm leading-6 text-muted-foreground">
+          Mulai dari audit CV, cek ATS, lalu siapkan jawaban interview dengan alur yang lebih fokus.
+        </p>
       </div>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {visible.map((f) => (
+
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        {visible.map((f, index) => (
           <button
             key={f.label}
-            onClick={() => f.locked ? onUpgrade() : onFeatureClick(f.action)}
-            className="group relative block w-full text-left"
+            type="button"
+            onClick={() => (f.locked ? onUpgrade() : onFeatureClick(f.action))}
+            className="group h-full text-left"
           >
-            <Card className={cn(
-              "h-full overflow-hidden border-2 transition-all duration-300",
-              f.locked
-                ? "border-dashed border-muted-foreground/20 opacity-75 hover:border-warning/40"
-                : "border-border hover:border-primary/40 hover:shadow-xl hover:-translate-y-1",
-            )}>
-              {!f.locked && (
-                <div className={cn("h-1 w-full", f.gradient || "bg-gradient-to-r from-primary to-secondary")} />
+            <article
+              className={cn(
+                "flex h-full flex-col rounded-2xl border bg-card p-5 shadow-sm transition-all",
+                f.locked
+                  ? "border-dashed opacity-80 hover:border-amber-400"
+                  : "hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-md",
               )}
-              <CardContent className="p-5">
-                {f.locked && (
-                  <div className="absolute top-3 right-3 flex items-center gap-1 rounded-full bg-warning/15 border border-warning/30 px-2.5 py-1">
-                    <Lock className="h-3 w-3 text-warning" />
-                    <span className="text-[10px] font-semibold text-warning">{f.upgradeTier}</span>
-                  </div>
-                )}
-
-                <div className={cn(
-                  "mb-3 flex h-11 w-11 items-center justify-center rounded-2xl transition-transform group-hover:scale-110",
-                  f.locked ? "bg-muted" : "bg-primary-soft",
-                )}>
-                  <f.icon className={cn("h-5 w-5", f.locked ? "text-muted-foreground" : "text-primary")} />
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div
+                  className={cn(
+                    "flex h-11 w-11 items-center justify-center rounded-xl",
+                    index % 3 === 0
+                      ? "bg-primary/10 text-primary"
+                      : index % 3 === 1
+                        ? "bg-sky-500/10 text-sky-700"
+                        : "bg-rose-500/10 text-rose-700",
+                  )}
+                >
+                  <f.icon className="h-5 w-5" />
                 </div>
-
-                <h3 className={cn(
-                  "font-display font-bold",
-                  !f.locked && "group-hover:text-primary transition-colors",
-                )}>
-                  {f.label}
-                </h3>
-                <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground line-clamp-2">
-                  {f.desc}
-                </p>
-
-                <div className="mt-4 flex items-center justify-between">
-                  <Badge variant="secondary" className="text-[10px] font-semibold">
-                    {f.badge}
+                {f.locked ? (
+                  <Badge variant="outline" className="gap-1 border-amber-400/50 text-amber-700">
+                    <Lock className="h-3 w-3" />
+                    {f.upgradeTier}
                   </Badge>
-                  <span className={cn(
-                    "flex items-center gap-1 text-xs font-semibold transition-all",
-                    f.locked ? "text-warning" : "text-primary group-hover:gap-2",
-                  )}>
-                    {f.locked ? "Upgrade" : "Coba"}
-                    {f.locked ? (
-                      <Lock className="h-3 w-3" />
-                    ) : (
-                      <ArrowUpRight className="h-3 w-3" />
-                    )}
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
+                ) : (
+                  <Badge variant="secondary">{f.badge}</Badge>
+                )}
+              </div>
+
+              <h3 className="mt-5 font-display text-base font-bold text-foreground transition-colors group-hover:text-primary">
+                {f.label}
+              </h3>
+              <p className="mt-2 line-clamp-3 text-sm leading-6 text-muted-foreground">{f.desc}</p>
+
+              <div className="mt-auto flex items-center gap-2 pt-5 text-sm font-semibold text-primary">
+                {f.locked ? "Lihat paket" : "Buka fitur"}
+                {f.locked ? <Lock className="h-4 w-4" /> : <ArrowRight className="h-4 w-4" />}
+              </div>
+            </article>
           </button>
         ))}
       </div>

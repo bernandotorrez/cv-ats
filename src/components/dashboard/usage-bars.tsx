@@ -1,4 +1,3 @@
-import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import type { LucideIcon } from "lucide-react";
@@ -21,38 +20,52 @@ export function UsageBars({ bars }: UsageBarsProps) {
   if (visibleBars.length === 0) return null;
 
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {visibleBars.map((bar) => {
         const pct = bar.max === null ? 100 : Math.min((bar.used / bar.max) * 100, 100);
         const isNearLimit = bar.max !== null && pct >= 80;
         const isUnlimited = bar.max === null;
 
         return (
-          <Card key={bar.label} className="group relative overflow-hidden border transition-all hover:shadow-md hover:-translate-y-0.5">
-            <CardContent className="p-4">
-              <div className="mb-3 flex items-center justify-between">
-                <div className={cn("flex h-8 w-8 items-center justify-center rounded-lg", bar.color)}>
-                  <bar.icon className="h-4 w-4" />
+          <article
+            key={bar.label}
+            className="rounded-2xl border bg-card p-4 shadow-sm transition-colors hover:border-primary/30"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex min-w-0 items-center gap-3">
+                <div
+                  className={cn(
+                    "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl",
+                    bar.color,
+                  )}
+                >
+                  <bar.icon className="h-5 w-5" />
                 </div>
-                {isUnlimited && (
-                  <span className="text-[10px] font-bold text-primary">∞</span>
-                )}
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-foreground">{bar.label}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {isUnlimited
+                      ? "Tanpa batas bulan ini"
+                      : `${Math.max((bar.max ?? 0) - bar.used, 0)} sisa`}
+                  </p>
+                </div>
               </div>
-              <p className="text-xs font-medium text-foreground">{bar.label}</p>
-              <div className="mt-1 flex items-baseline gap-1">
-                <span className={cn("text-lg font-bold tabular-nums", isNearLimit ? "text-warning" : "text-foreground")}>
+              <div className="text-right">
+                <p
+                  className={cn("text-sm font-bold tabular-nums", isNearLimit && "text-amber-600")}
+                >
                   {bar.used}
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  {bar.max === null ? "unlimited" : `/ ${bar.max}`}
-                </span>
+                </p>
+                <p className="text-[11px] text-muted-foreground">
+                  {isUnlimited ? "unlimited" : `/ ${bar.max}`}
+                </p>
               </div>
-              <Progress
-                value={pct}
-                className={cn("mt-2 h-1.5", isNearLimit && "[&>div]:bg-warning")}
-              />
-            </CardContent>
-          </Card>
+            </div>
+            <Progress
+              value={pct}
+              className={cn("mt-4 h-2", isNearLimit && "[&>div]:bg-amber-500")}
+            />
+          </article>
         );
       })}
     </div>

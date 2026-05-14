@@ -1,4 +1,3 @@
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Lock, Zap } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -23,37 +22,48 @@ export function QuickActions({ actions, onAction }: QuickActionsProps) {
   if (visible.length === 0) return null;
 
   return (
-    <section>
-      <div className="mb-4 flex items-center gap-2">
-        <Zap className="h-5 w-5 text-warning" />
-        <h2 className="font-display text-lg font-bold text-foreground">Aksi Cepat</h2>
+    <section className="space-y-4">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+            <Zap className="h-3.5 w-3.5" />
+            Shortcut
+          </div>
+          <h2 className="font-display text-xl font-bold text-foreground">Aksi cepat</h2>
+        </div>
       </div>
-      <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         {visible.map((a) => (
           <button
             key={a.label}
+            type="button"
             onClick={() => !a.locked && onAction(a.action)}
             className={cn(
-              "group relative flex flex-col items-center gap-2.5 rounded-2xl border-2 p-4 transition-all duration-200",
+              "group relative flex min-h-28 flex-col justify-between rounded-2xl border bg-card p-4 text-left shadow-sm transition-all",
               a.locked
-                ? "border-dashed border-muted-foreground/15 opacity-60 cursor-not-allowed"
-                : "border-transparent bg-card hover:border-primary/30 hover:shadow-md hover:-translate-y-0.5 active:translate-y-0",
+                ? "cursor-not-allowed border-dashed opacity-65"
+                : "hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-md",
             )}
+            aria-disabled={a.locked}
           >
             {a.locked && (
-              <div className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-warning/20 border border-warning/30">
-                <Lock className="h-2.5 w-2.5 text-warning" />
-              </div>
+              <span className="absolute right-3 top-3 inline-flex h-6 w-6 items-center justify-center rounded-full bg-amber-500/10 text-amber-700">
+                <Lock className="h-3.5 w-3.5" />
+              </span>
             )}
-            <div className={cn(
-              "flex h-10 w-10 items-center justify-center rounded-xl transition-transform group-hover:scale-110",
-              a.color,
-            )}>
+            <div className={cn("flex h-10 w-10 items-center justify-center rounded-xl", a.color)}>
               <a.icon className="h-5 w-5" />
             </div>
-            <span className="text-[11px] font-medium text-center leading-tight">
-              {a.label}
-            </span>
+            <div>
+              <span className="block text-sm font-semibold leading-tight text-foreground">
+                {a.label}
+              </span>
+              {a.locked && (
+                <span className="mt-1 block text-[11px] font-medium text-amber-700">
+                  {a.upgradeTier}
+                </span>
+              )}
+            </div>
           </button>
         ))}
       </div>
