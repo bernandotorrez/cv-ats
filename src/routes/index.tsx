@@ -205,7 +205,10 @@ function LandingPage() {
             </Badge>
 
             <h1 className="mt-5 max-w-4xl break-words font-display text-4xl font-extrabold leading-[1.04] tracking-tight text-white sm:text-5xl lg:text-7xl">
-              CV yang membuat rekruter paham kenapa kamu layak dipanggil.
+              CV yang membuat rekruter paham{" "}
+              <span className="underline decoration-white/80 decoration-4 underline-offset-[0.16em]">
+                kenapa kamu layak dipanggil.
+              </span>
             </h1>
 
             <p className="mt-5 max-w-2xl break-words text-base leading-8 text-white/86 sm:text-lg">
