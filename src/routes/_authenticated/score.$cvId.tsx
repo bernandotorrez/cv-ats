@@ -31,7 +31,6 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { scoreCv } from "@/lib/ai-functions";
 import { TEMPLATES, emptyCv, type CvData, type TemplateId } from "@/lib/cv-types";
-import { scoreCvLocally } from "@/lib/local-scoring";
 import { buildSeo } from "@/lib/seo";
 
 export const Route = createFileRoute("/_authenticated/score/$cvId")({
@@ -71,6 +70,7 @@ function CvScorePage() {
   const [jobDescription, setJobDescription] = useState("");
   const [targetRole, setTargetRole] = useState("");
   const [result, setResult] = useState<ScoreResult | null>(null);
+  const [scoreError, setScoreError] = useState<string | null>(null);
   const [prevScores, setPrevScores] = useState<Database["public"]["Tables"]["cv_scores"]["Row"][]>(
     [],
   );
@@ -105,6 +105,7 @@ function CvScorePage() {
   const handleScore = async () => {
     setScoring(true);
     setResult(null);
+    setScoreError(null);
 
     try {
       const res = await scoreCv({
@@ -128,20 +129,9 @@ function CvScorePage() {
       toast.success("Skor CV berhasil dianalisis.");
     } catch (error) {
       const message = error instanceof Error ? error.message : "AI scoring tidak tersedia";
-      console.warn("AI scoring gagal, fallback ke local scoring:", message);
-
-      const localResult = scoreCvLocally(cvData, targetRole || undefined);
-      setResult({
-        overallScore: localResult.overallScore,
-        breakdown: localResult.breakdown,
-        summary: `Skor heuristik dipakai karena AI belum tersedia. ${
-          localResult.strengths[0] || ""
-        }`,
-        strengths: localResult.strengths,
-        weaknesses: localResult.weaknesses,
-        suggestions: localResult.suggestions,
-      });
-      toast.warning("AI scoring belum dapat diakses. Skor heuristik dipakai.");
+      console.warn("AI scoring gagal:", message);
+      setScoreError(message);
+      toast.error(message);
     } finally {
       setScoring(false);
     }
@@ -300,6 +290,20 @@ function CvScorePage() {
 
           {result ? (
             <ScoreResultPanel result={result} />
+          ) : scoreError ? (
+            <Card className="border-destructive/35 bg-destructive/5">
+              <CardContent className="p-6 text-center sm:p-8">
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-background text-destructive">
+                  <AlertCircle className="h-6 w-6" />
+                </div>
+                <h2 className="mt-4 font-display text-2xl font-bold text-foreground">
+                  AI scoring gagal.
+                </h2>
+                <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
+                  {scoreError}
+                </p>
+              </CardContent>
+            </Card>
           ) : (
             <Card className="border-dashed border-border bg-muted/30">
               <CardContent className="p-6 text-center sm:p-8">
