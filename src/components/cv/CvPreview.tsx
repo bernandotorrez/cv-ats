@@ -115,20 +115,20 @@ export function CvPreview({
         }}
       >
         {renderTemplate()}
+        {showWatermark && (
+          <div
+            className="cv-preview-watermark text-xs text-gray-400 pointer-events-none"
+            style={{
+              marginTop: "10mm",
+              fontSize: "8pt",
+              color: "#ccc",
+              textAlign: "center",
+            }}
+          >
+            {t(language, "watermark")}
+          </div>
+        )}
       </div>
-
-      {showWatermark && (
-        <div
-          className="cv-preview-watermark absolute bottom-4 left-1/2 -translate-x-1/2 text-xs text-gray-400 pointer-events-none"
-          style={{
-            fontSize: "8pt",
-            color: "#ccc",
-            textAlign: "center",
-          }}
-        >
-          {t(language, "watermark")}
-        </div>
-      )}
 
       {totalPages > 1 && (
         <div
@@ -187,20 +187,20 @@ export function MultiPageCvPreview({
             }}
           >
             {renderTemplateById(template, pageData, index === 0, language)}
+            {showWatermark && index === pages.length - 1 && (
+              <div
+                className="cv-preview-watermark text-xs text-gray-400 pointer-events-none"
+                style={{
+                  marginTop: "10mm",
+                  fontSize: "8pt",
+                  color: "#ccc",
+                  textAlign: "center",
+                }}
+              >
+                {t(language, "watermark")}
+              </div>
+            )}
           </div>
-
-          {showWatermark && (
-            <div
-              className="cv-preview-watermark absolute bottom-4 left-1/2 -translate-x-1/2 text-xs text-gray-400 pointer-events-none"
-              style={{
-                fontSize: "8pt",
-                color: "#ccc",
-                textAlign: "center",
-              }}
-            >
-              {t(language, "watermark")}
-            </div>
-          )}
 
           {pages.length > 1 && (
             <div
@@ -608,12 +608,12 @@ export const cvPrintStyles = `
     page-break-after: auto;
   }
 
-  /* Ensure watermark shows in print */
+  /* Watermark should flow after the last CV content */
   .cv-preview-watermark {
     display: block !important;
-    position: absolute !important;
-    bottom: 8mm !important;
-    right: 8mm !important;
+    position: static !important;
+    margin-top: 10mm !important;
+    text-align: center !important;
   }
 }
 `;

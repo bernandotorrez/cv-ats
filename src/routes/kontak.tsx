@@ -32,19 +32,19 @@ const contactChannels = [
   {
     icon: Mail,
     label: "Email support",
-    value: "halo@cvpintar.web.id",
+    value: "mail.bernand@gmail.com",
     description:
       "Paling pas untuk pertanyaan akun, invoice, kerja sama, atau detail yang butuh jejak tertulis.",
-    href: "mailto:halo@cvpintar.web.id",
+    href: "mailto:mail.bernand@gmail.com",
     action: "Kirim email",
   },
   {
     icon: MessageCircle,
     label: "WhatsApp",
-    value: "+62 812-3456-7890",
+    value: "+62 851-9060-7141",
     description:
       "Untuk pertanyaan cepat seputar fitur, review CV, atau jadwal private coaching dengan HR Recruiter.",
-    href: "https://wa.me/6281234567890",
+    href: "https://wa.me/6285190607141",
     action: "Chat WhatsApp",
   },
 ];
