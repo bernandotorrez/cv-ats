@@ -16,8 +16,18 @@ Deno.serve(async (req: Request) => {
 
     if (!cvId || !section) throw new Error("cvId dan section diperlukan");
 
+    const languageRule =
+      lang === "en"
+        ? "All option and explanation values MUST be written in professional English."
+        : "Semua nilai option dan explanation WAJIB ditulis dalam Bahasa Indonesia profesional.";
+    const activeVerbRule =
+      lang === "en"
+        ? 'Use active verbs such as "Led", "Developed", "Increased", "Managed", "Designed", "Optimized".'
+        : 'Gunakan kata kerja aktif seperti "Memimpin", "Mengembangkan", "Meningkatkan", "Mengelola", "Merancang", "Mengoptimalkan".';
+
     const prompts: Record<string, string> = {
       summary: `Buatkan 3 opsi ringkasan profil profesional (2-4 kalimat) ${getLanguageInstruction(lang)}. Setiap opsi harus punya gaya berbeda.
+${languageRule}
 Target posisi: ${targetRole || "tidak disebutkan"}
 ${currentContent ? `Konten saat ini: ${currentContent}\nBuat opsi yang lebih baik dengan gaya berbeda.` : "Buat 3 opsi dari awal."}
 ${additionalContext ? `Konteks: ${additionalContext}` : ""}
@@ -28,6 +38,7 @@ OUTPUT FORMAT (JSON):
 HANYA JSON array, tanpa markdown, tanpa kata pembuka/penutup.`,
 
       headline: `Buatkan 3 opsi headline profesional ${getLanguageInstruction(lang)} untuk posisi ${targetRole || "profesional"}.
+${languageRule}
 ${currentContent ? `Headline saat ini: ${currentContent}\nBuat opsi dengan gaya berbeda.` : ""}
 ${regenerateIndex !== undefined ? `Opsi ke-${regenerateIndex + 1} sebelumnya kurang cocok. Buatkan opsi baru.` : ""}
 Syarat: singkat, sebut posisi + keahlian inti + value proposition.
@@ -36,6 +47,7 @@ OUTPUT FORMAT (JSON):
 HANYA JSON array.`,
 
       experience: `Buatkan 3 opsi deskripsi pengalaman kerja (3-5 poin) ${getLanguageInstruction(lang)}.
+${languageRule}
 ${targetRole ? `Target: ${targetRole}` : ""}
 ${currentContent ? `Konten saat ini: ${currentContent}\nBuat opsi dengan gaya berbeda.` : "Buat 3 opsi dari awal."}
 ${additionalContext ? `Konteks: ${additionalContext}` : ""}
@@ -43,7 +55,7 @@ ${regenerateIndex !== undefined ? `Opsi ke-${regenerateIndex + 1} sebelumnya kur
 
 ATURAN PENTING untuk setiap opsi:
 - Setiap poin DIAWALI dengan dash: "- "
-- Gunakan kata kerja aktif: "Memimpin...", "Mengembangkan...", "Meningkatkan..."
+- ${activeVerbRule}
 - Sertakan metrik kuantitatif: "...meningkatkan 35%", "...mengelola tim 8 orang"
 - Fokus pada PENCAPAIAN, bukan tugas harian.
 
@@ -52,6 +64,7 @@ OUTPUT FORMAT (JSON):
 HANYA JSON array, tanpa markdown.`,
 
       education: `Buatkan 3 opsi deskripsi pendidikan (1-3 kalimat) ${getLanguageInstruction(lang)}.
+${languageRule}
 ${currentContent ? `Deskripsi saat ini: ${currentContent}\nBuat opsi dengan gaya berbeda.` : "Buat 3 opsi dari awal."}
 ${additionalContext ? `Konteks: ${additionalContext}` : ""}
 ${regenerateIndex !== undefined ? `Opsi ke-${regenerateIndex + 1} sebelumnya kurang cocok. Buatkan opsi baru.` : ""}
@@ -60,7 +73,8 @@ OUTPUT FORMAT (JSON):
 [{"option": "deskripsi opsi 1", "explanation": "kenapa deskripsi ini efektif"}, ...]
 HANYA JSON array.`,
 
-      skills: `Sarankan 3 opsi daftar skill (hard + soft) untuk target posisi: ${targetRole || "umum"}.
+      skills: `Sarankan 3 opsi daftar skill (hard + soft) ${getLanguageInstruction(lang)} untuk target posisi: ${targetRole || "umum"}.
+${languageRule}
 ${currentContent ? `Skill saat ini: ${currentContent}\nBuat opsi dengan fokus berbeda.` : ""}
 ${additionalContext ? `Konteks: ${additionalContext}` : ""}
 ${regenerateIndex !== undefined ? `Opsi ke-${regenerateIndex + 1} sebelumnya kurang cocok. Buatkan opsi baru.` : ""}
@@ -85,7 +99,9 @@ HANYA JSON array.`,
       }
     } catch {
       // Fallback: wrap single response as one option
-      suggestions = [{ option: result.trim(), explanation: "Saran dari AI" }];
+      suggestions = [
+        { option: result.trim(), explanation: lang === "en" ? "AI suggestion" : "Saran dari AI" },
+      ];
     }
 
     return corsResponse({ suggestions }, 200, req);

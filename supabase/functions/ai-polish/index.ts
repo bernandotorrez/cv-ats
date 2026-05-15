@@ -49,10 +49,15 @@ Deno.serve(async (req: Request) => {
     }
 
     const ctxLine = context ? `\nKONTEKS: ${context}` : "";
+    const languageRule =
+      lang === "en"
+        ? "The final output MUST be in professional English."
+        : "Output akhir WAJIB dalam Bahasa Indonesia formal dan profesional.";
 
     const prompt = `Perbaiki teks deskripsi pengalaman kerja/pendidikan berikut agar lebih profesional, impactful, dan ATS-friendly.${ctxLine}
 
 ATURAN:
+- ${languageRule}
 - ${getActionVerbExamples(lang)}
 - Tambahkan metrik/angka jika memungkinkan (contoh: ${lang === "en" ? '"increased 30%", "managed team of 5"' : '"meningkatkan 30%", "mengelola tim 5 orang"'})
 - ${lang === "en" ? "Professional & formal English" : "Bahasa Indonesia formal & profesional"}

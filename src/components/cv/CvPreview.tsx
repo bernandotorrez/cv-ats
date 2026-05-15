@@ -119,14 +119,14 @@ export function CvPreview({
 
       {showWatermark && (
         <div
-          className="cv-preview-watermark absolute bottom-4 right-4 text-xs text-gray-400 pointer-events-none"
+          className="cv-preview-watermark absolute bottom-4 left-1/2 -translate-x-1/2 text-xs text-gray-400 pointer-events-none"
           style={{
             fontSize: "8pt",
             color: "#ccc",
-            textAlign: "right",
+            textAlign: "center",
           }}
         >
-          {t(language, 'watermark')}
+          {t(language, "watermark")}
         </div>
       )}
 
@@ -191,14 +191,14 @@ export function MultiPageCvPreview({
 
           {showWatermark && (
             <div
-              className="absolute bottom-4 right-4 text-xs text-gray-400 pointer-events-none"
+              className="cv-preview-watermark absolute bottom-4 left-1/2 -translate-x-1/2 text-xs text-gray-400 pointer-events-none"
               style={{
                 fontSize: "8pt",
                 color: "#ccc",
-                textAlign: "right",
+                textAlign: "center",
               }}
             >
-              {t(language, 'watermark')}
+              {t(language, "watermark")}
             </div>
           )}
 

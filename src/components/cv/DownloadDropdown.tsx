@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Download, FileText, File, ChevronDown, Loader2 } from "lucide-react";
+import { Download, FileText, File, ChevronDown, Loader2, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { CvData, TemplateId } from "@/lib/cv-types";
 import { generateDocx, downloadBlob, downloadPdf } from "@/lib/cv-export";
@@ -19,6 +19,7 @@ export function DownloadDropdown({ cv, fileName = "CV", templateId = "jakarta", 
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const isFreeTier = showWatermark;
 
   const trackDownload = async () => {
     if (!cvId || !userId) return;
@@ -49,9 +50,10 @@ export function DownloadDropdown({ cv, fileName = "CV", templateId = "jakarta", 
   };
 
   const handleDownloadDocx = async () => {
+    if (isFreeTier) return;
     setLoading("docx");
     try {
-      const blob = await generateDocx(cv, { template: templateId, watermark: showWatermark });
+      const blob = await generateDocx(cv, { template: templateId, watermark: false });
       downloadBlob(blob, `${fileName}.docx`);
       setOpen(false);
       trackDownload();
@@ -92,24 +94,29 @@ export function DownloadDropdown({ cv, fileName = "CV", templateId = "jakarta", 
           {/* DOCX Option */}
           <button
             onClick={handleDownloadDocx}
-            disabled={loading === "docx"}
-            className="w-full flex items-center gap-3 px-3 py-2.5 text-sm hover:bg-muted/50 transition-colors text-left disabled:opacity-50"
+            disabled={loading === "docx" || isFreeTier}
+            title={isFreeTier ? "DOCX tersedia untuk paket Starter ke atas" : "Download Microsoft Word"}
+            className="w-full flex items-center gap-3 px-3 py-2.5 text-sm hover:bg-muted/50 transition-colors text-left disabled:cursor-not-allowed disabled:opacity-50"
           >
             {loading === "docx" ? (
               <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
+            ) : isFreeTier ? (
+              <Lock className="h-4 w-4 text-muted-foreground" />
             ) : (
               <File className="h-4 w-4 text-blue-600" />
             )}
             <div className="flex-1">
               <div className="font-medium">DOCX</div>
-              <div className="text-xs text-muted-foreground">Microsoft Word</div>
+              <div className="text-xs text-muted-foreground">
+                {isFreeTier ? "Upgrade untuk download Word" : "Microsoft Word"}
+              </div>
             </div>
           </button>
 
-          {showWatermark && (
+          {isFreeTier && (
             <div className="px-3 py-2 border-t border-border mt-1">
               <p className="text-xs text-muted-foreground">
-                Free tier: PDF dengan watermark
+                Free tier hanya bisa download PDF dengan watermark.
               </p>
             </div>
           )}

@@ -211,7 +211,7 @@ function CvEditorPage() {
       setTimeout(() => setSaveStatus((s) => (s === "saved" ? "idle" : s)), 3000);
       return true;
     },
-    [id, title, templateId, data],
+    [cvLanguage, data, id, title, templateId],
   );
 
   // ─── Auto-save (onChange-triggered, debounced) ─────────────
@@ -481,7 +481,7 @@ function CvEditorPage() {
         setAiLoading(null);
       }
     },
-    [id, targetRole],
+    [cvLanguage, id, targetRole],
   );
 
   const handleAcceptSuggestion = useCallback(
@@ -512,22 +512,25 @@ function CvEditorPage() {
 
   const [polishingField, setPolishingField] = useState<string | null>(null);
 
-  const handlePolishText = useCallback(async (fieldKey: string, text: string, context?: string) => {
-    if (!text.trim() || text.trim().length < 5) {
-      toast.error("Teks terlalu pendek untuk diperbaiki.");
-      return;
-    }
-    setPolishingField(fieldKey);
-    try {
-      const result = await polishText({ data: { text, context, language: cvLanguage } });
-      return result.polished;
-    } catch (e: any) {
-      toast.error(e.message || "Gagal memperbaiki teks.");
-      return null;
-    } finally {
-      setPolishingField(null);
-    }
-  }, []);
+  const handlePolishText = useCallback(
+    async (fieldKey: string, text: string, context?: string) => {
+      if (!text.trim() || text.trim().length < 5) {
+        toast.error("Teks terlalu pendek untuk diperbaiki.");
+        return;
+      }
+      setPolishingField(fieldKey);
+      try {
+        const result = await polishText({ data: { text, context, language: cvLanguage } });
+        return result.polished;
+      } catch (e: any) {
+        toast.error(e.message || "Gagal memperbaiki teks.");
+        return null;
+      } finally {
+        setPolishingField(null);
+      }
+    },
+    [cvLanguage],
+  );
 
   // Local/instant ATS score (recalculated on data change)
   const localScore = useMemo(
@@ -696,7 +699,7 @@ function CvEditorPage() {
           {chatOpen && (
             <div className="shrink-0 print:hidden border-b border-border">
               <div className="p-3">
-                <AiChatPanel cvId={id} cvData={data} />
+                <AiChatPanel cvId={id} cvData={data} language={cvLanguage} />
               </div>
             </div>
           )}

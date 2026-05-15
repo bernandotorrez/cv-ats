@@ -5,10 +5,12 @@ import { chatWithAi } from "@/lib/ai-functions";
 import { toast } from "sonner";
 import { Send, Loader2, Sparkles } from "lucide-react";
 import type { CvData } from "@/lib/cv-types";
+import type { CvUiLang } from "@/lib/cv-translations";
 
 interface Props {
   cvId: string;
   cvData: CvData;
+  language?: CvUiLang;
 }
 
 interface ChatMsg {
@@ -24,7 +26,7 @@ const INITIAL_MESSAGES: ChatMsg[] = [
   },
 ];
 
-export function AiChatPanel({ cvId, cvData }: Props) {
+export function AiChatPanel({ cvId, cvData, language = "id" }: Props) {
   const [messages, setMessages] = useState<ChatMsg[]>(INITIAL_MESSAGES);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -66,6 +68,7 @@ export function AiChatPanel({ cvId, cvData }: Props) {
         data: {
           cvId,
           messages: msgsForApi,
+          language,
         },
       });
 
