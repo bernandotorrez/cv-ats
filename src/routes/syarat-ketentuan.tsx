@@ -83,7 +83,7 @@ const paymentRules = [
   {
     icon: CreditCard,
     label: "Transfer manual",
-    desc: "Pembayaran saat ini dilakukan lewat transfer rekening. Konfirmasi upgrade diproses manual lewat WhatsApp dengan bukti transfer.",
+    desc: "Pembayaran saat ini dilakukan lewat transfer rekening. Nomor rekening diberikan lewat WhatsApp sebelum transfer, lalu upgrade diproses setelah bukti transfer diverifikasi.",
   },
 ];
 
@@ -217,7 +217,7 @@ function SyaratKetentuanPage() {
             icon={CreditCard}
             number="03"
             title="Pembayaran dan refund"
-            description="Saat ini pembayaran upgrade dilakukan manual via transfer rekening, lalu diverifikasi oleh admin."
+            description="Saat ini pembayaran upgrade dilakukan manual. Minta nomor rekening lewat WhatsApp, transfer, lalu admin memverifikasi bukti transfer."
           >
             <div className="grid gap-4 md:grid-cols-3">
               {paymentRules.map((item) => (

@@ -207,8 +207,8 @@ function KontakPage() {
               <Sparkles className="mb-3 h-5 w-5 text-primary" />
               <p className="font-semibold text-foreground">Mau langsung mulai?</p>
               <p className="mt-1">
-                Buat CV pertamamu gratis. Untuk upgrade, transfer manual lalu konfirmasi lewat
-                WhatsApp dengan bukti transfer.
+                Buat CV pertamamu gratis. Untuk upgrade, minta nomor rekening lewat WhatsApp,
+                transfer manual, lalu kirim bukti transfer di chat yang sama.
               </p>
               <Button asChild variant="link" className="mt-2 h-auto p-0">
                 <Link to="/register">

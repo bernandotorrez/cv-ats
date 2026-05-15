@@ -34,7 +34,7 @@ const WHATSAPP_NUMBER = "6285190607141";
 
 function getUpgradeWhatsAppUrl(tierName: string) {
   return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
-    `Saya sudah melakukan transfer untuk Upgrade ${tierName}`,
+    `Halo, saya ingin Upgrade ${tierName}. Mohon info nomor rekening untuk transfer.`,
   )}`;
 }
 
@@ -164,7 +164,7 @@ const faqs = [
   },
   {
     q: "Metode pembayaran apa saja?",
-    a: "Saat ini pembayaran dilakukan manual via transfer rekening. Setelah transfer, konfirmasi lewat WhatsApp dengan teks: “Saya sudah melakukan transfer untuk Upgrade <tier>” dan lampirkan bukti transfer.",
+    a: "Saat ini pembayaran dilakukan manual via transfer rekening. Klik tombol upgrade untuk meminta nomor rekening lewat WhatsApp, lalu setelah transfer kirim bukti dengan teks: “Saya sudah melakukan transfer untuk Upgrade <tier>”.",
   },
   {
     q: "Bisa ganti atau berhenti paket kapan saja?",
@@ -357,9 +357,10 @@ function HargaPage() {
               Transfer, kirim bukti, lalu kami aktifkan paketmu.
             </h2>
             <p className="mt-4 max-w-2xl text-lg leading-8 text-primary-foreground/85">
-              Untuk tahap awal, upgrade diproses manual. Transfer ke rekening yang diinformasikan
-              tim CV Pintar, lalu kirim bukti transfer lewat WhatsApp dengan format pesan yang
-              sudah disiapkan.
+              Untuk tahap awal, upgrade diproses manual. Klik tombol upgrade untuk meminta nomor
+              rekening lewat WhatsApp. Setelah tim CV Pintar mengirim detail rekening, lakukan
+              transfer, lalu kirim bukti transfer di chat yang sama dengan format pesan yang sudah
+              disiapkan.
             </p>
           </div>
           <div className="grid gap-3 sm:grid-cols-3 md:grid-cols-1">
@@ -425,7 +426,7 @@ function HargaPage() {
           <div className="flex flex-col gap-3 sm:flex-row md:flex-col">
             <Button asChild size="lg" className="h-12 px-6 text-base">
               <a href={getUpgradeWhatsAppUrl("Starter")} target="_blank" rel="noreferrer">
-                Konfirmasi Upgrade Starter
+                Minta Rekening Starter
                 <MessageCircle className="h-5 w-5" aria-hidden="true" />
               </a>
             </Button>
@@ -522,8 +523,8 @@ function PricingCard({ tier }: { tier: (typeof tiers)[number] }) {
               </a>
             </Button>
             <p className="mt-3 text-center text-xs leading-5 text-muted-foreground">
-              Setelah transfer, kirim bukti via WhatsApp dengan teks: “Saya sudah melakukan
-              transfer untuk Upgrade {tier.name}”.
+              Tombol ini membuka WhatsApp untuk meminta nomor rekening. Setelah transfer, kirim
+              bukti dengan teks: “Saya sudah melakukan transfer untuk Upgrade {tier.name}”.
             </p>
           </>
         )}

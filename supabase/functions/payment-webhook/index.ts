@@ -4,7 +4,9 @@
  * Payment gateway flow is currently disabled.
  *
  * Current payment flow:
- * - User transfers manually to CV Pintar bank account.
+ * - User asks for the destination bank account via WhatsApp.
+ * - Admin sends the destination bank account manually in WhatsApp.
+ * - User transfers manually to that account.
  * - User confirms via WhatsApp with:
  *   "Saya sudah melakukan transfer untuk Upgrade <tier>"
  * - User uploads transfer proof in WhatsApp.
@@ -22,7 +24,7 @@ Deno.serve(async (req: Request) => {
     JSON.stringify({
       error: "Payment gateway webhook is disabled. Payments are verified manually via WhatsApp.",
       current_flow:
-        'Transfer manual, lalu konfirmasi WhatsApp dengan teks "Saya sudah melakukan transfer untuk Upgrade <tier>" dan lampirkan bukti transfer.',
+        'Minta nomor rekening lewat WhatsApp, transfer manual, lalu konfirmasi dengan teks "Saya sudah melakukan transfer untuk Upgrade <tier>" dan lampirkan bukti transfer.',
     }),
     { status: 410, headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
   );
