@@ -87,7 +87,7 @@ const EMAIL_TEMPLATES: Record<string, { subject: string; html: string }> = {
   },
   payment: {
     subject: "Konfirmasi Pembayaran - CV Pintar",
-    html: "<h1>Pembayaran Berhasil</h1><p>Pembayaranmu telah kami terima. Subscriptionmu telah diaktifkan.</p>",
+    html: "<h1>Pembayaran Terverifikasi</h1><p>Transfer manualmu telah kami verifikasi. Subscriptionmu telah diaktifkan.</p>",
   },
   subscription: {
     subject: "Pengingat Subscription - CV Pintar",

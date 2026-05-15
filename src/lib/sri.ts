@@ -32,18 +32,6 @@ export const HCAPTCHA_SRI = {
 } as const;
 
 /**
- * Midtrans Snap Script
- * URL: https://app.midtrans.com/snap/snap.js
- * 
- * To get the correct hash:
- * 1. Download the script: curl -s https://app.midtrans.com/snap/snap.js | sha384sum
- * 2. Update this constant
- */
-export const MIDTRANS_SRI = {
-  snapJs: "sha384-REPLACE_WITH_ACTUAL_HASH", // Replace with actual hash
-} as const;
-
-/**
  * Vercel Analytics
  * URL: https://va.vercel-scripts.com/v1/script.js
  * 

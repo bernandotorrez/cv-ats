@@ -41,9 +41,9 @@ const contactChannels = [
   {
     icon: MessageCircle,
     label: "WhatsApp",
-    value: "+62 851-9060-7141",
+    value: "0851-9060-7141",
     description:
-      "Untuk pertanyaan cepat seputar fitur, review CV, atau jadwal private coaching dengan HR Recruiter.",
+      "Untuk pertanyaan cepat, konfirmasi pembayaran manual, upload bukti transfer, atau jadwal private coaching.",
     href: "https://wa.me/6285190607141",
     action: "Chat WhatsApp",
   },
@@ -72,6 +72,7 @@ const quickTopics = [
   "Review CV by HR Expert AI",
   "Simulasi wawancara AI",
   "Private coaching",
+  "Konfirmasi pembayaran",
   "Template dan export PDF",
   "Kerja sama komunitas",
 ];
@@ -96,13 +97,13 @@ function KontakPage() {
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Button asChild size="lg" className="h-12 rounded-lg">
-                <a href="https://wa.me/6281234567890" target="_blank" rel="noreferrer">
+                <a href="https://wa.me/6285190607141" target="_blank" rel="noreferrer">
                   Chat sekarang
                   <MessageCircle className="ml-2 h-4 w-4" />
                 </a>
               </Button>
               <Button asChild variant="outline" size="lg" className="h-12 rounded-lg">
-                <a href="mailto:halo@cvpintar.web.id">
+                <a href="mailto:mail.bernand@gmail.com">
                   Kirim email
                   <Send className="ml-2 h-4 w-4" />
                 </a>
@@ -206,7 +207,8 @@ function KontakPage() {
               <Sparkles className="mb-3 h-5 w-5 text-primary" />
               <p className="font-semibold text-foreground">Mau langsung mulai?</p>
               <p className="mt-1">
-                Buat CV pertamamu gratis, lalu upgrade saat kamu butuh tenaga ekstra.
+                Buat CV pertamamu gratis. Untuk upgrade, transfer manual lalu konfirmasi lewat
+                WhatsApp dengan bukti transfer.
               </p>
               <Button asChild variant="link" className="mt-2 h-auto p-0">
                 <Link to="/register">

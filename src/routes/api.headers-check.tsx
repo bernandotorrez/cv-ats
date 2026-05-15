@@ -29,7 +29,7 @@ export const Route = createFileRoute("/api/headers-check")({
                 "Strict-Transport-Security",
                 "X-DNS-Prefetch-Control: on",
               ],
-              note: "Some CSP directives allow 'unsafe-inline' for styles (Tailwind) and Midtrans/Anthropic API domains.",
+              note: "Some CSP directives allow 'unsafe-inline' for styles (Tailwind) and trusted app/API domains.",
             },
             null,
             2,

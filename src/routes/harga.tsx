@@ -7,6 +7,7 @@ import {
   FileText,
   Gift,
   LockKeyhole,
+  MessageCircle,
   MessageSquareText,
   ShieldCheck,
   Sparkles,
@@ -28,6 +29,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { buildSeo } from "@/lib/seo";
+
+const WHATSAPP_NUMBER = "6285190607141";
+
+function getUpgradeWhatsAppUrl(tierName: string) {
+  return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
+    `Saya sudah melakukan transfer untuk Upgrade ${tierName}`,
+  )}`;
+}
 
 const tiers = [
   {
@@ -145,7 +154,7 @@ const comparison = [
 const guarantees = [
   { icon: ShieldCheck, label: "Refund 7 hari" },
   { icon: LockKeyhole, label: "Data terenkripsi" },
-  { icon: CreditCard, label: "QRIS, e-wallet, VA bank" },
+  { icon: MessageCircle, label: "Konfirmasi via WhatsApp" },
 ] as const;
 
 const faqs = [
@@ -155,11 +164,11 @@ const faqs = [
   },
   {
     q: "Metode pembayaran apa saja?",
-    a: "Kami menerima QRIS, e-wallet seperti GoPay, OVO, Dana, ShopeePay, serta transfer VA bank lokal. Pembayaran diproses aman.",
+    a: "Saat ini pembayaran dilakukan manual via transfer rekening. Setelah transfer, konfirmasi lewat WhatsApp dengan teks: “Saya sudah melakukan transfer untuk Upgrade <tier>” dan lampirkan bukti transfer.",
   },
   {
     q: "Bisa ganti atau berhenti paket kapan saja?",
-    a: "Bisa. Upgrade aktif setelah pembayaran. Downgrade berlaku di periode tagihan berikutnya. Tidak ada biaya tersembunyi.",
+    a: "Bisa. Upgrade aktif setelah admin memverifikasi bukti transfer. Downgrade atau berhenti paket bisa dikonfirmasi lewat WhatsApp sebelum periode berikutnya.",
   },
   {
     q: "Bagaimana jika tidak cocok?",
@@ -342,14 +351,15 @@ function HargaPage() {
         <div className="container-page grid gap-8 md:grid-cols-[1fr_0.9fr] md:items-center">
           <div>
             <Badge className="mb-5 border-white/25 bg-white/15 text-white hover:bg-white/15">
-              Aman untuk dicoba
+              Pembayaran manual
             </Badge>
             <h2 className="font-display text-3xl font-bold leading-tight md:text-4xl">
-              Coba premium tanpa rasa was-was.
+              Transfer, kirim bukti, lalu kami aktifkan paketmu.
             </h2>
             <p className="mt-4 max-w-2xl text-lg leading-8 text-primary-foreground/85">
-              Kalau dalam 7 hari pertama kamu merasa fiturnya belum cocok, kamu bisa minta refund
-              100%. Praktis, jelas, dan tidak diputar-putar.
+              Untuk tahap awal, upgrade diproses manual. Transfer ke rekening yang diinformasikan
+              tim CV Pintar, lalu kirim bukti transfer lewat WhatsApp dengan format pesan yang
+              sudah disiapkan.
             </p>
           </div>
           <div className="grid gap-3 sm:grid-cols-3 md:grid-cols-1">
@@ -414,13 +424,13 @@ function HargaPage() {
           </div>
           <div className="flex flex-col gap-3 sm:flex-row md:flex-col">
             <Button asChild size="lg" className="h-12 px-6 text-base">
-              <Link to="/register">
-                Mulai gratis
-                <ArrowRight className="h-5 w-5" aria-hidden="true" />
-              </Link>
+              <a href={getUpgradeWhatsAppUrl("Starter")} target="_blank" rel="noreferrer">
+                Konfirmasi Upgrade Starter
+                <MessageCircle className="h-5 w-5" aria-hidden="true" />
+              </a>
             </Button>
             <Button asChild variant="outline" size="lg" className="h-12 px-6 text-base">
-              <Link to="/template">Lihat template</Link>
+              <Link to="/register">Mulai gratis</Link>
             </Button>
           </div>
         </div>
@@ -486,17 +496,37 @@ function PricingCard({ tier }: { tier: (typeof tiers)[number] }) {
           </div>
         </div>
 
-        <Button
-          asChild
-          size="lg"
-          variant={tier.ctaVariant}
-          className={`mt-6 h-12 w-full text-base ${featured ? "shadow-sm" : ""}`}
-        >
-          <Link to="/register">
-            {tier.cta}
-            <ArrowRight className="h-4 w-4" aria-hidden="true" />
-          </Link>
-        </Button>
+        {tier.name === "Free" ? (
+          <Button
+            asChild
+            size="lg"
+            variant={tier.ctaVariant}
+            className={`mt-6 h-12 w-full text-base ${featured ? "shadow-sm" : ""}`}
+          >
+            <Link to="/register">
+              {tier.cta}
+              <ArrowRight className="h-4 w-4" aria-hidden="true" />
+            </Link>
+          </Button>
+        ) : (
+          <>
+            <Button
+              asChild
+              size="lg"
+              variant={tier.ctaVariant}
+              className={`mt-6 h-12 w-full text-base ${featured ? "shadow-sm" : ""}`}
+            >
+              <a href={getUpgradeWhatsAppUrl(tier.name)} target="_blank" rel="noreferrer">
+                {tier.cta}
+                <MessageCircle className="h-4 w-4" aria-hidden="true" />
+              </a>
+            </Button>
+            <p className="mt-3 text-center text-xs leading-5 text-muted-foreground">
+              Setelah transfer, kirim bukti via WhatsApp dengan teks: “Saya sudah melakukan
+              transfer untuk Upgrade {tier.name}”.
+            </p>
+          </>
+        )}
 
         <ul className="mt-6 space-y-3">
           {tier.features.map((feature) => (

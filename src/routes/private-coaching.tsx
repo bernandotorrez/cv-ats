@@ -39,7 +39,7 @@ export const Route = createFileRoute("/private-coaching")({
   component: PrivateCoachingPage,
 });
 
-const whatsappNumber = "6281234567890";
+const whatsappNumber = "6285190607141";
 
 const packages = [
   {

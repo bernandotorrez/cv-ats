@@ -65,7 +65,7 @@ const usageGroups = [
 const accountRules = [
   "Kamu bertanggung jawab atas aktivitas yang terjadi di akunmu.",
   "Kode OTP dan akses login tidak boleh dibagikan ke siapa pun.",
-  "Laporkan aktivitas mencurigakan ke halo@cvpintar.web.id.",
+  "Laporkan aktivitas mencurigakan ke mail.bernand@gmail.com.",
   "Kami dapat menangguhkan akun yang terbukti melanggar ketentuan.",
 ];
 
@@ -78,12 +78,12 @@ const paymentRules = [
   {
     icon: RefreshCw,
     label: "Berhenti kapan saja",
-    desc: "Langganan dapat dihentikan kapan saja. Akses aktif tetap berjalan sampai periode berakhir.",
+    desc: "Langganan dapat dihentikan kapan saja lewat WhatsApp. Akses aktif tetap berjalan sampai periode berakhir.",
   },
   {
     icon: CreditCard,
-    label: "Pembayaran aman",
-    desc: "Transaksi diproses oleh partner pembayaran. Kami tidak menyimpan detail kartu pembayaran.",
+    label: "Transfer manual",
+    desc: "Pembayaran saat ini dilakukan lewat transfer rekening. Konfirmasi upgrade diproses manual lewat WhatsApp dengan bukti transfer.",
   },
 ];
 
@@ -217,7 +217,7 @@ function SyaratKetentuanPage() {
             icon={CreditCard}
             number="03"
             title="Pembayaran dan refund"
-            description="Kami ingin proses pembayaran terasa jelas sejak awal: harga, akses, dan opsi berhenti."
+            description="Saat ini pembayaran upgrade dilakukan manual via transfer rekening, lalu diverifikasi oleh admin."
           >
             <div className="grid gap-4 md:grid-cols-3">
               {paymentRules.map((item) => (
@@ -281,9 +281,9 @@ function SyaratKetentuanPage() {
             </p>
             <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
               <Button asChild className="rounded-lg">
-                <a href="mailto:halo@cvpintar.web.id">
+                <a href="mailto:mail.bernand@gmail.com">
                   <Mail className="mr-2 h-4 w-4" />
-                  halo@cvpintar.web.id
+                  mail.bernand@gmail.com
                 </a>
               </Button>
               <Button asChild variant="outline" className="rounded-lg">

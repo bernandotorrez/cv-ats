@@ -275,9 +275,9 @@ function KebijakanPrivasiPage() {
               </p>
               <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
                 <Button asChild className="rounded-lg">
-                  <a href="mailto:halo@cvpintar.web.id">
+                  <a href="mailto:mail.bernand@gmail.com">
                     <Mail className="mr-2 h-4 w-4" />
-                    halo@cvpintar.web.id
+                    mail.bernand@gmail.com
                   </a>
                 </Button>
                 <Button asChild variant="outline" className="rounded-lg">
