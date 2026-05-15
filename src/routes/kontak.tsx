@@ -32,10 +32,10 @@ const contactChannels = [
   {
     icon: Mail,
     label: "Email support",
-    value: "mail.bernand@gmail.com",
+    value: "cs@cvpintar.web.id",
     description:
       "Paling pas untuk pertanyaan akun, invoice, kerja sama, atau detail yang butuh jejak tertulis.",
-    href: "mailto:mail.bernand@gmail.com",
+    href: "mailto:cs@cvpintar.web.id",
     action: "Kirim email",
   },
   {
@@ -103,7 +103,7 @@ function KontakPage() {
                 </a>
               </Button>
               <Button asChild variant="outline" size="lg" className="h-12 rounded-lg">
-                <a href="mailto:mail.bernand@gmail.com">
+                <a href="mailto:cs@cvpintar.web.id">
                   Kirim email
                   <Send className="ml-2 h-4 w-4" />
                 </a>

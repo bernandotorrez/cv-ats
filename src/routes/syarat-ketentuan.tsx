@@ -65,7 +65,7 @@ const usageGroups = [
 const accountRules = [
   "Kamu bertanggung jawab atas aktivitas yang terjadi di akunmu.",
   "Kode OTP dan akses login tidak boleh dibagikan ke siapa pun.",
-  "Laporkan aktivitas mencurigakan ke mail.bernand@gmail.com.",
+  "Laporkan aktivitas mencurigakan ke cs@cvpintar.web.id.",
   "Kami dapat menangguhkan akun yang terbukti melanggar ketentuan.",
 ];
 
@@ -281,9 +281,9 @@ function SyaratKetentuanPage() {
             </p>
             <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
               <Button asChild className="rounded-lg">
-                <a href="mailto:mail.bernand@gmail.com">
+                <a href="mailto:cs@cvpintar.web.id">
                   <Mail className="mr-2 h-4 w-4" />
-                  mail.bernand@gmail.com
+                  cs@cvpintar.web.id
                 </a>
               </Button>
               <Button asChild variant="outline" className="rounded-lg">
