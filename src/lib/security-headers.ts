@@ -14,11 +14,11 @@
 // If a future refactor can eliminate these, security posture would be significantly improved.
 const CSP_DIRECTIVES = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.hcaptcha.com https://*.hcaptcha.com https://va.vercel-scripts.com",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.hcaptcha.com https://*.hcaptcha.com https://va.vercel-scripts.com https://www.googletagmanager.com",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.hcaptcha.com",
   "font-src 'self' https://fonts.gstatic.com",
-  "img-src 'self' data: blob: https://*.supabase.co https://lh3.googleusercontent.com https://*.hcaptcha.com",
-  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://ai.sumopod.com https://*.hcaptcha.com",
+  "img-src 'self' data: blob: https://*.supabase.co https://lh3.googleusercontent.com https://*.hcaptcha.com https://www.google-analytics.com https://*.google-analytics.com",
+  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://ai.sumopod.com https://*.hcaptcha.com https://www.google-analytics.com https://*.google-analytics.com https://www.googletagmanager.com",
   "frame-src https://*.hcaptcha.com https://newassets.hcaptcha.com",
   "object-src 'none'",
   "base-uri 'self'",
@@ -42,18 +42,16 @@ export const SECURITY_HEADERS: Record<string, string> = {
   "Referrer-Policy": "strict-origin-when-cross-origin",
 
   // Membatasi browser API yang bisa digunakan
-  "Permissions-Policy":
-    "camera=(), microphone=(self), geolocation=(), interest-cohort=()",
+  "Permissions-Policy": "camera=(), microphone=(self), geolocation=(), interest-cohort=()",
 
   // HSTS — force HTTPS (max 2 tahun, include subdomains, preload ready)
-  "Strict-Transport-Security":
-    "max-age=63072000; includeSubDomains; preload",
+  "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
 
   // Hint browser untuk pre-resolve DNS
   "X-DNS-Prefetch-Control": "on",
 
   // Informasi server minimal (jangan tampilkan tech stack)
-  "Server": "cvpintar.web.id",
+  Server: "cvpintar.web.id",
 };
 
 /**
@@ -83,10 +81,7 @@ export function applySecurityHeaders(response: Response): Response {
 /**
  * Creates a new Response with security headers from scratch.
  */
-export function createSecureResponse(
-  body?: BodyInit | null,
-  init?: ResponseInit,
-): Response {
+export function createSecureResponse(body?: BodyInit | null, init?: ResponseInit): Response {
   const response = new Response(body, init);
   return applySecurityHeaders(response);
 }

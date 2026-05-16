@@ -19,6 +19,7 @@ import { AuthProvider } from "@/lib/auth-context";
 import { Skeleton } from "@/components/ui/skeleton-loading";
 
 const SITE_URL = "https://cvpintar.web.id";
+const GOOGLE_TAG_ID = "G-HYFCCCP4SR";
 
 function NotFoundComponent() {
   return (
@@ -112,13 +113,29 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:card", content: "summary_large_image" },
       { property: "og:title", content: "CV Pintar — Buat CV ATS Friendly dengan AI" },
       { name: "twitter:title", content: "CV Pintar — Buat CV ATS Friendly dengan AI" },
-      { property: "og:description", content: "Bikin CV ATS friendly dalam 1 menit. Template gratis, saran AI Bahasa Indonesia, scoring otomatis, dan tips lolos screening HR & interview." },
-      { name: "twitter:description", content: "Bikin CV ATS friendly dalam 1 menit. Template gratis, saran AI Bahasa Indonesia, scoring otomatis, dan tips lolos screening HR & interview." },
-      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/44765322-b45b-44f5-a6ac-752e6e50e35e" },
+      {
+        property: "og:description",
+        content:
+          "Bikin CV ATS friendly dalam 1 menit. Template gratis, saran AI Bahasa Indonesia, scoring otomatis, dan tips lolos screening HR & interview.",
+      },
+      {
+        name: "twitter:description",
+        content:
+          "Bikin CV ATS friendly dalam 1 menit. Template gratis, saran AI Bahasa Indonesia, scoring otomatis, dan tips lolos screening HR & interview.",
+      },
+      {
+        property: "og:image",
+        content:
+          "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/44765322-b45b-44f5-a6ac-752e6e50e35e",
+      },
       { property: "og:image:width", content: "1200" },
       { property: "og:image:height", content: "630" },
       { property: "og:image:alt", content: "CV Pintar — Buat CV ATS Friendly dengan AI" },
-      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/44765322-b45b-44f5-a6ac-752e6e50e35e" },
+      {
+        name: "twitter:image",
+        content:
+          "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/44765322-b45b-44f5-a6ac-752e6e50e35e",
+      },
       { name: "twitter:image:alt", content: "CV Pintar — Buat CV ATS Friendly dengan AI" },
     ],
     links: [
@@ -139,6 +156,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
     ],
     scripts: [
+      {
+        async: true,
+        src: `https://www.googletagmanager.com/gtag/js?id=${GOOGLE_TAG_ID}`,
+      },
+      {
+        children: `
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', '${GOOGLE_TAG_ID}');
+        `,
+      },
       {
         type: "application/ld+json",
         children: JSON.stringify({
@@ -190,7 +219,9 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <a href="#main" className="skip-link">Lewati ke konten utama</a>
+        <a href="#main" className="skip-link">
+          Lewati ke konten utama
+        </a>
         <div className="flex min-h-screen flex-col">
           {!isSharePage && <SiteHeader />}
           <main id="main" className="flex-1">
