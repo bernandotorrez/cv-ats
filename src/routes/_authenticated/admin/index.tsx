@@ -1,14 +1,30 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { buildSeo } from "@/lib/seo";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  Users, FileText, Sparkles, Crown, TrendingUp, Activity,
+  Activity,
+  ArrowRight,
+  Crown,
+  FileText,
+  LayoutDashboard,
+  Palette,
+  Sparkles,
+  TrendingUp,
+  Users,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/")({
-  head: () => buildSeo({ title: "Admin Dashboard — CV Pintar", description: "Admin analytics.", path: "/admin", noindex: true }),
+  head: () =>
+    buildSeo({
+      title: "Admin Dashboard - CV Pintar",
+      description: "Admin analytics.",
+      path: "/admin",
+      noindex: true,
+    }),
   component: AdminDashboard,
 });
 
@@ -22,28 +38,31 @@ interface Stats {
   recentSignups: number;
 }
 
+interface SubscriptionRow {
+  subscription_tiers?: {
+    slug?: string | null;
+  } | null;
+}
+
 function AdminDashboard() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadStats();
+    void loadStats();
   }, []);
 
   const loadStats = async () => {
     setLoading(true);
 
-    // Total users (from profiles)
     const { count: totalUsers } = await supabase
       .from("profiles")
       .select("*", { count: "exact", head: true });
 
-    // Total CVs
     const { count: totalCvs } = await supabase
       .from("cvs")
       .select("*", { count: "exact", head: true });
 
-    // Total AI calls this month
     const monthStart = new Date();
     monthStart.setDate(1);
     monthStart.setHours(0, 0, 0, 0);
@@ -52,17 +71,16 @@ function AdminDashboard() {
       .select("*", { count: "exact", head: true })
       .gte("created_at", monthStart.toISOString());
 
-    // Subscription breakdown
     const { data: subs } = await supabase
       .from("user_subscriptions")
       .select("status, subscription_tiers!inner(slug)")
       .eq("status", "active");
-    const activeSubs = subs || [];
-    const freeUsers = activeSubs.filter((s: any) => s.subscription_tiers?.slug === "free").length;
-    const starterUsers = activeSubs.filter((s: any) => s.subscription_tiers?.slug === "starter").length;
-    const proUsers = activeSubs.filter((s: any) => s.subscription_tiers?.slug === "pro").length;
 
-    // Recent signups (last 7 days)
+    const activeSubs = (subs || []) as unknown as SubscriptionRow[];
+    const freeUsers = activeSubs.filter((s) => s.subscription_tiers?.slug === "free").length;
+    const starterUsers = activeSubs.filter((s) => s.subscription_tiers?.slug === "starter").length;
+    const proUsers = activeSubs.filter((s) => s.subscription_tiers?.slug === "pro").length;
+
     const weekAgo = new Date();
     weekAgo.setDate(weekAgo.getDate() - 7);
     const { count: recentSignups } = await supabase
@@ -82,118 +100,182 @@ function AdminDashboard() {
     setLoading(false);
   };
 
-  if (loading) return <p className="text-sm text-muted-foreground">Memuat analytics...</p>;
+  if (loading) {
+    return (
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, index) => (
+          <div key={index} className="h-28 animate-pulse rounded-lg bg-muted" />
+        ))}
+      </div>
+    );
+  }
+
   if (!stats) return null;
 
+  const totalActive = stats.freeUsers + stats.starterUsers + stats.proUsers;
+  const paidUsers = stats.starterUsers + stats.proUsers;
+  const conversionRate =
+    stats.totalUsers > 0 ? Math.round((paidUsers / stats.totalUsers) * 100) : 0;
+  const cvPerUser =
+    stats.totalUsers > 0 ? (stats.totalCvs / stats.totalUsers).toLocaleString("id-ID") : "0";
+
   const statCards = [
-    { icon: Users, label: "Total Pengguna", value: stats.totalUsers.toLocaleString(), color: "text-primary" },
-    { icon: FileText, label: "Total CV", value: stats.totalCvs.toLocaleString(), color: "text-primary" },
-    { icon: Sparkles, label: "AI Calls (bln ini)", value: stats.totalAiCalls.toLocaleString(), color: "text-primary" },
-    { icon: Activity, label: "Signup 7 Hari", value: stats.recentSignups.toLocaleString(), color: "text-primary" },
+    {
+      icon: Users,
+      label: "Users",
+      value: stats.totalUsers.toLocaleString("id-ID"),
+      detail: `+${stats.recentSignups} minggu ini`,
+      tone: "bg-sky-50 text-sky-700",
+    },
+    {
+      icon: FileText,
+      label: "CV",
+      value: stats.totalCvs.toLocaleString("id-ID"),
+      detail: `${cvPerUser} per user`,
+      tone: "bg-emerald-50 text-emerald-700",
+    },
+    {
+      icon: Sparkles,
+      label: "AI",
+      value: stats.totalAiCalls.toLocaleString("id-ID"),
+      detail: "bulan ini",
+      tone: "bg-violet-50 text-violet-700",
+    },
+    {
+      icon: TrendingUp,
+      label: "Paid",
+      value: `${conversionRate}%`,
+      detail: `${paidUsers} user aktif`,
+      tone: "bg-amber-50 text-amber-700",
+    },
   ];
 
   const tierBreakdown = [
-    { tier: "Free", count: stats.freeUsers, icon: Users, color: "bg-muted" },
-    { tier: "Starter", count: stats.starterUsers, icon: Crown, color: "bg-primary" },
-    { tier: "Pro", count: stats.proUsers, icon: Crown, color: "bg-warning" },
+    { tier: "Free", count: stats.freeUsers },
+    { tier: "Starter", count: stats.starterUsers },
+    { tier: "Pro", count: stats.proUsers },
   ];
 
-  const totalActive = stats.freeUsers + stats.starterUsers + stats.proUsers;
+  const actions = [
+    {
+      to: "/admin/users" as const,
+      icon: Users,
+      title: "Users",
+      text: "Cari user, edit role, cek tier.",
+      cta: "Kelola user",
+    },
+    {
+      to: "/admin/templates" as const,
+      icon: Palette,
+      title: "Templates",
+      text: "Atur template CV yang tampil.",
+      cta: "Kelola template",
+    },
+  ];
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-lg font-semibold">Analytics Overview</h2>
-        <p className="text-sm text-muted-foreground">Ringkasan performa platform CV Pintar.</p>
-      </div>
+    <div className="space-y-5 sm:space-y-6">
+      <section className="flex flex-col gap-4 rounded-lg border bg-card p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+        <div className="min-w-0">
+          <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+            <LayoutDashboard className="h-3.5 w-3.5" />
+            Admin cockpit
+          </div>
+          <h2 className="font-display text-2xl font-bold tracking-normal sm:text-3xl">
+            Ringkas, cepat, siap eksekusi.
+          </h2>
+          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+            Pantau user, CV, AI usage, dan subscription dari satu layar yang bersih.
+          </p>
+        </div>
+        <Button asChild className="shrink-0">
+          <Link to="/admin/users">
+            Buka Users <ArrowRight className="h-4 w-4" />
+          </Link>
+        </Button>
+      </section>
 
-      {/* Stats Grid */}
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {statCards.map((s) => (
-          <Card key={s.label}>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
+      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {statCards.map((item) => (
+          <Card key={item.label} className="overflow-hidden">
+            <CardContent className="p-4">
+              <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-sm text-muted-foreground">{s.label}</p>
-                  <p className={`text-2xl font-bold font-display ${s.color}`}>
-                    {s.value}
+                  <p className="text-xs font-medium uppercase text-muted-foreground">
+                    {item.label}
                   </p>
+                  <p className="mt-2 font-display text-3xl font-bold">{item.value}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{item.detail}</p>
                 </div>
-                <div className="grid h-10 w-10 place-items-center rounded-lg bg-primary/10">
-                  <s.icon className={`h-5 w-5 ${s.color}`} />
+                <div className={`grid h-10 w-10 place-items-center rounded-lg ${item.tone}`}>
+                  <item.icon className="h-5 w-5" />
                 </div>
               </div>
             </CardContent>
           </Card>
         ))}
-      </div>
+      </section>
 
-      {/* Subscription Breakdown */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <Crown className="h-4 w-4" /> Subscription Breakdown
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {tierBreakdown.map((t) => (
-              <div key={t.tier}>
-                <div className="flex justify-between text-sm mb-2">
-                  <span className="flex items-center gap-2">
-                    <t.icon className="h-4 w-4 text-muted-foreground" />
-                    {t.tier}
+      <section className="grid gap-4 lg:grid-cols-[1fr_0.8fr]">
+        <Card>
+          <CardContent className="p-4 sm:p-5">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div>
+                <h3 className="font-semibold">Subscription Mix</h3>
+                <p className="text-xs text-muted-foreground">{totalActive} subscription aktif</p>
+              </div>
+              <Crown className="h-5 w-5 text-amber-500" />
+            </div>
+            <div className="space-y-4">
+              {tierBreakdown.map((tier) => {
+                const value = totalActive > 0 ? Math.round((tier.count / totalActive) * 100) : 0;
+                return (
+                  <div key={tier.tier} className="space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="font-medium">{tier.tier}</span>
+                      <span className="text-muted-foreground">
+                        {tier.count} user - {value}%
+                      </span>
+                    </div>
+                    <Progress value={value} className="h-2" />
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4 sm:p-5">
+            <div className="mb-4 flex items-center gap-2">
+              <Activity className="h-5 w-5 text-primary" />
+              <h3 className="font-semibold">Quick Actions</h3>
+            </div>
+            <div className="grid gap-3">
+              {actions.map((action) => (
+                <Link
+                  key={action.to}
+                  to={action.to}
+                  className="group flex items-center justify-between gap-3 rounded-lg border p-3 transition-colors hover:bg-muted"
+                >
+                  <div className="flex min-w-0 items-center gap-3">
+                    <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
+                      <action.icon className="h-4 w-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-medium">{action.title}</p>
+                      <p className="text-xs text-muted-foreground">{action.text}</p>
+                    </div>
+                  </div>
+                  <span className="hidden text-xs font-medium text-primary group-hover:underline sm:inline">
+                    {action.cta}
                   </span>
-                  <span className="font-medium">{t.count} users</span>
-                </div>
-                <div className="h-3 rounded-full bg-muted overflow-hidden">
-                  <div
-                    className={`h-full rounded-full transition-all ${t.color}`}
-                    style={{
-                      width: totalActive > 0
-                        ? `${(t.count / totalActive) * 100}%`
-                        : "0%",
-                    }}
-                  />
-                </div>
-              </div>
-            ))}
-            <div className="text-xs text-muted-foreground pt-2 border-t border-border">
-              Total aktif: {totalActive} pengguna
+                </Link>
+              ))}
             </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Quick Links */}
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Card className="hover:shadow-sm transition-shadow">
-          <a href="/admin/users" className="block p-6">
-            <div className="flex items-center gap-3">
-              <div className="grid h-10 w-10 place-items-center rounded-lg bg-primary/10">
-                <Users className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-sm">Manage Users</h3>
-                <p className="text-xs text-muted-foreground">Lihat, edit role & tier pengguna</p>
-              </div>
-            </div>
-          </a>
+          </CardContent>
         </Card>
-        <Card className="hover:shadow-sm transition-shadow">
-          <a href="/admin/templates" className="block p-6">
-            <div className="flex items-center gap-3">
-              <div className="grid h-10 w-10 place-items-center rounded-lg bg-primary/10">
-                <FileText className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-sm">Manage Templates</h3>
-                <p className="text-xs text-muted-foreground">Kelola template CV yang tersedia</p>
-              </div>
-            </div>
-          </a>
-        </Card>
-      </div>
+      </section>
     </div>
   );
 }

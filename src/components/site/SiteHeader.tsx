@@ -105,20 +105,41 @@ export function SiteHeader() {
               </Link>
             ))}
             <div className="mt-2 flex flex-col gap-2">
-              <Button asChild variant="outline">
-                <Link
-                  to="/login"
-                  search={{ redirect: "/dashboard" }}
-                  onClick={() => setOpen(false)}
-                >
-                  Masuk
-                </Link>
-              </Button>
-              <Button asChild>
-                <Link to="/register" onClick={() => setOpen(false)}>
-                  Daftar Gratis
-                </Link>
-              </Button>
+              {user ? (
+                <>
+                  <Button asChild>
+                    <Link to="/dashboard" onClick={() => setOpen(false)}>
+                      <LayoutDashboard className="h-4 w-4" /> Dashboard
+                    </Link>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setOpen(false);
+                      signOut();
+                    }}
+                  >
+                    Keluar
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button asChild variant="outline">
+                    <Link
+                      to="/login"
+                      search={{ redirect: "/dashboard" }}
+                      onClick={() => setOpen(false)}
+                    >
+                      Masuk
+                    </Link>
+                  </Button>
+                  <Button asChild>
+                    <Link to="/register" onClick={() => setOpen(false)}>
+                      Daftar Gratis
+                    </Link>
+                  </Button>
+                </>
+              )}
             </div>
           </nav>
         </div>

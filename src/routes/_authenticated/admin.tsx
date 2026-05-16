@@ -23,7 +23,11 @@ function AdminLayout() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   useEffect(() => {
-    if (user?.id) isAdmin(user.id).then((ok) => { setAdmin(ok); setChecking(false); });
+    if (user?.id)
+      isAdmin(user.id).then((ok) => {
+        setAdmin(ok);
+        setChecking(false);
+      });
     else setChecking(false);
   }, [user]);
 
@@ -49,17 +53,19 @@ function AdminLayout() {
   }
 
   return (
-    <div className="container-page py-10">
-      <div className="flex items-center gap-3 mb-8">
+    <div className="container-page py-6 sm:py-10">
+      <div className="mb-6 flex flex-col gap-3 sm:mb-8 sm:flex-row sm:items-center">
         <Button asChild variant="ghost" size="sm">
-          <Link to="/dashboard"><ArrowLeft className="h-4 w-4" /> Dashboard</Link>
+          <Link to="/dashboard">
+            <ArrowLeft className="h-4 w-4" /> Dashboard
+          </Link>
         </Button>
-        <h1 className="font-display text-2xl font-bold flex items-center gap-2">
+        <h1 className="flex items-center gap-2 font-display text-2xl font-bold">
           <Shield className="h-5 w-5 text-primary" /> Admin Panel
         </h1>
       </div>
 
-      <div className="flex gap-6">
+      <div className="flex flex-col gap-5 md:flex-row md:gap-6">
         {/* Sidebar */}
         <nav className="w-48 shrink-0 hidden md:block">
           <div className="space-y-1 sticky top-24">
@@ -84,7 +90,7 @@ function AdminLayout() {
         </nav>
 
         {/* Mobile nav */}
-        <div className="md:hidden flex gap-2 mb-4 overflow-x-auto">
+        <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 md:hidden">
           {NAV_ITEMS.map((item) => (
             <Button
               key={item.to}
