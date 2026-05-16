@@ -143,7 +143,7 @@ function CvScorePage() {
     TEMPLATES.find((template) => template.id === templateId)?.name ?? "Template CV";
 
   return (
-    <main className="container-page py-6 sm:py-8 lg:py-10">
+    <main className="container-page overflow-x-hidden py-6 sm:py-8 lg:py-10">
       <div className="mb-6">
         <Button asChild variant="ghost" size="sm" className="rounded-lg px-2">
           <Link to="/cv/$id" params={{ id: cvId }}>
@@ -153,8 +153,8 @@ function CvScorePage() {
         </Button>
       </div>
 
-      <section className="grid gap-6 lg:grid-cols-[1.12fr_0.88fr] lg:items-stretch">
-        <Card className="overflow-hidden border-border bg-card">
+      <section className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1.12fr)_minmax(0,0.88fr)] lg:items-stretch">
+        <Card className="min-w-0 overflow-hidden border-border bg-card">
           <CardContent className="relative p-5 sm:p-7 lg:p-8">
             <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-primary-soft/80 to-transparent" />
             <div className="relative">
@@ -171,7 +171,7 @@ function CvScorePage() {
                 berikutnya.
               </p>
 
-              <div className="mt-6 grid gap-3 sm:grid-cols-3">
+              <div className="mt-6 grid min-w-0 gap-3 sm:grid-cols-3">
                 {[
                   { icon: Target, label: "Target posisi", value: targetRole || "Belum diisi" },
                   { icon: FileText, label: "CV aktif", value: cvTitle || "CV kamu" },
@@ -179,7 +179,7 @@ function CvScorePage() {
                 ].map((item) => (
                   <div
                     key={item.label}
-                    className="rounded-xl border border-border/80 bg-background/90 p-4"
+                    className="min-w-0 rounded-xl border border-border/80 bg-background/90 p-4"
                   >
                     <item.icon className="h-5 w-5 text-primary" />
                     <p className="mt-3 text-xs font-medium uppercase tracking-normal text-muted-foreground">
@@ -195,7 +195,7 @@ function CvScorePage() {
           </CardContent>
         </Card>
 
-        <Card className="border-border bg-primary text-primary-foreground">
+        <Card className="min-w-0 border-border bg-primary text-primary-foreground">
           <CardContent className="flex h-full flex-col justify-between p-5 sm:p-7">
             <div>
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary-foreground/15">
@@ -221,16 +221,16 @@ function CvScorePage() {
         </Card>
       </section>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_390px]">
-        <div className="space-y-6">
-          <Card className="border-border bg-card">
+      <div className="mt-6 grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_390px]">
+        <div className="min-w-0 space-y-6">
+          <Card className="min-w-0 border-border bg-card">
             <CardHeader className="pb-4">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div>
+              <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0">
                   <Badge variant="secondary" className="rounded-full">
                     Input analisis
                   </Badge>
-                  <CardTitle className="mt-3 font-display text-2xl">
+                  <CardTitle className="mt-3 text-wrap font-display text-xl sm:text-2xl">
                     Beri konteks agar skor lebih tajam
                   </CardTitle>
                   <CardDescription className="mt-2 max-w-2xl leading-6">
@@ -241,7 +241,7 @@ function CvScorePage() {
                 <Button
                   onClick={handleScore}
                   disabled={scoring}
-                  className="h-11 shrink-0 rounded-lg"
+                  className="h-11 w-full shrink-0 rounded-lg sm:w-auto"
                 >
                   {scoring ? (
                     <>
@@ -258,18 +258,18 @@ function CvScorePage() {
               </div>
             </CardHeader>
             <CardContent className="grid gap-4">
-              <div className="grid gap-2">
+              <div className="grid min-w-0 gap-2">
                 <Label htmlFor="target-role">Target posisi</Label>
                 <Input
                   id="target-role"
                   value={targetRole}
                   onChange={(event) => setTargetRole(event.target.value)}
                   placeholder="Contoh: Frontend Developer, HR Generalist, Sales Manager"
-                  className="h-11 rounded-lg"
+                  className="h-11 w-full min-w-0 rounded-lg"
                 />
               </div>
-              <div className="grid gap-2">
-                <div className="flex items-end justify-between gap-3">
+              <div className="grid min-w-0 gap-2">
+                <div className="flex min-w-0 flex-wrap items-end justify-between gap-3">
                   <Label htmlFor="job-description">Deskripsi pekerjaan</Label>
                   <span className="text-xs text-muted-foreground">
                     {jobDescription.length}/10.000
@@ -282,7 +282,7 @@ function CvScorePage() {
                   placeholder="Tempel job description di sini. AI akan membaca keyword, tanggung jawab utama, dan sinyal kompetensi yang perlu muncul di CV."
                   rows={7}
                   maxLength={10000}
-                  className="rounded-lg text-sm leading-6"
+                  className="w-full min-w-0 rounded-lg text-sm leading-6"
                 />
               </div>
             </CardContent>
@@ -368,8 +368,8 @@ function CvScorePage() {
           )}
         </div>
 
-        <aside className="lg:sticky lg:top-24 lg:self-start">
-          <Card className="overflow-hidden border-border bg-card">
+        <aside className="min-w-0 lg:sticky lg:top-24 lg:self-start">
+          <Card className="min-w-0 overflow-hidden border-border bg-card">
             <CardHeader className="pb-3">
               <div className="flex items-start justify-between gap-3">
                 <div>
@@ -388,12 +388,12 @@ function CvScorePage() {
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="max-h-[620px] overflow-auto rounded-xl border border-border bg-muted/30 p-2">
+              <div className="max-h-[620px] max-w-full overflow-hidden rounded-xl border border-border bg-muted/30 p-2 sm:overflow-auto">
                 <div
                   style={{
                     transform: "scale(0.45)",
                     transformOrigin: "top left",
-                    width: "210mm",
+                    width: "min(210mm, 222%)",
                   }}
                 >
                   <CvPreview data={cvData} template={templateId} />
