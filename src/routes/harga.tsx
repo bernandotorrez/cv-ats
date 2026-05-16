@@ -31,11 +31,19 @@ import { Card, CardContent } from "@/components/ui/card";
 import { buildSeo } from "@/lib/seo";
 
 const WHATSAPP_NUMBER = "6285190607141";
+const STARTER_PAYMENT_URL = "https://lynk.id/ben-yt-ai/rj687wre6kr0";
+const PRO_PAYMENT_URL = "http://lynk.id/ben-yt-ai/zq1y83lq1kek";
 
 function getUpgradeWhatsAppUrl(tierName: string) {
   return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
     `Halo, saya ingin Upgrade ${tierName}. Mohon info nomor rekening untuk transfer.`,
   )}`;
+}
+
+function getUpgradeUrl(tierName: string) {
+  if (tierName === "Starter") return STARTER_PAYMENT_URL;
+  if (tierName === "Pro") return PRO_PAYMENT_URL;
+  return getUpgradeWhatsAppUrl(tierName);
 }
 
 const tiers = [
@@ -69,7 +77,7 @@ const tiers = [
     tone: "featured",
     features: [
       "3 CV aktif",
-      "Semua template premium",
+      "Sebagian template premium",
       "50x saran AI / bulan",
       "10x scoring / bulan",
       "50x perbaiki teks / bulan",
@@ -94,6 +102,7 @@ const tiers = [
     tone: "sharp",
     features: [
       "10 CV aktif",
+      "Semua template premium",
       "200x saran AI / bulan",
       "50x scoring / bulan",
       "200x perbaiki teks / bulan",
@@ -154,7 +163,7 @@ const comparison = [
 const guarantees = [
   { icon: ShieldCheck, label: "Refund 7 hari" },
   { icon: LockKeyhole, label: "Data terenkripsi" },
-  { icon: MessageCircle, label: "Konfirmasi via WhatsApp" },
+  { icon: CreditCard, label: "Bayar via Lynk" },
 ] as const;
 
 const faqs = [
@@ -164,11 +173,11 @@ const faqs = [
   },
   {
     q: "Metode pembayaran apa saja?",
-    a: "Saat ini pembayaran dilakukan manual via transfer rekening. Klik tombol upgrade untuk meminta nomor rekening lewat WhatsApp, lalu setelah transfer kirim bukti dengan teks: “Saya sudah melakukan transfer untuk Upgrade <tier>”.",
+    a: "Paket Starter dan Pro bisa dibayar langsung lewat Lynk. Setelah pembayaran selesai diproses, akses paket akan diaktifkan.",
   },
   {
     q: "Bisa ganti atau berhenti paket kapan saja?",
-    a: "Bisa. Upgrade aktif setelah admin memverifikasi bukti transfer. Downgrade atau berhenti paket bisa dikonfirmasi lewat WhatsApp sebelum periode berikutnya.",
+    a: "Bisa. Paket berbayar aktif setelah pembayaran Lynk selesai diproses. Downgrade atau berhenti paket bisa dikonfirmasi lewat WhatsApp sebelum periode berikutnya.",
   },
   {
     q: "Bagaimana jika tidak cocok?",
@@ -351,16 +360,14 @@ function HargaPage() {
         <div className="container-page grid gap-8 md:grid-cols-[1fr_0.9fr] md:items-center">
           <div>
             <Badge className="mb-5 border-white/25 bg-white/15 text-white hover:bg-white/15">
-              Pembayaran manual
+              Pembayaran
             </Badge>
             <h2 className="font-display text-3xl font-bold leading-tight md:text-4xl">
-              Transfer, kirim bukti, lalu kami aktifkan paketmu.
+              Starter dan Pro bisa langsung dibayar lewat Lynk.
             </h2>
             <p className="mt-4 max-w-2xl text-lg leading-8 text-primary-foreground/85">
-              Untuk tahap awal, upgrade diproses manual. Klik tombol upgrade untuk meminta nomor
-              rekening lewat WhatsApp. Setelah tim CV Pintar mengirim detail rekening, lakukan
-              transfer, lalu kirim bukti transfer di chat yang sama dengan format pesan yang sudah
-              disiapkan.
+              Klik tombol Starter atau Pro untuk menuju halaman pembayaran Lynk sesuai paket yang
+              kamu pilih.
             </p>
           </div>
           <div className="grid gap-3 sm:grid-cols-3 md:grid-cols-1">
@@ -425,9 +432,9 @@ function HargaPage() {
           </div>
           <div className="flex flex-col gap-3 sm:flex-row md:flex-col">
             <Button asChild size="lg" className="h-12 px-6 text-base">
-              <a href={getUpgradeWhatsAppUrl("Starter")} target="_blank" rel="noreferrer">
-                Minta Rekening Starter
-                <MessageCircle className="h-5 w-5" aria-hidden="true" />
+              <a href={STARTER_PAYMENT_URL} target="_blank" rel="noreferrer">
+                Bayar Starter
+                <CreditCard className="h-5 w-5" aria-hidden="true" />
               </a>
             </Button>
             <Button asChild variant="outline" size="lg" className="h-12 px-6 text-base">
@@ -442,6 +449,9 @@ function HargaPage() {
 
 function PricingCard({ tier }: { tier: (typeof tiers)[number] }) {
   const featured = tier.popular;
+  const isStarter = tier.name === "Starter";
+  const isPro = tier.name === "Pro";
+  const isLynkPayment = isStarter || isPro;
 
   return (
     <Card
@@ -517,14 +527,19 @@ function PricingCard({ tier }: { tier: (typeof tiers)[number] }) {
               variant={tier.ctaVariant}
               className={`mt-6 h-12 w-full text-base ${featured ? "shadow-sm" : ""}`}
             >
-              <a href={getUpgradeWhatsAppUrl(tier.name)} target="_blank" rel="noreferrer">
+              <a href={getUpgradeUrl(tier.name)} target="_blank" rel="noreferrer">
                 {tier.cta}
-                <MessageCircle className="h-4 w-4" aria-hidden="true" />
+                {isLynkPayment ? (
+                  <CreditCard className="h-4 w-4" aria-hidden="true" />
+                ) : (
+                  <MessageCircle className="h-4 w-4" aria-hidden="true" />
+                )}
               </a>
             </Button>
             <p className="mt-3 text-center text-xs leading-5 text-muted-foreground">
-              Tombol ini membuka WhatsApp untuk meminta nomor rekening. Setelah transfer, kirim
-              bukti dengan teks: “Saya sudah melakukan transfer untuk Upgrade {tier.name}”.
+              {isLynkPayment
+                ? `Tombol ini membuka halaman pembayaran Lynk untuk paket ${tier.name}.`
+                : `Tombol ini membuka WhatsApp untuk konfirmasi Upgrade ${tier.name}.`}
             </p>
           </>
         )}

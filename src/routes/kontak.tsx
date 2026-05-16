@@ -42,8 +42,7 @@ const contactChannels = [
     icon: MessageCircle,
     label: "WhatsApp",
     value: "0851-9060-7141",
-    description:
-      "Untuk pertanyaan cepat, konfirmasi pembayaran manual, upload bukti transfer, atau jadwal private coaching.",
+    description: "Untuk pertanyaan cepat, bantuan pembayaran, atau jadwal private coaching.",
     href: "https://wa.me/6285190607141",
     action: "Chat WhatsApp",
   },
@@ -207,8 +206,8 @@ function KontakPage() {
               <Sparkles className="mb-3 h-5 w-5 text-primary" />
               <p className="font-semibold text-foreground">Mau langsung mulai?</p>
               <p className="mt-1">
-                Buat CV pertamamu gratis. Untuk upgrade, minta nomor rekening lewat WhatsApp,
-                transfer manual, lalu kirim bukti transfer di chat yang sama.
+                Buat CV pertamamu gratis. Untuk Starter dan Pro, lanjutkan pembayaran lewat Lynk
+                dari halaman harga.
               </p>
               <Button asChild variant="link" className="mt-2 h-auto p-0">
                 <Link to="/register">

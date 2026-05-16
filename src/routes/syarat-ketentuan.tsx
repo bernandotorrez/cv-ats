@@ -82,8 +82,8 @@ const paymentRules = [
   },
   {
     icon: CreditCard,
-    label: "Transfer manual",
-    desc: "Pembayaran saat ini dilakukan lewat transfer rekening. Nomor rekening diberikan lewat WhatsApp sebelum transfer, lalu upgrade diproses setelah bukti transfer diverifikasi.",
+    label: "Pembayaran paket",
+    desc: "Paket Starter dan Pro dibayar lewat Lynk. Akses paket aktif setelah pembayaran selesai diproses.",
   },
 ];
 
@@ -217,7 +217,7 @@ function SyaratKetentuanPage() {
             icon={CreditCard}
             number="03"
             title="Pembayaran dan refund"
-            description="Saat ini pembayaran upgrade dilakukan manual. Minta nomor rekening lewat WhatsApp, transfer, lalu admin memverifikasi bukti transfer."
+            description="Paket Starter dan Pro dibayar lewat Lynk. Akses paket aktif setelah pembayaran selesai diproses."
           >
             <div className="grid gap-4 md:grid-cols-3">
               {paymentRules.map((item) => (
