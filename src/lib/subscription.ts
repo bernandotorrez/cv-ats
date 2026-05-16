@@ -24,6 +24,7 @@ export interface TierLimits {
   maxKeywordExtract: number | null;
   maxInterviewSimulator: number | null;
   maxAiChat: number | null;
+  maxCvDownloads: number | null;
   // Boolean feature gates — MUST match edge function gating
   enableCvReview: boolean; // ai-cv-review: free=❌, starter+=✅
   enableAiSuggest: boolean; // ai-suggest: all tiers
@@ -56,6 +57,7 @@ type DbSubscriptionRow = {
     quota_ai_chat: number | null;
     quota_ai_cover_letter: number | null;
     quota_ai_keyword_extract: number | null;
+    quota_cv_downloads: number | null;
     quota_cv_review: number | null;
     quota_interview_simulator: number | null;
     quota_guided_mode: number | null;
@@ -90,6 +92,7 @@ const TIER_LIMITS: Record<Tier, TierLimits> = {
     maxKeywordExtract: 0,
     maxInterviewSimulator: 0,
     maxAiChat: 5,
+    maxCvDownloads: 1,
     enableCvReview: false,
     enableAiSuggest: true,
     enableAiScore: true,
@@ -118,6 +121,7 @@ const TIER_LIMITS: Record<Tier, TierLimits> = {
     maxKeywordExtract: 20,
     maxInterviewSimulator: 0,
     maxAiChat: 50,
+    maxCvDownloads: null,
     enableCvReview: true,
     enableAiSuggest: true,
     enableAiScore: true,
@@ -146,6 +150,7 @@ const TIER_LIMITS: Record<Tier, TierLimits> = {
     maxKeywordExtract: 100,
     maxInterviewSimulator: 50,
     maxAiChat: 200,
+    maxCvDownloads: null,
     enableCvReview: true,
     enableAiSuggest: true,
     enableAiScore: true,
@@ -169,7 +174,7 @@ const TIER_LIMITS: Record<Tier, TierLimits> = {
  */
 export async function getUserTierConfig(userId: string): Promise<TierLimits> {
   try {
-    const { data } = await (supabase as any)
+    const { data } = await supabase
       .from("user_subscriptions")
       .select(
         `tier_id, status, date_start, date_end,
@@ -177,6 +182,7 @@ export async function getUserTierConfig(userId: string): Promise<TierLimits> {
           slug, name, price_monthly,
           max_cvs, quota_ai_suggest, quota_ai_score,
           quota_ai_chat, quota_ai_cover_letter, quota_ai_keyword_extract,
+          quota_cv_downloads,
           quota_cv_review, quota_interview_simulator, quota_guided_mode,
           template_access,
           enable_cv_review, enable_cover_letter, enable_keyword_extractor,
@@ -209,6 +215,7 @@ export async function getUserTierConfig(userId: string): Promise<TierLimits> {
         maxKeywordExtract: t.quota_ai_keyword_extract ?? base.maxKeywordExtract,
         maxInterviewSimulator: t.quota_interview_simulator ?? base.maxInterviewSimulator,
         maxAiChat: t.quota_ai_chat ?? base.maxAiChat,
+        maxCvDownloads: t.quota_cv_downloads ?? base.maxCvDownloads,
         templateAccess: (t.template_access as "basic" | "all") || base.templateAccess,
         // Feature gates — read directly from DB columns.
         // DB is the source of truth; hardcoded base is fallback only.
@@ -236,7 +243,7 @@ export async function getUserTierConfig(userId: string): Promise<TierLimits> {
  */
 export async function getUserTier(userId: string): Promise<Tier> {
   try {
-    const { data } = await (supabase as any)
+    const { data } = await supabase
       .from("user_subscriptions")
       .select("subscription_tiers!inner(slug)")
       .eq("user_id", userId)
