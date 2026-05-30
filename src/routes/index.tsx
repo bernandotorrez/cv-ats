@@ -450,7 +450,7 @@ function LandingPage() {
         <div className="container-page grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
           <div>
             <Badge className="bg-info text-info-foreground hover:bg-info">
-              Private Coaching by HR Recruiter
+              Private Mentoring by HR Recruiter
             </Badge>
             <h2 className="mt-4 font-display text-3xl font-bold tracking-tight md:text-4xl">
               Butuh arahan manusia setelah CV kamu siap?
@@ -474,7 +474,7 @@ function LandingPage() {
             </div>
             <Button asChild size="lg" className="mt-8 h-12 px-6 text-base">
               <Link to="/private-coaching">
-                Lihat Private Coaching
+                Lihat Private Mentoring
                 <ArrowRight className="h-4 w-4" aria-hidden />
               </Link>
             </Button>

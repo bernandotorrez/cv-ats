@@ -22,7 +22,7 @@ export const Route = createFileRoute("/kontak")({
     buildSeo({
       title: "Kontak - CV Pintar",
       description:
-        "Hubungi tim CV Pintar untuk bantuan akun, CV, kerja sama, private coaching, dan pertanyaan layanan.",
+        "Hubungi tim CV Pintar untuk bantuan akun, CV, kerja sama, private mentoring, dan pertanyaan layanan.",
       path: "/kontak",
     }),
   component: KontakPage,
@@ -42,7 +42,7 @@ const contactChannels = [
     icon: MessageCircle,
     label: "WhatsApp",
     value: "0851-9060-7141",
-    description: "Untuk pertanyaan cepat, bantuan pembayaran, atau jadwal private coaching.",
+    description: "Untuk pertanyaan cepat, bantuan pembayaran, atau jadwal private mentoring.",
     href: "https://wa.me/6285190607141",
     action: "Chat WhatsApp",
   },
@@ -70,7 +70,7 @@ const quickTopics = [
   "Akun dan login",
   "Review CV by HR Expert AI",
   "Simulasi wawancara AI",
-  "Private coaching",
+  "Private mentoring",
   "Konfirmasi pembayaran",
   "Template dan export PDF",
   "Kerja sama komunitas",
@@ -91,7 +91,7 @@ function KontakPage() {
               Ada yang perlu dibantu? Ceritakan saja, kami dengarkan.
             </h1>
             <p className="mt-5 max-w-2xl text-pretty text-base leading-7 text-muted-foreground sm:text-lg">
-              Butuh bantuan CV, akun, private coaching, atau kerja sama? Tim CV Pintar siap bantu
+              Butuh bantuan CV, akun, private mentoring, atau kerja sama? Tim CV Pintar siap bantu
               dengan bahasa yang jelas dan langkah yang praktis.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">

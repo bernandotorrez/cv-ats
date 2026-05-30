@@ -29,12 +29,12 @@ import { buildSeo } from "@/lib/seo";
 export const Route = createFileRoute("/private-coaching")({
   head: () =>
     buildSeo({
-      title: "Private Coaching by HR Recruiter - CV Pintar",
+      title: "Private Mentoring by HR Recruiter - CV Pintar",
       description:
         "Konsultasi 1-on-1 dengan HR Recruiter untuk review CV, strategi apply, dan persiapan interview. Chat session Rp25.000 dan video Zoom Rp50.000.",
       path: "/private-coaching",
       keywords:
-        "private coaching hr recruiter, konsultasi cv, review cv hr, simulasi interview, coaching karir indonesia",
+        "private mentoring hr recruiter, konsultasi cv, review cv hr, simulasi interview, mentoring karir indonesia",
     }),
   component: PrivateCoachingPage,
 });
@@ -50,7 +50,7 @@ const packages = [
     duration: "30 menit chat terarah",
     cta: "Booking Chat",
     message:
-      "Halo CV Pintar, saya ingin booking Chat Session Private Coaching by HR Recruiter. Mohon info jadwal dan cara pembayarannya.",
+      "Halo CV Pintar, saya ingin booking Chat Session Private Mentoring by HR Recruiter. Mohon info jadwal dan cara pembayarannya.",
   },
   {
     icon: Video,
@@ -60,7 +60,7 @@ const packages = [
     duration: "30 menit via Zoom",
     cta: "Booking Video",
     message:
-      "Halo CV Pintar, saya ingin booking Video Session Private Coaching via Zoom. Mohon info jadwal, pembayaran, dan link Zoom-nya.",
+      "Halo CV Pintar, saya ingin booking Video Session Private Mentoring via Zoom. Mohon info jadwal, pembayaran, dan link Zoom-nya.",
   },
 ] as const;
 
@@ -87,7 +87,7 @@ const steps = [
   ["01", "Pilih sesi", "Tentukan ingin konsultasi via chat atau video Zoom."],
   ["02", "Konfirmasi jadwal", "Tim akan membantu mencocokkan jadwal dengan HR Recruiter."],
   ["03", "Bayar & kirim bahan", "Kirim CV, target role, atau job description yang ingin dibahas."],
-  ["04", "Mulai coaching", "Chat dimulai via WhatsApp. Video session memakai link Zoom."],
+  ["04", "Mulai mentoring", "Chat dimulai via WhatsApp. Video session memakai link Zoom."],
 ] as const;
 
 const faqs = [
@@ -97,7 +97,7 @@ const faqs = [
   },
   {
     q: "Apa yang perlu saya siapkan sebelum sesi?",
-    a: "Siapkan CV terbaru, target posisi, dan job description bila ada. Untuk interview coaching, siapkan juga daftar pertanyaan yang paling membuat kamu ragu.",
+    a: "Siapkan CV terbaru, target posisi, dan job description bila ada. Untuk interview mentoring, siapkan juga daftar pertanyaan yang paling membuat kamu ragu.",
   },
   {
     q: "Apakah bisa memilih HR Recruiter?",
@@ -105,7 +105,7 @@ const faqs = [
   },
   {
     q: "Apakah sesi ini menggantikan fitur AI Review?",
-    a: "Tidak. AI Review membantu screening cepat, sedangkan Private Coaching memberi arahan personal langsung dari HR Recruiter.",
+    a: "Tidak. AI Review membantu screening cepat, sedangkan Private Mentoring memberi arahan personal langsung dari HR Recruiter.",
   },
 ] as const;
 
@@ -121,7 +121,7 @@ function PrivateCoachingPage() {
           <div>
             <Badge className="gap-1.5 bg-info text-info-foreground hover:bg-info">
               <Sparkles className="h-3.5 w-3.5" aria-hidden />
-              Private coaching by HR Recruiter
+              Private mentoring by HR Recruiter
             </Badge>
             <h1 className="mt-5 max-w-3xl font-display text-4xl font-extrabold leading-tight tracking-tight text-foreground sm:text-5xl lg:text-6xl">
               Bukan cuma CV bagus. Kamu juga perlu tahu cara menjual dirimu.
@@ -159,7 +159,7 @@ function PrivateCoachingPage() {
                 </div>
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    Coaching focus
+                    Mentoring focus
                   </p>
                   <h2 className="font-display text-xl font-bold">CV, Apply, Interview</h2>
                 </div>
@@ -316,7 +316,7 @@ function PrivateCoachingPage() {
             Punya CV. Punya strategi. Punya cara menjawab.
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-sm leading-7 text-primary-foreground/90 md:text-base">
-            Booking sesi coaching dan bawa proses apply kamu ke langkah yang lebih terarah.
+            Booking sesi mentoring dan bawa proses apply kamu ke langkah yang lebih terarah.
           </p>
           <Button asChild size="lg" variant="secondary" className="mt-8 h-12 px-7 text-base">
             <a href={waLink(packages[1].message)} target="_blank" rel="noopener noreferrer">

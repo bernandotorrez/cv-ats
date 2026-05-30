@@ -24,7 +24,7 @@ export function SiteFooter() {
             links={[
               { to: "/fitur", label: "Fitur" },
               { to: "/template", label: "Template" },
-              { to: "/private-coaching", label: "Private Coaching" },
+              { to: "/private-coaching", label: "Private Mentoring" },
               { to: "/harga", label: "Harga" },
             ]}
           />

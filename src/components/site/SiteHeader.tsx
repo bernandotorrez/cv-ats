@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 const nav = [
   { to: "/fitur", label: "Fitur" },
   { to: "/template", label: "Template" },
-  { to: "/private-coaching", label: "Private Coaching" },
+  { to: "/private-coaching", label: "Private Mentoring" },
   { to: "/harga", label: "Harga" },
   { to: "/panduan-cv-ats", label: "Panduan" },
   { to: "/tips-interview", label: "Tips Interview" },

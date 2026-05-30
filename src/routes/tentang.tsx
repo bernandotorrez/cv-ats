@@ -75,7 +75,7 @@ const values = [
     icon: BadgeCheck,
     title: "Dari CV sampai interview",
     description:
-      "CV Pintar tidak berhenti di dokumen. Kami juga membantu review HR, simulasi wawancara, dan private coaching.",
+      "CV Pintar tidak berhenti di dokumen. Kami juga membantu review HR, simulasi wawancara, dan private mentoring.",
   },
 ] as const;
 
@@ -129,7 +129,7 @@ function TentangPage() {
                 </Link>
               </Button>
               <Button asChild size="lg" variant="outline" className="h-12 px-6 text-base">
-                <Link to="/private-coaching">Lihat Private Coaching</Link>
+                <Link to="/private-coaching">Lihat Private Mentoring</Link>
               </Button>
             </div>
           </div>
@@ -283,12 +283,12 @@ function TentangPage() {
             </h2>
             <p className="mt-4 text-base leading-8 text-muted-foreground">
               Setelah CV dibuat, kamu bisa lanjut ke scoring, review HR, simulasi wawancara, atau
-              private coaching bersama HR Recruiter.
+              private mentoring bersama HR Recruiter.
             </p>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             {[
-              [BriefcaseBusiness, "Private Coaching", "Bimbingan 1-on-1 dengan HR Recruiter."],
+              [BriefcaseBusiness, "Private Mentoring", "Bimbingan 1-on-1 dengan HR Recruiter."],
               [FileCheck, "Review CV", "Analisis mendalam dari perspektif HR."],
             ].map(([Icon, title, desc]) => (
               <div key={title as string} className="rounded-lg border border-border p-4">
