@@ -1,31 +1,91 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import type { ReactNode } from "react";
 import { buildSeo } from "@/lib/seo";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { PageHero } from "@/components/site/PageHero";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  MapPin, Building2, Clock, DollarSign, Briefcase,
-  ArrowLeft, FileText, ExternalLink, Calendar, GraduationCap,
+  ArrowLeft,
+  ArrowRight,
+  BadgeCheck,
+  BookOpen,
+  Briefcase,
+  Building2,
+  Calendar,
+  CheckCircle2,
+  Clock,
+  DollarSign,
+  ExternalLink,
+  FileText,
+  GraduationCap,
+  Lightbulb,
+  MapPin,
+  Search,
+  Send,
+  ShieldCheck,
+  Sparkles,
+  Wand2,
+  Zap,
 } from "lucide-react";
 
+type Job = {
+  id: string;
+  slug: string;
+  title: string;
+  company: string;
+  company_logo?: string | null;
+  location: string;
+  type: string;
+  level: string;
+  industry?: string | null;
+  salary_min?: number | null;
+  salary_max?: number | null;
+  description: string;
+  requirements?: string | null;
+  qualifications?: string | null;
+  source_url?: string | null;
+  created_at: string;
+};
+
+type JobListingsTable = (table: "job_listings") => {
+  select: (columns: string) => {
+    eq: (
+      column: string,
+      value: string | boolean,
+    ) => {
+      eq: (
+        column: string,
+        value: string | boolean,
+      ) => {
+        single: () => Promise<{ data: Job | null; error: unknown }>;
+      };
+    };
+  };
+};
+
 export const Route = createFileRoute("/lowongan/$slug")({
-  loader: async ({ params }: { params: { slug: string } }) => {
-    const { data, error } = await (supabase as any)
-      .from("job_listings")
+  loader: async ({ params }) => {
+    const jobListings = supabase.from as unknown as JobListingsTable;
+    const { data, error } = await jobListings("job_listings")
       .select("*")
       .eq("slug", params.slug)
       .eq("is_active", true)
       .single();
+
     if (error || !data) throw notFound();
-    return data;
+    return data as Job;
   },
-  head: ({ loaderData }: any) => {
-    if (!loaderData) return { meta: [{ title: "Lowongan tidak ditemukan" }], links: [], scripts: [] };
+  head: ({ loaderData }) => {
+    if (!loaderData) {
+      return { meta: [{ title: "Lowongan tidak ditemukan" }], links: [], scripts: [] };
+    }
+
     return buildSeo({
-      title: `Lowongan ${loaderData.title} di ${loaderData.company} — CV Pintar`,
-      description: loaderData.description?.substring(0, 160) ?? `Lowongan ${loaderData.title} di ${loaderData.company}, ${loaderData.location}.`,
+      title: `Lowongan ${loaderData.title} di ${loaderData.company} - CV Pintar`,
+      description:
+        loaderData.description?.substring(0, 160) ??
+        `Lowongan ${loaderData.title} di ${loaderData.company}, ${loaderData.location}.`,
       path: `/lowongan/${loaderData.slug}`,
       keywords: `lowongan ${loaderData.title}, loker ${loaderData.company}, kerja ${loaderData.location}`,
       jsonLd: {
@@ -50,140 +110,386 @@ export const Route = createFileRoute("/lowongan/$slug")({
   ),
 });
 
+const prepCards = [
+  {
+    icon: Search,
+    title: "Ambil keyword",
+    desc: "Catat skill, tools, dan tanggung jawab yang berulang di lowongan ini.",
+  },
+  {
+    icon: Wand2,
+    title: "Sesuaikan CV",
+    desc: "Tulis ulang pengalaman agar lebih nyambung dengan kebutuhan role.",
+  },
+  {
+    icon: Send,
+    title: "Kirim dengan konteks",
+    desc: "Gunakan cover letter singkat yang menyebut kebutuhan perusahaan.",
+  },
+] as const;
+
 function LowonganDetailPage() {
-  const job = Route.useLoaderData() as any;
-
-  const typeLabel = (t: string) => {
-    const map: Record<string, string> = { "full-time": "Full Time", "part-time": "Part Time", "contract": "Kontrak", "internship": "Magang" };
-    return map[t] ?? t;
-  };
-
-  const levelLabel = (l: string) => {
-    const map: Record<string, string> = { entry: "Entry Level", mid: "Mid Level", senior: "Senior", manager: "Manager", director: "Director" };
-    return map[l] ?? l;
-  };
-
-  const formatSalary = (min: number, max: number) => {
-    if (!min && !max) return null;
-    const fmt = (n: number) => n >= 1000000 ? `Rp ${(n / 1000000).toFixed(0)}jt` : `Rp ${(n / 1000).toFixed(0)}rb`;
-    if (min && max) return `${fmt(min)} - ${fmt(max)}`;
-    return min ? `Mulai ${fmt(min)}` : `Hingga ${fmt(max!)}`;
-  };
-
+  const job = Route.useLoaderData();
   const salaryText = formatSalary(job.salary_min, job.salary_max);
+  const postedDate = new Date(job.created_at).toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+  const requirementItems = parseList(job.requirements);
+  const qualificationItems = parseList(job.qualifications);
+  const descriptionParagraphs = parseParagraphs(job.description);
 
   return (
-    <div>
-      <PageHero
-        title={job.title}
-        description={`Lowongan ${job.title} di ${job.company}, ${job.location}.`}
-      />
+    <main className="overflow-x-clip bg-background">
+      <section className="border-b border-border/70">
+        <div className="container-page py-8 md:py-12">
+          <Button asChild variant="ghost" size="sm" className="mb-8">
+            <Link to="/lowongan">
+              <ArrowLeft className="h-4 w-4" />
+              Kembali ke Lowongan
+            </Link>
+          </Button>
 
-      <div className="container-page py-8">
-        <Button asChild variant="ghost" size="sm" className="mb-6">
-          <Link to="/lowongan"><ArrowLeft className="h-4 w-4 mr-1.5" /> Kembali ke Lowongan</Link>
-        </Button>
+          <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
+            <div>
+              <Badge className="mb-5 gap-2 border-emerald-200 bg-emerald-100 px-4 py-2 text-sm text-emerald-950 shadow-sm hover:bg-emerald-100">
+                <Sparkles className="h-4 w-4" aria-hidden="true" />
+                Detail lowongan
+              </Badge>
 
-        <div className="grid gap-6 lg:grid-cols-3">
-          {/* Main Content */}
-          <div className="lg:col-span-2 space-y-6">
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex flex-wrap gap-2 mb-4">
-                  <Badge variant="secondary">{typeLabel(job.type)}</Badge>
-                  <Badge variant="outline">{levelLabel(job.level)}</Badge>
-                  {job.industry && <Badge variant="outline">{job.industry}</Badge>}
-                </div>
+              <h1 className="max-w-4xl font-display text-4xl font-bold leading-[1.04] text-foreground sm:text-5xl lg:text-6xl">
+                {job.title}
+              </h1>
 
-                <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground mb-6">
-                  <span className="flex items-center gap-1.5"><Building2 className="h-4 w-4" /> {job.company}</span>
-                  <span className="flex items-center gap-1.5"><MapPin className="h-4 w-4" /> {job.location}</span>
-                  {salaryText && <span className="flex items-center gap-1.5"><DollarSign className="h-4 w-4" /> {salaryText}</span>}
-                  <span className="flex items-center gap-1.5"><Calendar className="h-4 w-4" /> Diposting {new Date(job.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}</span>
-                </div>
+              <div className="mt-5 flex flex-wrap items-center gap-3 text-base text-muted-foreground">
+                <span className="inline-flex items-center gap-2 font-medium text-foreground">
+                  <Building2 className="h-5 w-5 text-primary" />
+                  {job.company}
+                </span>
+                <span className="inline-flex items-center gap-2">
+                  <MapPin className="h-5 w-5" />
+                  {job.location}
+                </span>
+                <span className="inline-flex items-center gap-2">
+                  <Calendar className="h-5 w-5" />
+                  {postedDate}
+                </span>
+              </div>
 
-                <h2 className="font-semibold text-lg mb-3">Deskripsi Pekerjaan</h2>
-                <div className="prose prose-sm max-w-none text-muted-foreground whitespace-pre-line">
-                  {job.description}
-                </div>
+              <div className="mt-6 flex flex-wrap gap-2">
+                <Badge className="bg-primary/10 text-primary hover:bg-primary/10">
+                  {levelLabel(job.level)}
+                </Badge>
+                <Badge variant="secondary">{typeLabel(job.type)}</Badge>
+                {job.industry && <Badge variant="outline">{job.industry}</Badge>}
+                {salaryText && <Badge variant="outline">{salaryText}</Badge>}
+              </div>
 
-                {job.requirements && (
-                  <>
-                    <h2 className="font-semibold text-lg mt-6 mb-3">Persyaratan</h2>
-                    <div className="prose prose-sm max-w-none text-muted-foreground whitespace-pre-line">
-                      {job.requirements}
-                    </div>
-                  </>
-                )}
+              <p className="mt-6 max-w-3xl text-lg leading-8 text-muted-foreground">
+                {descriptionParagraphs[0] ||
+                  `Peluang ${job.title} di ${job.company}. Baca detail role, requirement, dan siapkan CV yang relevan sebelum melamar.`}
+              </p>
+            </div>
 
-                {job.qualifications && (
-                  <>
-                    <h2 className="font-semibold text-lg mt-6 mb-3">Kualifikasi</h2>
-                    <div className="prose prose-sm max-w-none text-muted-foreground whitespace-pre-line">
-                      {job.qualifications}
-                    </div>
-                  </>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Sidebar */}
-          <div className="space-y-4">
-            {/* CTA Card */}
-            <Card className="bg-primary/5 border-primary/20">
-              <CardContent className="p-6 text-center">
-                <FileText className="mx-auto h-8 w-8 text-primary mb-3" />
-                <h3 className="font-semibold">Siap Melamar?</h3>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Buat CV ATS-friendly dalam 1 menit dan tingkatkan peluang lolos screening.
-                </p>
-                <Button asChild className="w-full mt-4">
-                  <Link to="/register">Buat CV Gratis</Link>
-                </Button>
-                <p className="text-xs text-muted-foreground mt-2">
-                  Sudah punya akun? <Link to="/login" search={{ redirect: "/dashboard" }} className="text-primary hover:underline">Login</Link>
-                </p>
-              </CardContent>
-            </Card>
-
-            {/* Job Info Card */}
-            <Card>
-              <CardContent className="p-4 space-y-3">
-                <h4 className="font-medium text-sm">Ringkasan</h4>
-                <div className="space-y-2 text-sm">
-                  <div className="flex items-center gap-2">
-                    <Briefcase className="h-4 w-4 text-muted-foreground" />
-                    <span>{typeLabel(job.type)}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <GraduationCap className="h-4 w-4 text-muted-foreground" />
-                    <span>{levelLabel(job.level)}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <MapPin className="h-4 w-4 text-muted-foreground" />
-                    <span>{job.location}</span>
-                  </div>
-                  {salaryText && (
-                    <div className="flex items-center gap-2">
-                      <DollarSign className="h-4 w-4 text-muted-foreground" />
-                      <span>{salaryText}</span>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-
-            {job.source_url && (
-              <Button asChild variant="outline" className="w-full gap-1.5">
-                <a href={job.source_url} target="_blank" rel="noopener noreferrer">
-                  <ExternalLink className="h-4 w-4" /> Lihat Sumber Asli
-                </a>
-              </Button>
-            )}
+            <ApplyPanel job={job} salaryText={salaryText} />
           </div>
         </div>
-      </div>
+      </section>
+
+      <section className="container-page py-10 md:py-14">
+        <div className="grid gap-4 md:grid-cols-3">
+          {[
+            { icon: Briefcase, label: "Tipe kerja", value: typeLabel(job.type) },
+            { icon: GraduationCap, label: "Level", value: levelLabel(job.level) },
+            { icon: DollarSign, label: "Estimasi gaji", value: salaryText || "Tidak dicantumkan" },
+          ].map((item) => (
+            <Card key={item.label} className="border-border/80 shadow-sm">
+              <CardContent className="flex items-center gap-4 p-5">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <item.icon className="h-5 w-5" aria-hidden="true" />
+                </div>
+                <div>
+                  <p className="text-xs font-medium uppercase text-muted-foreground">
+                    {item.label}
+                  </p>
+                  <p className="mt-1 font-display text-xl font-bold text-foreground">
+                    {item.value}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </section>
+
+      <section className="bg-muted/45 py-12 md:py-16">
+        <div className="container-page grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
+          <div className="space-y-5">
+            <ContentCard
+              icon={FileText}
+              eyebrow="Role overview"
+              title="Deskripsi pekerjaan"
+              fallback="Deskripsi pekerjaan belum tersedia lengkap dari sumber asli."
+            >
+              {descriptionParagraphs.length > 0 ? (
+                <div className="space-y-4">
+                  {descriptionParagraphs.map((paragraph) => (
+                    <p key={paragraph} className="leading-8 text-muted-foreground">
+                      {paragraph}
+                    </p>
+                  ))}
+                </div>
+              ) : (
+                <p className="leading-7 text-muted-foreground">
+                  Deskripsi pekerjaan belum tersedia lengkap dari sumber asli.
+                </p>
+              )}
+            </ContentCard>
+
+            <ContentCard
+              icon={ShieldCheck}
+              eyebrow="Yang perlu disiapkan"
+              title="Job requirements"
+              fallback="Requirement belum dicantumkan secara terpisah."
+            >
+              <Checklist items={requirementItems} />
+            </ContentCard>
+
+            <ContentCard
+              icon={BadgeCheck}
+              eyebrow="Kualifikasi kandidat"
+              title="Skill dan kualifikasi"
+              fallback="Kualifikasi belum dicantumkan secara terpisah."
+            >
+              <Checklist items={qualificationItems} />
+            </ContentCard>
+          </div>
+
+          <aside className="space-y-4 lg:sticky lg:top-24">
+            <Card className="border-border/80 shadow-sm">
+              <CardContent className="p-5">
+                <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <Lightbulb className="h-5 w-5" aria-hidden="true" />
+                </div>
+                <h2 className="font-display text-2xl font-bold text-foreground">
+                  Sebelum klik lamar
+                </h2>
+                <p className="mt-3 leading-7 text-muted-foreground">
+                  Simpan keyword utama dari halaman ini. CV yang terasa spesifik biasanya lebih kuat
+                  daripada CV yang sama untuk semua lowongan.
+                </p>
+              </CardContent>
+            </Card>
+
+            <div className="grid gap-3">
+              {prepCards.map((item) => (
+                <div key={item.title} className="rounded-lg border bg-card p-4 shadow-sm">
+                  <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                    <item.icon className="h-5 w-5" aria-hidden="true" />
+                  </div>
+                  <h3 className="font-semibold text-foreground">{item.title}</h3>
+                  <p className="mt-2 text-sm leading-6 text-muted-foreground">{item.desc}</p>
+                </div>
+              ))}
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section className="container-page py-12 md:py-16">
+        <div className="grid gap-6 rounded-lg border border-border bg-card p-6 shadow-sm md:grid-cols-[1fr_auto] md:items-center md:p-8">
+          <div>
+            <Badge className="mb-4 bg-primary text-primary-foreground">Cocokkan CV</Badge>
+            <h2 className="font-display text-3xl font-bold leading-tight text-foreground">
+              Ubah detail lowongan ini jadi CV yang lebih relevan.
+            </h2>
+            <p className="mt-3 max-w-2xl leading-7 text-muted-foreground">
+              Gunakan CV Pintar untuk scoring ATS, keyword extractor, dan cover letter yang
+              mengikuti konteks role ini.
+            </p>
+          </div>
+          <div className="flex flex-col gap-3 sm:flex-row md:flex-col">
+            <Button asChild size="lg">
+              <Link to="/register">
+                Buat CV dengan AI
+                <Zap className="h-5 w-5" />
+              </Link>
+            </Button>
+            <Button asChild variant="outline" size="lg">
+              <Link to="/panduan-cv-ats">
+                Panduan CV ATS
+                <BookOpen className="h-5 w-5" />
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </section>
+    </main>
+  );
+}
+
+function ApplyPanel({ job, salaryText }: { job: Job; salaryText: string | null }) {
+  return (
+    <Card className="border-border/80 bg-card shadow-sm lg:sticky lg:top-24">
+      <CardContent className="p-5">
+        <div className="mb-5 flex items-start gap-4">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+            <Building2 className="h-6 w-6" aria-hidden="true" />
+          </div>
+          <div className="min-w-0">
+            <p className="font-display text-xl font-bold text-foreground">{job.company}</p>
+            <p className="mt-1 text-sm text-muted-foreground">{job.location}</p>
+          </div>
+        </div>
+
+        <div className="space-y-3 rounded-lg bg-muted/60 p-4">
+          <Fact icon={Clock} label="Diposting" value={formatShortDate(job.created_at)} />
+          <Fact icon={Briefcase} label="Tipe" value={typeLabel(job.type)} />
+          <Fact icon={GraduationCap} label="Level" value={levelLabel(job.level)} />
+          <Fact icon={DollarSign} label="Gaji" value={salaryText || "Tidak dicantumkan"} />
+        </div>
+
+        <div className="mt-5 grid gap-3">
+          {job.source_url && (
+            <Button asChild className="w-full justify-center gap-2">
+              <a href={job.source_url} target="_blank" rel="noopener noreferrer">
+                Lamar di sumber asli
+                <ExternalLink className="h-4 w-4" />
+              </a>
+            </Button>
+          )}
+          <Button asChild variant="outline" className="w-full justify-center gap-2">
+            <Link to="/register">
+              Siapkan CV
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </Button>
+        </div>
+
+        <p className="mt-4 text-xs leading-5 text-muted-foreground">
+          CV Pintar menampilkan lowongan sebagai referensi. Selalu cek detail terbaru di sumber asli
+          sebelum melamar.
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
+
+function ContentCard({
+  icon: Icon,
+  eyebrow,
+  title,
+  fallback,
+  children,
+}: {
+  icon: typeof FileText;
+  eyebrow: string;
+  title: string;
+  fallback: string;
+  children: ReactNode;
+}) {
+  return (
+    <Card className="border-border/80 bg-background shadow-sm">
+      <CardContent className="p-5 md:p-6">
+        <div className="mb-5 flex items-start gap-4">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <Icon className="h-5 w-5" aria-hidden="true" />
+          </div>
+          <div>
+            <p className="text-xs font-bold uppercase text-primary">{eyebrow}</p>
+            <h2 className="mt-1 font-display text-2xl font-bold text-foreground">{title}</h2>
+          </div>
+        </div>
+        {children || <p className="leading-7 text-muted-foreground">{fallback}</p>}
+      </CardContent>
+    </Card>
+  );
+}
+
+function Checklist({ items }: { items: string[] }) {
+  if (items.length === 0) {
+    return <p className="leading-7 text-muted-foreground">Belum tersedia dari sumber asli.</p>;
+  }
+
+  return (
+    <ul className="grid gap-3 sm:grid-cols-2">
+      {items.map((item) => (
+        <li key={item} className="flex items-start gap-3 rounded-lg bg-muted/60 p-3">
+          <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-primary" aria-hidden="true" />
+          <span className="text-sm font-medium leading-6 text-foreground">{item}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function Fact({ icon: Icon, label, value }: { icon: typeof Clock; label: string; value: string }) {
+  return (
+    <div className="flex items-center gap-3 text-sm">
+      <Icon className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+      <span className="min-w-20 text-muted-foreground">{label}</span>
+      <span className="font-medium text-foreground">{value}</span>
     </div>
   );
+}
+
+function parseParagraphs(value?: string | null) {
+  return String(value || "")
+    .split(/\n{2,}|(?<=\.)\s+(?=[A-Z0-9A-Z])/)
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .slice(0, 6);
+}
+
+function parseList(value?: string | null) {
+  return String(value || "")
+    .split(/\n|;|(?:^|\s)[-•]\s+/)
+    .map((item) =>
+      item
+        .replace(/^[0-9]+[.)]\s*/, "")
+        .replace(/^[-•]\s*/, "")
+        .trim(),
+    )
+    .filter((item) => item.length > 2)
+    .slice(0, 12);
+}
+
+function typeLabel(type: string) {
+  const map: Record<string, string> = {
+    "full-time": "Full Time",
+    "part-time": "Part Time",
+    contract: "Kontrak",
+    internship: "Magang",
+  };
+  return map[type] ?? type;
+}
+
+function levelLabel(level: string) {
+  const map: Record<string, string> = {
+    entry: "Entry Level",
+    mid: "Mid Level",
+    senior: "Senior",
+    manager: "Manager",
+    director: "Director",
+  };
+  return map[level] ?? level;
+}
+
+function formatSalary(min?: number | null, max?: number | null) {
+  if (!min && !max) return null;
+  const fmt = (value: number) => {
+    if (value >= 1000000) return `Rp ${(value / 1000000).toFixed(0)}jt`;
+    return `Rp ${(value / 1000).toFixed(0)}rb`;
+  };
+  if (min && max) return `${fmt(min)} - ${fmt(max)}`;
+  if (min) return `Mulai ${fmt(min)}`;
+  return `Hingga ${fmt(max ?? 0)}`;
+}
+
+function formatShortDate(value: string) {
+  return new Date(value).toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "short",
+  });
 }
