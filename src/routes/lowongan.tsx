@@ -6,6 +6,15 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -78,6 +87,7 @@ interface SearchSource {
 
 const typeOptions = ["Semua Tipe", "full-time", "part-time", "contract", "internship"];
 const levelOptions = ["Semua Level", "entry", "mid", "senior", "manager", "director"];
+const JOBS_PER_PAGE = 10;
 const locationOptions = [
   "Semua Lokasi",
   "Jakarta",
@@ -176,6 +186,7 @@ function LowonganPage() {
   const [locationFilter, setLocationFilter] = useState("Semua Lokasi");
   const [aiRole, setAiRole] = useState("");
   const [aiLocation, setAiLocation] = useState("Indonesia");
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     void loadJobs();
@@ -217,6 +228,24 @@ function LowonganPage() {
 
     return matchSearch && matchType && matchLevel && matchLocation;
   });
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / JOBS_PER_PAGE));
+  const currentPageSafe = Math.min(currentPage, totalPages);
+  const paginatedJobs = filtered.slice(
+    (currentPageSafe - 1) * JOBS_PER_PAGE,
+    currentPageSafe * JOBS_PER_PAGE,
+  );
+  const pageItems = buildPageItems(currentPageSafe, totalPages);
+  const firstItem = filtered.length === 0 ? 0 : (currentPageSafe - 1) * JOBS_PER_PAGE + 1;
+  const lastItem = Math.min(currentPageSafe * JOBS_PER_PAGE, filtered.length);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, typeFilter, levelFilter, locationFilter]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) setCurrentPage(totalPages);
+  }, [currentPage, totalPages]);
 
   const smartSources = useMemo(
     () => buildSearchSources(aiRole || search || "lowongan kerja", aiLocation),
@@ -373,6 +402,12 @@ function LowonganPage() {
               <Filter className="mr-1.5 h-3.5 w-3.5" />
               {filtered.length.toLocaleString("id-ID")} hasil
             </Badge>
+            {filtered.length > 0 && (
+              <Badge variant="outline" className="bg-background">
+                {firstItem.toLocaleString("id-ID")}-{lastItem.toLocaleString("id-ID")} dari{" "}
+                {filtered.length.toLocaleString("id-ID")}
+              </Badge>
+            )}
             <Badge variant="outline" className="bg-background">
               <Compass className="mr-1.5 h-3.5 w-3.5" />
               {totalRemote.toLocaleString("id-ID")} remote
@@ -393,11 +428,76 @@ function LowonganPage() {
               <p className="mt-1 text-sm text-muted-foreground">Coba ubah filter pencarian.</p>
             </div>
           ) : (
-            <div className="grid gap-4">
-              {filtered.map((job) => (
-                <JobCard key={job.id} job={job} />
-              ))}
-            </div>
+            <>
+              <div className="grid gap-4">
+                {paginatedJobs.map((job) => (
+                  <JobCard key={job.id} job={job} />
+                ))}
+              </div>
+
+              {totalPages > 1 && (
+                <div className="mt-8 flex flex-col items-center gap-3">
+                  <p className="text-sm text-muted-foreground">
+                    Halaman {currentPageSafe.toLocaleString("id-ID")} dari{" "}
+                    {totalPages.toLocaleString("id-ID")} - 10 lowongan per halaman
+                  </p>
+                  <Pagination>
+                    <PaginationContent className="flex-wrap justify-center">
+                      <PaginationItem>
+                        <PaginationPrevious
+                          href="#daftar-lowongan"
+                          aria-disabled={currentPageSafe === 1}
+                          className={
+                            currentPageSafe === 1 ? "pointer-events-none opacity-50" : undefined
+                          }
+                          onClick={(event) => {
+                            event.preventDefault();
+                            setCurrentPage((page) => Math.max(1, page - 1));
+                          }}
+                        />
+                      </PaginationItem>
+
+                      {pageItems.map((item, index) =>
+                        item === "ellipsis" ? (
+                          <PaginationItem key={`ellipsis-${index}`}>
+                            <PaginationEllipsis />
+                          </PaginationItem>
+                        ) : (
+                          <PaginationItem key={item}>
+                            <PaginationLink
+                              href="#daftar-lowongan"
+                              isActive={item === currentPageSafe}
+                              onClick={(event) => {
+                                event.preventDefault();
+                                setCurrentPage(item);
+                              }}
+                            >
+                              {item}
+                            </PaginationLink>
+                          </PaginationItem>
+                        ),
+                      )}
+
+                      <PaginationItem>
+                        <PaginationNext
+                          href="#daftar-lowongan"
+                          aria-disabled={currentPageSafe === totalPages}
+                          className={
+                            currentPageSafe === totalPages
+                              ? "pointer-events-none opacity-50"
+                              : undefined
+                          }
+                          onClick={(event) => {
+                            event.preventDefault();
+                            setCurrentPage((page) => Math.min(totalPages, page + 1));
+                          }}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                </div>
+              )}
+            </>
           )}
         </div>
       </section>
@@ -631,6 +731,26 @@ function formatSalary(min?: number | null, max?: number | null) {
   if (min && max) return `${fmt(min)} - ${fmt(max)}`;
   if (min) return `Mulai ${fmt(min)}`;
   return `Hingga ${fmt(max ?? 0)}`;
+}
+
+function buildPageItems(currentPage: number, totalPages: number) {
+  if (totalPages <= 7) {
+    return Array.from({ length: totalPages }, (_, index) => index + 1);
+  }
+
+  const pages = new Set([1, totalPages, currentPage - 1, currentPage, currentPage + 1]);
+  const sortedPages = Array.from(pages)
+    .filter((page) => page >= 1 && page <= totalPages)
+    .sort((a, b) => a - b);
+
+  return sortedPages.reduce<Array<number | "ellipsis">>((items, page) => {
+    const previous = items[items.length - 1];
+    if (typeof previous === "number" && page - previous > 1) {
+      items.push("ellipsis");
+    }
+    items.push(page);
+    return items;
+  }, []);
 }
 
 function buildSearchSources(role: string, location: string): SearchSource[] {
