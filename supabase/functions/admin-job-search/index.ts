@@ -48,17 +48,21 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const requesterId = await getUserId(req);
     const admin = getAdminClient();
-    const { data: requesterRole, error: roleError } = await admin
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", requesterId)
-      .eq("role", "admin")
-      .maybeSingle();
+    const isCronRequest = await isValidCronRequest(req, admin);
 
-    if (roleError) throw roleError;
-    if (!requesterRole) return json(req, { error: "Forbidden" }, 403);
+    if (!isCronRequest) {
+      const requesterId = await getUserId(req);
+      const { data: requesterRole, error: roleError } = await admin
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", requesterId)
+        .eq("role", "admin")
+        .maybeSingle();
+
+      if (roleError) throw roleError;
+      if (!requesterRole) return json(req, { error: "Forbidden" }, 403);
+    }
 
     const body = await req.json().catch(() => ({}));
     const query = cleanText(body.query, 80);
@@ -515,6 +519,16 @@ function decodeHtmlEntities(value: string) {
 function clampNumber(value: number, min: number, max: number) {
   if (!Number.isFinite(value)) return min;
   return Math.min(Math.max(Math.floor(value), min), max);
+}
+
+async function isValidCronRequest(req: Request, admin: ReturnType<typeof getAdminClient>) {
+  const providedSecret = req.headers.get("x-cron-secret");
+  if (!providedSecret) return false;
+
+  const { data, error } = await admin.rpc("get_job_search_cron_secret");
+  if (error || !data) return false;
+
+  return providedSecret === data;
 }
 
 function json(req: Request, body: unknown, status = 200) {
