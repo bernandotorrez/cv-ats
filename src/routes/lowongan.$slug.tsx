@@ -48,7 +48,7 @@ type Job = {
   created_at: string;
 };
 
-type JobListingsTable = (table: "job_listings") => {
+type JobListingsQuery = {
   select: (columns: string) => {
     eq: (
       column: string,
@@ -66,8 +66,8 @@ type JobListingsTable = (table: "job_listings") => {
 
 export const Route = createFileRoute("/lowongan/$slug")({
   loader: async ({ params }) => {
-    const jobListings = supabase.from as unknown as JobListingsTable;
-    const { data, error } = await jobListings("job_listings")
+    const jobListings = supabase.from("job_listings") as unknown as JobListingsQuery;
+    const { data, error } = await jobListings
       .select("*")
       .eq("slug", params.slug)
       .eq("is_active", true)
@@ -444,11 +444,11 @@ function parseParagraphs(value?: string | null) {
 
 function parseList(value?: string | null) {
   return String(value || "")
-    .split(/\n|;|(?:^|\s)[-•]\s+/)
+    .split(/\n|;|(?:^|\s)[*-]\s+/)
     .map((item) =>
       item
         .replace(/^[0-9]+[.)]\s*/, "")
-        .replace(/^[-•]\s*/, "")
+        .replace(/^[*-]\s*/, "")
         .trim(),
     )
     .filter((item) => item.length > 2)
