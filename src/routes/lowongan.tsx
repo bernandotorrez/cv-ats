@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { buildSeo } from "@/lib/seo";
 import { Button } from "@/components/ui/button";
@@ -12,23 +12,32 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { PageHero } from "@/components/site/PageHero";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton-loading";
 import {
   ArrowRight,
+  BadgeCheck,
   BookOpen,
   Bot,
   Briefcase,
   Building2,
+  CheckCircle2,
   Clock,
+  Compass,
   DollarSign,
   ExternalLink,
   FileText,
+  Filter,
   GraduationCap,
+  Layers3,
   MapPin,
+  MousePointerClick,
   Search,
+  Send,
   Sparkles,
+  Target,
+  TrendingUp,
+  Wand2,
   Zap,
 } from "lucide-react";
 
@@ -37,11 +46,11 @@ export const Route = createFileRoute("/lowongan")({
     buildSeo({
       title: "Lowongan Pekerjaan - CV Pintar",
       description:
-        "Temukan lowongan kerja terbaru dan cari peluang dari LinkedIn, JobStreet, Glints, Kalibrr, dan Google Jobs.",
+        "Temukan lowongan kerja terbaru, filter peluang yang relevan, dan siapkan CV ATS sebelum melamar.",
       path: "/lowongan",
       keywords: "lowongan kerja, loker, job indonesia, cari kerja, lowongan terbaru",
     }),
-  component: LowonganPage,
+  component: LowonganRoute,
 });
 
 interface Job {
@@ -130,6 +139,34 @@ const fallbackJobs: Job[] = [
   },
 ];
 
+const playbook = [
+  {
+    icon: Target,
+    title: "Pilih target role",
+    desc: "Cari dari posisi, perusahaan, lokasi, atau industri yang paling nyambung dengan arah kariermu.",
+  },
+  {
+    icon: Wand2,
+    title: "Baca kebutuhan",
+    desc: "Ambil keyword dari deskripsi lowongan, lalu cocokkan dengan pengalaman dan skill di CV.",
+  },
+  {
+    icon: Send,
+    title: "Lamar lebih siap",
+    desc: "Buka detail lowongan, cek sumber asli, lalu siapkan CV ATS sebelum kirim aplikasi.",
+  },
+] as const;
+
+function LowonganRoute() {
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+
+  if (pathname !== "/lowongan" && pathname !== "/lowongan/") {
+    return <Outlet />;
+  }
+
+  return <LowonganPage />;
+}
+
 function LowonganPage() {
   const [loading, setLoading] = useState(true);
   const [jobs, setJobs] = useState<Job[]>([]);
@@ -168,6 +205,7 @@ function LowonganPage() {
       !term ||
       job.title.toLowerCase().includes(term) ||
       job.company.toLowerCase().includes(term) ||
+      job.location.toLowerCase().includes(term) ||
       job.industry?.toLowerCase().includes(term);
     const matchType = typeFilter === "Semua Tipe" || job.type === typeFilter;
     const matchLevel = levelFilter === "Semua Level" || job.level === levelFilter;
@@ -175,7 +213,7 @@ function LowonganPage() {
       locationFilter === "Semua Lokasi" ||
       (locationFilter === "Remote"
         ? job.location.toLowerCase().includes("remote")
-        : job.location.includes(locationFilter));
+        : job.location.toLowerCase().includes(locationFilter.toLowerCase()));
 
     return matchSearch && matchType && matchLevel && matchLocation;
   });
@@ -185,115 +223,171 @@ function LowonganPage() {
     [aiLocation, aiRole, search],
   );
 
-  return (
-    <div>
-      <PageHero
-        title="Lowongan Pekerjaan"
-        description="Cari peluang dari database CV Pintar atau buka pencarian lintas platform dengan query yang lebih rapi."
-      />
+  const totalRemote = jobs.filter((job) => job.location.toLowerCase().includes("remote")).length;
+  const totalCompanies = new Set(jobs.map((job) => job.company)).size;
+  const latestDate = jobs[0]?.created_at
+    ? new Date(jobs[0].created_at).toLocaleDateString("id-ID", {
+        day: "numeric",
+        month: "short",
+      })
+    : "Hari ini";
 
-      <div className="container-page space-y-8 py-8">
-        <Card className="border-primary/20 bg-primary/5">
-          <CardContent className="grid gap-6 p-6 lg:grid-cols-[0.85fr_1.15fr] lg:items-center">
+  return (
+    <main className="overflow-x-clip bg-background">
+      <section className="border-b border-border/70">
+        <div className="container-page grid gap-10 py-14 lg:grid-cols-[minmax(0,1fr)_minmax(340px,0.88fr)] lg:items-center lg:py-20">
+          <div>
+            <Badge className="mb-6 gap-2 border-emerald-200 bg-emerald-100 px-4 py-2 text-sm text-emerald-950 shadow-sm hover:bg-emerald-100">
+              <Sparkles className="h-4 w-4" aria-hidden="true" />
+              Job board + AI search helper
+            </Badge>
+
+            <h1 className="max-w-3xl font-display text-4xl font-bold leading-[1.04] text-foreground sm:text-5xl lg:text-6xl">
+              Temukan lowongan yang pas, lalu siapkan CV yang lebih tajam.
+            </h1>
+
+            <p className="mt-6 max-w-2xl text-lg leading-8 text-muted-foreground">
+              Browse lowongan dari database CV Pintar, filter peluang yang relevan, dan buka
+              pencarian lintas platform tanpa mengetik ulang query yang sama.
+            </p>
+
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <Button asChild size="lg" className="h-12 px-6 text-base">
+                <a href="#daftar-lowongan">
+                  Lihat lowongan
+                  <ArrowRight className="h-5 w-5" aria-hidden="true" />
+                </a>
+              </Button>
+              <Button asChild variant="outline" size="lg" className="h-12 px-6 text-base">
+                <Link to="/panduan-cv-ats">Cek panduan CV ATS</Link>
+              </Button>
+            </div>
+
+            <dl className="mt-10 grid grid-cols-3 gap-3">
+              {[
+                [jobs.length.toLocaleString("id-ID"), "lowongan"],
+                [totalCompanies.toLocaleString("id-ID"), "perusahaan"],
+                [latestDate, "update"],
+              ].map(([stat, label]) => (
+                <div key={label} className="rounded-lg border border-border bg-card p-3 shadow-sm">
+                  <dt className="font-display text-xl font-bold text-foreground">{stat}</dt>
+                  <dd className="mt-1 text-sm text-muted-foreground">{label}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+
+          <SearchPanel
+            aiRole={aiRole}
+            aiLocation={aiLocation}
+            onRoleChange={setAiRole}
+            onLocationChange={setAiLocation}
+            sources={smartSources}
+          />
+        </div>
+      </section>
+
+      <section className="container-page py-12 md:py-16">
+        <div className="grid gap-4 md:grid-cols-3">
+          {playbook.map((item) => (
+            <Card key={item.title} className="border-border/80 shadow-sm">
+              <CardContent className="p-6">
+                <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <item.icon className="h-5 w-5" aria-hidden="true" />
+                </div>
+                <h2 className="font-display text-xl font-bold text-foreground">{item.title}</h2>
+                <p className="mt-3 leading-7 text-muted-foreground">{item.desc}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </section>
+
+      <section id="daftar-lowongan" className="bg-muted/45 py-12 md:py-16">
+        <div className="container-page">
+          <div className="mb-8 grid gap-5 lg:grid-cols-[0.75fr_1fr] lg:items-end">
             <div>
-              <Badge className="gap-1.5 bg-info text-info-foreground hover:bg-info">
-                <Bot className="h-3.5 w-3.5" />
-                Asisten pencarian
+              <Badge variant="secondary" className="mb-4 px-3 py-1.5">
+                <Briefcase className="mr-1.5 h-3.5 w-3.5" />
+                Daftar lowongan
               </Badge>
-              <h2 className="mt-3 font-display text-2xl font-bold text-foreground">
-                Cari lowongan di banyak platform tanpa mengetik ulang.
+              <h2 className="font-display text-3xl font-bold leading-tight text-foreground md:text-4xl">
+                Filter cepat untuk peluang yang paling masuk akal.
               </h2>
-              <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                Masukkan posisi dan lokasi. Kami susun query pencarian untuk LinkedIn, JobStreet,
-                Glints, Kalibrr, dan Google Jobs.
+              <p className="mt-3 leading-7 text-muted-foreground">
+                Klik kartu lowongan untuk melihat detail, ringkasan, dan sumber aslinya.
               </p>
             </div>
 
-            <div className="space-y-4">
-              <div className="grid gap-3 sm:grid-cols-[1.2fr_0.8fr]">
+            <div className="grid gap-3 rounded-lg border border-border bg-card p-3 shadow-sm sm:grid-cols-[1fr_auto_auto_auto]">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  value={aiRole}
-                  onChange={(event) => setAiRole(event.target.value)}
-                  placeholder="Contoh: Frontend Developer, HR Officer"
-                />
-                <Input
-                  value={aiLocation}
-                  onChange={(event) => setAiLocation(event.target.value)}
-                  placeholder="Lokasi"
+                  placeholder="Cari posisi, perusahaan, lokasi..."
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  className="pl-9"
                 />
               </div>
-
-              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                {smartSources.map((source) => (
-                  <Button key={source.name} asChild variant="outline" className="justify-between">
-                    <a href={source.url} target="_blank" rel="noopener noreferrer">
-                      <span>{source.name}</span>
-                      <ExternalLink className="h-4 w-4" />
-                    </a>
-                  </Button>
-                ))}
-              </div>
+              <Select value={typeFilter} onValueChange={setTypeFilter}>
+                <SelectTrigger className="w-full sm:w-[150px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {typeOptions.map((type) => (
+                    <SelectItem key={type} value={type}>
+                      {type === "Semua Tipe" ? type : typeLabel(type)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={levelFilter} onValueChange={setLevelFilter}>
+                <SelectTrigger className="w-full sm:w-[150px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {levelOptions.map((level) => (
+                    <SelectItem key={level} value={level}>
+                      {level === "Semua Level" ? level : levelLabel(level)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={locationFilter} onValueChange={setLocationFilter}>
+                <SelectTrigger className="w-full sm:w-[150px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {locationOptions.map((location) => (
+                    <SelectItem key={location} value={location}>
+                      {location}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-          </CardContent>
-        </Card>
+          </div>
 
-        <section>
-          <div className="mb-6 flex flex-col gap-3 sm:flex-row">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Cari posisi, perusahaan, atau industri..."
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                className="pl-9"
-              />
-            </div>
-            <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger className="w-full sm:w-[150px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {typeOptions.map((type) => (
-                  <SelectItem key={type} value={type}>
-                    {type === "Semua Tipe" ? type : typeLabel(type)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={levelFilter} onValueChange={setLevelFilter}>
-              <SelectTrigger className="w-full sm:w-[150px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {levelOptions.map((level) => (
-                  <SelectItem key={level} value={level}>
-                    {level === "Semua Level" ? level : levelLabel(level)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={locationFilter} onValueChange={setLocationFilter}>
-              <SelectTrigger className="w-full sm:w-[150px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {locationOptions.map((location) => (
-                  <SelectItem key={location} value={location}>
-                    {location}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="mb-5 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+            <Badge variant="outline" className="bg-background">
+              <Filter className="mr-1.5 h-3.5 w-3.5" />
+              {filtered.length.toLocaleString("id-ID")} hasil
+            </Badge>
+            <Badge variant="outline" className="bg-background">
+              <Compass className="mr-1.5 h-3.5 w-3.5" />
+              {totalRemote.toLocaleString("id-ID")} remote
+            </Badge>
+            <span>Gunakan keyword dari lowongan untuk memperkuat CV kamu.</span>
           </div>
 
           {loading ? (
             <div className="grid gap-4">
               {Array.from({ length: 5 }).map((_, index) => (
-                <Skeleton key={index} className="h-32" />
+                <Skeleton key={index} className="h-36" />
               ))}
             </div>
           ) : filtered.length === 0 ? (
-            <div className="py-16 text-center">
+            <div className="rounded-lg border border-dashed bg-background py-16 text-center">
               <Briefcase className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
               <h3 className="text-lg font-semibold">Tidak ada lowongan</h3>
               <p className="mt-1 text-sm text-muted-foreground">Coba ubah filter pencarian.</p>
@@ -305,40 +399,127 @@ function LowonganPage() {
               ))}
             </div>
           )}
-        </section>
+        </div>
+      </section>
 
-        <section>
-          <Card className="border-0 bg-primary text-primary-foreground">
-            <CardContent className="p-8 text-center md:p-12">
-              <div className="mx-auto mb-6 w-fit rounded-full bg-primary-foreground/15 p-4">
-                <Sparkles className="h-12 w-12" />
-              </div>
-              <h2 className="font-display text-3xl font-bold md:text-4xl">
-                Siapkan CV sebelum klik lamar.
+      <section className="container-page py-12 md:py-16">
+        <div className="grid gap-6 lg:grid-cols-[0.9fr_1fr] lg:items-center">
+          <Card className="border-border/80 shadow-sm">
+            <CardContent className="p-6">
+              <Badge className="mb-5 bg-primary text-primary-foreground">Lamaran lebih siap</Badge>
+              <h2 className="font-display text-3xl font-bold leading-tight text-foreground">
+                Jangan cuma cari lowongan. Cocokkan CV dengan role-nya.
               </h2>
-              <p className="mx-auto mt-4 max-w-xl text-sm leading-7 text-primary-foreground/85 md:text-base">
-                AI CV Pintar membantu menyusun keyword, merapikan struktur, dan memberi skor ATS
-                sebelum kamu kirim lamaran.
+              <p className="mt-4 leading-8 text-muted-foreground">
+                Setelah menemukan lowongan, gunakan AI CV Pintar untuk scoring, keyword, cover
+                letter, dan perbaikan kalimat agar lamaran lebih relevan.
               </p>
-              <div className="mt-8 flex flex-col justify-center gap-4 sm:flex-row">
-                <Button asChild size="lg" variant="secondary" className="gap-2">
-                  <Link to="/cv">
-                    <Zap className="h-5 w-5" />
-                    Buat CV dengan AI
+              <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+                <Button asChild>
+                  <Link to="/register">
+                    Buat CV dengan AI <Zap className="h-4 w-4" />
                   </Link>
                 </Button>
-                <Button asChild size="lg" variant="outline" className="gap-2 bg-transparent">
+                <Button asChild variant="outline">
                   <Link to="/template">
-                    <BookOpen className="h-5 w-5" />
-                    Lihat Template
+                    Lihat Template <BookOpen className="h-4 w-4" />
                   </Link>
                 </Button>
               </div>
             </CardContent>
           </Card>
-        </section>
-      </div>
-    </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            {[
+              ["ATS score", "Cek struktur dan keyword sebelum submit.", BadgeCheck],
+              ["Cover letter", "Buat surat lamaran sesuai lowongan.", FileText],
+              ["Keyword extractor", "Ambil skill penting dari job description.", Layers3],
+              ["Application tracker", "Catat status lamaran dan follow up.", TrendingUp],
+            ].map(([title, desc, Icon]) => (
+              <div key={title as string} className="rounded-lg border bg-card p-4 shadow-sm">
+                <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <Icon className="h-5 w-5" aria-hidden="true" />
+                </div>
+                <h3 className="font-semibold text-foreground">{title}</h3>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">{desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    </main>
+  );
+}
+
+function SearchPanel({
+  aiRole,
+  aiLocation,
+  onRoleChange,
+  onLocationChange,
+  sources,
+}: {
+  aiRole: string;
+  aiLocation: string;
+  onRoleChange: (value: string) => void;
+  onLocationChange: (value: string) => void;
+  sources: SearchSource[];
+}) {
+  return (
+    <Card className="overflow-hidden border-border/80 bg-card shadow-sm">
+      <CardContent className="p-4 sm:p-6">
+        <div className="rounded-lg border border-border bg-background p-4">
+          <div className="mb-5 flex items-start justify-between gap-4 border-b border-border pb-4">
+            <div>
+              <p className="text-xs font-bold uppercase text-primary">Smart search console</p>
+              <h2 className="mt-2 font-display text-2xl font-bold text-foreground">
+                Cari lintas platform
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Query dirapikan untuk LinkedIn, JobStreet, Glints, Kalibrr, dan Google Jobs.
+              </p>
+            </div>
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <Bot className="h-5 w-5" aria-hidden="true" />
+            </div>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-[1.2fr_0.8fr]">
+            <Input
+              value={aiRole}
+              onChange={(event) => onRoleChange(event.target.value)}
+              placeholder="Frontend Developer, HR Officer"
+            />
+            <Input
+              value={aiLocation}
+              onChange={(event) => onLocationChange(event.target.value)}
+              placeholder="Indonesia, Remote"
+            />
+          </div>
+
+          <div className="mt-4 grid gap-2 sm:grid-cols-2">
+            {sources.map((source) => (
+              <Button key={source.name} asChild variant="outline" className="justify-between">
+                <a href={source.url} target="_blank" rel="noopener noreferrer">
+                  <span>{source.name}</span>
+                  <ExternalLink className="h-4 w-4" />
+                </a>
+              </Button>
+            ))}
+          </div>
+
+          <div className="mt-5 rounded-lg bg-primary p-4 text-primary-foreground">
+            <div className="mb-2 flex items-center gap-2">
+              <MousePointerClick className="h-4 w-4" aria-hidden="true" />
+              <p className="font-semibold">Tips cepat</p>
+            </div>
+            <p className="text-sm leading-6 text-primary-foreground/85">
+              Coba gabungkan role + level + lokasi, misalnya “Junior Data Analyst Jakarta” atau
+              “Remote Backend Engineer”.
+            </p>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -347,50 +528,53 @@ function JobCard({ job }: { job: Job }) {
   const isFallback = job.id.startsWith("fallback-");
 
   const content = (
-    <Card className="cursor-pointer transition-all hover:border-primary/30 hover:shadow-md">
-      <CardContent className="p-5">
-        <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-          <div className="min-w-0 flex-1">
-            <div className="mb-1.5 flex flex-wrap items-center gap-2">
-              <h3 className="text-base font-semibold transition-colors group-hover:text-primary">
-                {job.title}
-              </h3>
-              <Badge variant="secondary" className="text-xs">
-                {typeLabel(job.type)}
-              </Badge>
-              <Badge variant="outline" className="text-xs">
+    <Card className="overflow-hidden border-border/80 bg-background transition-all hover:border-primary/35 hover:shadow-md">
+      <CardContent className="p-0">
+        <div className="grid gap-0 md:grid-cols-[1fr_auto]">
+          <div className="p-5">
+            <div className="mb-3 flex flex-wrap items-center gap-2">
+              <Badge className="bg-primary/10 text-primary hover:bg-primary/10">
                 {levelLabel(job.level)}
               </Badge>
-              {isFallback && (
-                <Badge variant="outline" className="text-xs">
-                  Contoh
-                </Badge>
-              )}
+              <Badge variant="secondary">{typeLabel(job.type)}</Badge>
+              {job.industry && <Badge variant="outline">{job.industry}</Badge>}
+              {isFallback && <Badge variant="outline">Contoh</Badge>}
             </div>
-            <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-              <span className="flex items-center gap-1">
-                <Building2 className="h-3.5 w-3.5" /> {job.company}
+
+            <h3 className="font-display text-xl font-bold text-foreground transition-colors group-hover:text-primary">
+              {job.title}
+            </h3>
+
+            <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+              <span className="flex items-center gap-1.5">
+                <Building2 className="h-4 w-4" /> {job.company}
               </span>
-              <span className="flex items-center gap-1">
-                <MapPin className="h-3.5 w-3.5" /> {job.location}
+              <span className="flex items-center gap-1.5">
+                <MapPin className="h-4 w-4" /> {job.location}
               </span>
               {salaryText && (
-                <span className="flex items-center gap-1">
-                  <DollarSign className="h-3.5 w-3.5" /> {salaryText}
+                <span className="flex items-center gap-1.5">
+                  <DollarSign className="h-4 w-4" /> {salaryText}
                 </span>
               )}
             </div>
-            <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">{job.description}</p>
+
+            <p className="mt-3 line-clamp-2 leading-7 text-muted-foreground">{job.description}</p>
           </div>
-          <div className="flex shrink-0 items-center gap-2">
-            <span className="hidden items-center gap-1 text-xs text-muted-foreground sm:flex">
-              <Clock className="h-3 w-3" />
+
+          <div className="flex items-center justify-between gap-4 border-t border-border bg-muted/45 p-5 md:w-56 md:flex-col md:items-start md:justify-center md:border-l md:border-t-0">
+            <span className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+              <Clock className="h-3.5 w-3.5" />
+              Diposting{" "}
               {new Date(job.created_at).toLocaleDateString("id-ID", {
                 day: "numeric",
                 month: "short",
               })}
             </span>
-            <ArrowRight className="h-4 w-4 text-muted-foreground transition-all group-hover:translate-x-0.5 group-hover:text-primary" />
+            <span className="inline-flex items-center gap-2 text-sm font-semibold text-primary">
+              Lihat detail
+              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+            </span>
           </div>
         </div>
       </CardContent>
