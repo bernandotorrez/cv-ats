@@ -30,6 +30,7 @@ import {
   Bot,
   Briefcase,
   Building2,
+  CalendarDays,
   CheckCircle2,
   Clock,
   Compass,
@@ -39,6 +40,7 @@ import {
   Filter,
   GraduationCap,
   Layers3,
+  Laptop,
   MapPin,
   MousePointerClick,
   Search,
@@ -74,7 +76,14 @@ interface Job {
   industry?: string | null;
   salary_min?: number | null;
   salary_max?: number | null;
+  salary_currency?: string | null;
+  salary_period?: string | null;
   description: string;
+  responsibilities?: string | null;
+  benefits?: string | null;
+  tech_stack?: string | null;
+  work_mode?: string | null;
+  deadline?: string | null;
   source_url?: string | null;
   created_at: string;
 }
@@ -110,8 +119,12 @@ const fallbackJobs: Job[] = [
     industry: "Teknologi",
     salary_min: 8000000,
     salary_max: 14000000,
+    salary_currency: "IDR",
+    salary_period: "monthly",
     description:
       "Menganalisis funnel produk, membuat dashboard metrik, dan bekerja sama dengan product manager untuk meningkatkan aktivasi pengguna.",
+    tech_stack: "SQL, Dashboard, Product Analytics",
+    work_mode: "remote",
     source_url: null,
     created_at: new Date().toISOString(),
   },
@@ -126,8 +139,11 @@ const fallbackJobs: Job[] = [
     industry: "Finance",
     salary_min: 4500000,
     salary_max: 7000000,
+    salary_currency: "IDR",
+    salary_period: "monthly",
     description:
       "Mengelola invoice, rekonsiliasi sederhana, arsip transaksi, dan koordinasi pembayaran vendor.",
+    work_mode: "onsite",
     source_url: null,
     created_at: new Date().toISOString(),
   },
@@ -142,8 +158,12 @@ const fallbackJobs: Job[] = [
     industry: "Marketing",
     salary_min: 5000000,
     salary_max: 9000000,
+    salary_currency: "IDR",
+    salary_period: "monthly",
     description:
       "Menyusun content calendar, membuat brief visual, membaca performa konten, dan mengelola komunitas brand.",
+    tech_stack: "Content Calendar, Meta Business Suite, Analytics",
+    work_mode: "hybrid",
     source_url: null,
     created_at: new Date().toISOString(),
   },
@@ -217,7 +237,10 @@ function LowonganPage() {
       job.title.toLowerCase().includes(term) ||
       job.company.toLowerCase().includes(term) ||
       job.location.toLowerCase().includes(term) ||
-      job.industry?.toLowerCase().includes(term);
+      job.industry?.toLowerCase().includes(term) ||
+      job.tech_stack?.toLowerCase().includes(term) ||
+      job.work_mode?.toLowerCase().includes(term) ||
+      job.benefits?.toLowerCase().includes(term);
     const matchType = typeFilter === "Semua Tipe" || job.type === typeFilter;
     const matchLevel = levelFilter === "Semua Level" || job.level === levelFilter;
     const matchLocation =
@@ -624,8 +647,15 @@ function SearchPanel({
 }
 
 function JobCard({ job }: { job: Job }) {
-  const salaryText = formatSalary(job.salary_min, job.salary_max);
+  const salaryText = formatSalary(
+    job.salary_min,
+    job.salary_max,
+    job.salary_currency,
+    job.salary_period,
+  );
   const isFallback = job.id.startsWith("fallback-");
+  const techItems = parseInlineList(job.tech_stack).slice(0, 3);
+  const deadlineText = job.deadline ? formatDeadline(job.deadline) : null;
 
   const content = (
     <Card className="overflow-hidden border-border/80 bg-background transition-all hover:border-primary/35 hover:shadow-md">
@@ -637,6 +667,12 @@ function JobCard({ job }: { job: Job }) {
                 {levelLabel(job.level)}
               </Badge>
               <Badge variant="secondary">{typeLabel(job.type)}</Badge>
+              {job.work_mode && (
+                <Badge variant="outline" className="gap-1.5">
+                  <Laptop className="h-3.5 w-3.5" />
+                  {workModeLabel(job.work_mode)}
+                </Badge>
+              )}
               {job.industry && <Badge variant="outline">{job.industry}</Badge>}
               {isFallback && <Badge variant="outline">Contoh</Badge>}
             </div>
@@ -657,9 +693,24 @@ function JobCard({ job }: { job: Job }) {
                   <DollarSign className="h-4 w-4" /> {salaryText}
                 </span>
               )}
+              {deadlineText && (
+                <span className="flex items-center gap-1.5">
+                  <CalendarDays className="h-4 w-4" /> Deadline {deadlineText}
+                </span>
+              )}
             </div>
 
             <p className="mt-3 line-clamp-2 leading-7 text-muted-foreground">{job.description}</p>
+
+            {techItems.length > 0 && (
+              <div className="mt-4 flex flex-wrap gap-2">
+                {techItems.map((item) => (
+                  <Badge key={item} variant="secondary" className="bg-muted text-muted-foreground">
+                    {item}
+                  </Badge>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="flex items-center justify-between gap-4 border-t border-border bg-muted/45 p-5 md:w-56 md:flex-col md:items-start md:justify-center md:border-l md:border-t-0">
@@ -722,15 +773,22 @@ function levelLabel(level: string) {
   return map[level] ?? level;
 }
 
-function formatSalary(min?: number | null, max?: number | null) {
+function formatSalary(
+  min?: number | null,
+  max?: number | null,
+  currency = "IDR",
+  period?: string | null,
+) {
   if (!min && !max) return null;
+  const prefix = currency && currency !== "IDR" ? currency : "Rp";
+  const suffix = period === "yearly" ? "/tahun" : "/bulan";
   const fmt = (value: number) => {
-    if (value >= 1000000) return `Rp ${(value / 1000000).toFixed(0)}jt`;
-    return `Rp ${(value / 1000).toFixed(0)}rb`;
+    if (value >= 1000000) return `${prefix} ${(value / 1000000).toFixed(0)}jt`;
+    return `${prefix} ${(value / 1000).toFixed(0)}rb`;
   };
-  if (min && max) return `${fmt(min)} - ${fmt(max)}`;
-  if (min) return `Mulai ${fmt(min)}`;
-  return `Hingga ${fmt(max ?? 0)}`;
+  if (min && max) return `${fmt(min)} - ${fmt(max)} ${suffix}`;
+  if (min) return `Mulai ${fmt(min)} ${suffix}`;
+  return `Hingga ${fmt(max ?? 0)} ${suffix}`;
 }
 
 function buildPageItems(currentPage: number, totalPages: number) {
@@ -751,6 +809,30 @@ function buildPageItems(currentPage: number, totalPages: number) {
     items.push(page);
     return items;
   }, []);
+}
+
+function parseInlineList(value?: string | null) {
+  return String(value || "")
+    .split(/,|\n|;/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function workModeLabel(value: string) {
+  const map: Record<string, string> = {
+    onsite: "On-site",
+    remote: "Remote",
+    hybrid: "Hybrid",
+  };
+  return map[value] ?? value;
+}
+
+function formatDeadline(value: string) {
+  return new Date(value).toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
 }
 
 function buildSearchSources(role: string, location: string): SearchSource[] {

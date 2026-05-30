@@ -1,5 +1,6 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import type { ReactNode } from "react";
+import type { LucideIcon } from "lucide-react";
 import { buildSeo } from "@/lib/seo";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -13,13 +14,17 @@ import {
   Briefcase,
   Building2,
   Calendar,
+  CalendarDays,
   CheckCircle2,
   Clock,
   DollarSign,
   ExternalLink,
   FileText,
   GraduationCap,
+  Gift,
   Lightbulb,
+  Laptop,
+  ListChecks,
   MapPin,
   Search,
   Send,
@@ -41,9 +46,16 @@ type Job = {
   industry?: string | null;
   salary_min?: number | null;
   salary_max?: number | null;
+  salary_currency?: string | null;
+  salary_period?: string | null;
   description: string;
+  responsibilities?: string | null;
   requirements?: string | null;
   qualifications?: string | null;
+  benefits?: string | null;
+  tech_stack?: string | null;
+  work_mode?: string | null;
+  deadline?: string | null;
   source_url?: string | null;
   created_at: string;
 };
@@ -130,15 +142,24 @@ const prepCards = [
 
 function LowonganDetailPage() {
   const job = Route.useLoaderData();
-  const salaryText = formatSalary(job.salary_min, job.salary_max);
+  const salaryText = formatSalary(
+    job.salary_min,
+    job.salary_max,
+    job.salary_currency,
+    job.salary_period,
+  );
   const postedDate = new Date(job.created_at).toLocaleDateString("id-ID", {
     day: "numeric",
     month: "long",
     year: "numeric",
   });
+  const responsibilityItems = parseList(job.responsibilities);
   const requirementItems = parseList(job.requirements);
   const qualificationItems = parseList(job.qualifications);
+  const benefitItems = parseList(job.benefits);
+  const techItems = parseInlineList(job.tech_stack);
   const descriptionParagraphs = parseParagraphs(job.description);
+  const deadlineText = job.deadline ? formatLongDate(job.deadline) : null;
 
   return (
     <main className="overflow-x-clip bg-background">
@@ -182,8 +203,10 @@ function LowonganDetailPage() {
                   {levelLabel(job.level)}
                 </Badge>
                 <Badge variant="secondary">{typeLabel(job.type)}</Badge>
+                {job.work_mode && <Badge variant="outline">{workModeLabel(job.work_mode)}</Badge>}
                 {job.industry && <Badge variant="outline">{job.industry}</Badge>}
                 {salaryText && <Badge variant="outline">{salaryText}</Badge>}
+                {deadlineText && <Badge variant="outline">Deadline {deadlineText}</Badge>}
               </div>
 
               <p className="mt-6 max-w-3xl text-lg leading-8 text-muted-foreground">
@@ -203,6 +226,17 @@ function LowonganDetailPage() {
             { icon: Briefcase, label: "Tipe kerja", value: typeLabel(job.type) },
             { icon: GraduationCap, label: "Level", value: levelLabel(job.level) },
             { icon: DollarSign, label: "Estimasi gaji", value: salaryText || "Tidak dicantumkan" },
+            {
+              icon: Laptop,
+              label: "Mode kerja",
+              value: job.work_mode ? workModeLabel(job.work_mode) : "Belum dicantumkan",
+            },
+            { icon: CalendarDays, label: "Deadline", value: deadlineText || "Belum dicantumkan" },
+            {
+              icon: ListChecks,
+              label: "Tech stack",
+              value: techItems.slice(0, 3).join(", ") || "Tidak dicantumkan",
+            },
           ].map((item) => (
             <Card key={item.label} className="border-border/80 shadow-sm">
               <CardContent className="flex items-center gap-4 p-5">
@@ -248,6 +282,15 @@ function LowonganDetailPage() {
             </ContentCard>
 
             <ContentCard
+              icon={ListChecks}
+              eyebrow="Tanggung jawab"
+              title="Responsibilities"
+              fallback="Tanggung jawab belum dicantumkan secara terpisah."
+            >
+              <Checklist items={responsibilityItems} />
+            </ContentCard>
+
+            <ContentCard
               icon={ShieldCheck}
               eyebrow="Yang perlu disiapkan"
               title="Job requirements"
@@ -264,6 +307,32 @@ function LowonganDetailPage() {
             >
               <Checklist items={qualificationItems} />
             </ContentCard>
+
+            <ContentCard
+              icon={Gift}
+              eyebrow="Benefit"
+              title="Fasilitas dan benefit"
+              fallback="Benefit belum dicantumkan secara terpisah."
+            >
+              <Checklist items={benefitItems} />
+            </ContentCard>
+
+            {techItems.length > 0 && (
+              <ContentCard
+                icon={Laptop}
+                eyebrow="Tools"
+                title="Tech stack dan tools"
+                fallback="Tech stack belum dicantumkan."
+              >
+                <div className="flex flex-wrap gap-2">
+                  {techItems.map((item) => (
+                    <Badge key={item} variant="secondary" className="px-3 py-1.5">
+                      {item}
+                    </Badge>
+                  ))}
+                </div>
+              </ContentCard>
+            )}
           </div>
 
           <aside className="space-y-4 lg:sticky lg:top-24">
@@ -330,6 +399,8 @@ function LowonganDetailPage() {
 }
 
 function ApplyPanel({ job, salaryText }: { job: Job; salaryText: string | null }) {
+  const deadlineText = job.deadline ? formatShortDate(job.deadline) : null;
+
   return (
     <Card className="border-border/80 bg-card shadow-sm lg:sticky lg:top-24">
       <CardContent className="p-5">
@@ -347,7 +418,13 @@ function ApplyPanel({ job, salaryText }: { job: Job; salaryText: string | null }
           <Fact icon={Clock} label="Diposting" value={formatShortDate(job.created_at)} />
           <Fact icon={Briefcase} label="Tipe" value={typeLabel(job.type)} />
           <Fact icon={GraduationCap} label="Level" value={levelLabel(job.level)} />
+          <Fact
+            icon={Laptop}
+            label="Mode"
+            value={job.work_mode ? workModeLabel(job.work_mode) : "Belum dicantumkan"}
+          />
           <Fact icon={DollarSign} label="Gaji" value={salaryText || "Tidak dicantumkan"} />
+          <Fact icon={CalendarDays} label="Deadline" value={deadlineText || "Tidak dicantumkan"} />
         </div>
 
         <div className="mt-5 grid gap-3">
@@ -383,7 +460,7 @@ function ContentCard({
   fallback,
   children,
 }: {
-  icon: typeof FileText;
+  icon: LucideIcon;
   eyebrow: string;
   title: string;
   fallback: string;
@@ -424,7 +501,7 @@ function Checklist({ items }: { items: string[] }) {
   );
 }
 
-function Fact({ icon: Icon, label, value }: { icon: typeof Clock; label: string; value: string }) {
+function Fact({ icon: Icon, label, value }: { icon: LucideIcon; label: string; value: string }) {
   return (
     <div className="flex items-center gap-3 text-sm">
       <Icon className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
@@ -455,6 +532,14 @@ function parseList(value?: string | null) {
     .slice(0, 12);
 }
 
+function parseInlineList(value?: string | null) {
+  return String(value || "")
+    .split(/,|\n|;/)
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .slice(0, 16);
+}
+
 function typeLabel(type: string) {
   const map: Record<string, string> = {
     "full-time": "Full Time",
@@ -476,15 +561,22 @@ function levelLabel(level: string) {
   return map[level] ?? level;
 }
 
-function formatSalary(min?: number | null, max?: number | null) {
+function formatSalary(
+  min?: number | null,
+  max?: number | null,
+  currency = "IDR",
+  period?: string | null,
+) {
   if (!min && !max) return null;
+  const prefix = currency && currency !== "IDR" ? currency : "Rp";
+  const suffix = period === "yearly" ? "/tahun" : "/bulan";
   const fmt = (value: number) => {
-    if (value >= 1000000) return `Rp ${(value / 1000000).toFixed(0)}jt`;
-    return `Rp ${(value / 1000).toFixed(0)}rb`;
+    if (value >= 1000000) return `${prefix} ${(value / 1000000).toFixed(0)}jt`;
+    return `${prefix} ${(value / 1000).toFixed(0)}rb`;
   };
-  if (min && max) return `${fmt(min)} - ${fmt(max)}`;
-  if (min) return `Mulai ${fmt(min)}`;
-  return `Hingga ${fmt(max ?? 0)}`;
+  if (min && max) return `${fmt(min)} - ${fmt(max)} ${suffix}`;
+  if (min) return `Mulai ${fmt(min)} ${suffix}`;
+  return `Hingga ${fmt(max ?? 0)} ${suffix}`;
 }
 
 function formatShortDate(value: string) {
@@ -492,4 +584,21 @@ function formatShortDate(value: string) {
     day: "numeric",
     month: "short",
   });
+}
+
+function formatLongDate(value: string) {
+  return new Date(value).toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
+function workModeLabel(value: string) {
+  const map: Record<string, string> = {
+    onsite: "On-site",
+    remote: "Remote",
+    hybrid: "Hybrid",
+  };
+  return map[value] ?? value;
 }
