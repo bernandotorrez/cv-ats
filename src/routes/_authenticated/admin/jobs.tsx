@@ -52,6 +52,7 @@ type SearchResponse = {
   inserted?: number;
   skipped?: number;
   searched?: number;
+  source_pages?: number;
   jobs?: ImportedJob[];
   error?: string;
 };
@@ -147,8 +148,8 @@ function AdminJobsPage() {
               Cari dan import lowongan kerja.
             </h2>
             <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-              Hasil yang valid akan otomatis masuk ke tabel job_listings dan tampil di halaman
-              Lowongan Pekerjaan.
+              AI akan mencoba membaca halaman sumber asli, lalu menyusun job description,
+              requirements, dan qualifications sebelum menyimpan ke tabel job_listings.
             </p>
           </div>
           <Button asChild variant="outline" className="shrink-0">
@@ -252,10 +253,11 @@ function AdminJobsPage() {
               </Alert>
             ) : (
               <div className="space-y-4">
-                <div className="grid gap-2 sm:grid-cols-3">
+                <div className="grid gap-2 sm:grid-cols-4">
                   <Metric label="Inserted" value={result.inserted || 0} />
                   <Metric label="Skipped" value={result.skipped || 0} />
                   <Metric label="Searched" value={result.searched || 0} />
+                  <Metric label="Source Pages" value={result.source_pages || 0} />
                 </div>
 
                 <div className="space-y-2">

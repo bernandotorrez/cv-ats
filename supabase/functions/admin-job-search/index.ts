@@ -8,6 +8,8 @@ type SearchResult = {
   url: string;
   content: string;
   source: string;
+  original_content?: string;
+  original_content_source?: "tavily_extract" | "direct_fetch";
 };
 
 type ExtractedJob = {
@@ -80,7 +82,8 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    const extractedJobs = await extractJobsWithAi(query, location, searchResults, limit);
+    const enrichedResults = await enrichSearchResults(searchResults, limit);
+    const extractedJobs = await extractJobsWithAi(query, location, enrichedResults, limit);
     const rows = extractedJobs.map((job) => toJobRow(job, query, location)).filter(Boolean);
 
     if (rows.length === 0) {
@@ -104,6 +107,7 @@ Deno.serve(async (req: Request) => {
       skipped: Math.max(extractedJobs.length - (data?.length || 0), 0),
       jobs: data || [],
       searched: searchResults.length,
+      source_pages: enrichedResults.filter((result) => result.original_content).length,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Internal server error";
@@ -202,6 +206,101 @@ async function searchWeb(searchQuery: string, source: SearchSource, limit: numbe
   return [];
 }
 
+async function enrichSearchResults(results: SearchResult[], limit: number) {
+  const targets = results.slice(0, Math.max(limit, 8));
+  const extracted = await extractSourcePages(targets);
+
+  return results.map((result) => {
+    const page = extracted.get(result.url);
+    if (!page) return result;
+
+    return {
+      ...result,
+      original_content: page.content,
+      original_content_source: page.source,
+    };
+  });
+}
+
+async function extractSourcePages(results: SearchResult[]) {
+  const validUrls = results.map((result) => result.url).filter(Boolean);
+  const pageMap = new Map<string, { content: string; source: "tavily_extract" | "direct_fetch" }>();
+
+  const tavilyKey = Deno.env.get("TAVILY_API_KEY");
+  if (tavilyKey && validUrls.length > 0) {
+    try {
+      const res = await fetch("https://api.tavily.com/extract", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${tavilyKey}`,
+        },
+        body: JSON.stringify({
+          urls: validUrls,
+          extract_depth: "advanced",
+          format: "markdown",
+          include_images: false,
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        for (const item of data.results || []) {
+          const url = String(item.url || "");
+          const content = cleanContent(item.raw_content || item.content || "", 8000);
+          if (url && content.length > 120) {
+            pageMap.set(url, { content, source: "tavily_extract" });
+          }
+        }
+      } else {
+        console.warn("Tavily extract failed:", await res.text().catch(() => ""));
+      }
+    } catch (error) {
+      console.warn("Tavily extract error:", error instanceof Error ? error.message : error);
+    }
+  }
+
+  const missing = results.filter((result) => !pageMap.has(result.url)).slice(0, 6);
+  const directPages = await Promise.all(
+    missing.map(async (result) => {
+      const content = await fetchPageText(result.url);
+      return { url: result.url, content };
+    }),
+  );
+
+  for (const page of directPages) {
+    if (page.content.length > 120) {
+      pageMap.set(page.url, { content: page.content, source: "direct_fetch" });
+    }
+  }
+
+  return pageMap;
+}
+
+async function fetchPageText(url: string) {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+    const res = await fetch(url, {
+      signal: controller.signal,
+      headers: {
+        Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,text/plain;q=0.8",
+        "User-Agent": "CVPintarJobIndexer/1.0 (+https://cvpintar.web.id)",
+      },
+    });
+    clearTimeout(timeout);
+
+    if (!res.ok) return "";
+    const contentType = res.headers.get("content-type") || "";
+    if (!contentType.includes("text/html") && !contentType.includes("text/plain")) return "";
+
+    const html = await res.text();
+    return cleanContent(stripHtml(html), 6000);
+  } catch {
+    return "";
+  }
+}
+
 async function extractJobsWithAi(
   query: string,
   location: string,
@@ -212,9 +311,16 @@ async function extractJobsWithAi(
   if (!aiKey) throw new Error("AI_API_KEY tidak dikonfigurasi.");
 
   const prompt = [
-    "Ekstrak lowongan pekerjaan Indonesia dari hasil search berikut.",
+    "Ekstrak lowongan pekerjaan Indonesia dari hasil search dan konten halaman sumber berikut.",
     'Kembalikan JSON valid saja dengan format: {"jobs":[...]}',
     "Setiap job wajib punya title, company, location, description, source_url.",
+    "Prioritaskan field original_content karena itu berasal dari URL sumber asli.",
+    "Jika original_content tersedia, isi description, requirements, dan qualifications dari konten tersebut.",
+    "Jika original_content tidak tersedia, gunakan snippet search hanya jika cukup jelas.",
+    "Tulis ringkasan akurat dalam Bahasa Indonesia. Jangan copy-paste panjang dari sumber.",
+    "description berisi 3-5 kalimat yang menjelaskan scope kerja dan konteks role.",
+    "requirements berisi daftar requirement utama, dipisahkan newline.",
+    "qualifications berisi daftar kualifikasi/skill utama, dipisahkan newline.",
     "Jangan mengarang perusahaan atau posisi yang tidak didukung hasil search.",
     "Jika hasil hanya halaman search umum dan bukan listing, abaikan.",
     "Gunakan type salah satu: full-time, part-time, contract, internship.",
@@ -375,6 +481,35 @@ function cleanText(value: unknown, maxLength: number) {
     .replace(/\s+/g, " ")
     .trim()
     .slice(0, maxLength);
+}
+
+function cleanContent(value: unknown, maxLength: number) {
+  return decodeHtmlEntities(String(value || ""))
+    .replace(/\r/g, "\n")
+    .replace(/[ \t]+/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim()
+    .slice(0, maxLength);
+}
+
+function stripHtml(html: string) {
+  return html
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<noscript[\s\S]*?<\/noscript>/gi, " ")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/(p|div|li|h1|h2|h3|h4|section|article)>/gi, "\n")
+    .replace(/<[^>]+>/g, " ");
+}
+
+function decodeHtmlEntities(value: string) {
+  return value
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'");
 }
 
 function clampNumber(value: number, min: number, max: number) {
