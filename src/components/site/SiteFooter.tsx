@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { FileText } from "lucide-react";
+import { APP_VERSION } from "@/lib/app-version";
 
 export function SiteFooter() {
   const year = new Date().getFullYear();
@@ -24,6 +25,7 @@ export function SiteFooter() {
             links={[
               { to: "/fitur", label: "Fitur" },
               { to: "/template", label: "Template" },
+              { to: "/lowongan", label: "Lowongan Pekerjaan" },
               { to: "/private-coaching", label: "Private Mentoring" },
               { to: "/harga", label: "Harga" },
             ]}
@@ -48,8 +50,11 @@ export function SiteFooter() {
         </div>
 
         <div className="mt-10 flex flex-col items-start justify-between gap-2 border-t border-border pt-6 text-sm text-muted-foreground md:flex-row md:items-center">
-          <p>© {year} CV Pintar. Semua hak dilindungi.</p>
-          <p>Dibuat dengan ❤️ untuk pencari kerja di Indonesia.</p>
+          <p>Copyright {year} CV Pintar. Semua hak dilindungi.</p>
+          <div className="flex flex-col items-start gap-1 md:items-end">
+            <p>Dibuat untuk pencari kerja di Indonesia.</p>
+            <p className="font-mono text-xs">Version {APP_VERSION}</p>
+          </div>
         </div>
       </div>
     </footer>
@@ -61,10 +66,10 @@ function FooterCol({ title, links }: { title: string; links: { to: string; label
     <div>
       <h3 className="mb-3 font-display text-sm font-semibold text-foreground">{title}</h3>
       <ul className="space-y-2 text-sm">
-        {links.map((l) => (
-          <li key={l.to}>
-            <Link to={l.to} className="text-muted-foreground hover:text-foreground">
-              {l.label}
+        {links.map((link) => (
+          <li key={link.to}>
+            <Link to={link.to} className="text-muted-foreground hover:text-foreground">
+              {link.label}
             </Link>
           </li>
         ))}

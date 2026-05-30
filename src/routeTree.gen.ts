@@ -56,6 +56,7 @@ import { Route as AuthenticatedCvIdRouteImport } from './routes/_authenticated/c
 import { Route as AuthenticatedCvReviewCvIdRouteImport } from './routes/_authenticated/cv-review.$cvId'
 import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin/users'
 import { Route as AuthenticatedAdminTemplatesRouteImport } from './routes/_authenticated/admin/templates'
+import { Route as AuthenticatedAdminJobsRouteImport } from './routes/_authenticated/admin/jobs'
 import { Route as AuthenticatedToolsKeywordCvIdRouteImport } from './routes/_authenticated/tools.keyword.$cvId'
 import { Route as AuthenticatedToolsCoverLetterCvIdRouteImport } from './routes/_authenticated/tools.cover-letter.$cvId'
 
@@ -298,6 +299,11 @@ const AuthenticatedAdminTemplatesRoute =
     path: '/templates',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminJobsRoute = AuthenticatedAdminJobsRouteImport.update({
+  id: '/jobs',
+  path: '/jobs',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
 const AuthenticatedToolsKeywordCvIdRoute =
   AuthenticatedToolsKeywordCvIdRouteImport.update({
     id: '/tools/keyword/$cvId',
@@ -348,6 +354,7 @@ export interface FileRoutesByFullPath {
   '/share/$token': typeof ShareTokenRoute
   '/sitemap/xml': typeof SitemapXmlRoute
   '/tips-interview/$slug': typeof TipsInterviewSlugRoute
+  '/admin/jobs': typeof AuthenticatedAdminJobsRoute
   '/admin/templates': typeof AuthenticatedAdminTemplatesRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/cv-review/$cvId': typeof AuthenticatedCvReviewCvIdRoute
@@ -397,6 +404,7 @@ export interface FileRoutesByTo {
   '/share/$token': typeof ShareTokenRoute
   '/sitemap/xml': typeof SitemapXmlRoute
   '/tips-interview/$slug': typeof TipsInterviewSlugRoute
+  '/admin/jobs': typeof AuthenticatedAdminJobsRoute
   '/admin/templates': typeof AuthenticatedAdminTemplatesRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/cv-review/$cvId': typeof AuthenticatedCvReviewCvIdRoute
@@ -449,6 +457,7 @@ export interface FileRoutesById {
   '/share/$token': typeof ShareTokenRoute
   '/sitemap/xml': typeof SitemapXmlRoute
   '/tips-interview/$slug': typeof TipsInterviewSlugRoute
+  '/_authenticated/admin/jobs': typeof AuthenticatedAdminJobsRoute
   '/_authenticated/admin/templates': typeof AuthenticatedAdminTemplatesRoute
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
   '/_authenticated/cv-review/$cvId': typeof AuthenticatedCvReviewCvIdRoute
@@ -501,6 +510,7 @@ export interface FileRouteTypes {
     | '/share/$token'
     | '/sitemap/xml'
     | '/tips-interview/$slug'
+    | '/admin/jobs'
     | '/admin/templates'
     | '/admin/users'
     | '/cv-review/$cvId'
@@ -550,6 +560,7 @@ export interface FileRouteTypes {
     | '/share/$token'
     | '/sitemap/xml'
     | '/tips-interview/$slug'
+    | '/admin/jobs'
     | '/admin/templates'
     | '/admin/users'
     | '/cv-review/$cvId'
@@ -601,6 +612,7 @@ export interface FileRouteTypes {
     | '/share/$token'
     | '/sitemap/xml'
     | '/tips-interview/$slug'
+    | '/_authenticated/admin/jobs'
     | '/_authenticated/admin/templates'
     | '/_authenticated/admin/users'
     | '/_authenticated/cv-review/$cvId'
@@ -975,6 +987,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminTemplatesRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/jobs': {
+      id: '/_authenticated/admin/jobs'
+      path: '/jobs'
+      fullPath: '/admin/jobs'
+      preLoaderRoute: typeof AuthenticatedAdminJobsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/tools/keyword/$cvId': {
       id: '/_authenticated/tools/keyword/$cvId'
       path: '/tools/keyword/$cvId'
@@ -993,12 +1012,14 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedAdminRouteChildren {
+  AuthenticatedAdminJobsRoute: typeof AuthenticatedAdminJobsRoute
   AuthenticatedAdminTemplatesRoute: typeof AuthenticatedAdminTemplatesRoute
   AuthenticatedAdminUsersRoute: typeof AuthenticatedAdminUsersRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
+  AuthenticatedAdminJobsRoute: AuthenticatedAdminJobsRoute,
   AuthenticatedAdminTemplatesRoute: AuthenticatedAdminTemplatesRoute,
   AuthenticatedAdminUsersRoute: AuthenticatedAdminUsersRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,

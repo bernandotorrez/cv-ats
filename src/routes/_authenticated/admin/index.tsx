@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   Activity,
   ArrowRight,
+  BriefcaseBusiness,
   Crown,
   FileText,
   LayoutDashboard,
@@ -170,6 +171,13 @@ function AdminDashboard() {
       title: "Templates",
       text: "Atur template CV yang tampil.",
       cta: "Kelola template",
+    },
+    {
+      to: "/admin/jobs" as const,
+      icon: BriefcaseBusiness,
+      title: "Lowongan",
+      text: "Cari dan import lowongan dengan AI.",
+      cta: "AI search",
     },
   ];
 

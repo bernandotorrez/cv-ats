@@ -4,7 +4,15 @@ import { useAuth } from "@/lib/auth-context";
 import { isAdmin } from "@/lib/admin";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Shield, LayoutDashboard, Users, Palette, ArrowLeft, Loader2 } from "lucide-react";
+import {
+  Shield,
+  LayoutDashboard,
+  Users,
+  Palette,
+  ArrowLeft,
+  Loader2,
+  BriefcaseBusiness,
+} from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminLayout,
@@ -14,6 +22,7 @@ const NAV_ITEMS = [
   { to: "/admin" as const, icon: LayoutDashboard, label: "Dashboard" },
   { to: "/admin/users" as const, icon: Users, label: "Users" },
   { to: "/admin/templates" as const, icon: Palette, label: "Templates" },
+  { to: "/admin/jobs" as const, icon: BriefcaseBusiness, label: "Lowongan" },
 ];
 
 function AdminLayout() {
