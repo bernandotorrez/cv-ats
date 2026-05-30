@@ -1,6 +1,8 @@
 import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 import { buildSeo } from "@/lib/seo";
+import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -27,6 +29,8 @@ import {
   ArrowRight,
   BadgeCheck,
   BookOpen,
+  Bookmark,
+  BookmarkCheck,
   Bot,
   Briefcase,
   Building2,
@@ -41,6 +45,8 @@ import {
   GraduationCap,
   Layers3,
   Laptop,
+  Loader2,
+  LogIn,
   MapPin,
   MousePointerClick,
   Search,
@@ -92,6 +98,28 @@ interface SearchSource {
   name: string;
   description: string;
   url: string;
+}
+
+type SavedJobListingsQuery = {
+  select: (columns: string) => {
+    eq: (
+      column: string,
+      value: string,
+    ) => Promise<{ data: Array<{ job_listing_id: string | null }> | null; error: unknown }>;
+  };
+  insert: (row: { user_id: string; job_listing_id: string }) => Promise<{ error: unknown }>;
+  delete: () => {
+    eq: (
+      column: string,
+      value: string,
+    ) => {
+      eq: (column: string, value: string) => Promise<{ error: unknown }>;
+    };
+  };
+};
+
+function savedJobListingsTable() {
+  return supabase.from("saved_job_listings") as unknown as SavedJobListingsQuery;
 }
 
 const typeOptions = ["Semua Tipe", "full-time", "part-time", "contract", "internship"];
@@ -198,8 +226,11 @@ function LowonganRoute() {
 }
 
 function LowonganPage() {
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [jobs, setJobs] = useState<Job[]>([]);
+  const [savedJobIds, setSavedJobIds] = useState<Set<string>>(new Set());
+  const [savingJobId, setSavingJobId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("Semua Tipe");
   const [levelFilter, setLevelFilter] = useState("Semua Level");
@@ -211,6 +242,15 @@ function LowonganPage() {
   useEffect(() => {
     void loadJobs();
   }, []);
+
+  useEffect(() => {
+    if (!user?.id) {
+      setSavedJobIds(new Set());
+      return;
+    }
+
+    void loadSavedJobs(user.id);
+  }, [user?.id]);
 
   const loadJobs = async () => {
     setLoading(true);
@@ -228,6 +268,55 @@ function LowonganPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const loadSavedJobs = async (userId: string) => {
+    const { data, error } = await savedJobListingsTable()
+      .select("job_listing_id")
+      .eq("user_id", userId);
+
+    if (error) {
+      return;
+    }
+
+    setSavedJobIds(
+      new Set((data ?? []).map((row) => row.job_listing_id).filter(Boolean) as string[]),
+    );
+  };
+
+  const toggleSavedJob = async (jobId: string) => {
+    if (!user?.id || savingJobId) return;
+
+    const nextSaved = !savedJobIds.has(jobId);
+    setSavingJobId(jobId);
+    setSavedJobIds((current) => {
+      const next = new Set(current);
+      if (nextSaved) next.add(jobId);
+      else next.delete(jobId);
+      return next;
+    });
+
+    const { error } = nextSaved
+      ? await savedJobListingsTable().insert({
+          user_id: user.id,
+          job_listing_id: jobId,
+        })
+      : await savedJobListingsTable().delete().eq("user_id", user.id).eq("job_listing_id", jobId);
+
+    setSavingJobId(null);
+
+    if (error) {
+      setSavedJobIds((current) => {
+        const next = new Set(current);
+        if (nextSaved) next.delete(jobId);
+        else next.add(jobId);
+        return next;
+      });
+      toast.error("Gagal memperbarui lowongan tersimpan.");
+      return;
+    }
+
+    toast.success(nextSaved ? "Lowongan disimpan." : "Lowongan dihapus dari simpanan.");
   };
 
   const filtered = jobs.filter((job) => {
@@ -454,7 +543,14 @@ function LowonganPage() {
             <>
               <div className="grid gap-4">
                 {paginatedJobs.map((job) => (
-                  <JobCard key={job.id} job={job} />
+                  <JobCard
+                    key={job.id}
+                    job={job}
+                    isLoggedIn={Boolean(user)}
+                    isSaved={savedJobIds.has(job.id)}
+                    isSaving={savingJobId === job.id}
+                    onToggleSaved={toggleSavedJob}
+                  />
                 ))}
               </div>
 
@@ -646,7 +742,19 @@ function SearchPanel({
   );
 }
 
-function JobCard({ job }: { job: Job }) {
+function JobCard({
+  job,
+  isLoggedIn,
+  isSaved,
+  isSaving,
+  onToggleSaved,
+}: {
+  job: Job;
+  isLoggedIn: boolean;
+  isSaved: boolean;
+  isSaving: boolean;
+  onToggleSaved: (jobId: string) => void;
+}) {
   const salaryText = formatSalary(
     job.salary_min,
     job.salary_max,
@@ -657,7 +765,9 @@ function JobCard({ job }: { job: Job }) {
   const techItems = parseInlineList(job.tech_stack).slice(0, 3);
   const deadlineText = job.deadline ? formatDeadline(job.deadline) : null;
 
-  const content = (
+  const detailLink = isFallback ? buildSearchSources(job.title, job.location)[4].url : null;
+
+  return (
     <Card className="overflow-hidden border-border/80 bg-background transition-all hover:border-primary/35 hover:shadow-md">
       <CardContent className="p-0">
         <div className="grid gap-0 md:grid-cols-[1fr_auto]">
@@ -677,9 +787,24 @@ function JobCard({ job }: { job: Job }) {
               {isFallback && <Badge variant="outline">Contoh</Badge>}
             </div>
 
-            <h3 className="font-display text-xl font-bold text-foreground transition-colors group-hover:text-primary">
-              {job.title}
-            </h3>
+            {isFallback ? (
+              <a
+                href={detailLink ?? "#"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group/title inline-flex"
+              >
+                <h3 className="font-display text-xl font-bold text-foreground transition-colors group-hover/title:text-primary">
+                  {job.title}
+                </h3>
+              </a>
+            ) : (
+              <Link to="/lowongan/$slug" params={{ slug: job.slug }} className="group/title">
+                <h3 className="font-display text-xl font-bold text-foreground transition-colors group-hover/title:text-primary">
+                  {job.title}
+                </h3>
+              </Link>
+            )}
 
             <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
               <span className="flex items-center gap-1.5">
@@ -713,7 +838,7 @@ function JobCard({ job }: { job: Job }) {
             )}
           </div>
 
-          <div className="flex items-center justify-between gap-4 border-t border-border bg-muted/45 p-5 md:w-56 md:flex-col md:items-start md:justify-center md:border-l md:border-t-0">
+          <div className="flex items-center justify-between gap-4 border-t border-border bg-muted/45 p-5 md:w-60 md:flex-col md:items-start md:justify-center md:border-l md:border-t-0">
             <span className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
               <Clock className="h-3.5 w-3.5" />
               Diposting{" "}
@@ -722,33 +847,57 @@ function JobCard({ job }: { job: Job }) {
                 month: "short",
               })}
             </span>
-            <span className="inline-flex items-center gap-2 text-sm font-semibold text-primary">
-              Lihat detail
-              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-            </span>
+            <div className="flex w-full flex-wrap gap-2">
+              {isFallback ? (
+                <Button type="button" variant="outline" size="sm" className="flex-1" disabled>
+                  Contoh
+                </Button>
+              ) : isLoggedIn ? (
+                <Button
+                  type="button"
+                  variant={isSaved ? "default" : "outline"}
+                  size="sm"
+                  className="flex-1 justify-center gap-2"
+                  disabled={isSaving}
+                  onClick={() => onToggleSaved(job.id)}
+                >
+                  {isSaving ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : isSaved ? (
+                    <BookmarkCheck className="h-4 w-4" />
+                  ) : (
+                    <Bookmark className="h-4 w-4" />
+                  )}
+                  {isSaved ? "Tersimpan" : "Simpan"}
+                </Button>
+              ) : (
+                <Button asChild variant="outline" size="sm" className="flex-1 justify-center gap-2">
+                  <Link to="/login" search={{ redirect: "/lowongan" }}>
+                    <LogIn className="h-4 w-4" />
+                    Masuk
+                  </Link>
+                </Button>
+              )}
+              {isFallback ? (
+                <Button asChild variant="ghost" size="sm" className="flex-1 justify-center gap-2">
+                  <a href={detailLink ?? "#"} target="_blank" rel="noopener noreferrer">
+                    Detail
+                    <ExternalLink className="h-4 w-4" />
+                  </a>
+                </Button>
+              ) : (
+                <Button asChild variant="ghost" size="sm" className="flex-1 justify-center gap-2">
+                  <Link to="/lowongan/$slug" params={{ slug: job.slug }}>
+                    Detail
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </CardContent>
     </Card>
-  );
-
-  if (isFallback) {
-    return (
-      <a
-        className="group block"
-        href={buildSearchSources(job.title, job.location)[4].url}
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        {content}
-      </a>
-    );
-  }
-
-  return (
-    <Link className="group block" to="/lowongan/$slug" params={{ slug: job.slug }}>
-      {content}
-    </Link>
   );
 }
 

@@ -1,7 +1,10 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
+import { toast } from "sonner";
 import { buildSeo } from "@/lib/seo";
+import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +14,8 @@ import {
   ArrowRight,
   BadgeCheck,
   BookOpen,
+  Bookmark,
+  BookmarkCheck,
   Briefcase,
   Building2,
   Calendar,
@@ -24,6 +29,8 @@ import {
   Gift,
   Lightbulb,
   Laptop,
+  Loader2,
+  LogIn,
   ListChecks,
   MapPin,
   Search,
@@ -75,6 +82,35 @@ type JobListingsQuery = {
     };
   };
 };
+
+type SavedJobListingsQuery = {
+  select: (columns: string) => {
+    eq: (
+      column: string,
+      value: string,
+    ) => {
+      eq: (
+        column: string,
+        value: string,
+      ) => {
+        maybeSingle: () => Promise<{ data: { id: string } | null; error: unknown }>;
+      };
+    };
+  };
+  insert: (row: { user_id: string; job_listing_id: string }) => Promise<{ error: unknown }>;
+  delete: () => {
+    eq: (
+      column: string,
+      value: string,
+    ) => {
+      eq: (column: string, value: string) => Promise<{ error: unknown }>;
+    };
+  };
+};
+
+function savedJobListingsTable() {
+  return supabase.from("saved_job_listings") as unknown as SavedJobListingsQuery;
+}
 
 export const Route = createFileRoute("/lowongan/$slug")({
   loader: async ({ params }) => {
@@ -399,7 +435,62 @@ function LowonganDetailPage() {
 }
 
 function ApplyPanel({ job, salaryText }: { job: Job; salaryText: string | null }) {
+  const { user } = useAuth();
   const deadlineText = job.deadline ? formatShortDate(job.deadline) : null;
+  const [isSaved, setIsSaved] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    if (!user?.id) {
+      setIsSaved(false);
+      return;
+    }
+
+    const userId = user.id;
+    let active = true;
+
+    async function loadSavedState() {
+      const { data, error } = await savedJobListingsTable()
+        .select("id")
+        .eq("user_id", userId)
+        .eq("job_listing_id", job.id)
+        .maybeSingle();
+
+      if (!active || error) return;
+      setIsSaved(Boolean(data));
+    }
+
+    void loadSavedState();
+
+    return () => {
+      active = false;
+    };
+  }, [job.id, user?.id]);
+
+  const toggleSavedJob = async () => {
+    if (!user?.id || isSaving) return;
+
+    const nextSaved = !isSaved;
+    setIsSaving(true);
+    setIsSaved(nextSaved);
+
+    const { error } = nextSaved
+      ? await savedJobListingsTable().insert({
+          user_id: user.id,
+          job_listing_id: job.id,
+        })
+      : await savedJobListingsTable().delete().eq("user_id", user.id).eq("job_listing_id", job.id);
+
+    setIsSaving(false);
+
+    if (error) {
+      setIsSaved(!nextSaved);
+      toast.error("Gagal memperbarui lowongan tersimpan.");
+      return;
+    }
+
+    toast.success(nextSaved ? "Lowongan disimpan." : "Lowongan dihapus dari simpanan.");
+  };
 
   return (
     <Card className="border-border/80 bg-card shadow-sm lg:sticky lg:top-24">
@@ -428,6 +519,31 @@ function ApplyPanel({ job, salaryText }: { job: Job; salaryText: string | null }
         </div>
 
         <div className="mt-5 grid gap-3">
+          {user ? (
+            <Button
+              type="button"
+              variant={isSaved ? "default" : "outline"}
+              className="w-full justify-center gap-2"
+              disabled={isSaving}
+              onClick={toggleSavedJob}
+            >
+              {isSaving ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : isSaved ? (
+                <BookmarkCheck className="h-4 w-4" />
+              ) : (
+                <Bookmark className="h-4 w-4" />
+              )}
+              {isSaved ? "Lowongan tersimpan" : "Simpan lowongan"}
+            </Button>
+          ) : (
+            <Button asChild variant="outline" className="w-full justify-center gap-2">
+              <Link to="/login" search={{ redirect: `/lowongan/${job.slug}` }}>
+                <LogIn className="h-4 w-4" />
+                Masuk untuk simpan
+              </Link>
+            </Button>
+          )}
           {job.source_url && (
             <Button asChild className="w-full justify-center gap-2">
               <a href={job.source_url} target="_blank" rel="noopener noreferrer">
