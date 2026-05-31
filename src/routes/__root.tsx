@@ -14,6 +14,7 @@ import { Analytics } from "@vercel/analytics/react";
 import appCss from "../styles.css?url";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
+import { BenixCsWidget } from "@/components/site/BenixCsWidget";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/lib/auth-context";
 import { Skeleton } from "@/components/ui/skeleton-loading";
@@ -233,6 +234,7 @@ function RootComponent() {
         </div>
         <Toaster />
         <Analytics />
+        <BenixCsWidget disabled={isSharePage} />
       </AuthProvider>
     </QueryClientProvider>
   );
