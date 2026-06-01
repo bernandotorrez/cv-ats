@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
   SelectContent,
@@ -230,8 +231,6 @@ function AdminUsersPage() {
   const goToPrevPage = () => goToPage(pagination.page - 1);
   const goToNextPage = () => goToPage(pagination.page + 1);
 
-  if (loading) return <p className="text-sm text-muted-foreground">Memuat data pengguna...</p>;
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -267,69 +266,74 @@ function AdminUsersPage() {
         </Select>
       </div>
 
-      {/* User Cards */}
       <div className="space-y-3">
-        {users.map((u) => (
-          <Card key={u.id} className="flex flex-col sm:flex-row sm:items-center gap-4 p-4">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="font-medium text-sm">
-                  {u.full_name || <span className="text-muted-foreground italic">Tanpa Nama</span>}
-                </span>
-                {u.email && (
-                  <span className="text-xs text-muted-foreground truncate max-w-full">
-                    {u.email}
+        {loading ? (
+          <AdminUsersSkeleton />
+        ) : (
+          users.map((u) => (
+            <Card key={u.id} className="flex flex-col sm:flex-row sm:items-center gap-4 p-4">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-medium text-sm">
+                    {u.full_name || (
+                      <span className="text-muted-foreground italic">Tanpa Nama</span>
+                    )}
                   </span>
-                )}
-                <code className="text-xs bg-muted px-1.5 py-0.5 rounded font-mono">
-                  {u.id.slice(0, 12)}...
-                </code>
-                <Badge
-                  variant={u.role === "admin" ? "default" : "secondary"}
-                  className="text-xs gap-1"
-                >
-                  <Shield className="h-3 w-3" />
-                  {u.role}
-                </Badge>
-                <Badge
-                  className={`text-xs gap-1 ${
-                    u.tier === "pro"
-                      ? "bg-warning text-warning-foreground"
-                      : u.tier === "starter"
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted"
-                  }`}
-                >
-                  <Crown className="h-3 w-3" />
-                  {u.tier}
-                </Badge>
-                {u.tier_status !== "active" && (
-                  <Badge variant="outline" className="text-xs text-destructive">
-                    {u.tier_status}
+                  {u.email && (
+                    <span className="text-xs text-muted-foreground truncate max-w-full">
+                      {u.email}
+                    </span>
+                  )}
+                  <code className="text-xs bg-muted px-1.5 py-0.5 rounded font-mono">
+                    {u.id.slice(0, 12)}...
+                  </code>
+                  <Badge
+                    variant={u.role === "admin" ? "default" : "secondary"}
+                    className="text-xs gap-1"
+                  >
+                    <Shield className="h-3 w-3" />
+                    {u.role}
                   </Badge>
-                )}
+                  <Badge
+                    className={`text-xs gap-1 ${
+                      u.tier === "pro"
+                        ? "bg-warning text-warning-foreground"
+                        : u.tier === "starter"
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted"
+                    }`}
+                  >
+                    <Crown className="h-3 w-3" />
+                    {u.tier}
+                  </Badge>
+                  {u.tier_status !== "active" && (
+                    <Badge variant="outline" className="text-xs text-destructive">
+                      {u.tier_status}
+                    </Badge>
+                  )}
+                </div>
+                <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                  <span className="flex items-center gap-1">
+                    <FileText className="h-3 w-3" /> {u.cv_count} CV
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Sparkles className="h-3 w-3" /> {u.ai_count} AI/bln
+                  </span>
+                  <span>Daftar: {new Date(u.created_at).toLocaleDateString("id-ID")}</span>
+                </div>
               </div>
-              <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-                <span className="flex items-center gap-1">
-                  <FileText className="h-3 w-3" /> {u.cv_count} CV
-                </span>
-                <span className="flex items-center gap-1">
-                  <Sparkles className="h-3 w-3" /> {u.ai_count} AI/bln
-                </span>
-                <span>Daftar: {new Date(u.created_at).toLocaleDateString("id-ID")}</span>
-              </div>
-            </div>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => handleEdit(u)}
-              className="shrink-0 gap-1"
-            >
-              <Pencil className="h-3.5 w-3.5" /> Edit
-            </Button>
-          </Card>
-        ))}
-        {users.length === 0 && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => handleEdit(u)}
+                className="shrink-0 gap-1"
+              >
+                <Pencil className="h-3.5 w-3.5" /> Edit
+              </Button>
+            </Card>
+          ))
+        )}
+        {!loading && users.length === 0 && (
           <p className="text-center text-sm text-muted-foreground py-8">
             Tidak ada pengguna ditemukan.
           </p>
@@ -337,7 +341,7 @@ function AdminUsersPage() {
       </div>
 
       {/* ─── Security: Pagination Controls ─────────────────────────────────────── */}
-      {pagination.totalPages > 1 && (
+      {pagination.totalPages > 1 && !loading && (
         <div className="flex items-center justify-between px-2 py-4 border-t">
           <p className="text-sm text-muted-foreground">
             Menampilkan {(pagination.page - 1) * pagination.pageSize + 1}–
@@ -463,5 +467,31 @@ function AdminUsersPage() {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+function AdminUsersSkeleton() {
+  return (
+    <>
+      {Array.from({ length: PAGE_SIZE }).map((_, index) => (
+        <Card key={index} className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center">
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <Skeleton className="h-4 w-36" />
+              <Skeleton className="h-3 w-48" />
+              <Skeleton className="h-5 w-28 rounded" />
+              <Skeleton className="h-5 w-16 rounded-full" />
+              <Skeleton className="h-5 w-20 rounded-full" />
+            </div>
+            <div className="mt-3 flex flex-wrap items-center gap-4">
+              <Skeleton className="h-3 w-12" />
+              <Skeleton className="h-3 w-16" />
+              <Skeleton className="h-3 w-28" />
+            </div>
+          </div>
+          <Skeleton className="h-8 w-20 shrink-0 rounded-md" />
+        </Card>
+      ))}
+    </>
   );
 }

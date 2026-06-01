@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Table,
@@ -627,7 +628,7 @@ function AdminJobsPage() {
         </div>
 
         {jobsLoading ? (
-          <p className="text-sm text-muted-foreground">Memuat lowongan...</p>
+          <AdminJobsTableSkeleton />
         ) : jobs.length === 0 ? (
           <div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
             Belum ada lowongan.
@@ -1057,6 +1058,66 @@ function buildPayload(form: JobForm): Partial<JobListing> {
     is_active: form.is_active,
     updated_at: new Date().toISOString(),
   };
+}
+
+function AdminJobsTableSkeleton() {
+  return (
+    <div className="overflow-hidden rounded-lg border bg-background">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Lowongan</TableHead>
+            <TableHead>Perusahaan</TableHead>
+            <TableHead>Lokasi</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Diposting</TableHead>
+            <TableHead className="text-right">Aksi</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {Array.from({ length: PAGE_SIZE }).map((_, index) => (
+            <TableRow key={index}>
+              <TableCell className="min-w-[260px]">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Skeleton className="h-4 w-44" />
+                    <Skeleton className="h-5 w-20 rounded-full" />
+                  </div>
+                  <Skeleton className="h-3 w-full max-w-xl" />
+                </div>
+              </TableCell>
+              <TableCell className="min-w-40">
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-3 w-24" />
+                </div>
+              </TableCell>
+              <TableCell className="min-w-32">
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-28" />
+                  <Skeleton className="h-5 w-16 rounded-full" />
+                </div>
+              </TableCell>
+              <TableCell>
+                <Skeleton className="h-5 w-16 rounded-full" />
+              </TableCell>
+              <TableCell>
+                <Skeleton className="h-4 w-20" />
+              </TableCell>
+              <TableCell>
+                <div className="flex justify-end gap-1">
+                  <Skeleton className="h-8 w-8 rounded-md" />
+                  <Skeleton className="h-8 w-10 rounded-md" />
+                  <Skeleton className="h-8 w-8 rounded-md" />
+                  <Skeleton className="h-8 w-8 rounded-md" />
+                </div>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  );
 }
 
 function typeLabel(type: string) {
