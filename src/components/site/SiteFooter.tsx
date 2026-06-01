@@ -42,6 +42,7 @@ export function SiteFooter() {
             title="Perusahaan"
             links={[
               { to: "/tentang", label: "Tentang" },
+              { to: "/changelog", label: "Changelog" },
               { to: "/kontak", label: "Kontak" },
               { to: "/kebijakan-privasi", label: "Kebijakan Privasi" },
               { to: "/syarat-ketentuan", label: "Syarat & Ketentuan" },

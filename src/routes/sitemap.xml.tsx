@@ -2,7 +2,12 @@ import { createFileRoute } from "@tanstack/react-router";
 
 const SITE_URL = "https://cvpintar.web.id";
 
-const staticPaths: { path: string; priority: string; changefreq: "weekly" | "monthly" | "yearly"; lastmod: string }[] = [
+const staticPaths: {
+  path: string;
+  priority: string;
+  changefreq: "weekly" | "monthly" | "yearly";
+  lastmod: string;
+}[] = [
   { path: "/", priority: "1.0", changefreq: "weekly", lastmod: "2026-05-10" },
   { path: "/fitur", priority: "0.8", changefreq: "monthly", lastmod: "2026-05-01" },
   { path: "/template", priority: "0.9", changefreq: "weekly", lastmod: "2026-05-08" },
@@ -12,6 +17,7 @@ const staticPaths: { path: string; priority: string; changefreq: "weekly" | "mon
   { path: "/blog", priority: "0.7", changefreq: "weekly", lastmod: "2026-05-10" },
   { path: "/lowongan", priority: "0.8", changefreq: "weekly", lastmod: "2026-05-12" },
   { path: "/tentang", priority: "0.5", changefreq: "monthly", lastmod: "2026-04-15" },
+  { path: "/changelog", priority: "0.4", changefreq: "monthly", lastmod: "2026-06-01" },
   { path: "/kontak", priority: "0.4", changefreq: "monthly", lastmod: "2026-04-15" },
   { path: "/kebijakan-privasi", priority: "0.4", changefreq: "yearly", lastmod: "2026-04-01" },
   { path: "/syarat-ketentuan", priority: "0.4", changefreq: "yearly", lastmod: "2026-04-01" },
@@ -74,18 +80,20 @@ export const Route = createFileRoute("/sitemap/xml")({
         // Fetch lowongan slugs from Supabase
         try {
           const { supabase } = await import("@/integrations/supabase/client");
-          const { data } = await (supabase as any)
+          const { data } = await supabase
             .from("job_listings")
             .select("slug, updated_at")
             .eq("is_active", true)
             .limit(500);
           if (data) {
-            for (const job of data as any[]) {
+            for (const job of data) {
               urls.push({
                 loc: `${SITE_URL}/lowongan/${job.slug}`,
                 priority: "0.6",
                 changefreq: "weekly",
-                lastmod: job.updated_at ? new Date(job.updated_at).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10),
+                lastmod: job.updated_at
+                  ? new Date(job.updated_at).toISOString().slice(0, 10)
+                  : new Date().toISOString().slice(0, 10),
               });
             }
           }
@@ -105,7 +113,10 @@ ${urls
 </urlset>`;
 
         return new Response(body, {
-          headers: { "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "public, max-age=3600" },
+          headers: {
+            "Content-Type": "application/xml; charset=utf-8",
+            "Cache-Control": "public, max-age=3600",
+          },
         });
       },
     },

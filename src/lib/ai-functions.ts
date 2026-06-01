@@ -24,8 +24,10 @@ async function callEdge(name: string, body: Record<string, unknown>) {
     body: JSON.stringify(body),
   });
   if (!res.ok) {
-    const json = await res.json().catch(() => ({ error: res.statusText }));
-    throw new Error((json as any).error || `Error ${res.status}`);
+    const json = (await res.json().catch(() => ({ error: res.statusText }))) as {
+      error?: string;
+    };
+    throw new Error(json.error || `Error ${res.status}`);
   }
   return res.json();
 }
@@ -65,6 +67,37 @@ export async function scoreCv(input: {
     weaknesses: string[];
     suggestions: string[];
   }>;
+}
+
+export type JobMatchResult = {
+  matchScore: number;
+  verdict: "strong" | "good" | "medium" | "low";
+  summary: string;
+  matchedKeywords: string[];
+  missingKeywords: string[];
+  strengths: string[];
+  gaps: string[];
+  recommendations: string[];
+  cvChanges: Array<{
+    section: string;
+    currentIssue: string;
+    suggestedChange: string;
+    impact: string;
+  }>;
+};
+
+export async function matchCvToJob(input: {
+  data: {
+    cvId: string;
+    jobId?: string;
+    jobDescription?: string;
+    jobUrl?: string;
+    jobTitle?: string;
+    companyName?: string;
+    language?: "id" | "en";
+  };
+}) {
+  return callEdge("ai-job-match", input.data) as Promise<JobMatchResult>;
 }
 
 export async function chatWithAi(input: {

@@ -35,6 +35,7 @@ const AI_MODEL = "gemini/gemini-2.5-flash-lite";
 export const FEATURE_MAP: Record<string, string> = {
   "ai-suggest": "suggest",
   "ai-score": "score",
+  "ai-job-match": "job_match",
   "ai-chat": "chat",
   "ai-cover-letter": "cover_letter",
   "ai-keywords": "keyword_extract",
@@ -43,6 +44,7 @@ export const FEATURE_MAP: Record<string, string> = {
 const FEATURE_QUOTA_MAP: Record<string, string> = {
   suggest: "quota_ai_suggest",
   score: "quota_ai_score",
+  job_match: "quota_ai_job_match",
   chat: "quota_ai_chat",
   cover_letter: "quota_ai_cover_letter",
   keyword_extract: "quota_ai_keyword_extract",
@@ -64,7 +66,10 @@ export async function getUserId(req: Request): Promise<string> {
   const supabase = createClient(supabaseUrl, supabaseKey, {
     auth: { persistSession: false },
   });
-  const { data: { user }, error } = await supabase.auth.getUser(token);
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser(token);
   if (error || !user) {
     throw new Error("Unauthorized: Invalid auth token");
   }
@@ -137,15 +142,11 @@ export async function checkAndTrackQuota(
     return;
   }
   if (count !== null && count >= limit) {
-    throw new Error(
-      `Kuota ${feature} bulan ini habis (${count}/${limit}). Silakan upgrade.`,
-    );
+    throw new Error(`Kuota ${feature} bulan ini habis (${count}/${limit}). Silakan upgrade.`);
   }
 
   // Track usage
-  await adminClient
-    .from("ai_usage")
-    .insert({ user_id: userId, feature, tokens_used: tokensUsed });
+  await adminClient.from("ai_usage").insert({ user_id: userId, feature, tokens_used: tokensUsed });
 }
 
 // ─── AI Gateway ────────────────────────────────────────────────────
@@ -169,9 +170,7 @@ export async function aiComplete(
   if (!AI_API_KEY) throw new Error("AI_API_KEY tidak dikonfigurasi.");
 
   // Use specialized prompt for guided CV chat
-  const systemPrompt = useGuidedPrompt
-    ? getChatSystemPrompt(language)
-    : getSystemPrompt(language);
+  const systemPrompt = useGuidedPrompt ? getChatSystemPrompt(language) : getSystemPrompt(language);
 
   const body: Record<string, unknown> = {
     model,
@@ -208,7 +207,10 @@ export async function aiComplete(
 export function corsResponse(body: unknown, status = 200, req?: Request) {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { ...(req ? corsHeaders(req) : corsHeadersStatic), "Content-Type": "application/json" },
+    headers: {
+      ...(req ? corsHeaders(req) : corsHeadersStatic),
+      "Content-Type": "application/json",
+    },
   });
 }
 

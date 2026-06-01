@@ -8,7 +8,16 @@ import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { matchCvToJob, type JobMatchResult } from "@/lib/ai-functions";
 import {
   ArrowLeft,
   ArrowRight,
@@ -106,6 +115,12 @@ type SavedJobListingsQuery = {
       eq: (column: string, value: string) => Promise<{ error: unknown }>;
     };
   };
+};
+
+type CvOption = {
+  id: string;
+  title: string;
+  updated_at: string;
 };
 
 function savedJobListingsTable() {
@@ -439,10 +454,16 @@ function ApplyPanel({ job, salaryText }: { job: Job; salaryText: string | null }
   const deadlineText = job.deadline ? formatShortDate(job.deadline) : null;
   const [isSaved, setIsSaved] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [cvs, setCvs] = useState<CvOption[]>([]);
+  const [selectedCvId, setSelectedCvId] = useState("");
+  const [matching, setMatching] = useState(false);
+  const [matchResult, setMatchResult] = useState<JobMatchResult | null>(null);
 
   useEffect(() => {
     if (!user?.id) {
       setIsSaved(false);
+      setCvs([]);
+      setSelectedCvId("");
       return;
     }
 
@@ -466,6 +487,31 @@ function ApplyPanel({ job, salaryText }: { job: Job; salaryText: string | null }
       active = false;
     };
   }, [job.id, user?.id]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const userId = user.id;
+    let active = true;
+
+    async function loadCvs() {
+      const { data, error } = await supabase
+        .from("cvs")
+        .select("id, title, updated_at")
+        .eq("user_id", userId)
+        .order("updated_at", { ascending: false });
+
+      if (!active || error) return;
+      const rows = (data ?? []) as CvOption[];
+      setCvs(rows);
+      setSelectedCvId((current) => current || rows[0]?.id || "");
+    }
+
+    void loadCvs();
+    return () => {
+      active = false;
+    };
+  }, [user?.id]);
 
   const toggleSavedJob = async () => {
     if (!user?.id || isSaving) return;
@@ -492,6 +538,29 @@ function ApplyPanel({ job, salaryText }: { job: Job; salaryText: string | null }
     toast.success(nextSaved ? "Lowongan disimpan." : "Lowongan dihapus dari simpanan.");
   };
 
+  const handleJobMatch = async () => {
+    if (!selectedCvId || matching) return;
+
+    setMatching(true);
+    setMatchResult(null);
+
+    try {
+      const result = await matchCvToJob({
+        data: {
+          cvId: selectedCvId,
+          jobId: job.id,
+          language: "id",
+        },
+      });
+      setMatchResult(result);
+      toast.success("Job match score berhasil dibuat.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Gagal membuat job match score.");
+    } finally {
+      setMatching(false);
+    }
+  };
+
   return (
     <Card className="border-border/80 bg-card shadow-sm lg:sticky lg:top-24">
       <CardContent className="p-5">
@@ -516,6 +585,67 @@ function ApplyPanel({ job, salaryText }: { job: Job; salaryText: string | null }
           />
           <Fact icon={DollarSign} label="Gaji" value={salaryText || "Tidak dicantumkan"} />
           <Fact icon={CalendarDays} label="Deadline" value={deadlineText || "Tidak dicantumkan"} />
+        </div>
+
+        <div className="mt-5 rounded-lg border bg-background p-4">
+          <div className="mb-3 flex items-start gap-3">
+            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
+              <Sparkles className="h-4 w-4" aria-hidden="true" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-foreground">AI Job Match Score</h3>
+              <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                Cocokkan CV kamu dengan lowongan ini sebelum melamar.
+              </p>
+            </div>
+          </div>
+
+          {user ? (
+            <div className="space-y-3">
+              {cvs.length > 0 ? (
+                <>
+                  <Select value={selectedCvId} onValueChange={setSelectedCvId}>
+                    <SelectTrigger className="h-10">
+                      <SelectValue placeholder="Pilih CV" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {cvs.map((cv) => (
+                        <SelectItem key={cv.id} value={cv.id}>
+                          {cv.title}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    type="button"
+                    className="w-full justify-center gap-2"
+                    disabled={!selectedCvId || matching}
+                    onClick={handleJobMatch}
+                  >
+                    {matching ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Sparkles className="h-4 w-4" />
+                    )}
+                    {matching ? "Menganalisis..." : "Cek kecocokan CV"}
+                  </Button>
+                </>
+              ) : (
+                <div className="rounded-lg bg-muted/60 p-3 text-sm text-muted-foreground">
+                  Kamu belum punya CV. Buat CV dulu untuk memakai Job Match Score.
+                </div>
+              )}
+
+              {matchResult && <JobMatchResultCard result={matchResult} />}
+            </div>
+          ) : (
+            <Button asChild variant="outline" className="w-full justify-center gap-2">
+              <Link to="/login" search={{ redirect: `/lowongan/${job.slug}` }}>
+                <LogIn className="h-4 w-4" />
+                Masuk untuk cek match
+              </Link>
+            </Button>
+          )}
         </div>
 
         <div className="mt-5 grid gap-3">
@@ -566,6 +696,84 @@ function ApplyPanel({ job, salaryText }: { job: Job; salaryText: string | null }
         </p>
       </CardContent>
     </Card>
+  );
+}
+
+function JobMatchResultCard({ result }: { result: JobMatchResult }) {
+  const tone = matchTone(result.matchScore);
+
+  return (
+    <div className="space-y-4 rounded-lg border bg-muted/35 p-4">
+      <div>
+        <div className="flex items-end justify-between gap-3">
+          <div>
+            <p className="text-xs font-medium uppercase text-muted-foreground">Match score</p>
+            <p className={`font-display text-4xl font-bold ${tone.text}`}>{result.matchScore}%</p>
+          </div>
+          <Badge className={tone.badge}>{verdictLabel(result.verdict)}</Badge>
+        </div>
+        <Progress value={result.matchScore} className="mt-3 h-2" />
+        <p className="mt-3 text-sm leading-6 text-muted-foreground">{result.summary}</p>
+      </div>
+
+      <MatchList title="Keyword yang sudah match" items={result.matchedKeywords} tone="match" />
+      <MatchList title="Keyword yang perlu diperkuat" items={result.missingKeywords} tone="gap" />
+      <MatchList title="Rekomendasi cepat" items={result.recommendations.slice(0, 4)} />
+
+      {result.cvChanges.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-xs font-semibold uppercase text-muted-foreground">
+            Perubahan CV yang disarankan
+          </p>
+          {result.cvChanges.slice(0, 3).map((change) => (
+            <div
+              key={`${change.section}-${change.suggestedChange}`}
+              className="rounded-lg bg-card p-3"
+            >
+              <p className="text-sm font-semibold text-foreground">{change.section}</p>
+              <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                {change.suggestedChange}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MatchList({
+  title,
+  items,
+  tone,
+}: {
+  title: string;
+  items: string[];
+  tone?: "match" | "gap";
+}) {
+  if (items.length === 0) return null;
+
+  return (
+    <div>
+      <p className="mb-2 text-xs font-semibold uppercase text-muted-foreground">{title}</p>
+      <div className="flex flex-wrap gap-2">
+        {items.slice(0, 8).map((item) => (
+          <Badge
+            key={item}
+            variant="secondary"
+            className={
+              tone === "match"
+                ? "bg-emerald-100 text-emerald-800 hover:bg-emerald-100"
+                : tone === "gap"
+                  ? "bg-amber-100 text-amber-800 hover:bg-amber-100"
+                  : ""
+            }
+          >
+            {item}
+          </Badge>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -675,6 +883,41 @@ function levelLabel(level: string) {
     director: "Director",
   };
   return map[level] ?? level;
+}
+
+function verdictLabel(value: JobMatchResult["verdict"]) {
+  const map: Record<JobMatchResult["verdict"], string> = {
+    strong: "Sangat cocok",
+    good: "Cocok",
+    medium: "Perlu dipoles",
+    low: "Kurang cocok",
+  };
+  return map[value];
+}
+
+function matchTone(score: number) {
+  if (score >= 80) {
+    return {
+      text: "text-emerald-700",
+      badge: "bg-emerald-100 text-emerald-800 hover:bg-emerald-100",
+    };
+  }
+  if (score >= 60) {
+    return {
+      text: "text-primary",
+      badge: "bg-primary/10 text-primary hover:bg-primary/10",
+    };
+  }
+  if (score >= 40) {
+    return {
+      text: "text-amber-700",
+      badge: "bg-amber-100 text-amber-800 hover:bg-amber-100",
+    };
+  }
+  return {
+    text: "text-red-700",
+    badge: "bg-red-100 text-red-800 hover:bg-red-100",
+  };
 }
 
 function formatSalary(

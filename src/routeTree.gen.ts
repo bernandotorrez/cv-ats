@@ -25,6 +25,7 @@ import { Route as KontakRouteImport } from './routes/kontak'
 import { Route as KebijakanPrivasiRouteImport } from './routes/kebijakan-privasi'
 import { Route as HargaRouteImport } from './routes/harga'
 import { Route as FiturRouteImport } from './routes/fitur'
+import { Route as ChangelogRouteImport } from './routes/changelog'
 import { Route as BlogRouteImport } from './routes/blog'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
@@ -41,6 +42,7 @@ import { Route as ApiAiCvReviewRouteImport } from './routes/api/ai-cv-review'
 import { Route as AuthenticatedSimulasiWawancaraRouteImport } from './routes/_authenticated/simulasi-wawancara'
 import { Route as AuthenticatedReferralRouteImport } from './routes/_authenticated/referral'
 import { Route as AuthenticatedLamaranRouteImport } from './routes/_authenticated/lamaran'
+import { Route as AuthenticatedJobMatchRouteImport } from './routes/_authenticated/job-match'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedCompareRouteImport } from './routes/_authenticated/compare'
 import { Route as AuthenticatedAnalitikRouteImport } from './routes/_authenticated/analitik'
@@ -141,6 +143,11 @@ const FiturRoute = FiturRouteImport.update({
   path: '/fitur',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ChangelogRoute = ChangelogRouteImport.update({
+  id: '/changelog',
+  path: '/changelog',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BlogRoute = BlogRouteImport.update({
   id: '/blog',
   path: '/blog',
@@ -219,6 +226,11 @@ const AuthenticatedReferralRoute = AuthenticatedReferralRouteImport.update({
 const AuthenticatedLamaranRoute = AuthenticatedLamaranRouteImport.update({
   id: '/lamaran',
   path: '/lamaran',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedJobMatchRoute = AuthenticatedJobMatchRouteImport.update({
+  id: '/job-match',
+  path: '/job-match',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
@@ -326,6 +338,7 @@ const AuthenticatedToolsCoverLetterCvIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/blog': typeof BlogRouteWithChildren
+  '/changelog': typeof ChangelogRoute
   '/fitur': typeof FiturRoute
   '/harga': typeof HargaRoute
   '/kebijakan-privasi': typeof KebijakanPrivasiRoute
@@ -347,6 +360,7 @@ export interface FileRoutesByFullPath {
   '/analitik': typeof AuthenticatedAnalitikRoute
   '/compare': typeof AuthenticatedCompareRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/job-match': typeof AuthenticatedJobMatchRoute
   '/lamaran': typeof AuthenticatedLamaranRoute
   '/referral': typeof AuthenticatedReferralRoute
   '/simulasi-wawancara': typeof AuthenticatedSimulasiWawancaraRouteWithChildren
@@ -378,6 +392,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/blog': typeof BlogRouteWithChildren
+  '/changelog': typeof ChangelogRoute
   '/fitur': typeof FiturRoute
   '/harga': typeof HargaRoute
   '/kebijakan-privasi': typeof KebijakanPrivasiRoute
@@ -398,6 +413,7 @@ export interface FileRoutesByTo {
   '/analitik': typeof AuthenticatedAnalitikRoute
   '/compare': typeof AuthenticatedCompareRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/job-match': typeof AuthenticatedJobMatchRoute
   '/lamaran': typeof AuthenticatedLamaranRoute
   '/referral': typeof AuthenticatedReferralRoute
   '/simulasi-wawancara': typeof AuthenticatedSimulasiWawancaraRouteWithChildren
@@ -431,6 +447,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/blog': typeof BlogRouteWithChildren
+  '/changelog': typeof ChangelogRoute
   '/fitur': typeof FiturRoute
   '/harga': typeof HargaRoute
   '/kebijakan-privasi': typeof KebijakanPrivasiRoute
@@ -452,6 +469,7 @@ export interface FileRoutesById {
   '/_authenticated/analitik': typeof AuthenticatedAnalitikRoute
   '/_authenticated/compare': typeof AuthenticatedCompareRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/job-match': typeof AuthenticatedJobMatchRoute
   '/_authenticated/lamaran': typeof AuthenticatedLamaranRoute
   '/_authenticated/referral': typeof AuthenticatedReferralRoute
   '/_authenticated/simulasi-wawancara': typeof AuthenticatedSimulasiWawancaraRouteWithChildren
@@ -485,6 +503,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/blog'
+    | '/changelog'
     | '/fitur'
     | '/harga'
     | '/kebijakan-privasi'
@@ -506,6 +525,7 @@ export interface FileRouteTypes {
     | '/analitik'
     | '/compare'
     | '/dashboard'
+    | '/job-match'
     | '/lamaran'
     | '/referral'
     | '/simulasi-wawancara'
@@ -537,6 +557,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/blog'
+    | '/changelog'
     | '/fitur'
     | '/harga'
     | '/kebijakan-privasi'
@@ -557,6 +578,7 @@ export interface FileRouteTypes {
     | '/analitik'
     | '/compare'
     | '/dashboard'
+    | '/job-match'
     | '/lamaran'
     | '/referral'
     | '/simulasi-wawancara'
@@ -589,6 +611,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/blog'
+    | '/changelog'
     | '/fitur'
     | '/harga'
     | '/kebijakan-privasi'
@@ -610,6 +633,7 @@ export interface FileRouteTypes {
     | '/_authenticated/analitik'
     | '/_authenticated/compare'
     | '/_authenticated/dashboard'
+    | '/_authenticated/job-match'
     | '/_authenticated/lamaran'
     | '/_authenticated/referral'
     | '/_authenticated/simulasi-wawancara'
@@ -643,6 +667,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   BlogRoute: typeof BlogRouteWithChildren
+  ChangelogRoute: typeof ChangelogRoute
   FiturRoute: typeof FiturRoute
   HargaRoute: typeof HargaRoute
   KebijakanPrivasiRoute: typeof KebijakanPrivasiRoute
@@ -782,6 +807,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FiturRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/changelog': {
+      id: '/changelog'
+      path: '/changelog'
+      fullPath: '/changelog'
+      preLoaderRoute: typeof ChangelogRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/blog': {
       id: '/blog'
       path: '/blog'
@@ -892,6 +924,13 @@ declare module '@tanstack/react-router' {
       path: '/lamaran'
       fullPath: '/lamaran'
       preLoaderRoute: typeof AuthenticatedLamaranRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/job-match': {
+      id: '/_authenticated/job-match'
+      path: '/job-match'
+      fullPath: '/job-match'
+      preLoaderRoute: typeof AuthenticatedJobMatchRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/dashboard': {
@@ -1068,6 +1107,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedAnalitikRoute: typeof AuthenticatedAnalitikRoute
   AuthenticatedCompareRoute: typeof AuthenticatedCompareRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedJobMatchRoute: typeof AuthenticatedJobMatchRoute
   AuthenticatedLamaranRoute: typeof AuthenticatedLamaranRoute
   AuthenticatedReferralRoute: typeof AuthenticatedReferralRoute
   AuthenticatedSimulasiWawancaraRoute: typeof AuthenticatedSimulasiWawancaraRouteWithChildren
@@ -1088,6 +1128,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAnalitikRoute: AuthenticatedAnalitikRoute,
   AuthenticatedCompareRoute: AuthenticatedCompareRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedJobMatchRoute: AuthenticatedJobMatchRoute,
   AuthenticatedLamaranRoute: AuthenticatedLamaranRoute,
   AuthenticatedReferralRoute: AuthenticatedReferralRoute,
   AuthenticatedSimulasiWawancaraRoute:
@@ -1146,6 +1187,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   BlogRoute: BlogRouteWithChildren,
+  ChangelogRoute: ChangelogRoute,
   FiturRoute: FiturRoute,
   HargaRoute: HargaRoute,
   KebijakanPrivasiRoute: KebijakanPrivasiRoute,

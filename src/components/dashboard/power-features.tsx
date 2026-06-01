@@ -9,6 +9,7 @@ interface PowerFeature {
   desc: string;
   action: string;
   badge: string;
+  isNew?: boolean;
   badgeColor?: string;
   visible: boolean;
   locked: boolean;
@@ -78,7 +79,14 @@ export function PowerFeatures({ features, onFeatureClick, onUpgrade }: PowerFeat
                     {f.upgradeTier}
                   </Badge>
                 ) : (
-                  <Badge variant="secondary">{f.badge}</Badge>
+                  <div className="flex flex-wrap justify-end gap-2">
+                    {f.isNew && (
+                      <Badge className="bg-primary text-primary-foreground hover:bg-primary">
+                        New
+                      </Badge>
+                    )}
+                    <Badge variant="secondary">{f.badge}</Badge>
+                  </div>
                 )}
               </div>
 

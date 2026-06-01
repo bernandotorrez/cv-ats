@@ -38,6 +38,7 @@ import {
   BarChart3,
   Brain,
   FileCheck,
+  FileSearch,
   Target,
   Key,
   Type,
@@ -89,6 +90,7 @@ function DashboardPage() {
   const [cvCount, setCvCount] = useState(0);
   const [aiUsageCount, setAiUsageCount] = useState(0);
   const [scoreUsageCount, setScoreUsageCount] = useState(0);
+  const [jobMatchUsageCount, setJobMatchUsageCount] = useState(0);
   const [guidedUsageCount, setGuidedUsageCount] = useState(0);
   const [coverLetterUsageCount, setCoverLetterUsageCount] = useState(0);
   const [cvReviewUsageCount, setCvReviewUsageCount] = useState(0);
@@ -127,6 +129,7 @@ function DashboardPage() {
         `subscription_tiers!inner(
           quota_ai_suggest,
           quota_ai_score,
+          quota_ai_job_match,
           quota_ai_chat,
           quota_ai_cover_letter,
           quota_ai_keyword_extract,
@@ -199,6 +202,7 @@ function DashboardPage() {
     }
     setAiUsageCount(counts["suggest"] ?? 0);
     setScoreUsageCount(counts["score"] ?? 0);
+    setJobMatchUsageCount(counts["job_match"] ?? 0);
     setGuidedUsageCount(counts["guided"] ?? 0);
     setCoverLetterUsageCount(counts["cover_letter"] ?? 0);
     setCvReviewUsageCount(counts["cv_review"] ?? 0);
@@ -280,6 +284,14 @@ function DashboardPage() {
       max: tierQuotas?.quota_ai_score ?? limits.maxAtsScores,
       color: "bg-amber-500/10 text-amber-600",
       visible: limits.enableAiScore,
+    },
+    {
+      icon: FileSearch,
+      label: "Job Match",
+      used: jobMatchUsageCount,
+      max: tierQuotas?.quota_ai_job_match ?? (tier === "free" ? 0 : tier === "starter" ? 20 : 100),
+      color: "bg-lime-500/10 text-lime-700",
+      visible: true,
     },
     {
       icon: Brain,
@@ -372,6 +384,18 @@ function DashboardPage() {
       gradient: "bg-gradient-to-r from-amber-500 to-orange-500",
     },
     {
+      icon: FileSearch,
+      label: "AI Job Match Score",
+      desc: "Cocokkan CV dengan lowongan dari database, URL, atau job description manual.",
+      action: "job-match",
+      badge: "Starter",
+      isNew: true,
+      visible: true,
+      locked: tier === "free",
+      upgradeTier: "Starter",
+      gradient: "bg-gradient-to-r from-lime-500 to-emerald-500",
+    },
+    {
       icon: ArrowLeftRight,
       label: "CV Comparison",
       desc: "Bandingkan dua versi CV untuk melihat struktur, keyword, kelengkapan, dan preview dalam satu layar.",
@@ -446,6 +470,15 @@ function DashboardPage() {
       action: "score",
       color: "bg-amber-500/10 text-amber-600",
       visible: true,
+    },
+    {
+      icon: FileSearch,
+      label: "Job Match",
+      action: "job-match",
+      color: "bg-lime-500/10 text-lime-700",
+      visible: true,
+      locked: tier === "free",
+      upgradeTier: "Starter",
     },
     {
       icon: ArrowLeftRight,
@@ -541,6 +574,7 @@ function DashboardPage() {
       lamaran: "/lamaran",
       simulasi: "/simulasi-wawancara",
       compare: "/compare",
+      "job-match": "/job-match",
       referral: "/referral",
       analitik: "/analitik",
       admin: "/admin",

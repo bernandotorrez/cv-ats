@@ -84,6 +84,13 @@ const featureGroups = [
         desc: "Cek format, keyword, skill, dan relevansi CV terhadap job description target.",
       },
       {
+        icon: FileSearch,
+        name: "AI Job Match Score",
+        desc: "Cocokkan CV dengan lowongan dari database, URL, atau job description untuk melihat match score dan keyword gap.",
+        badge: "Starter",
+        isNew: true,
+      },
+      {
         icon: UserRoundCheck,
         name: "Review CV by HR Expert AI",
         desc: "Analisis mendalam dari perspektif HR profesional 20+ tahun, lengkap dengan quick wins.",
@@ -253,11 +260,18 @@ function FiturPage() {
                           <div className="grid h-11 w-11 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
                             <item.icon className="h-5 w-5" aria-hidden />
                           </div>
-                          {item.badge && (
-                            <Badge className="bg-info text-info-foreground hover:bg-info">
-                              {item.badge}
-                            </Badge>
-                          )}
+                          <div className="flex flex-wrap justify-end gap-2">
+                            {"isNew" in item && item.isNew && (
+                              <Badge className="bg-primary text-primary-foreground hover:bg-primary">
+                                New
+                              </Badge>
+                            )}
+                            {item.badge && (
+                              <Badge className="bg-info text-info-foreground hover:bg-info">
+                                {item.badge}
+                              </Badge>
+                            )}
+                          </div>
                         </div>
                         <h3 className="mt-5 font-display text-lg font-semibold">{item.name}</h3>
                         <p className="mt-2 text-sm leading-6 text-muted-foreground">{item.desc}</p>
