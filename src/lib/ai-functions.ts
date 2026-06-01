@@ -118,7 +118,9 @@ export type TailorCvResult = {
 export async function tailorCvToJob(input: {
   data: {
     cvId: string;
-    jobDescription: string;
+    jobId?: string;
+    jobDescription?: string;
+    jobUrl?: string;
     jobTitle?: string;
     companyName?: string;
     language?: "id" | "en";

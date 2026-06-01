@@ -5,10 +5,12 @@ import {
   BriefcaseBusiness,
   CheckCircle2,
   FileText,
+  Link2,
   Loader2,
   Lock,
   RefreshCw,
   Save,
+  Search,
   Sparkles,
   Target,
 } from "lucide-react";
@@ -21,6 +23,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton-loading";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
@@ -30,6 +39,16 @@ import { emptyCv, type CvData, type TemplateId } from "@/lib/cv-types";
 import { buildSeo } from "@/lib/seo";
 import { getUserTier } from "@/lib/subscription";
 import type { Json } from "@/integrations/supabase/types";
+
+type TailorMode = "database" | "url" | "manual";
+
+interface JobOption {
+  id: string;
+  title: string;
+  company: string;
+  location: string;
+  level: string | null;
+}
 
 export const Route = createFileRoute("/_authenticated/tools/tailor/$cvId")({
   head: () =>
@@ -52,6 +71,11 @@ function TailorCvPage() {
   const [templateId, setTemplateId] = useState<TemplateId>("jakarta");
   const [cvData, setCvData] = useState<CvData>(emptyCv);
   const [cvLanguage, setCvLanguage] = useState<"id" | "en">("id");
+  const [mode, setMode] = useState<TailorMode>("database");
+  const [jobs, setJobs] = useState<JobOption[]>([]);
+  const [selectedJobId, setSelectedJobId] = useState("");
+  const [search, setSearch] = useState("");
+  const [jobUrl, setJobUrl] = useState("");
   const [jobTitle, setJobTitle] = useState("");
   const [companyName, setCompanyName] = useState("");
   const [jobDescription, setJobDescription] = useState("");
@@ -84,18 +108,47 @@ function TailorCvPage() {
       setCvData(nextData);
       setCvLanguage(row.language === "en" ? "en" : "id");
       setJobTitle(nextData.personal.headline || "");
+
+      const { data: jobRows } = await supabase
+        .from("job_listings")
+        .select("id, title, company, location, level")
+        .eq("is_active", true)
+        .order("created_at", { ascending: false })
+        .limit(80);
+
+      const nextJobs = (jobRows ?? []) as JobOption[];
+      setJobs(nextJobs);
+      setSelectedJobId((current) => current || nextJobs[0]?.id || "");
       setLoading(false);
     })();
   }, [cvId, user?.id]);
+
+  const filteredJobs = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return jobs;
+    return jobs.filter((job) =>
+      `${job.title} ${job.company} ${job.location} ${job.level || ""}`.toLowerCase().includes(q),
+    );
+  }, [jobs, search]);
+
+  const selectedJob = useMemo(
+    () => jobs.find((job) => job.id === selectedJobId) || null,
+    [jobs, selectedJobId],
+  );
 
   const tailoredData = useMemo(
     () => (result?.tailoredCvData ? ({ ...emptyCv, ...result.tailoredCvData } as CvData) : null),
     [result],
   );
 
+  const canGenerate =
+    (mode === "database" && Boolean(selectedJobId)) ||
+    (mode === "url" && Boolean(jobUrl.trim())) ||
+    (mode === "manual" && Boolean(jobDescription.trim()));
+
   const handleGenerate = async () => {
-    if (!jobDescription.trim()) {
-      toast.error("Job description wajib diisi.");
+    if (!canGenerate) {
+      toast.error("Pilih lowongan, masukkan URL, atau isi job description manual.");
       return;
     }
 
@@ -104,7 +157,9 @@ function TailorCvPage() {
       const nextResult = await tailorCvToJob({
         data: {
           cvId,
-          jobDescription: jobDescription.trim(),
+          jobId: mode === "database" ? selectedJobId : undefined,
+          jobUrl: mode === "url" ? jobUrl.trim() : undefined,
+          jobDescription: mode === "manual" ? jobDescription.trim() : undefined,
           jobTitle: jobTitle.trim() || undefined,
           companyName: companyName.trim() || undefined,
           language: cvLanguage,
@@ -174,11 +229,15 @@ function TailorCvPage() {
 
               <div className="mt-6 grid gap-3 sm:grid-cols-3">
                 <HeroMetric icon={FileText} label="CV aktif" value={cvTitle || "CV kamu"} />
-                <HeroMetric icon={Target} label="Target" value={jobTitle || "Belum diisi"} />
+                <HeroMetric
+                  icon={Target}
+                  label="Target"
+                  value={selectedJob?.title || jobTitle || "Belum dipilih"}
+                />
                 <HeroMetric
                   icon={BriefcaseBusiness}
                   label="Perusahaan"
-                  value={companyName || "Opsional"}
+                  value={selectedJob?.company || companyName || "Opsional"}
                 />
               </div>
             </div>
@@ -215,60 +274,144 @@ function TailorCvPage() {
             <Badge variant="secondary" className="w-fit rounded-full">
               Konteks lowongan
             </Badge>
-            <CardTitle className="font-display text-2xl">Tempel job description lengkap.</CardTitle>
+            <CardTitle className="font-display text-2xl">Pilih sumber lowongan.</CardTitle>
             <CardDescription className="leading-6">
-              Sertakan responsibilities, requirements, skill, tools, dan kualifikasi agar hasil
-              tailoring lebih tajam.
+              Gunakan lowongan dari database CV Pintar, URL lowongan, atau job description manual
+              agar hasil tailoring lebih tajam.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="grid gap-2">
-                <Label htmlFor="job-title">Posisi target</Label>
-                <Input
-                  id="job-title"
-                  value={jobTitle}
-                  onChange={(event) => setJobTitle(event.target.value)}
-                  placeholder="Contoh: Product Manager"
-                  className="h-11 rounded-lg"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="company">Perusahaan</Label>
-                <Input
-                  id="company"
-                  value={companyName}
-                  onChange={(event) => setCompanyName(event.target.value)}
-                  placeholder="Contoh: PT Talenta Nusantara"
-                  className="h-11 rounded-lg"
-                />
-              </div>
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                ["database", BriefcaseBusiness, "Database"],
+                ["url", Link2, "URL"],
+                ["manual", FileText, "Manual"],
+              ].map(([value, Icon, label]) => (
+                <Button
+                  key={value as string}
+                  type="button"
+                  variant={mode === value ? "default" : "outline"}
+                  className="h-auto flex-col gap-1 rounded-lg py-3 text-xs"
+                  onClick={() => {
+                    setMode(value as TailorMode);
+                    setResult(null);
+                  }}
+                >
+                  <Icon className="h-4 w-4" />
+                  {label as string}
+                </Button>
+              ))}
             </div>
 
-            <div className="grid gap-2">
-              <div className="flex items-end justify-between gap-3">
-                <Label htmlFor="job-description">
-                  Job description
-                  <span className="ml-1 text-destructive">*</span>
-                </Label>
-                <span className="text-xs text-muted-foreground">
-                  {jobDescription.length}/12.000
-                </span>
+            {mode === "database" && (
+              <div className="space-y-3">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    value={search}
+                    onChange={(event) => setSearch(event.target.value)}
+                    placeholder="Cari role, perusahaan, lokasi..."
+                    className="h-11 rounded-lg pl-9"
+                  />
+                </div>
+                {jobs.length > 0 ? (
+                  <Select value={selectedJobId} onValueChange={setSelectedJobId}>
+                    <SelectTrigger className="h-11 rounded-lg">
+                      <SelectValue placeholder="Pilih lowongan" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {filteredJobs.map((job) => (
+                        <SelectItem key={job.id} value={job.id}>
+                          {job.title} - {job.company}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <div className="rounded-lg border bg-muted/40 p-4 text-sm leading-6 text-muted-foreground">
+                    Belum ada lowongan aktif di database. Gunakan URL atau manual sebagai sumber
+                    lowongan.
+                  </div>
+                )}
               </div>
-              <Textarea
-                id="job-description"
-                value={jobDescription}
-                onChange={(event) => setJobDescription(event.target.value)}
-                placeholder="Paste lowongan lengkap di sini..."
-                rows={14}
-                maxLength={12000}
-                className="resize-none rounded-lg text-sm leading-6"
-              />
-            </div>
+            )}
+
+            {mode === "url" && (
+              <div className="space-y-4">
+                <Field
+                  id="job-url"
+                  label="URL lowongan"
+                  value={jobUrl}
+                  onChange={setJobUrl}
+                  placeholder="https://..."
+                />
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Field
+                    id="url-job-title"
+                    label="Posisi target"
+                    value={jobTitle}
+                    onChange={setJobTitle}
+                    placeholder="Contoh: Product Manager"
+                  />
+                  <Field
+                    id="url-company"
+                    label="Perusahaan"
+                    value={companyName}
+                    onChange={setCompanyName}
+                    placeholder="Contoh: PT Talenta Nusantara"
+                  />
+                </div>
+                <p className="text-xs leading-5 text-muted-foreground">
+                  Jika situs memblokir scraping, paste job description manual sebagai fallback.
+                </p>
+              </div>
+            )}
+
+            {mode === "manual" && (
+              <div className="space-y-4">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Field
+                    id="manual-job-title"
+                    label="Posisi target"
+                    value={jobTitle}
+                    onChange={setJobTitle}
+                    placeholder="Contoh: Product Manager"
+                  />
+                  <Field
+                    id="manual-company"
+                    label="Perusahaan"
+                    value={companyName}
+                    onChange={setCompanyName}
+                    placeholder="Contoh: PT Talenta Nusantara"
+                  />
+                </div>
+
+                <div className="grid gap-2">
+                  <div className="flex items-end justify-between gap-3">
+                    <Label htmlFor="job-description">
+                      Job description
+                      <span className="ml-1 text-destructive">*</span>
+                    </Label>
+                    <span className="text-xs text-muted-foreground">
+                      {jobDescription.length}/12.000
+                    </span>
+                  </div>
+                  <Textarea
+                    id="job-description"
+                    value={jobDescription}
+                    onChange={(event) => setJobDescription(event.target.value)}
+                    placeholder="Paste lowongan lengkap di sini..."
+                    rows={14}
+                    maxLength={12000}
+                    className="resize-none rounded-lg text-sm leading-6"
+                  />
+                </div>
+              </div>
+            )}
 
             <Button
               onClick={handleGenerate}
-              disabled={generating || !jobDescription.trim()}
+              disabled={generating || !canGenerate}
               className="h-11 w-full rounded-lg"
             >
               {generating ? (
@@ -370,7 +513,12 @@ function TailorCvPage() {
                 )}
 
                 <div className="max-h-[720px] overflow-auto rounded-xl border border-border bg-muted/25 p-4">
-                  <CvPreview data={tailoredData} templateId={templateId} scale={0.68} />
+                  <CvPreview
+                    data={tailoredData}
+                    template={templateId}
+                    scale={0.68}
+                    language={cvLanguage}
+                  />
                 </div>
               </div>
             )}
@@ -397,6 +545,33 @@ function HeroMetric({
         {label}
       </p>
       <p className="mt-1 line-clamp-2 text-sm font-semibold text-foreground">{value}</p>
+    </div>
+  );
+}
+
+function Field({
+  id,
+  label,
+  value,
+  onChange,
+  placeholder,
+}: {
+  id: string;
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+}) {
+  return (
+    <div className="grid gap-2">
+      <Label htmlFor={id}>{label}</Label>
+      <Input
+        id={id}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        placeholder={placeholder}
+        className="h-11 rounded-lg"
+      />
     </div>
   );
 }
