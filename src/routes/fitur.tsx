@@ -136,8 +136,10 @@ const featureGroups = [
       },
       {
         icon: Share2,
-        name: "Share Link Publik",
-        desc: "Bagikan CV lewat link read-only dan nonaktifkan kapan saja.",
+        name: "Portfolio / Share Page",
+        desc: "Bagikan portfolio publik berisi profil, skill, pengalaman, kontak, dan preview CV yang bisa dicetak.",
+        badge: "Baru",
+        isNew: true,
       },
       {
         icon: ShieldCheck,

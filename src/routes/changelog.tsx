@@ -7,6 +7,7 @@ import {
   FileText,
   GitBranch,
   LayoutDashboard,
+  Share2,
   ShieldCheck,
   Sparkles,
   Wrench,
@@ -34,9 +35,9 @@ const changelog = [
   {
     version: APP_VERSION,
     date: "1 Juni 2026",
-    title: "AI Job Match Score dan peningkatan dashboard",
+    title: "AI Job Match Score dan Portfolio / Share Page",
     summary:
-      "Update ini membantu pengguna melihat seberapa cocok CV dengan lowongan yang dituju, langsung dari data lowongan, URL, atau job description manual.",
+      "Update ini membantu pengguna mengecek kecocokan CV dengan lowongan, lalu membagikan profil profesional lewat portfolio publik yang lebih lengkap.",
     highlights: [
       {
         icon: FileSearch,
@@ -47,6 +48,11 @@ const changelog = [
         icon: LayoutDashboard,
         type: "Peningkatan",
         text: "Menambahkan akses Job Match di dashboard agar alur cek kecocokan CV lebih cepat.",
+      },
+      {
+        icon: Share2,
+        type: "Fitur baru",
+        text: "Meningkatkan Share Page menjadi portfolio publik dengan profil, skill, pengalaman, kontak, dan preview CV printable.",
       },
       {
         icon: BadgeCheck,

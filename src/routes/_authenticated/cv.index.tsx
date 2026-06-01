@@ -168,7 +168,7 @@ function CvListPage() {
     },
     {
       icon: Share2,
-      label: "Share Link",
+      label: "Portfolio",
       value: `${sharedCount}`,
       note: "Sedang aktif",
       color: "bg-amber-500/10 text-amber-700",
@@ -277,8 +277,8 @@ function CvListPage() {
               Semua CV kamu, rapi dan siap dipakai untuk role yang berbeda.
             </h1>
             <p className="mt-3 max-w-2xl text-sm leading-7 text-muted-foreground sm:text-base">
-              Buat versi CV, cek skor ATS, aktifkan share link, dan lanjutkan ke AI tools tanpa
-              kehilangan konteks.
+              Buat versi CV, cek skor ATS, aktifkan portfolio publik, dan lanjutkan ke AI tools
+              tanpa kehilangan konteks.
             </p>
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
               <Button
@@ -401,8 +401,8 @@ function CvListPage() {
             </h2>
           </div>
           <p className="max-w-md text-sm leading-6 text-muted-foreground">
-            Setiap kartu punya shortcut untuk edit, scoring, review, AI tools, share, dan persiapan
-            interview.
+            Setiap kartu punya shortcut untuk edit, scoring, review, AI tools, portfolio, dan
+            persiapan interview.
           </p>
         </div>
 
@@ -552,11 +552,11 @@ function CvListPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-lg">
               <Share2 className="h-5 w-5 text-primary" />
-              Link CV siap dibagikan
+              Portfolio siap dibagikan
             </DialogTitle>
             <DialogDescription className="text-sm">
-              Bagikan link ini agar orang lain bisa melihat CV <strong>{shareCv?.title}</strong>{" "}
-              kamu.
+              Bagikan link ini agar orang lain bisa melihat portfolio dan CV{" "}
+              <strong>{shareCv?.title}</strong> kamu.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
@@ -746,7 +746,7 @@ function CvCard({
           ) : (
             <Share2 className="h-3.5 w-3.5" />
           )}
-          {cv.share_enabled ? "Share Aktif" : "Bagikan"}
+          {cv.share_enabled ? "Portfolio Aktif" : "Portfolio"}
         </Button>
         <Button
           size="icon"
