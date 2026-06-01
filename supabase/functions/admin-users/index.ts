@@ -12,6 +12,21 @@ type AuthUser = {
   };
 };
 
+type AdminUsersPageRow = {
+  id: string;
+  email?: string | null;
+  full_name?: string | null;
+  role?: string | null;
+  tier?: string | null;
+  tier_status?: string | null;
+  cv_count?: number | null;
+  ai_count?: number | null;
+  created_at?: string | null;
+  auth_created_at?: string | null;
+  last_sign_in_at?: string | null;
+  total_count?: number | null;
+};
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders(req) });
@@ -39,20 +54,31 @@ Deno.serve(async (req: Request) => {
     const search = (url.searchParams.get("search") || "").trim().toLowerCase();
     const tier = (url.searchParams.get("tier") || "all").trim().toLowerCase();
 
-    if (search || tier !== "all") {
-      const allAuthUsers = await fetchAllAuthUsers(admin);
-      const rows = await buildUserRows(admin, allAuthUsers);
-      const filteredRows = rows.filter((user) => {
-        const matchesTier = tier === "all" || user.tier === tier;
-        const matchesQuery = matchesSearch(user, search);
-        return matchesTier && matchesQuery;
-      });
-      const total = filteredRows.length;
-      const start = (page - 1) * perPage;
-      const users = filteredRows.slice(start, start + perPage);
+    const { data, error } = await admin.rpc("admin_list_users_page", {
+      search_text: search,
+      tier_filter: tier,
+      page_num: page,
+      page_size: perPage,
+    });
+
+    if (!error) {
+      const rows = ((data || []) as AdminUsersPageRow[]).map((user) => ({
+        id: user.id,
+        email: user.email || "",
+        full_name: user.full_name || "",
+        role: user.role || "user",
+        tier: user.tier || "free",
+        tier_status: user.tier_status || "active",
+        cv_count: Number(user.cv_count || 0),
+        ai_count: Number(user.ai_count || 0),
+        created_at: user.created_at || user.auth_created_at || "",
+        auth_created_at: user.auth_created_at || "",
+        last_sign_in_at: user.last_sign_in_at || null,
+      }));
+      const total = Number((data?.[0] as AdminUsersPageRow | undefined)?.total_count || 0);
 
       return json(req, {
-        users,
+        users: rows,
         page,
         perPage,
         total,
@@ -60,19 +86,24 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    const { data, error } = await admin.auth.admin.listUsers({ page, perPage });
+    console.warn("admin-users rpc fallback:", error.message);
 
-    if (error) throw error;
+    const { data: authData, error: authError } = await admin.auth.admin.listUsers({
+      page,
+      perPage,
+    });
 
-    const authUsers = (data.users || []) as AuthUser[];
+    if (authError) throw authError;
+
+    const authUsers = (authData.users || []) as AuthUser[];
     const users = await buildUserRows(admin, authUsers);
 
     return json(req, {
       users,
       page,
       perPage,
-      total: data.total || users.length,
-      totalPages: Math.ceil((data.total || users.length) / perPage),
+      total: authData.total || users.length,
+      totalPages: Math.ceil((authData.total || users.length) / perPage),
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Internal server error";
@@ -80,37 +111,6 @@ Deno.serve(async (req: Request) => {
     return json(req, { error: message }, message.startsWith("Unauthorized") ? 401 : 500);
   }
 });
-
-async function fetchAllAuthUsers(admin: ReturnType<typeof getAdminClient>) {
-  const perPage = 100;
-  let page = 1;
-  let total = 0;
-  const users: AuthUser[] = [];
-
-  do {
-    const { data, error } = await admin.auth.admin.listUsers({ page, perPage });
-    if (error) throw error;
-
-    const pageUsers = (data.users || []) as AuthUser[];
-    users.push(...pageUsers);
-    total = data.total || users.length;
-    page += 1;
-
-    if (pageUsers.length === 0) break;
-  } while (users.length < total);
-
-  return users;
-}
-
-function matchesSearch(user: { id: string; email?: string; full_name?: string }, search: string) {
-  if (!search) return true;
-
-  return (
-    user.id.toLowerCase().includes(search) ||
-    (user.email || "").toLowerCase().includes(search) ||
-    (user.full_name || "").toLowerCase().includes(search)
-  );
-}
 
 async function buildUserRows(admin: ReturnType<typeof getAdminClient>, authUsers: AuthUser[]) {
   const userIds = authUsers.map((user) => user.id);

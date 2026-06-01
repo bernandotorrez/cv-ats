@@ -34,6 +34,13 @@ type ExtractedJob = {
   source_url?: string | null;
 };
 
+type SalaryRange = {
+  min: number | null;
+  max: number | null;
+  currency: string | null;
+  period: string | null;
+};
+
 const AI_GATEWAY_URL = "https://ai.sumopod.com/v1/chat/completions";
 const AI_MODEL = "gemini/gemini-2.5-flash-lite";
 const DEFAULT_SOURCES: SearchSource[] = ["linkedin", "jobstreet", "glints", "kalibrr"];
@@ -179,7 +186,9 @@ Deno.serve(async (req: Request) => {
     log.info("ai_extract_done", { jobs_extracted: extractedJobs.length });
 
     // ── STEP 4: Build rows & filter ─────────────────────────────────────────
-    const rows = extractedJobs.map((job) => toJobRow(job, query, location)).filter(Boolean);
+    const rows = extractedJobs
+      .map((job) => toJobRow(job, query, location, enrichedResults))
+      .filter(Boolean);
     const invalidCount = extractedJobs.length - rows.length;
     if (invalidCount > 0) {
       log.warn("rows_filtered", { invalid_rows: invalidCount, reason: "missing required fields" });
@@ -320,7 +329,7 @@ async function searchWeb(searchQuery: string, source: SearchSource, limit: numbe
         max_results: limit,
         search_depth: "advanced",
         include_answer: false,
-        include_raw_content: false,
+        include_raw_content: true,
       }),
     });
     if (!res.ok) throw new Error(`Tavily search gagal: ${res.status}`);
@@ -330,6 +339,8 @@ async function searchWeb(searchQuery: string, source: SearchSource, limit: numbe
       url: String(item.url || ""),
       content: String(item.content || ""),
       source,
+      original_content: cleanContent(item.raw_content || "", 12000) || undefined,
+      original_content_source: item.raw_content ? "tavily_extract" : undefined,
     })) as SearchResult[];
     log.debug("provider_result", {
       provider: "tavily",
@@ -413,10 +424,15 @@ async function enrichSearchResults(results: SearchResult[], limit: number, log: 
   return results.map((result) => {
     const page = extracted.get(result.url);
     if (!page) return result;
+    const existingContent = result.original_content || "";
     return {
       ...result,
-      original_content: page.content,
-      original_content_source: page.source,
+      original_content:
+        existingContent.length >= page.content.length ? existingContent : page.content,
+      original_content_source:
+        existingContent.length >= page.content.length
+          ? result.original_content_source
+          : page.source,
     };
   });
 }
@@ -451,7 +467,7 @@ async function extractSourcePages(results: SearchResult[], log: Logger) {
           let extracted = 0;
           for (const item of data.results || []) {
             const url = String(item.url || "");
-            const content = cleanContent(item.raw_content || item.content || "", 10000);
+            const content = cleanContent(item.raw_content || item.content || "", 20000);
             if (url && content.length > 120) {
               pageMap.set(url, { content, source: "tavily_extract" });
               extracted++;
@@ -524,7 +540,8 @@ async function fetchPageText(url: string, log: Logger) {
     }
 
     const html = await res.text();
-    const text = cleanContent(stripHtml(html), 8000);
+    const structured = extractStructuredJobPosting(html);
+    const text = cleanContent(`${structured}\n\n${stripHtml(html)}`, 16000);
     log.debug("direct_fetch_ok", { url, chars: text.length });
     return text;
   } catch (err) {
@@ -599,7 +616,7 @@ async function extractJobsWithAi(
     batches.push(batch2);
   }
 
-  const allJobs = batches.flat();
+  const allJobs = batches.flat().map((job) => enhanceJobFromSources(job, results));
   const seen = new Set<string>();
   const deduped = allJobs
     .filter((job) => {
@@ -631,6 +648,7 @@ async function extractBatch(
   const prompt = [
     "Kamu adalah parser lowongan kerja Indonesia yang sangat teliti.",
     'Ekstrak semua lowongan pekerjaan dari data berikut dan kembalikan JSON valid: {"jobs":[...]}',
+    "Jangan membuat, menebak, atau menambah informasi yang tidak ada di DATA SUMBER.",
     "",
     "=== INSTRUKSI FIELD ===",
     "WAJIB ADA: title, company, location, description",
@@ -641,12 +659,12 @@ async function extractBatch(
     "title         : Nama jabatan yang tepat (misal: 'Senior Frontend Engineer', bukan 'Lowongan IT')",
     "company       : Nama perusahaan lengkap dan benar",
     "location      : Kota/provinsi (misal: 'Jakarta Selatan', 'Bandung', 'Remote')",
-    "description   : 4-6 kalimat menjelaskan scope kerja, tim, dan konteks bisnis perusahaan",
-    "responsibilities: Daftar tanggung jawab utama, tiap item dipisah newline (\\n), 4-8 poin",
-    "requirements  : Daftar requirement wajib (pengalaman, pendidikan, sertifikasi), tiap item dipisah \\n",
-    "qualifications: Daftar skill/kompetensi yang dicari, tiap item dipisah \\n",
-    "benefits      : Fasilitas/benefit (asuransi, bonus, WFH, dll), tiap item dipisah \\n",
-    "tech_stack    : Tools/teknologi spesifik (misal: 'React, TypeScript, PostgreSQL'), pisah dengan koma",
+    "description   : Ringkasan dari kalimat/paragraf yang benar-benar ada di sumber. Jangan tambah konteks bisnis jika tidak tertulis.",
+    "responsibilities: Hanya tanggung jawab yang eksplisit tertulis di sumber, tiap item dipisah newline (\\n). Null jika tidak ada.",
+    "requirements  : Hanya requirement wajib yang eksplisit tertulis di sumber, tiap item dipisah \\n. Null jika tidak ada.",
+    "qualifications: Hanya skill/kualifikasi yang eksplisit tertulis di sumber, tiap item dipisah \\n. Null jika tidak ada.",
+    "benefits      : Hanya fasilitas/benefit yang eksplisit tertulis di sumber, tiap item dipisah \\n. Null jika tidak ada.",
+    "tech_stack    : Hanya tools/teknologi yang eksplisit tertulis di sumber, pisah dengan koma. Null jika tidak ada.",
     "work_mode     : 'onsite' | 'remote' | 'hybrid'",
     "type          : 'full-time' | 'part-time' | 'contract' | 'internship'",
     "level         : 'entry' | 'mid' | 'senior' | 'manager' | 'director'",
@@ -659,10 +677,12 @@ async function extractBatch(
     "",
     "=== ATURAN KUALITAS ===",
     "- Satu URL = satu lowongan (jangan duplikasi)",
-    "- Jangan mengarang company atau posisi yang tidak ada di sumber",
+    "- Jangan mengarang deskripsi, tanggung jawab, requirement, benefit, gaji, deadline, company, atau posisi.",
+    "- Jika informasi tidak muncul eksplisit di sumber, isi null. Jangan isi dengan asumsi umum untuk role tersebut.",
+    "- Boleh merapikan bahasa, tetapi maknanya harus tetap sama dengan sumber asli.",
     "- Jika company tidak jelas, gunakan domain URL sebagai petunjuk",
     "- Jika halaman adalah listing umum (bukan detail 1 lowongan), ekstrak semua yang ada",
-    "- Tulis dalam Bahasa Indonesia yang natural dan profesional",
+    "- Tulis dalam Bahasa Indonesia yang natural dan profesional tanpa menambahkan fakta baru",
     `- ${modeNote}`,
     "",
     `Keyword: ${query}`,
@@ -675,7 +695,7 @@ async function extractBatch(
         title: r.title,
         url: r.url,
         snippet: r.content?.slice(0, 400),
-        full_content: r.original_content?.slice(0, 6000) || null,
+        full_content: r.original_content?.slice(0, mode === "rich" ? 10000 : 2500) || null,
       })),
       null,
       2,
@@ -737,11 +757,36 @@ async function extractBatch(
 // ROW BUILDER — tambah field baru
 // ---------------------------------------------------------------------------
 
-function toJobRow(job: ExtractedJob, fallbackQuery: string, fallbackLocation: string) {
-  const title = cleanText(job.title || fallbackQuery, 120);
-  const company = cleanText(job.company || "", 120);
-  const location = cleanText(job.location || fallbackLocation, 120);
-  const description = cleanText(job.description || "", 2000); // Naikkan batas
+function toJobRow(
+  job: ExtractedJob,
+  fallbackQuery: string,
+  fallbackLocation: string,
+  sourceResults: SearchResult[] = [],
+) {
+  const title = cleanJobTitle(job.title || fallbackQuery);
+  const company = cleanJobText(job.company || "", 120);
+  const location = cleanJobText(job.location || fallbackLocation, 120);
+  const description = cleanJobText(job.description || "", 2000); // Naikkan batas
+  const matchedSource = findSourceForJob({ ...job, title, company, location }, sourceResults);
+  const fallbackSourceUrl = sourceResults.map((result) => cleanUrl(result.url)).find(Boolean);
+  const sourceUrl =
+    cleanUrl(job.source_url) || cleanUrl(matchedSource?.url) || fallbackSourceUrl || null;
+  const sourceText = matchedSource
+    ? cleanContent(
+        `${matchedSource.title}\n${matchedSource.content}\n${matchedSource.original_content || ""}`,
+        24000,
+      )
+    : "";
+  const parsedSalary = sourceText ? parseSalaryRange(sourceText) : null;
+  const aiCurrency = normalizeSalaryCurrency(job.salary_currency);
+  const hasGroundedSalary = Boolean(parsedSalary?.min || parsedSalary?.max);
+  const salaryMin = normalizeSalary(hasGroundedSalary ? parsedSalary?.min : job.salary_min);
+  const salaryMax = normalizeSalary(hasGroundedSalary ? parsedSalary?.max : job.salary_max);
+  const salaryCurrency = hasGroundedSalary
+    ? parsedSalary?.currency || "IDR"
+    : aiCurrency && isSalaryCurrencyGrounded(aiCurrency, sourceText)
+      ? aiCurrency
+      : "IDR";
 
   if (!title || !company || !location || description.length < 24) return null;
 
@@ -752,24 +797,496 @@ function toJobRow(job: ExtractedJob, fallbackQuery: string, fallbackLocation: st
     location,
     type: normalizeType(job.type),
     level: normalizeLevel(job.level),
-    industry: cleanText(job.industry || "", 80) || null,
-    salary_min: normalizeSalary(job.salary_min),
-    salary_max: normalizeSalary(job.salary_max),
+    industry: cleanJobText(job.industry || "", 80) || null,
+    salary_min: salaryMin,
+    salary_max: salaryMax,
     // Field baru — pastikan kolom ini ada di tabel job_listings kamu
-    salary_currency: cleanText(job.salary_currency || "", 10) || "IDR",
-    salary_period: normalizeSalaryPeriod(job.salary_period),
+    salary_currency: salaryMin || salaryMax ? salaryCurrency || "IDR" : "IDR",
+    salary_period:
+      salaryMin || salaryMax ? parsedSalary?.period || normalizeSalaryPeriod(job.salary_period) : "monthly",
     description,
-    responsibilities: cleanText(job.responsibilities || "", 2000) || null,
-    requirements: cleanText(job.requirements || "", 2000) || null,
-    qualifications: cleanText(job.qualifications || "", 2000) || null,
-    benefits: cleanText(job.benefits || "", 1000) || null,
-    tech_stack: cleanText(job.tech_stack || "", 500) || null,
+    responsibilities: cleanListText(job.responsibilities || "", 2000) || null,
+    requirements: cleanListText(job.requirements || "", 2000) || null,
+    qualifications: cleanListText(job.qualifications || "", 2000) || null,
+    benefits: cleanListText(job.benefits || "", 1000) || null,
+    tech_stack: cleanJobText(job.tech_stack || "", 500) || null,
     work_mode: normalizeWorkMode(job.work_mode),
     deadline: parseDeadline(job.deadline),
-    source_url: cleanUrl(job.source_url),
+    source_url: sourceUrl,
     is_active: true,
     updated_at: new Date().toISOString(),
   };
+}
+
+// ---------------------------------------------------------------------------
+// SOURCE-BASED ENHANCEMENT — isi field penting jika AI melewatkan data eksplisit
+// ---------------------------------------------------------------------------
+
+function enhanceJobFromSources(job: ExtractedJob, results: SearchResult[]): ExtractedJob {
+  const source = findSourceForJob(job, results);
+  if (!source) return stripUngroundedDetails(job);
+  const sourceUrl = cleanUrl(job.source_url) || cleanUrl(source.url);
+
+  const text = cleanContent(
+    `${source.title}\n${source.content}\n${source.original_content || ""}`,
+    24000,
+  );
+  if (text.length < 120) {
+    return {
+      ...stripUngroundedDetails(job),
+      source_url: sourceUrl,
+    };
+  }
+
+  const salary = parseSalaryRange(text);
+  const responsibilities =
+    extractSectionItems(text, [
+      "responsibilities",
+      "job description",
+      "deskripsi pekerjaan",
+      "tanggung jawab",
+      "apa yang akan kamu lakukan",
+      "what you will do",
+      "the role",
+    ]) || filterGroundedListText(job.responsibilities, text);
+  const requirements =
+    extractSectionItems(text, [
+      "requirements",
+      "persyaratan",
+      "kualifikasi",
+      "minimum qualifications",
+      "what you will need",
+      "qualifications",
+      "requirements and skills",
+    ]) || filterGroundedListText(job.requirements, text);
+  const qualifications =
+    extractSectionItems(text, [
+      "preferred qualifications",
+      "nice to have",
+      "skill yang dibutuhkan",
+      "skills",
+      "kompetensi",
+    ]) || filterGroundedListText(job.qualifications, text);
+  const benefits =
+    extractSectionItems(text, ["benefits", "perks", "fasilitas", "benefit", "what we offer"]) ||
+    filterGroundedListText(job.benefits, text);
+
+  return {
+    ...job,
+    source_url: sourceUrl,
+    salary_min: job.salary_min ?? salary.min,
+    salary_max: job.salary_max ?? salary.max,
+    salary_currency: job.salary_currency || salary.currency,
+    salary_period: job.salary_period || salary.period,
+    description: buildSourceDescription(text, job.description, responsibilities),
+    responsibilities,
+    requirements,
+    qualifications,
+    benefits,
+    tech_stack: extractTechStack(text) || filterGroundedInlineText(job.tech_stack, text),
+    work_mode: job.work_mode || inferWorkMode(text),
+    deadline: job.deadline || extractDeadline(text),
+  };
+}
+
+function stripUngroundedDetails(job: ExtractedJob): ExtractedJob {
+  return {
+    ...job,
+    description: "",
+    responsibilities: null,
+    requirements: null,
+    qualifications: null,
+    benefits: null,
+    tech_stack: null,
+  };
+}
+
+function findSourceForJob(job: ExtractedJob, results: SearchResult[]) {
+  const jobUrl = cleanUrl(job.source_url);
+  if (jobUrl) {
+    const exact = results.find((result) => cleanUrl(result.url) === jobUrl);
+    if (exact) return exact;
+  }
+
+  const jobKey = normalizeForDedup(`${job.title}|${job.company}`);
+  return results.find((result) => {
+    const resultKey = normalizeForDedup(`${result.title}|${result.content}`);
+    return (
+      resultKey.includes(normalizeForDedup(job.title).slice(0, 24)) ||
+      (job.company && resultKey.includes(normalizeForDedup(job.company).slice(0, 18))) ||
+      resultKey.includes(jobKey.slice(0, 30))
+    );
+  });
+}
+
+function parseSalaryRange(text: string): SalaryRange {
+  const salaryText = extractSalaryContext(text);
+  if (!salaryText) {
+    return { min: null, max: null, currency: null, period: null };
+  }
+
+  const source = salaryText.toLowerCase();
+  const period = /tahun|year|annual|annually/.test(source)
+    ? "yearly"
+    : /bulan|month|monthly|per month|\/mo|\/bulan/.test(source)
+      ? "monthly"
+      : null;
+  const structuredMin = salaryText.match(/"minValue"\s*:\s*"?([0-9.,]+)"?/i);
+  const structuredMax = salaryText.match(/"maxValue"\s*:\s*"?([0-9.,]+)"?/i);
+  const structuredValue = salaryText.match(/"value"\s*:\s*"?([0-9.,]+)"?/i);
+  const structuredCurrency = salaryText.match(/"currency"\s*:\s*"([A-Z]{3})"/i);
+  if (structuredMin || structuredMax || structuredValue) {
+    const currency = normalizeSalaryCurrency(structuredCurrency?.[1]) || inferSalaryCurrency(source);
+    const min = parseSalaryNumber(structuredMin?.[1] || structuredValue?.[1], undefined, currency);
+    const max = parseSalaryNumber(structuredMax?.[1] || structuredValue?.[1], undefined, currency);
+    return {
+      min,
+      max,
+      currency,
+      period,
+    };
+  }
+  const currency = inferSalaryCurrency(source);
+
+  const rangePatterns = [
+    /(?:rp|idr)?\s*([\d.,]+)\s*(juta|jt|m|million|k|ribu)?\s*(?:-|–|—|to|sampai|hingga|sd|s\/d)\s*(?:rp|idr)?\s*([\d.,]+)\s*(juta|jt|m|million|k|ribu)?/i,
+    /(?:salary|gaji|upah|kompensasi)[^\d]{0,30}(?:rp|idr)?\s*([\d.,]+)\s*(juta|jt|m|million|k|ribu)?[^\d]{0,12}(?:rp|idr)?\s*([\d.,]+)\s*(juta|jt|m|million|k|ribu)?/i,
+  ];
+
+  for (const pattern of rangePatterns) {
+    const match = salaryText.match(pattern);
+    if (!match) continue;
+    const min = parseSalaryNumber(match[1], match[2], currency);
+    const max = parseSalaryNumber(match[3], match[4] || match[2], currency);
+    if (min || max) {
+      return {
+        min: min && max ? Math.min(min, max) : min,
+        max: min && max ? Math.max(min, max) : max,
+        currency: currency || "IDR",
+        period: period || "monthly",
+      };
+    }
+  }
+
+  const single = salaryText.match(
+    /(?:salary|gaji|upah|kompensasi|mulai|hingga|up to)[^\d]{0,30}(?:rp|idr)?\s*([\d.,]+)\s*(juta|jt|m|million|k|ribu)?/i,
+  );
+  const amount = single ? parseSalaryNumber(single[1], single[2], currency) : null;
+  return {
+    min: /mulai|start|from/i.test(single?.[0] || "") ? amount : null,
+    max: /hingga|up to|max/i.test(single?.[0] || "") ? amount : null,
+    currency: amount ? currency || "IDR" : null,
+    period: amount ? period || "monthly" : null,
+  };
+}
+
+function extractSalaryContext(text: string) {
+  const structuredSalary = text.match(/Salary:\s*(\{[\s\S]{0,1200}?\})/i)?.[0];
+  if (structuredSalary && /minValue|maxValue|currency|value/i.test(structuredSalary)) {
+    return structuredSalary;
+  }
+
+  const lines = text
+    .split(/\n|(?<=\.)\s+/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .filter((line) =>
+      /salary|gaji|upah|kompensasi|rp|idr|rupiah|usd|dollar|\$|juta|jt|million|ribu|\/bulan|per month|monthly|tahun|year/i.test(
+        line,
+      ),
+    )
+    .filter(
+      (line) => !/image|logo|cookie|privacy|javascript|css|font|schema|breadcrumb/i.test(line),
+    )
+    .slice(0, 8);
+
+  return lines.join("\n");
+}
+
+function inferSalaryCurrency(context: string) {
+  if (/\b(rp|idr|rupiah)\b/i.test(context)) return "IDR";
+  if (/\b(usd|us\$|dollar|dollars)\b/i.test(context)) return "USD";
+  if (/\$/.test(context) && !/\b(rp|idr|rupiah)\b/i.test(context)) return "USD";
+  return null;
+}
+
+function normalizeSalaryCurrency(value?: string | null) {
+  const clean = String(value || "").trim().toUpperCase();
+  if (!clean) return null;
+  if (clean === "RP" || clean === "RUPIAH") return "IDR";
+  if (/^[A-Z]{3}$/.test(clean)) return clean;
+  return null;
+}
+
+function isSalaryCurrencyGrounded(currency: string, sourceText: string) {
+  if (!sourceText) return currency === "IDR";
+  if (currency === "IDR") return /\b(rp|idr|rupiah)\b/i.test(sourceText);
+  if (currency === "USD") return /\b(usd|us\$|dollar|dollars)\b|\$/i.test(sourceText);
+  return new RegExp(`\\b${escapeRegExp(currency)}\\b`, "i").test(sourceText);
+}
+
+function parseSalaryNumber(value?: string, unit?: string, currency?: string | null) {
+  if (!value) return null;
+  const normalized = normalizeNumericSalary(value);
+  const number = Number.parseFloat(normalized);
+  if (!Number.isFinite(number) || number <= 0) return null;
+  const cleanUnit = String(unit || "").toLowerCase();
+  if (cleanUnit === "juta" || cleanUnit === "jt" || cleanUnit === "m" || cleanUnit === "million") {
+    return Math.round(number * (currency === "USD" ? 1_000 : 1_000_000));
+  }
+  if (cleanUnit === "k" || cleanUnit === "ribu") return Math.round(number * 1_000);
+  if (number < 1_000) {
+    if (currency === "USD") return Math.round(number);
+    return Math.round(number * 1_000_000);
+  }
+  return Math.round(number);
+}
+
+function normalizeNumericSalary(value: string) {
+  const clean = value.trim();
+  if (clean.includes(",") && clean.includes(".")) {
+    return clean.lastIndexOf(",") > clean.lastIndexOf(".")
+      ? clean.replace(/\./g, "").replace(",", ".")
+      : clean.replace(/,/g, "");
+  }
+  if (clean.includes(",")) return clean.replace(",", ".");
+
+  const dotParts = clean.split(".");
+  if (dotParts.length > 2 || dotParts.at(-1)?.length === 3) {
+    return clean.replace(/\./g, "");
+  }
+  return clean;
+}
+
+function extractSectionItems(text: string, headings: string[]) {
+  const section = extractSectionText(text, headings);
+  if (!section) return null;
+  const items = section
+    .split(/\n|•|·|(?:^|\s)[*-]\s+|(?<=\.)\s+(?=[A-Z0-9A-Z])/)
+    .map((item) =>
+      item
+        .replace(/^[0-9]+[.)]\s*/, "")
+        .replace(/^[*-]\s*/, "")
+        .trim(),
+    )
+    .filter((item) => item.length > 8 && item.length < 240)
+    .slice(0, 10);
+  return items.length > 0 ? items.join("\n") : cleanText(section, 1200) || null;
+}
+
+function extractSectionText(text: string, headings: string[]) {
+  const normalized = text.replace(/\r/g, "\n");
+  const escapedHeadings = headings.map(escapeRegExp).join("|");
+  const stop =
+    "responsibilities|requirements|qualifications|benefits|perks|about|company|deskripsi|kualifikasi|persyaratan|tanggung jawab|fasilitas|benefit|skills|apply|lamar|deadline";
+  const pattern = new RegExp(
+    `(?:^|\\n)\\s*(?:${escapedHeadings})\\s*:?\\s*\\n?([\\s\\S]{80,1800}?)(?=\\n\\s*(?:${stop})\\s*:?\\s*\\n|$)`,
+    "i",
+  );
+  const match = normalized.match(pattern);
+  return match ? cleanContent(match[1], 1800) : null;
+}
+
+function buildSourceDescription(
+  sourceText: string,
+  aiDescription?: string | null,
+  responsibilities?: string | null,
+) {
+  const sourceDescription =
+    extractSectionText(sourceText, [
+      "about the job",
+      "about this role",
+      "ringkasan",
+      "overview",
+      "deskripsi pekerjaan",
+      "job description",
+      "the role",
+    ]) || firstReadableParagraph(sourceText);
+
+  if (sourceDescription) {
+    return cleanText(sourceDescription, 2000);
+  }
+
+  const groundedAiDescription = isTextGrounded(aiDescription, sourceText)
+    ? cleanText(aiDescription, 2000)
+    : "";
+  const groundedResponsibilities = responsibilities ? cleanText(responsibilities, 900) : "";
+
+  return cleanText(
+    [groundedAiDescription, groundedResponsibilities].filter(Boolean).join(" "),
+    2000,
+  );
+}
+
+function filterGroundedListText(value: string | null | undefined, sourceText: string) {
+  const items = String(value || "")
+    .split(/\n|;|•|·/)
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .filter((item) => isTextGrounded(item, sourceText))
+    .slice(0, 10);
+
+  return items.length > 0 ? items.join("\n") : null;
+}
+
+function filterGroundedInlineText(value: string | null | undefined, sourceText: string) {
+  const items = String(value || "")
+    .split(/,|\n|;/)
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .filter((item) => isTextGrounded(item, sourceText))
+    .slice(0, 12);
+
+  return items.length > 0 ? items.join(", ") : null;
+}
+
+function isTextGrounded(value: string | null | undefined, sourceText: string) {
+  const tokens = meaningfulTokens(value);
+  if (tokens.length === 0) return false;
+  const normalizedSource = normalizeWords(sourceText);
+  const matched = tokens.filter((token) => normalizedSource.includes(token));
+  return matched.length >= Math.min(3, tokens.length);
+}
+
+function meaningfulTokens(value: string | null | undefined) {
+  const stopwords = new Set([
+    "dan",
+    "atau",
+    "yang",
+    "untuk",
+    "dengan",
+    "dalam",
+    "pada",
+    "serta",
+    "akan",
+    "kami",
+    "kamu",
+    "anda",
+    "the",
+    "and",
+    "for",
+    "with",
+    "from",
+    "this",
+    "that",
+    "will",
+    "our",
+    "your",
+  ]);
+
+  return Array.from(new Set(normalizeWords(value).split(" ")))
+    .filter((token) => token.length >= 4 && !stopwords.has(token))
+    .slice(0, 16);
+}
+
+function firstReadableParagraph(text: string) {
+  return (
+    text
+      .split(/\n{2,}|(?<=\.)\s+(?=[A-Z0-9A-Z])/)
+      .map((item) => item.trim())
+      .find((item) => item.length > 120 && item.length < 900) || ""
+  );
+}
+
+function extractTechStack(text: string) {
+  const keywords = [
+    "React",
+    "Next.js",
+    "Vue",
+    "Angular",
+    "TypeScript",
+    "JavaScript",
+    "Node.js",
+    "Python",
+    "Java",
+    "PHP",
+    "Laravel",
+    "Go",
+    "Golang",
+    "PostgreSQL",
+    "MySQL",
+    "MongoDB",
+    "Redis",
+    "AWS",
+    "GCP",
+    "Docker",
+    "Kubernetes",
+    "Figma",
+    "Excel",
+    "SQL",
+  ];
+  const found = keywords.filter((keyword) =>
+    new RegExp(`\\b${escapeRegExp(keyword)}\\b`, "i").test(text),
+  );
+  return found.length > 0 ? Array.from(new Set(found)).slice(0, 12).join(", ") : null;
+}
+
+function inferWorkMode(text: string) {
+  return normalizeWorkMode(text);
+}
+
+function extractDeadline(text: string) {
+  const match = text.match(
+    /(?:deadline|batas lamaran|ditutup|closing date|apply before)[^\n\d]{0,30}([0-9]{1,2}\s+[A-Za-zÀ-ÿ]+\s+[0-9]{4}|[0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{1,2}[/-][0-9]{1,2}[/-][0-9]{2,4})/i,
+  );
+  return parseDeadline(match?.[1] || null);
+}
+
+function extractStructuredJobPosting(html: string) {
+  const blocks = Array.from(
+    html.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi),
+  );
+  const parts: string[] = [];
+
+  for (const block of blocks) {
+    const jsonText = decodeHtmlEntities(block[1] || "").trim();
+    const parsed = parseJsonObject(jsonText);
+    const nodes = flattenStructuredNodes(parsed);
+    for (const node of nodes) {
+      if (!isJobPostingNode(node)) continue;
+      parts.push(structuredJobToText(node));
+    }
+  }
+
+  return parts.join("\n\n");
+}
+
+function flattenStructuredNodes(value: unknown): Record<string, unknown>[] {
+  if (Array.isArray(value)) return value.flatMap(flattenStructuredNodes);
+  if (!value || typeof value !== "object") return [];
+  const record = value as Record<string, unknown>;
+  const graph = record["@graph"];
+  return [record, ...flattenStructuredNodes(graph)];
+}
+
+function isJobPostingNode(node: Record<string, unknown>) {
+  const type = node["@type"];
+  return Array.isArray(type)
+    ? type.some((item) => String(item).toLowerCase() === "jobposting")
+    : String(type || "").toLowerCase() === "jobposting";
+}
+
+function structuredJobToText(node: Record<string, unknown>) {
+  const hiring = node.hiringOrganization as Record<string, unknown> | undefined;
+  const baseSalary = node.baseSalary as Record<string, unknown> | undefined;
+  return cleanContent(
+    [
+      `Title: ${node.title || ""}`,
+      `Company: ${hiring?.name || ""}`,
+      `Description: ${stripHtml(String(node.description || ""))}`,
+      `Employment type: ${node.employmentType || ""}`,
+      `Qualifications: ${node.qualifications || ""}`,
+      `Responsibilities: ${node.responsibilities || ""}`,
+      `Skills: ${node.skills || ""}`,
+      `Salary: ${JSON.stringify(baseSalary || {})}`,
+      `Valid through: ${node.validThrough || ""}`,
+    ].join("\n"),
+    12000,
+  );
+}
+
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 // ---------------------------------------------------------------------------
@@ -913,6 +1430,16 @@ function normalizeForDedup(value: string) {
     .slice(0, 60);
 }
 
+function normalizeWords(value: unknown) {
+  return String(value || "")
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function parseJsonObject(content: string) {
   try {
     return JSON.parse(content);
@@ -934,12 +1461,44 @@ function cleanText(value: unknown, maxLength: number) {
     .slice(0, maxLength);
 }
 
+function cleanJobTitle(value: unknown) {
+  return cleanJobText(value, 120)
+    .replace(/^(?:yaur|baru|new)?\s*\d+\s+(?:menit|jam|hari|minggu|bulan|tahun)\s+yang\s+lalu\s*/i, "")
+    .replace(/^image\s+\d+\s*/i, "")
+    .replace(/^#+\s*/, "")
+    .replace(/\s*\|\s*(?:linkedin|jobstreet|glints|kalibrr|indeed).*$/i, "")
+    .trim()
+    .slice(0, 120);
+}
+
+function cleanJobText(value: unknown, maxLength: number) {
+  return cleanText(value, maxLength)
+    .replace(/(?:^|\s)(?:Yaur|Baru|New)?\s*\d+\s+(?:menit|jam|hari|minggu|bulan|tahun)\s+yang\s+lalu\s*/gi, " ")
+    .replace(/(?:^|\s)Image\s+\d+\s*/gi, " ")
+    .replace(/#{1,6}\s*/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, maxLength);
+}
+
 function cleanContent(value: unknown, maxLength: number) {
   return decodeHtmlEntities(String(value || ""))
     .replace(/\r/g, "\n")
     .replace(/[ \t]+/g, " ")
     .replace(/\n{3,}/g, "\n\n")
     .trim()
+    .slice(0, maxLength);
+}
+
+function cleanListText(value: unknown, maxLength: number) {
+  return decodeHtmlEntities(String(value || ""))
+    .replace(/\r/g, "\n")
+    .replace(/[ \t]+/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .join("\n")
     .slice(0, maxLength);
 }
 

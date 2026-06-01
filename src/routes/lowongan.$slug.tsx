@@ -687,6 +687,9 @@ function formatSalary(
   const prefix = currency && currency !== "IDR" ? currency : "Rp";
   const suffix = period === "yearly" ? "/tahun" : "/bulan";
   const fmt = (value: number) => {
+    if (currency && currency !== "IDR") {
+      return `${prefix} ${new Intl.NumberFormat("id-ID").format(value)}`;
+    }
     if (value >= 1000000) return `${prefix} ${(value / 1000000).toFixed(0)}jt`;
     return `${prefix} ${(value / 1000).toFixed(0)}rb`;
   };
