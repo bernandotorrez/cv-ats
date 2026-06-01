@@ -45,6 +45,21 @@ interface SubscriptionRow {
   } | null;
 }
 
+interface AdminDashboardStatsRow {
+  total_users?: number | null;
+  total_cvs?: number | null;
+  total_ai_calls?: number | null;
+  free_users?: number | null;
+  starter_users?: number | null;
+  pro_users?: number | null;
+  recent_signups?: number | null;
+}
+
+type AdminDashboardStatsRpc = (fn: "admin_dashboard_stats") => Promise<{
+  data: AdminDashboardStatsRow[] | null;
+  error: { message: string } | null;
+}>;
+
 function AdminDashboard() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -55,6 +70,27 @@ function AdminDashboard() {
 
   const loadStats = async () => {
     setLoading(true);
+
+    const adminStatsRpc = supabase.rpc as unknown as AdminDashboardStatsRpc;
+    const { data: dashboardStats, error: dashboardStatsError } =
+      await adminStatsRpc("admin_dashboard_stats");
+
+    if (!dashboardStatsError && dashboardStats?.[0]) {
+      const row = dashboardStats[0];
+      setStats({
+        totalUsers: Number(row.total_users || 0),
+        totalCvs: Number(row.total_cvs || 0),
+        totalAiCalls: Number(row.total_ai_calls || 0),
+        freeUsers: Number(row.free_users || 0),
+        starterUsers: Number(row.starter_users || 0),
+        proUsers: Number(row.pro_users || 0),
+        recentSignups: Number(row.recent_signups || 0),
+      });
+      setLoading(false);
+      return;
+    }
+
+    console.warn("admin_dashboard_stats fallback:", dashboardStatsError?.message);
 
     const { count: totalUsers } = await supabase
       .from("profiles")
