@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { buildSeo } from "@/lib/seo";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,12 +31,26 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   AlertCircle,
   Bot,
   BriefcaseBusiness,
   CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
   ExternalLink,
   Loader2,
   Pencil,
@@ -55,6 +69,8 @@ export const Route = createFileRoute("/_authenticated/admin/jobs")({
     }),
   component: AdminJobsPage,
 });
+
+const PAGE_SIZE = 10;
 
 type Source = "linkedin" | "jobstreet" | "glints" | "kalibrr" | "google";
 
@@ -134,6 +150,13 @@ type SearchResponse = {
   error?: string;
 };
 
+type PaginationState = {
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+};
+
 type JobListingsQuery = {
   select: (
     columns: string,
@@ -143,9 +166,14 @@ type JobListingsQuery = {
       column: string,
       options?: { ascending?: boolean },
     ) => {
-      limit: (
-        count: number,
-      ) => Promise<{ data: JobListing[] | null; error: { message: string } | null }>;
+      range: (
+        from: number,
+        to: number,
+      ) => Promise<{
+        data: JobListing[] | null;
+        count: number | null;
+        error: { message: string } | null;
+      }>;
     };
   };
   insert: (row: Partial<JobListing>) => Promise<{ error: { message: string } | null }>;
@@ -205,32 +233,57 @@ function AdminJobsPage() {
   const [jobsLoading, setJobsLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingJob, setEditingJob] = useState<JobListing | null>(null);
+  const [jobToDelete, setJobToDelete] = useState<JobListing | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState<JobForm>(emptyForm);
+  const [pagination, setPagination] = useState<PaginationState>({
+    page: 1,
+    pageSize: PAGE_SIZE,
+    total: 0,
+    totalPages: 0,
+  });
 
-  useEffect(() => {
-    void loadJobs();
-  }, []);
-
-  const loadJobs = async () => {
+  const loadJobs = useCallback(async (page: number = 1) => {
     setJobsLoading(true);
-    const { data, error } = await jobListingsTable()
-      .select("*")
+    const from = (page - 1) * PAGE_SIZE;
+    const to = from + PAGE_SIZE - 1;
+    const { data, count, error } = await jobListingsTable()
+      .select("*", { count: "exact" })
       .order("created_at", { ascending: false })
-      .limit(60);
+      .range(from, to);
 
     if (error) {
       toast.error(error.message);
     } else {
       setJobs(data || []);
+      setPagination({
+        page,
+        pageSize: PAGE_SIZE,
+        total: count || 0,
+        totalPages: Math.ceil((count || 0) / PAGE_SIZE),
+      });
     }
     setJobsLoading(false);
-  };
+  }, []);
+
+  useEffect(() => {
+    void loadJobs(pagination.page);
+  }, [loadJobs, pagination.page]);
 
   const toggleSource = (source: Source) => {
     setSources((current) =>
       current.includes(source) ? current.filter((item) => item !== source) : [...current, source],
     );
+  };
+
+  const refreshJobsPage = (page: number) => {
+    if (page === pagination.page) {
+      void loadJobs(page);
+      return;
+    }
+
+    setPagination((current) => ({ ...current, page }));
   };
 
   const runSearch = async () => {
@@ -270,7 +323,7 @@ function AdminJobsPage() {
 
       setResult(payload);
       toast.success(`${payload.inserted || 0} lowongan masuk ke database.`);
-      void loadJobs();
+      refreshJobsPage(1);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Gagal menjalankan AI search.";
       setResult({ error: message });
@@ -350,15 +403,20 @@ function AdminJobsPage() {
 
     toast.success(editingJob ? "Lowongan diupdate." : "Lowongan ditambahkan.");
     setDialogOpen(false);
-    void loadJobs();
+    refreshJobsPage(editingJob ? pagination.page : 1);
   };
 
-  const deleteJob = async (job: JobListing) => {
-    if (!confirm(`Hapus lowongan "${job.title}" di ${job.company}?`)) return;
-    const { error } = await jobListingsTable().delete().eq("id", job.id);
+  const confirmDeleteJob = async () => {
+    if (!jobToDelete) return;
+    setDeleting(true);
+    const nextPage =
+      jobs.length === 1 && pagination.page > 1 ? pagination.page - 1 : pagination.page;
+    const { error } = await jobListingsTable().delete().eq("id", jobToDelete.id);
+    setDeleting(false);
     if (error) return toast.error(error.message);
     toast.success("Lowongan dihapus.");
-    void loadJobs();
+    setJobToDelete(null);
+    refreshJobsPage(nextPage);
   };
 
   const toggleActive = async (job: JobListing) => {
@@ -368,8 +426,19 @@ function AdminJobsPage() {
 
     if (error) return toast.error(error.message);
     toast.success(!job.is_active ? "Lowongan diaktifkan." : "Lowongan dinonaktifkan.");
-    void loadJobs();
+    void loadJobs(pagination.page);
   };
+
+  const goToPage = (page: number) => {
+    if (page >= 1 && page <= pagination.totalPages) {
+      setPagination((current) => ({ ...current, page }));
+    }
+  };
+
+  const goToFirstPage = () => goToPage(1);
+  const goToLastPage = () => goToPage(pagination.totalPages);
+  const goToPrevPage = () => goToPage(pagination.page - 1);
+  const goToNextPage = () => goToPage(pagination.page + 1);
 
   return (
     <div className="space-y-5 sm:space-y-6">
@@ -547,7 +616,8 @@ function AdminJobsPage() {
           <div>
             <h3 className="font-display text-xl font-bold">Manage Lowongan</h3>
             <p className="text-sm text-muted-foreground">
-              Tambah manual, edit detail, hapus, atau nonaktifkan lowongan dari halaman publik.
+              {pagination.total} lowongan tersimpan. Tambah manual, edit detail, hapus, atau
+              nonaktifkan lowongan dari halaman publik.
             </p>
           </div>
           <Button onClick={openCreate} className="gap-2">
@@ -641,7 +711,7 @@ function AdminJobsPage() {
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() => deleteJob(job)}
+                          onClick={() => setJobToDelete(job)}
                           aria-label="Hapus"
                         >
                           <Trash2 className="h-4 w-4 text-destructive" />
@@ -654,7 +724,95 @@ function AdminJobsPage() {
             </Table>
           </div>
         )}
+
+        {pagination.totalPages > 1 && (
+          <div className="mt-4 flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm text-muted-foreground">
+              Menampilkan {(pagination.page - 1) * pagination.pageSize + 1}-
+              {Math.min(pagination.page * pagination.pageSize, pagination.total)} dari{" "}
+              {pagination.total}
+            </p>
+
+            <div className="flex items-center gap-1">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={goToFirstPage}
+                disabled={pagination.page === 1 || jobsLoading}
+                className="hidden sm:flex"
+              >
+                <ChevronsLeft className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={goToPrevPage}
+                disabled={pagination.page === 1 || jobsLoading}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+
+              <span className="px-3 text-sm">
+                Halaman {pagination.page} dari {pagination.totalPages}
+              </span>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={goToNextPage}
+                disabled={pagination.page === pagination.totalPages || jobsLoading}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={goToLastPage}
+                disabled={pagination.page === pagination.totalPages || jobsLoading}
+                className="hidden sm:flex"
+              >
+                <ChevronsRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
       </section>
+
+      <AlertDialog open={!!jobToDelete} onOpenChange={(open) => !open && setJobToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10 text-destructive">
+              <Trash2 className="h-5 w-5" />
+            </div>
+            <AlertDialogTitle>Hapus lowongan ini?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Lowongan <span className="font-medium text-foreground">{jobToDelete?.title}</span> di{" "}
+              <span className="font-medium text-foreground">{jobToDelete?.company}</span> akan
+              dihapus permanen dari database dan tidak tampil lagi di halaman publik.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="rounded-lg border bg-muted/40 p-3 text-sm">
+            <p className="font-medium text-foreground">{jobToDelete?.title}</p>
+            <p className="text-muted-foreground">
+              {jobToDelete?.location} {jobToDelete?.type ? `- ${typeLabel(jobToDelete.type)}` : ""}
+            </p>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Batal</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(event) => {
+                event.preventDefault();
+                void confirmDeleteJob();
+              }}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+              Hapus Lowongan
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-3xl">
