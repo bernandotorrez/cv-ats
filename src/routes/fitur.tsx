@@ -11,6 +11,7 @@ import {
   Languages,
   LockKeyhole,
   Mic,
+  RefreshCw,
   Share2,
   ShieldCheck,
   Sparkles,
@@ -88,6 +89,13 @@ const featureGroups = [
         name: "AI Job Match Score",
         desc: "Cocokkan CV dengan lowongan dari database, URL, atau job description untuk melihat match score dan keyword gap.",
         badge: "Starter",
+        isNew: true,
+      },
+      {
+        icon: RefreshCw,
+        name: "Auto Tailor CV untuk Lowongan",
+        desc: "Tempel job description, lalu AI menyesuaikan ringkasan, urutan skill, dan bullet pengalaman agar lebih relevan tanpa mengarang data.",
+        badge: "Pro",
         isNew: true,
       },
       {
@@ -301,7 +309,7 @@ function FiturPage() {
             <div className="mt-7 grid gap-3 sm:grid-cols-2">
               {[
                 "Saran bilingual Indonesia dan Inggris",
-                "Keyword berdasarkan job description",
+                "Keyword dan tailoring berdasarkan job description",
                 "Feedback HR dengan prioritas perbaikan",
                 "Preview ATS sebelum export PDF",
               ].map((item) => (

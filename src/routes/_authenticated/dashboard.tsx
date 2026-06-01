@@ -15,6 +15,7 @@ import {
 import { useAuth } from "@/lib/auth-context";
 import { isAdmin } from "@/lib/admin";
 import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
 import { getUserTier, getTierLimits, type Tier, type TierLimits } from "@/lib/subscription";
 import { Crown, AlertCircle } from "lucide-react";
 import { TemplateGallery } from "@/components/cv/TemplateGallery";
@@ -51,6 +52,7 @@ import {
   Edit3,
   ArrowLeftRight,
   Loader2,
+  RefreshCw,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -79,18 +81,45 @@ interface ActivityItem {
   time: string;
 }
 
+type TierQuotaRow = {
+  quota_ai_suggest?: number | null;
+  quota_ai_score?: number | null;
+  quota_ai_job_match?: number | null;
+  quota_ai_tailor_cv?: number | null;
+  quota_ai_chat?: number | null;
+  quota_ai_cover_letter?: number | null;
+  quota_ai_keyword_extract?: number | null;
+  quota_cv_review?: number | null;
+  quota_ai_polish?: number | null;
+  quota_guided_mode?: number | null;
+  enable_cv_review?: boolean | null;
+  enable_cover_letter?: boolean | null;
+  enable_keyword_extractor?: boolean | null;
+  enable_cv_comparison?: boolean | null;
+  enable_interview_simulator?: boolean | null;
+  enable_analytics?: boolean | null;
+  enable_text_polish?: boolean | null;
+  enable_guided_mode?: boolean | null;
+  template_access_detail?: string[] | null;
+};
+
+type UserSubscriptionResult = {
+  subscription_tiers?: TierQuotaRow | null;
+} | null;
+
 function DashboardPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [admin, setAdmin] = useState(false);
   const [tier, setTier] = useState<Tier>("free");
   const [limits, setLimits] = useState<TierLimits>(getTierLimits("free"));
-  const [tierQuotas, setTierQuotas] = useState<any>(null);
+  const [tierQuotas, setTierQuotas] = useState<TierQuotaRow | null>(null);
   const [cvs, setCvs] = useState<CvRow[]>([]);
   const [cvCount, setCvCount] = useState(0);
   const [aiUsageCount, setAiUsageCount] = useState(0);
   const [scoreUsageCount, setScoreUsageCount] = useState(0);
   const [jobMatchUsageCount, setJobMatchUsageCount] = useState(0);
+  const [tailorCvUsageCount, setTailorCvUsageCount] = useState(0);
   const [guidedUsageCount, setGuidedUsageCount] = useState(0);
   const [coverLetterUsageCount, setCoverLetterUsageCount] = useState(0);
   const [cvReviewUsageCount, setCvReviewUsageCount] = useState(0);
@@ -123,13 +152,14 @@ function DashboardPage() {
   }, [user?.id]);
 
   const loadTierQuotas = async (userId: string) => {
-    const { data } = await (supabase as any)
+    const { data } = await supabase
       .from("user_subscriptions")
       .select(
         `subscription_tiers!inner(
           quota_ai_suggest,
           quota_ai_score,
           quota_ai_job_match,
+          quota_ai_tailor_cv,
           quota_ai_chat,
           quota_ai_cover_letter,
           quota_ai_keyword_extract,
@@ -149,22 +179,24 @@ function DashboardPage() {
       .eq("user_id", userId)
       .eq("status", "active")
       .single();
-    if (data?.subscription_tiers) {
-      setTierQuotas(data.subscription_tiers);
+    const row = data as unknown as UserSubscriptionResult;
+    if (row?.subscription_tiers) {
+      setTierQuotas(row.subscription_tiers);
     }
   };
 
   const loadAllowedTemplates = async (userId: string) => {
-    const { data } = await (supabase as any)
+    const { data } = await supabase
       .from("user_subscriptions")
       .select("subscription_tiers!inner(template_access_detail)")
       .eq("user_id", userId)
       .eq("status", "active")
       .single();
 
-    if (data?.subscription_tiers?.template_access_detail) {
-      setAllowedTemplates(data.subscription_tiers.template_access_detail);
-    } else if (data?.subscription_tiers?.template_access_detail === null) {
+    const row = data as unknown as UserSubscriptionResult;
+    if (row?.subscription_tiers?.template_access_detail) {
+      setAllowedTemplates(row.subscription_tiers.template_access_detail);
+    } else if (row?.subscription_tiers?.template_access_detail === null) {
       setAllowedTemplates(null);
     } else {
       setAllowedTemplates(["jakarta", "bandung"]);
@@ -203,6 +235,7 @@ function DashboardPage() {
     setAiUsageCount(counts["suggest"] ?? 0);
     setScoreUsageCount(counts["score"] ?? 0);
     setJobMatchUsageCount(counts["job_match"] ?? 0);
+    setTailorCvUsageCount(counts["tailor_cv"] ?? 0);
     setGuidedUsageCount(counts["guided"] ?? 0);
     setCoverLetterUsageCount(counts["cover_letter"] ?? 0);
     setCvReviewUsageCount(counts["cv_review"] ?? 0);
@@ -218,7 +251,9 @@ function DashboardPage() {
       .eq("user_id", userId)
       .order("updated_at", { ascending: false })
       .limit(5);
-    const items: ActivityItem[] = (data ?? []).map((cv: any) => ({
+    const items: ActivityItem[] = (
+      (data ?? []) as Array<{ title: string; updated_at: string }>
+    ).map((cv) => ({
       action: "edit",
       label: cv.title,
       time: new Date(cv.updated_at).toLocaleDateString("id-ID", { day: "numeric", month: "short" }),
@@ -236,13 +271,13 @@ function DashboardPage() {
       return;
     }
     setCreating(true);
-    const { data, error } = await (supabase as any)
+    const { data, error } = await supabase
       .from("cvs")
       .insert({
         user_id: user.id,
         title: "CV Baru",
         template_id: selectedTemplate,
-        data: emptyCv as any,
+        data: emptyCv as unknown as Json,
       })
       .select("id")
       .single();
@@ -253,7 +288,7 @@ function DashboardPage() {
     navigate({
       to: "/cv/$id",
       params: { id: data.id },
-      search: guided ? ({ guided: "true" } as any) : {},
+      search: guided ? ({ guided: "true" } as never) : {},
     });
   };
 
@@ -291,6 +326,14 @@ function DashboardPage() {
       used: jobMatchUsageCount,
       max: tierQuotas?.quota_ai_job_match ?? (tier === "free" ? 0 : tier === "starter" ? 20 : 100),
       color: "bg-lime-500/10 text-lime-700",
+      visible: true,
+    },
+    {
+      icon: RefreshCw,
+      label: "Tailor CV",
+      used: tailorCvUsageCount,
+      max: tierQuotas?.quota_ai_tailor_cv ?? (tier === "pro" ? 30 : 0),
+      color: "bg-cyan-500/10 text-cyan-700",
       visible: true,
     },
     {
@@ -396,6 +439,18 @@ function DashboardPage() {
       gradient: "bg-gradient-to-r from-lime-500 to-emerald-500",
     },
     {
+      icon: RefreshCw,
+      label: "Auto Tailor CV",
+      desc: "Sesuaikan summary, skill, dan pengalaman CV untuk job description tertentu tanpa mengarang data.",
+      action: "tailor-cv",
+      badge: "Pro",
+      isNew: true,
+      visible: true,
+      locked: tier !== "pro",
+      upgradeTier: "Pro",
+      gradient: "bg-gradient-to-r from-cyan-500 to-blue-500",
+    },
+    {
       icon: ArrowLeftRight,
       label: "CV Comparison",
       desc: "Bandingkan dua versi CV untuk melihat struktur, keyword, kelengkapan, dan preview dalam satu layar.",
@@ -481,6 +536,15 @@ function DashboardPage() {
       upgradeTier: "Starter",
     },
     {
+      icon: RefreshCw,
+      label: "Tailor CV",
+      action: "tailor-cv",
+      color: "bg-cyan-500/10 text-cyan-700",
+      visible: true,
+      locked: tier !== "pro",
+      upgradeTier: "Pro",
+    },
+    {
       icon: ArrowLeftRight,
       label: "Compare",
       action: "compare",
@@ -558,6 +622,7 @@ function DashboardPage() {
     "ai-suggest",
     "cover-letter",
     "keyword-extractor",
+    "tailor-cv",
   ];
 
   const handleFeatureClick = (action: string) => {
@@ -579,7 +644,7 @@ function DashboardPage() {
       analitik: "/analitik",
       admin: "/admin",
     };
-    if (routes[action]) navigate({ to: routes[action] as any });
+    if (routes[action]) navigate({ to: routes[action] as never });
   };
 
   const handleCvSelect = (cvId: string) => {
@@ -590,10 +655,11 @@ function DashboardPage() {
       "ai-suggest": "/cv/$id",
       "cover-letter": "/tools/cover-letter/$cvId",
       "keyword-extractor": "/tools/keyword/$cvId",
+      "tailor-cv": "/tools/tailor/$cvId",
     };
     const route = routes[showCvPicker.action];
     if (route) {
-      navigate({ to: route.replace("$cvId", cvId).replace("$id", cvId) as any });
+      navigate({ to: route.replace("$cvId", cvId).replace("$id", cvId) as never });
     }
     setShowCvPicker(null);
   };
@@ -647,7 +713,7 @@ function DashboardPage() {
       <PowerFeatures
         features={powerFeatures}
         onFeatureClick={handleFeatureClick}
-        onUpgrade={() => navigate({ to: "/harga" } as any)}
+        onUpgrade={() => navigate({ to: "/harga" as never })}
       />
 
       {/* ── Quick Actions ── */}

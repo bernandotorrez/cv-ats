@@ -309,6 +309,7 @@ export type Database = {
           quota_ai_keyword_extract: number | null;
           quota_ai_score: number | null;
           quota_ai_suggest: number | null;
+          quota_ai_tailor_cv: number | null;
           quota_cv_downloads: number | null;
           slug: string;
           sort_order: number;
@@ -329,6 +330,7 @@ export type Database = {
           quota_ai_keyword_extract?: number | null;
           quota_ai_score?: number | null;
           quota_ai_suggest?: number | null;
+          quota_ai_tailor_cv?: number | null;
           quota_cv_downloads?: number | null;
           slug: string;
           sort_order?: number;
@@ -349,6 +351,7 @@ export type Database = {
           quota_ai_keyword_extract?: number | null;
           quota_ai_score?: number | null;
           quota_ai_suggest?: number | null;
+          quota_ai_tailor_cv?: number | null;
           quota_cv_downloads?: number | null;
           slug?: string;
           sort_order?: number;

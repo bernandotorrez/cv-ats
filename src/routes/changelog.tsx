@@ -7,6 +7,7 @@ import {
   FileText,
   GitBranch,
   LayoutDashboard,
+  RefreshCw,
   Share2,
   ShieldCheck,
   Sparkles,
@@ -35,14 +36,29 @@ const changelog = [
   {
     version: APP_VERSION,
     date: "1 Juni 2026",
-    title: "AI Job Match Score, Shared CV, dan Portfolio Page",
+    title: "Auto Tailor CV, quota Pro, dan AI Job Match Score",
     summary:
-      "Update ini membantu pengguna mengecek kecocokan CV dengan lowongan, membagikan CV printable, dan membuat portfolio publik yang lebih kaya.",
+      "Update ini menghadirkan Auto Tailor CV end-to-end, quota khusus untuk paket Pro, serta alur job match dan portfolio yang lebih siap dipakai.",
     highlights: [
+      {
+        icon: RefreshCw,
+        type: "Fitur baru",
+        text: "Menambahkan Auto Tailor CV untuk Lowongan agar pengguna bisa menyesuaikan ringkasan, skill, dan bullet pengalaman berdasarkan job description tanpa mengarang data.",
+      },
       {
         icon: FileSearch,
         type: "Fitur baru",
         text: "Menambahkan AI Job Match Score untuk membandingkan CV dengan lowongan kerja.",
+      },
+      {
+        icon: BadgeCheck,
+        type: "Subscription",
+        text: "Menambahkan quota khusus Auto Tailor CV sebesar 30x/bulan untuk pengguna Pro.",
+      },
+      {
+        icon: LayoutDashboard,
+        type: "Peningkatan",
+        text: "Menampilkan penggunaan Auto Tailor CV di dashboard agar sisa quota lebih mudah dipantau.",
       },
       {
         icon: LayoutDashboard,

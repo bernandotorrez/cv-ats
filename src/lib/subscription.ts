@@ -22,6 +22,7 @@ export interface TierLimits {
   maxCoverLetter: number | null;
   maxCvReview: number | null;
   maxKeywordExtract: number | null;
+  maxTailorCv: number | null;
   maxInterviewSimulator: number | null;
   maxAiChat: number | null;
   maxCvDownloads: number | null;
@@ -57,6 +58,7 @@ type DbSubscriptionRow = {
     quota_ai_chat: number | null;
     quota_ai_cover_letter: number | null;
     quota_ai_keyword_extract: number | null;
+    quota_ai_tailor_cv: number | null;
     quota_cv_downloads: number | null;
     quota_cv_review: number | null;
     quota_interview_simulator: number | null;
@@ -90,6 +92,7 @@ const TIER_LIMITS: Record<Tier, TierLimits> = {
     maxCoverLetter: 0,
     maxCvReview: 0,
     maxKeywordExtract: 0,
+    maxTailorCv: 0,
     maxInterviewSimulator: 0,
     maxAiChat: 5,
     maxCvDownloads: 1,
@@ -119,6 +122,7 @@ const TIER_LIMITS: Record<Tier, TierLimits> = {
     maxCoverLetter: 10,
     maxCvReview: 10,
     maxKeywordExtract: 20,
+    maxTailorCv: 0,
     maxInterviewSimulator: 0,
     maxAiChat: 50,
     maxCvDownloads: null,
@@ -148,6 +152,7 @@ const TIER_LIMITS: Record<Tier, TierLimits> = {
     maxCoverLetter: 50,
     maxCvReview: 50,
     maxKeywordExtract: 100,
+    maxTailorCv: 30,
     maxInterviewSimulator: 50,
     maxAiChat: 200,
     maxCvDownloads: null,
@@ -182,6 +187,7 @@ export async function getUserTierConfig(userId: string): Promise<TierLimits> {
           slug, name, price_monthly,
           max_cvs, quota_ai_suggest, quota_ai_score,
           quota_ai_chat, quota_ai_cover_letter, quota_ai_keyword_extract,
+          quota_ai_tailor_cv,
           quota_cv_downloads,
           quota_cv_review, quota_interview_simulator, quota_guided_mode,
           template_access,
@@ -213,6 +219,7 @@ export async function getUserTierConfig(userId: string): Promise<TierLimits> {
         maxCoverLetter: t.quota_ai_cover_letter ?? base.maxCoverLetter,
         maxCvReview: t.quota_cv_review ?? base.maxCvReview,
         maxKeywordExtract: t.quota_ai_keyword_extract ?? base.maxKeywordExtract,
+        maxTailorCv: t.quota_ai_tailor_cv ?? base.maxTailorCv,
         maxInterviewSimulator: t.quota_interview_simulator ?? base.maxInterviewSimulator,
         maxAiChat: t.quota_ai_chat ?? base.maxAiChat,
         maxCvDownloads: t.quota_cv_downloads ?? base.maxCvDownloads,

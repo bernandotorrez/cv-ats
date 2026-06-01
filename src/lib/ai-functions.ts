@@ -100,6 +100,33 @@ export async function matchCvToJob(input: {
   return callEdge("ai-job-match", input.data) as Promise<JobMatchResult>;
 }
 
+export type TailorCvResult = {
+  tailoredCvData: Record<string, unknown>;
+  summary: string;
+  targetRole: string;
+  companyName: string;
+  keywordFocus: string[];
+  changes: Array<{
+    section: string;
+    before: string;
+    after: string;
+    reason: string;
+  }>;
+  cautions: string[];
+};
+
+export async function tailorCvToJob(input: {
+  data: {
+    cvId: string;
+    jobDescription: string;
+    jobTitle?: string;
+    companyName?: string;
+    language?: "id" | "en";
+  };
+}) {
+  return callEdge("ai-tailor-cv", input.data) as Promise<TailorCvResult>;
+}
+
 export async function chatWithAi(input: {
   data: {
     cvId?: string;

@@ -9,6 +9,7 @@ import {
   Key,
   Lock,
   Plus,
+  RefreshCw,
   Sparkles,
   Target,
   WandSparkles,
@@ -31,7 +32,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton-loading";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
-import { checkFeatureAccess } from "@/lib/subscription";
+import { checkFeatureAccess, getUserTier } from "@/lib/subscription";
 import { buildSeo } from "@/lib/seo";
 
 export const Route = createFileRoute("/_authenticated/tools/")({
@@ -58,7 +59,7 @@ interface CvRow {
   updated_at: string;
 }
 
-type ToolId = "cover-letter" | "keyword-extractor";
+type ToolId = "cover-letter" | "keyword-extractor" | "tailor-cv";
 
 interface ToolItem {
   id: ToolId;
@@ -89,6 +90,7 @@ function ToolsIndexPage() {
   const [featureFlags, setFeatureFlags] = useState({
     canCoverLetter: true,
     canKeywordExtract: true,
+    canTailorCv: false,
   });
 
   useEffect(() => {
@@ -96,20 +98,35 @@ function ToolsIndexPage() {
 
     (async () => {
       setLoading(true);
-      const [cvRows, canCoverLetter, canKeywordExtract] = await Promise.all([
+      const [cvRows, canCoverLetter, canKeywordExtract, tier] = await Promise.all([
         loadCvs(user.id),
         checkFeatureAccess(user.id, "canCoverLetter"),
         checkFeatureAccess(user.id, "canKeywordExtract"),
+        getUserTier(user.id),
       ]);
 
       setCvs(cvRows);
-      setFeatureFlags({ canCoverLetter, canKeywordExtract });
+      setFeatureFlags({ canCoverLetter, canKeywordExtract, canTailorCv: tier === "pro" });
       setLoading(false);
     })();
   }, [user?.id]);
 
   const tools = useMemo<ToolItem[]>(
     () => [
+      {
+        id: "tailor-cv",
+        icon: RefreshCw,
+        title: "Auto Tailor CV",
+        eyebrow: "Sesuaikan untuk lowongan",
+        description:
+          "Ubah ringkasan, prioritas skill, dan bullet pengalaman agar CV lebih relevan dengan job description target.",
+        bestFor: "Membuat versi CV berbeda untuk lowongan yang paling penting.",
+        result: "Preview CV tailored + daftar perubahan + apply ke CV",
+        badge: "Pro",
+        enabled: featureFlags.canTailorCv,
+        locked: !featureFlags.canTailorCv,
+        upgradeTier: "Pro",
+      },
       {
         id: "cover-letter",
         icon: BookOpen,
@@ -161,7 +178,9 @@ function ToolsIndexPage() {
   const handleCvSelect = (cvId: string) => {
     if (!showCvPicker) return;
 
-    if (showCvPicker.tool === "cover-letter") {
+    if (showCvPicker.tool === "tailor-cv") {
+      navigate({ to: "/tools/tailor/$cvId", params: { cvId } });
+    } else if (showCvPicker.tool === "cover-letter") {
       navigate({ to: "/tools/cover-letter/$cvId", params: { cvId } });
     } else {
       navigate({ to: "/tools/keyword/$cvId", params: { cvId } });
@@ -207,7 +226,7 @@ function ToolsIndexPage() {
                 <HeroStat
                   icon={Sparkles}
                   label="Tools aktif"
-                  value={`${tools.filter((tool) => tool.enabled).length}/2`}
+                  value={`${tools.filter((tool) => tool.enabled).length}/3`}
                 />
                 <HeroStat icon={Target} label="Fokus" value="Apply lebih tajam" />
               </div>
@@ -493,7 +512,7 @@ function ToolsPageSkeleton() {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        {[1, 2].map((item) => (
+        {[1, 2, 3].map((item) => (
           <div key={item} className="rounded-xl border border-border bg-card p-5">
             <div className="flex justify-between gap-4">
               <Skeleton className="h-12 w-12 rounded-xl" />

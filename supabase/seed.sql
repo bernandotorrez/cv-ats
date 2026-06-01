@@ -108,3 +108,9 @@ ON CONFLICT (slug) DO UPDATE SET
   enable_guided_mode = EXCLUDED.enable_guided_mode,
   quota_guided_mode = EXCLUDED.quota_guided_mode,
   sort_order = EXCLUDED.sort_order;
+
+ALTER TABLE public.subscription_tiers
+  ADD COLUMN IF NOT EXISTS quota_ai_tailor_cv INTEGER DEFAULT 0;
+
+UPDATE public.subscription_tiers SET quota_ai_tailor_cv = 0 WHERE slug IN ('free', 'starter');
+UPDATE public.subscription_tiers SET quota_ai_tailor_cv = 30 WHERE slug = 'pro';

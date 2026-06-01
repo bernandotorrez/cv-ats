@@ -33,6 +33,7 @@ const actionLabels: Record<string, string> = {
   "ai-suggest": "AI Saran CV",
   "cover-letter": "Cover Letter AI",
   "keyword-extractor": "Keyword Extractor",
+  "tailor-cv": "Auto Tailor CV",
 };
 
 export function CvPickerDialog({ open, onOpenChange, cvs, action, onSelect }: CvPickerDialogProps) {
@@ -44,9 +45,7 @@ export function CvPickerDialog({ open, onOpenChange, cvs, action, onSelect }: Cv
             <Sparkles className="h-5 w-5 text-primary" />
             Pilih CV untuk {actionLabels[action ?? ""] ?? "Fitur Ini"}
           </DialogTitle>
-          <DialogDescription>
-            Pilih CV yang ingin kamu gunakan.
-          </DialogDescription>
+          <DialogDescription>Pilih CV yang ingin kamu gunakan.</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-2 py-2 max-h-[40vh] overflow-y-auto">
@@ -55,9 +54,7 @@ export function CvPickerDialog({ open, onOpenChange, cvs, action, onSelect }: Cv
               <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-soft">
                 <FileText className="h-7 w-7 text-primary" />
               </div>
-              <p className="text-sm text-muted-foreground">
-                Belum ada CV. Buat dulu ya!
-              </p>
+              <p className="text-sm text-muted-foreground">Belum ada CV. Buat dulu ya!</p>
             </div>
           ) : (
             cvs.map((cv, idx) => {
@@ -71,16 +68,24 @@ export function CvPickerDialog({ open, onOpenChange, cvs, action, onSelect }: Cv
                     "hover:border-primary/50 hover:bg-primary/5 hover:shadow-md",
                   )}
                 >
-                  <div className={cn(
-                    "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br",
-                    idx % 2 === 0 ? "from-primary/20 to-secondary/20" : "from-violet-500/20 to-purple-500/20",
-                  )}>
+                  <div
+                    className={cn(
+                      "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br",
+                      idx % 2 === 0
+                        ? "from-primary/20 to-secondary/20"
+                        : "from-violet-500/20 to-purple-500/20",
+                    )}
+                  >
                     <FileText className="h-5 w-5 text-primary" />
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-semibold truncate">{cv.title}</p>
                     <p className="text-xs text-muted-foreground">
-                      {tpl?.name ?? cv.template_id} · {new Date(cv.updated_at).toLocaleDateString("id-ID", { day: "numeric", month: "short" })}
+                      {tpl?.name ?? cv.template_id} ·{" "}
+                      {new Date(cv.updated_at).toLocaleDateString("id-ID", {
+                        day: "numeric",
+                        month: "short",
+                      })}
                     </p>
                   </div>
                   <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />

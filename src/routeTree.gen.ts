@@ -61,6 +61,7 @@ import { Route as AuthenticatedCvReviewCvIdRouteImport } from './routes/_authent
 import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin/users'
 import { Route as AuthenticatedAdminTemplatesRouteImport } from './routes/_authenticated/admin/templates'
 import { Route as AuthenticatedAdminJobsRouteImport } from './routes/_authenticated/admin/jobs'
+import { Route as AuthenticatedToolsTailorCvIdRouteImport } from './routes/_authenticated/tools.tailor.$cvId'
 import { Route as AuthenticatedToolsKeywordCvIdRouteImport } from './routes/_authenticated/tools.keyword.$cvId'
 import { Route as AuthenticatedToolsCoverLetterCvIdRouteImport } from './routes/_authenticated/tools.cover-letter.$cvId'
 
@@ -328,6 +329,12 @@ const AuthenticatedAdminJobsRoute = AuthenticatedAdminJobsRouteImport.update({
   path: '/jobs',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const AuthenticatedToolsTailorCvIdRoute =
+  AuthenticatedToolsTailorCvIdRouteImport.update({
+    id: '/tools/tailor/$cvId',
+    path: '/tools/tailor/$cvId',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedToolsKeywordCvIdRoute =
   AuthenticatedToolsKeywordCvIdRouteImport.update({
     id: '/tools/keyword/$cvId',
@@ -395,6 +402,7 @@ export interface FileRoutesByFullPath {
   '/tools/': typeof AuthenticatedToolsIndexRoute
   '/tools/cover-letter/$cvId': typeof AuthenticatedToolsCoverLetterCvIdRoute
   '/tools/keyword/$cvId': typeof AuthenticatedToolsKeywordCvIdRoute
+  '/tools/tailor/$cvId': typeof AuthenticatedToolsTailorCvIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -449,6 +457,7 @@ export interface FileRoutesByTo {
   '/tools': typeof AuthenticatedToolsIndexRoute
   '/tools/cover-letter/$cvId': typeof AuthenticatedToolsCoverLetterCvIdRoute
   '/tools/keyword/$cvId': typeof AuthenticatedToolsKeywordCvIdRoute
+  '/tools/tailor/$cvId': typeof AuthenticatedToolsTailorCvIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -506,6 +515,7 @@ export interface FileRoutesById {
   '/_authenticated/tools/': typeof AuthenticatedToolsIndexRoute
   '/_authenticated/tools/cover-letter/$cvId': typeof AuthenticatedToolsCoverLetterCvIdRoute
   '/_authenticated/tools/keyword/$cvId': typeof AuthenticatedToolsKeywordCvIdRoute
+  '/_authenticated/tools/tailor/$cvId': typeof AuthenticatedToolsTailorCvIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -563,6 +573,7 @@ export interface FileRouteTypes {
     | '/tools/'
     | '/tools/cover-letter/$cvId'
     | '/tools/keyword/$cvId'
+    | '/tools/tailor/$cvId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -617,6 +628,7 @@ export interface FileRouteTypes {
     | '/tools'
     | '/tools/cover-letter/$cvId'
     | '/tools/keyword/$cvId'
+    | '/tools/tailor/$cvId'
   id:
     | '__root__'
     | '/'
@@ -673,6 +685,7 @@ export interface FileRouteTypes {
     | '/_authenticated/tools/'
     | '/_authenticated/tools/cover-letter/$cvId'
     | '/_authenticated/tools/keyword/$cvId'
+    | '/_authenticated/tools/tailor/$cvId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -1072,6 +1085,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminJobsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/tools/tailor/$cvId': {
+      id: '/_authenticated/tools/tailor/$cvId'
+      path: '/tools/tailor/$cvId'
+      fullPath: '/tools/tailor/$cvId'
+      preLoaderRoute: typeof AuthenticatedToolsTailorCvIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/tools/keyword/$cvId': {
       id: '/_authenticated/tools/keyword/$cvId'
       path: '/tools/keyword/$cvId'
@@ -1140,6 +1160,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedToolsIndexRoute: typeof AuthenticatedToolsIndexRoute
   AuthenticatedToolsCoverLetterCvIdRoute: typeof AuthenticatedToolsCoverLetterCvIdRoute
   AuthenticatedToolsKeywordCvIdRoute: typeof AuthenticatedToolsKeywordCvIdRoute
+  AuthenticatedToolsTailorCvIdRoute: typeof AuthenticatedToolsTailorCvIdRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -1163,6 +1184,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedToolsCoverLetterCvIdRoute:
     AuthenticatedToolsCoverLetterCvIdRoute,
   AuthenticatedToolsKeywordCvIdRoute: AuthenticatedToolsKeywordCvIdRoute,
+  AuthenticatedToolsTailorCvIdRoute: AuthenticatedToolsTailorCvIdRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
