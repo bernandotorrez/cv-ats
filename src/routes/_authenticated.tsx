@@ -85,7 +85,7 @@ function AuthenticatedBottomNav() {
 
   return (
     <nav className="fixed bottom-4 left-3 right-[4.75rem] z-40 pb-[env(safe-area-inset-bottom)] md:hidden">
-      <div className="grid grid-cols-5 items-end gap-1 rounded-[1.75rem] border border-white/30 bg-primary/75 px-1.5 py-1.5 text-primary-foreground shadow-[0_18px_45px_rgba(15,23,42,0.24)] backdrop-blur-2xl supports-[backdrop-filter]:bg-primary/60">
+      <div className="grid grid-cols-5 items-end gap-1 rounded-[1.75rem] border border-white/60 bg-white/70 px-1.5 py-1.5 text-foreground shadow-[0_18px_45px_rgba(15,23,42,0.18)] backdrop-blur-2xl ring-1 ring-black/5 supports-[backdrop-filter]:bg-white/55">
         {bottomNavItems.map((item) => {
           const Icon = item.icon;
           const active = item.isActive(pathname);
@@ -97,8 +97,8 @@ function AuthenticatedBottomNav() {
                 to={item.to}
                 aria-label={item.label}
                 className={cn(
-                  "relative -mt-7 flex min-h-[4.65rem] flex-col items-center justify-end gap-1 rounded-[1.4rem] bg-white/90 px-1 pb-2 pt-2 text-[9px] font-bold leading-tight text-primary shadow-[0_12px_28px_rgba(15,23,42,0.22)] ring-4 ring-background/95 backdrop-blur-xl transition-transform active:scale-95",
-                  active && "bg-white text-primary",
+                  "relative -mt-7 flex min-h-[4.65rem] flex-col items-center justify-end gap-1 rounded-[1.4rem] bg-white/90 px-1 pb-2 pt-2 text-[9px] font-bold leading-tight text-primary shadow-[0_12px_28px_rgba(15,23,42,0.18)] ring-4 ring-background/95 backdrop-blur-xl transition-transform active:scale-95",
+                  active && "bg-white",
                 )}
               >
                 <span className="grid h-11 w-11 place-items-center rounded-full bg-primary text-primary-foreground shadow-md ring-1 ring-white/30">
@@ -117,8 +117,8 @@ function AuthenticatedBottomNav() {
               className={cn(
                 "flex min-h-14 flex-col items-center justify-center gap-1 rounded-[1.15rem] px-1 py-1.5 text-[9px] font-semibold leading-tight transition active:scale-95",
                 active
-                  ? "bg-white/20 text-white shadow-inner ring-1 ring-white/20"
-                  : "text-primary-foreground/80 hover:bg-white/15 hover:text-white",
+                  ? "bg-primary/10 text-primary shadow-inner ring-1 ring-primary/15"
+                  : "text-foreground/65 hover:bg-white/55 hover:text-foreground",
               )}
             >
               <Icon className="h-5 w-5" aria-hidden="true" />
