@@ -55,10 +55,12 @@ interface AdminDashboardStatsRow {
   recent_signups?: number | null;
 }
 
-type AdminDashboardStatsRpc = (fn: "admin_dashboard_stats") => Promise<{
-  data: AdminDashboardStatsRow[] | null;
-  error: { message: string } | null;
-}>;
+interface AdminDashboardStatsClient {
+  rpc: (fn: "admin_dashboard_stats") => Promise<{
+    data: AdminDashboardStatsRow[] | null;
+    error: { message: string } | null;
+  }>;
+}
 
 function AdminDashboard() {
   const [stats, setStats] = useState<Stats | null>(null);
@@ -71,9 +73,9 @@ function AdminDashboard() {
   const loadStats = async () => {
     setLoading(true);
 
-    const adminStatsRpc = supabase.rpc as unknown as AdminDashboardStatsRpc;
-    const { data: dashboardStats, error: dashboardStatsError } =
-      await adminStatsRpc("admin_dashboard_stats");
+    const { data: dashboardStats, error: dashboardStatsError } = await (
+      supabase as unknown as AdminDashboardStatsClient
+    ).rpc("admin_dashboard_stats");
 
     if (!dashboardStatsError && dashboardStats?.[0]) {
       const row = dashboardStats[0];
