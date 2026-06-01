@@ -447,19 +447,22 @@ function ExperienceCard({ experience }: { experience: CvExperience }) {
           )}
         </Badge>
       </div>
-      {experience.description && <DescriptionBlock text={experience.description} />}
+      {Boolean(experience.description) && <DescriptionBlock text={experience.description} />}
     </article>
   );
 }
 
-function DescriptionBlock({ text }: { text: string }) {
-  const lines = text
+function DescriptionBlock({ text }: { text: unknown }) {
+  const rawText = normalizeDescription(text);
+  const lines = rawText
     .split(/\r?\n/)
     .map((line) => line.trim())
     .filter(Boolean);
 
+  if (lines.length === 0) return null;
+
   if (lines.length <= 1) {
-    return <p className="mt-4 text-sm leading-7 text-muted-foreground">{text}</p>;
+    return <p className="mt-4 text-sm leading-7 text-muted-foreground">{rawText}</p>;
   }
 
   const normalized = lines.map((line) => line.replace(/^[-•*]\s*/, "").replace(/^\d+[.)]\s*/, ""));
@@ -479,6 +482,28 @@ function DescriptionBlock({ text }: { text: string }) {
       ))}
     </ListTag>
   );
+}
+
+function normalizeDescription(value: unknown): string {
+  if (typeof value === "string") return value;
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => normalizeDescription(item))
+      .filter(Boolean)
+      .join("\n");
+  }
+  if (value && typeof value === "object") {
+    const record = value as Record<string, unknown>;
+    if (typeof record.description === "string") return record.description;
+    if (typeof record.text === "string") return record.text;
+    if (typeof record.value === "string") return record.value;
+    if (typeof record.content === "string") return record.content;
+    return Object.values(record)
+      .map((item) => normalizeDescription(item))
+      .filter(Boolean)
+      .join("\n");
+  }
+  return value == null ? "" : String(value);
 }
 
 function getPortfolioStats(data: CvData) {
