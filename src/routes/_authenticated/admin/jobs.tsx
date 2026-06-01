@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { buildSeo } from "@/lib/seo";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -7,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -14,8 +16,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { toast } from "sonner";
 import {
   AlertCircle,
   Bot,
@@ -23,14 +31,17 @@ import {
   CheckCircle2,
   ExternalLink,
   Loader2,
+  Pencil,
+  Plus,
   Search,
+  Trash2,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/jobs")({
   head: () =>
     buildSeo({
       title: "Admin Lowongan - CV Pintar",
-      description: "Kelola import lowongan kerja.",
+      description: "Kelola import dan CRUD lowongan kerja.",
       path: "/admin/jobs",
       noindex: true,
     }),
@@ -38,6 +49,64 @@ export const Route = createFileRoute("/_authenticated/admin/jobs")({
 });
 
 type Source = "linkedin" | "jobstreet" | "glints" | "kalibrr" | "google";
+
+type JobType = "full-time" | "part-time" | "contract" | "internship";
+type JobLevel = "entry" | "mid" | "senior" | "manager" | "director";
+type WorkMode = "onsite" | "remote" | "hybrid";
+type SalaryPeriod = "monthly" | "yearly";
+
+type JobListing = {
+  id: string;
+  slug: string;
+  title: string;
+  company: string;
+  company_logo?: string | null;
+  location: string;
+  type: JobType;
+  level: JobLevel;
+  industry?: string | null;
+  salary_min?: number | null;
+  salary_max?: number | null;
+  salary_currency?: string | null;
+  salary_period?: SalaryPeriod | null;
+  description: string;
+  responsibilities?: string | null;
+  requirements?: string | null;
+  qualifications?: string | null;
+  benefits?: string | null;
+  tech_stack?: string | null;
+  work_mode?: WorkMode | null;
+  deadline?: string | null;
+  source_url?: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at?: string | null;
+};
+
+type JobForm = {
+  slug: string;
+  title: string;
+  company: string;
+  company_logo: string;
+  location: string;
+  type: JobType;
+  level: JobLevel;
+  industry: string;
+  salary_min: string;
+  salary_max: string;
+  salary_currency: string;
+  salary_period: SalaryPeriod;
+  description: string;
+  responsibilities: string;
+  requirements: string;
+  qualifications: string;
+  benefits: string;
+  tech_stack: string;
+  work_mode: "" | WorkMode;
+  deadline: string;
+  source_url: string;
+  is_active: boolean;
+};
 
 type ImportedJob = {
   id: string;
@@ -57,6 +126,58 @@ type SearchResponse = {
   error?: string;
 };
 
+type JobListingsQuery = {
+  select: (
+    columns: string,
+    options?: { count?: "exact" },
+  ) => {
+    order: (
+      column: string,
+      options?: { ascending?: boolean },
+    ) => {
+      limit: (
+        count: number,
+      ) => Promise<{ data: JobListing[] | null; error: { message: string } | null }>;
+    };
+  };
+  insert: (row: Partial<JobListing>) => Promise<{ error: { message: string } | null }>;
+  update: (row: Partial<JobListing>) => {
+    eq: (column: string, value: string) => Promise<{ error: { message: string } | null }>;
+  };
+  delete: () => {
+    eq: (column: string, value: string) => Promise<{ error: { message: string } | null }>;
+  };
+};
+
+function jobListingsTable() {
+  return supabase.from("job_listings") as unknown as JobListingsQuery;
+}
+
+const emptyForm: JobForm = {
+  slug: "",
+  title: "",
+  company: "",
+  company_logo: "",
+  location: "Indonesia",
+  type: "full-time",
+  level: "entry",
+  industry: "",
+  salary_min: "",
+  salary_max: "",
+  salary_currency: "IDR",
+  salary_period: "monthly",
+  description: "",
+  responsibilities: "",
+  requirements: "",
+  qualifications: "",
+  benefits: "",
+  tech_stack: "",
+  work_mode: "",
+  deadline: "",
+  source_url: "",
+  is_active: true,
+};
+
 const sourceOptions: Array<{ value: Source; label: string }> = [
   { value: "linkedin", label: "LinkedIn" },
   { value: "jobstreet", label: "JobStreet" },
@@ -72,6 +193,31 @@ function AdminJobsPage() {
   const [sources, setSources] = useState<Source[]>(["linkedin", "jobstreet", "glints", "kalibrr"]);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<SearchResponse | null>(null);
+  const [jobs, setJobs] = useState<JobListing[]>([]);
+  const [jobsLoading, setJobsLoading] = useState(true);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingJob, setEditingJob] = useState<JobListing | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState<JobForm>(emptyForm);
+
+  useEffect(() => {
+    void loadJobs();
+  }, []);
+
+  const loadJobs = async () => {
+    setJobsLoading(true);
+    const { data, error } = await jobListingsTable()
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(60);
+
+    if (error) {
+      toast.error(error.message);
+    } else {
+      setJobs(data || []);
+    }
+    setJobsLoading(false);
+  };
 
   const toggleSource = (source: Source) => {
     setSources((current) =>
@@ -83,15 +229,8 @@ function AdminJobsPage() {
     const cleanQuery = query.trim();
     const cleanLocation = location.trim() || "Indonesia";
 
-    if (!cleanQuery) {
-      toast.error("Keyword posisi wajib diisi.");
-      return;
-    }
-
-    if (sources.length === 0) {
-      toast.error("Pilih minimal satu sumber.");
-      return;
-    }
+    if (!cleanQuery) return toast.error("Keyword posisi wajib diisi.");
+    if (sources.length === 0) return toast.error("Pilih minimal satu sumber.");
 
     setLoading(true);
     setResult(null);
@@ -101,9 +240,8 @@ function AdminJobsPage() {
       const token = sessionData.session?.access_token;
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 
-      if (!token || !supabaseUrl) {
+      if (!token || !supabaseUrl)
         throw new Error("Session admin tidak valid. Silakan login ulang.");
-      }
 
       const response = await fetch(`${supabaseUrl}/functions/v1/admin-job-search`, {
         method: "POST",
@@ -120,12 +258,11 @@ function AdminJobsPage() {
       });
 
       const payload = (await response.json().catch(() => ({}))) as SearchResponse;
-      if (!response.ok) {
-        throw new Error(payload.error || "Gagal menjalankan AI search.");
-      }
+      if (!response.ok) throw new Error(payload.error || "Gagal menjalankan AI search.");
 
       setResult(payload);
       toast.success(`${payload.inserted || 0} lowongan masuk ke database.`);
+      void loadJobs();
     } catch (error) {
       const message = error instanceof Error ? error.message : "Gagal menjalankan AI search.";
       setResult({ error: message });
@@ -133,6 +270,97 @@ function AdminJobsPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const openCreate = () => {
+    setEditingJob(null);
+    setForm(emptyForm);
+    setDialogOpen(true);
+  };
+
+  const openEdit = (job: JobListing) => {
+    setEditingJob(job);
+    setForm({
+      slug: job.slug,
+      title: job.title,
+      company: job.company,
+      company_logo: job.company_logo || "",
+      location: job.location,
+      type: job.type,
+      level: job.level,
+      industry: job.industry || "",
+      salary_min: job.salary_min ? String(job.salary_min) : "",
+      salary_max: job.salary_max ? String(job.salary_max) : "",
+      salary_currency: job.salary_currency || "IDR",
+      salary_period: job.salary_period || "monthly",
+      description: job.description,
+      responsibilities: job.responsibilities || "",
+      requirements: job.requirements || "",
+      qualifications: job.qualifications || "",
+      benefits: job.benefits || "",
+      tech_stack: job.tech_stack || "",
+      work_mode: job.work_mode || "",
+      deadline: job.deadline || "",
+      source_url: job.source_url || "",
+      is_active: job.is_active,
+    });
+    setDialogOpen(true);
+  };
+
+  const setField = <K extends keyof JobForm>(key: K, value: JobForm[K]) => {
+    setForm((current) => {
+      const next = { ...current, [key]: value };
+      if (key === "title" && !editingJob && !current.slug.trim()) {
+        next.slug = buildSlug(String(value), current.company, current.location);
+      }
+      if (key === "company" && !editingJob && !current.slug.trim()) {
+        next.slug = buildSlug(current.title, String(value), current.location);
+      }
+      return next;
+    });
+  };
+
+  const saveJob = async () => {
+    if (!form.title.trim() || !form.company.trim() || !form.location.trim()) {
+      toast.error("Judul, perusahaan, dan lokasi wajib diisi.");
+      return;
+    }
+
+    if (!form.description.trim()) {
+      toast.error("Deskripsi lowongan wajib diisi.");
+      return;
+    }
+
+    setSaving(true);
+    const payload = buildPayload(form);
+    const { error } = editingJob
+      ? await jobListingsTable().update(payload).eq("id", editingJob.id)
+      : await jobListingsTable().insert(payload);
+
+    setSaving(false);
+    if (error) return toast.error(error.message);
+
+    toast.success(editingJob ? "Lowongan diupdate." : "Lowongan ditambahkan.");
+    setDialogOpen(false);
+    void loadJobs();
+  };
+
+  const deleteJob = async (job: JobListing) => {
+    if (!confirm(`Hapus lowongan "${job.title}" di ${job.company}?`)) return;
+    const { error } = await jobListingsTable().delete().eq("id", job.id);
+    if (error) return toast.error(error.message);
+    toast.success("Lowongan dihapus.");
+    void loadJobs();
+  };
+
+  const toggleActive = async (job: JobListing) => {
+    const { error } = await jobListingsTable()
+      .update({ is_active: !job.is_active, updated_at: new Date().toISOString() })
+      .eq("id", job.id);
+
+    if (error) return toast.error(error.message);
+    toast.success(!job.is_active ? "Lowongan diaktifkan." : "Lowongan dinonaktifkan.");
+    void loadJobs();
   };
 
   return (
@@ -145,18 +373,23 @@ function AdminJobsPage() {
               AI Job Search
             </div>
             <h2 className="font-display text-2xl font-bold tracking-normal sm:text-3xl">
-              Cari dan import lowongan kerja.
+              Cari, import, dan kelola lowongan kerja.
             </h2>
             <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-              AI akan mencoba membaca halaman sumber asli, lalu menyusun job description,
-              requirements, dan qualifications sebelum menyimpan ke tabel job_listings.
+              Import otomatis dengan AI atau tambahkan lowongan manual dari sumber yang kamu punya.
             </p>
           </div>
-          <Button asChild variant="outline" className="shrink-0">
-            <Link to="/lowongan">
-              Lihat Public Page <ExternalLink className="h-4 w-4" />
-            </Link>
-          </Button>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Button onClick={openCreate} className="shrink-0 gap-2">
+              <Plus className="h-4 w-4" />
+              Tambah Manual
+            </Button>
+            <Button asChild variant="outline" className="shrink-0">
+              <Link to="/lowongan">
+                Lihat Public Page <ExternalLink className="h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
         </div>
       </section>
 
@@ -300,6 +533,338 @@ function AdminJobsPage() {
           </CardContent>
         </Card>
       </section>
+
+      <section className="rounded-lg border bg-card p-4 sm:p-5">
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h3 className="font-display text-xl font-bold">Manage Lowongan</h3>
+            <p className="text-sm text-muted-foreground">
+              Tambah manual, edit detail, hapus, atau nonaktifkan lowongan dari halaman publik.
+            </p>
+          </div>
+          <Button onClick={openCreate} className="gap-2">
+            <Plus className="h-4 w-4" />
+            Tambah Lowongan
+          </Button>
+        </div>
+
+        {jobsLoading ? (
+          <p className="text-sm text-muted-foreground">Memuat lowongan...</p>
+        ) : jobs.length === 0 ? (
+          <div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
+            Belum ada lowongan.
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {jobs.map((job) => (
+              <div
+                key={job.id}
+                className="flex flex-col gap-3 rounded-lg border bg-background p-4 sm:flex-row sm:items-center"
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="font-semibold text-foreground">{job.title}</p>
+                    <Badge variant={job.is_active ? "secondary" : "outline"}>
+                      {job.is_active ? "Aktif" : "Nonaktif"}
+                    </Badge>
+                    <Badge variant="outline">{job.location}</Badge>
+                  </div>
+                  <p className="mt-1 text-sm text-muted-foreground">{job.company}</p>
+                  <p className="mt-1 line-clamp-1 text-xs text-muted-foreground">
+                    {job.description}
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button asChild size="sm" variant="outline">
+                    <Link to="/lowongan/$slug" params={{ slug: job.slug }}>
+                      Detail
+                    </Link>
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => toggleActive(job)}>
+                    {job.is_active ? "Nonaktifkan" : "Aktifkan"}
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => openEdit(job)} aria-label="Edit">
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => deleteJob(job)}
+                    aria-label="Hapus"
+                  >
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>{editingJob ? "Edit Lowongan" : "Tambah Lowongan Manual"}</DialogTitle>
+            <DialogDescription>
+              Data yang aktif akan tampil di halaman publik `/lowongan`.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Judul *">
+              <Input
+                value={form.title}
+                onChange={(event) => setField("title", event.target.value)}
+              />
+            </Field>
+            <Field label="Perusahaan *">
+              <Input
+                value={form.company}
+                onChange={(event) => setField("company", event.target.value)}
+              />
+            </Field>
+            <Field label="Slug *">
+              <Input
+                value={form.slug}
+                onChange={(event) => setField("slug", slugify(event.target.value))}
+              />
+            </Field>
+            <Field label="Lokasi *">
+              <Input
+                value={form.location}
+                onChange={(event) => setField("location", event.target.value)}
+              />
+            </Field>
+            <Field label="Tipe">
+              <Select
+                value={form.type}
+                onValueChange={(value) => setField("type", value as JobType)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="full-time">Full Time</SelectItem>
+                  <SelectItem value="part-time">Part Time</SelectItem>
+                  <SelectItem value="contract">Kontrak</SelectItem>
+                  <SelectItem value="internship">Magang</SelectItem>
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field label="Level">
+              <Select
+                value={form.level}
+                onValueChange={(value) => setField("level", value as JobLevel)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="entry">Entry</SelectItem>
+                  <SelectItem value="mid">Mid</SelectItem>
+                  <SelectItem value="senior">Senior</SelectItem>
+                  <SelectItem value="manager">Manager</SelectItem>
+                  <SelectItem value="director">Director</SelectItem>
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field label="Industri">
+              <Input
+                value={form.industry}
+                onChange={(event) => setField("industry", event.target.value)}
+              />
+            </Field>
+            <Field label="Mode kerja">
+              <Select
+                value={form.work_mode || "none"}
+                onValueChange={(value) =>
+                  setField("work_mode", value === "none" ? "" : (value as WorkMode))
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Tidak dicantumkan</SelectItem>
+                  <SelectItem value="onsite">On-site</SelectItem>
+                  <SelectItem value="remote">Remote</SelectItem>
+                  <SelectItem value="hybrid">Hybrid</SelectItem>
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field label="Gaji min">
+              <Input
+                type="number"
+                value={form.salary_min}
+                onChange={(event) => setField("salary_min", event.target.value)}
+              />
+            </Field>
+            <Field label="Gaji max">
+              <Input
+                type="number"
+                value={form.salary_max}
+                onChange={(event) => setField("salary_max", event.target.value)}
+              />
+            </Field>
+            <Field label="Currency">
+              <Input
+                value={form.salary_currency}
+                onChange={(event) => setField("salary_currency", event.target.value.toUpperCase())}
+              />
+            </Field>
+            <Field label="Periode gaji">
+              <Select
+                value={form.salary_period}
+                onValueChange={(value) => setField("salary_period", value as SalaryPeriod)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="monthly">Bulanan</SelectItem>
+                  <SelectItem value="yearly">Tahunan</SelectItem>
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field label="Deadline">
+              <Input
+                type="date"
+                value={form.deadline}
+                onChange={(event) => setField("deadline", event.target.value)}
+              />
+            </Field>
+            <Field label="Source URL">
+              <Input
+                value={form.source_url}
+                onChange={(event) => setField("source_url", event.target.value)}
+                placeholder="https://..."
+              />
+            </Field>
+            <Field label="Logo perusahaan">
+              <Input
+                value={form.company_logo}
+                onChange={(event) => setField("company_logo", event.target.value)}
+                placeholder="https://..."
+              />
+            </Field>
+            <label className="flex items-center gap-2 pt-8 text-sm font-medium">
+              <input
+                type="checkbox"
+                checked={form.is_active}
+                onChange={(event) => setField("is_active", event.target.checked)}
+                className="h-4 w-4 accent-primary"
+              />
+              Tampilkan di public page
+            </label>
+          </div>
+
+          <div className="mt-4 space-y-4">
+            <Field label="Deskripsi *">
+              <Textarea
+                rows={4}
+                value={form.description}
+                onChange={(event) => setField("description", event.target.value)}
+              />
+            </Field>
+            <Field label="Responsibilities">
+              <Textarea
+                rows={4}
+                value={form.responsibilities}
+                onChange={(event) => setField("responsibilities", event.target.value)}
+              />
+            </Field>
+            <Field label="Requirements">
+              <Textarea
+                rows={4}
+                value={form.requirements}
+                onChange={(event) => setField("requirements", event.target.value)}
+              />
+            </Field>
+            <Field label="Qualifications">
+              <Textarea
+                rows={4}
+                value={form.qualifications}
+                onChange={(event) => setField("qualifications", event.target.value)}
+              />
+            </Field>
+            <Field label="Benefits">
+              <Textarea
+                rows={3}
+                value={form.benefits}
+                onChange={(event) => setField("benefits", event.target.value)}
+              />
+            </Field>
+            <Field label="Tech stack / tools">
+              <Input
+                value={form.tech_stack}
+                onChange={(event) => setField("tech_stack", event.target.value)}
+                placeholder="React, TypeScript, Excel"
+              />
+            </Field>
+          </div>
+
+          <div className="mt-5 flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>
+              Batal
+            </Button>
+            <Button onClick={saveJob} disabled={saving}>
+              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+              {editingJob ? "Simpan" : "Tambah"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+function buildPayload(form: JobForm): Partial<JobListing> {
+  return {
+    slug: slugify(form.slug || buildSlug(form.title, form.company, form.location)),
+    title: form.title.trim(),
+    company: form.company.trim(),
+    company_logo: form.company_logo.trim() || null,
+    location: form.location.trim(),
+    type: form.type,
+    level: form.level,
+    industry: form.industry.trim() || null,
+    salary_min: form.salary_min ? Number(form.salary_min) : null,
+    salary_max: form.salary_max ? Number(form.salary_max) : null,
+    salary_currency: form.salary_currency.trim().toUpperCase() || "IDR",
+    salary_period: form.salary_period,
+    description: form.description.trim(),
+    responsibilities: form.responsibilities.trim() || null,
+    requirements: form.requirements.trim() || null,
+    qualifications: form.qualifications.trim() || null,
+    benefits: form.benefits.trim() || null,
+    tech_stack: form.tech_stack.trim() || null,
+    work_mode: form.work_mode || null,
+    deadline: form.deadline || null,
+    source_url: form.source_url.trim() || null,
+    is_active: form.is_active,
+    updated_at: new Date().toISOString(),
+  };
+}
+
+function buildSlug(...parts: string[]) {
+  return slugify(parts.filter(Boolean).join(" "));
+}
+
+function slugify(value: string) {
+  return value
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80);
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-1.5">
+      <Label>{label}</Label>
+      {children}
     </div>
   );
 }
