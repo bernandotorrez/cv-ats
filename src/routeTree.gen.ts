@@ -47,6 +47,7 @@ import { Route as AuthenticatedAnalitikRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedAkunRouteImport } from './routes/_authenticated/akun'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedToolsIndexRouteImport } from './routes/_authenticated/tools.index'
+import { Route as AuthenticatedScoreIndexRouteImport } from './routes/_authenticated/score.index'
 import { Route as AuthenticatedCvIndexRouteImport } from './routes/_authenticated/cv.index'
 import { Route as AuthenticatedCvReviewIndexRouteImport } from './routes/_authenticated/cv-review.index'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
@@ -250,6 +251,11 @@ const AuthenticatedToolsIndexRoute = AuthenticatedToolsIndexRouteImport.update({
   path: '/tools/',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedScoreIndexRoute = AuthenticatedScoreIndexRouteImport.update({
+  id: '/score/',
+  path: '/score/',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedCvIndexRoute = AuthenticatedCvIndexRouteImport.update({
   id: '/cv/',
   path: '/cv/',
@@ -364,6 +370,7 @@ export interface FileRoutesByFullPath {
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/cv-review/': typeof AuthenticatedCvReviewIndexRoute
   '/cv/': typeof AuthenticatedCvIndexRoute
+  '/score/': typeof AuthenticatedScoreIndexRoute
   '/tools/': typeof AuthenticatedToolsIndexRoute
   '/tools/cover-letter/$cvId': typeof AuthenticatedToolsCoverLetterCvIdRoute
   '/tools/keyword/$cvId': typeof AuthenticatedToolsKeywordCvIdRoute
@@ -414,6 +421,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/cv-review': typeof AuthenticatedCvReviewIndexRoute
   '/cv': typeof AuthenticatedCvIndexRoute
+  '/score': typeof AuthenticatedScoreIndexRoute
   '/tools': typeof AuthenticatedToolsIndexRoute
   '/tools/cover-letter/$cvId': typeof AuthenticatedToolsCoverLetterCvIdRoute
   '/tools/keyword/$cvId': typeof AuthenticatedToolsKeywordCvIdRoute
@@ -467,6 +475,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/cv-review/': typeof AuthenticatedCvReviewIndexRoute
   '/_authenticated/cv/': typeof AuthenticatedCvIndexRoute
+  '/_authenticated/score/': typeof AuthenticatedScoreIndexRoute
   '/_authenticated/tools/': typeof AuthenticatedToolsIndexRoute
   '/_authenticated/tools/cover-letter/$cvId': typeof AuthenticatedToolsCoverLetterCvIdRoute
   '/_authenticated/tools/keyword/$cvId': typeof AuthenticatedToolsKeywordCvIdRoute
@@ -520,6 +529,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/cv-review/'
     | '/cv/'
+    | '/score/'
     | '/tools/'
     | '/tools/cover-letter/$cvId'
     | '/tools/keyword/$cvId'
@@ -570,6 +580,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/cv-review'
     | '/cv'
+    | '/score'
     | '/tools'
     | '/tools/cover-letter/$cvId'
     | '/tools/keyword/$cvId'
@@ -622,6 +633,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/'
     | '/_authenticated/cv-review/'
     | '/_authenticated/cv/'
+    | '/_authenticated/score/'
     | '/_authenticated/tools/'
     | '/_authenticated/tools/cover-letter/$cvId'
     | '/_authenticated/tools/keyword/$cvId'
@@ -924,6 +936,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedToolsIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/score/': {
+      id: '/_authenticated/score/'
+      path: '/score'
+      fullPath: '/score/'
+      preLoaderRoute: typeof AuthenticatedScoreIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/cv/': {
       id: '/_authenticated/cv/'
       path: '/cv'
@@ -1057,6 +1076,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedScoreCvIdRoute: typeof AuthenticatedScoreCvIdRoute
   AuthenticatedCvReviewIndexRoute: typeof AuthenticatedCvReviewIndexRoute
   AuthenticatedCvIndexRoute: typeof AuthenticatedCvIndexRoute
+  AuthenticatedScoreIndexRoute: typeof AuthenticatedScoreIndexRoute
   AuthenticatedToolsIndexRoute: typeof AuthenticatedToolsIndexRoute
   AuthenticatedToolsCoverLetterCvIdRoute: typeof AuthenticatedToolsCoverLetterCvIdRoute
   AuthenticatedToolsKeywordCvIdRoute: typeof AuthenticatedToolsKeywordCvIdRoute
@@ -1077,6 +1097,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedScoreCvIdRoute: AuthenticatedScoreCvIdRoute,
   AuthenticatedCvReviewIndexRoute: AuthenticatedCvReviewIndexRoute,
   AuthenticatedCvIndexRoute: AuthenticatedCvIndexRoute,
+  AuthenticatedScoreIndexRoute: AuthenticatedScoreIndexRoute,
   AuthenticatedToolsIndexRoute: AuthenticatedToolsIndexRoute,
   AuthenticatedToolsCoverLetterCvIdRoute:
     AuthenticatedToolsCoverLetterCvIdRoute,

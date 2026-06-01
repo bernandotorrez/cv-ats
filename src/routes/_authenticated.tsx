@@ -37,7 +37,7 @@ function AuthGate() {
   }
 
   return (
-    <div className="pb-[calc(5.75rem+env(safe-area-inset-bottom))] md:pb-0">
+    <div className="pb-[calc(6.75rem+env(safe-area-inset-bottom))] md:pb-0">
       <Outlet />
       <AuthenticatedBottomNav />
     </div>
@@ -52,10 +52,10 @@ const bottomNavItems = [
     isActive: (pathname: string) => pathname === "/dashboard",
   },
   {
-    to: "/dashboard" as const,
+    to: "/score" as const,
     label: "ATS Scoring",
     icon: BarChart3,
-    isActive: (pathname: string) => pathname.startsWith("/score"),
+    isActive: (pathname: string) => pathname === "/score" || pathname.startsWith("/score/"),
   },
   {
     to: "/cv" as const,
@@ -84,8 +84,8 @@ function AuthenticatedBottomNav() {
   });
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-primary-foreground/15 bg-primary px-2 pb-[env(safe-area-inset-bottom)] pt-2 text-primary-foreground shadow-[0_-16px_35px_rgba(15,23,42,0.18)] md:hidden">
-      <div className="mx-auto grid max-w-md grid-cols-5 items-end gap-1">
+    <nav className="fixed bottom-4 left-3 right-[4.75rem] z-40 pb-[env(safe-area-inset-bottom)] md:hidden">
+      <div className="grid grid-cols-5 items-end gap-1 rounded-[1.75rem] border border-white/30 bg-primary/75 px-1.5 py-1.5 text-primary-foreground shadow-[0_18px_45px_rgba(15,23,42,0.24)] backdrop-blur-2xl supports-[backdrop-filter]:bg-primary/60">
         {bottomNavItems.map((item) => {
           const Icon = item.icon;
           const active = item.isActive(pathname);
@@ -97,11 +97,11 @@ function AuthenticatedBottomNav() {
                 to={item.to}
                 aria-label={item.label}
                 className={cn(
-                  "relative -mt-8 flex min-h-[4.75rem] flex-col items-center justify-end gap-1 rounded-2xl bg-primary-foreground px-1 pb-2 pt-2 text-[10px] font-bold leading-tight text-primary shadow-xl ring-4 ring-background transition-transform active:scale-95",
-                  active && "bg-white",
+                  "relative -mt-7 flex min-h-[4.65rem] flex-col items-center justify-end gap-1 rounded-[1.4rem] bg-white/90 px-1 pb-2 pt-2 text-[9px] font-bold leading-tight text-primary shadow-[0_12px_28px_rgba(15,23,42,0.22)] ring-4 ring-background/95 backdrop-blur-xl transition-transform active:scale-95",
+                  active && "bg-white text-primary",
                 )}
               >
-                <span className="grid h-11 w-11 place-items-center rounded-full bg-primary text-primary-foreground shadow-md">
+                <span className="grid h-11 w-11 place-items-center rounded-full bg-primary text-primary-foreground shadow-md ring-1 ring-white/30">
                   <Icon className="h-5 w-5" aria-hidden="true" />
                 </span>
                 <span className="max-w-[4rem] text-center">{item.label}</span>
@@ -115,10 +115,10 @@ function AuthenticatedBottomNav() {
               to={item.to}
               aria-label={item.label}
               className={cn(
-                "flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl px-1 py-1.5 text-[10px] font-semibold leading-tight transition-colors active:scale-95",
+                "flex min-h-14 flex-col items-center justify-center gap-1 rounded-[1.15rem] px-1 py-1.5 text-[9px] font-semibold leading-tight transition active:scale-95",
                 active
-                  ? "bg-primary-foreground/15 text-white"
-                  : "text-primary-foreground/75 hover:bg-primary-foreground/10 hover:text-white",
+                  ? "bg-white/20 text-white shadow-inner ring-1 ring-white/20"
+                  : "text-primary-foreground/80 hover:bg-white/15 hover:text-white",
               )}
             >
               <Icon className="h-5 w-5" aria-hidden="true" />
