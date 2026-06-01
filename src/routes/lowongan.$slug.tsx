@@ -519,6 +519,14 @@ function ApplyPanel({ job, salaryText }: { job: Job; salaryText: string | null }
         </div>
 
         <div className="mt-5 grid gap-3">
+          {job.source_url && (
+            <Button asChild className="w-full justify-center gap-2">
+              <a href={job.source_url} target="_blank" rel="noopener noreferrer">
+                Lihat sumber lowongan
+                <ExternalLink className="h-4 w-4" />
+              </a>
+            </Button>
+          )}
           {user ? (
             <Button
               type="button"
@@ -542,14 +550,6 @@ function ApplyPanel({ job, salaryText }: { job: Job; salaryText: string | null }
                 <LogIn className="h-4 w-4" />
                 Masuk untuk simpan
               </Link>
-            </Button>
-          )}
-          {job.source_url && (
-            <Button asChild className="w-full justify-center gap-2">
-              <a href={job.source_url} target="_blank" rel="noopener noreferrer">
-                Lamar di sumber asli
-                <ExternalLink className="h-4 w-4" />
-              </a>
             </Button>
           )}
           <Button asChild variant="outline" className="w-full justify-center gap-2">
