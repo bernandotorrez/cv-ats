@@ -10,6 +10,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -555,48 +563,95 @@ function AdminJobsPage() {
             Belum ada lowongan.
           </div>
         ) : (
-          <div className="space-y-3">
-            {jobs.map((job) => (
-              <div
-                key={job.id}
-                className="flex flex-col gap-3 rounded-lg border bg-background p-4 sm:flex-row sm:items-center"
-              >
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <p className="font-semibold text-foreground">{job.title}</p>
-                    <Badge variant={job.is_active ? "secondary" : "outline"}>
-                      {job.is_active ? "Aktif" : "Nonaktif"}
-                    </Badge>
-                    <Badge variant="outline">{job.location}</Badge>
-                  </div>
-                  <p className="mt-1 text-sm text-muted-foreground">{job.company}</p>
-                  <p className="mt-1 line-clamp-1 text-xs text-muted-foreground">
-                    {job.description}
-                  </p>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <Button asChild size="sm" variant="outline">
-                    <Link to="/lowongan/$slug" params={{ slug: job.slug }}>
-                      Detail
-                    </Link>
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={() => toggleActive(job)}>
-                    {job.is_active ? "Nonaktifkan" : "Aktifkan"}
-                  </Button>
-                  <Button size="sm" variant="ghost" onClick={() => openEdit(job)} aria-label="Edit">
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => deleteJob(job)}
-                    aria-label="Hapus"
-                  >
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
-                </div>
-              </div>
-            ))}
+          <div className="overflow-hidden rounded-lg border bg-background">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Lowongan</TableHead>
+                  <TableHead>Perusahaan</TableHead>
+                  <TableHead>Lokasi</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Diposting</TableHead>
+                  <TableHead className="text-right">Aksi</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {jobs.map((job) => (
+                  <TableRow key={job.id}>
+                    <TableCell className="min-w-[260px]">
+                      <div className="space-y-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="font-semibold text-foreground">{job.title}</p>
+                          <Badge variant="outline">{typeLabel(job.type)}</Badge>
+                        </div>
+                        <p className="line-clamp-1 max-w-xl text-xs text-muted-foreground">
+                          {job.description}
+                        </p>
+                      </div>
+                    </TableCell>
+                    <TableCell className="min-w-40">
+                      <div>
+                        <p className="font-medium text-foreground">{job.company}</p>
+                        {job.industry && (
+                          <p className="text-xs text-muted-foreground">{job.industry}</p>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="min-w-32">
+                      <div className="space-y-1">
+                        <p className="text-sm">{job.location}</p>
+                        {job.work_mode && (
+                          <Badge variant="secondary" className="text-xs">
+                            {workModeLabel(job.work_mode)}
+                          </Badge>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={job.is_active ? "secondary" : "outline"}>
+                        {job.is_active ? "Aktif" : "Nonaktif"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap text-sm text-muted-foreground">
+                      {formatDate(job.created_at)}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex justify-end gap-1">
+                        <Button asChild size="sm" variant="ghost" aria-label="Detail">
+                          <Link to="/lowongan/$slug" params={{ slug: job.slug }}>
+                            <ExternalLink className="h-4 w-4" />
+                          </Link>
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => toggleActive(job)}
+                          aria-label={job.is_active ? "Nonaktifkan" : "Aktifkan"}
+                        >
+                          {job.is_active ? "Off" : "On"}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => openEdit(job)}
+                          aria-label="Edit"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => deleteJob(job)}
+                          aria-label="Hapus"
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </div>
         )}
       </section>
@@ -844,6 +899,33 @@ function buildPayload(form: JobForm): Partial<JobListing> {
     is_active: form.is_active,
     updated_at: new Date().toISOString(),
   };
+}
+
+function typeLabel(type: string) {
+  const map: Record<string, string> = {
+    "full-time": "Full Time",
+    "part-time": "Part Time",
+    contract: "Kontrak",
+    internship: "Magang",
+  };
+  return map[type] ?? type;
+}
+
+function workModeLabel(value: string) {
+  const map: Record<string, string> = {
+    onsite: "On-site",
+    remote: "Remote",
+    hybrid: "Hybrid",
+  };
+  return map[value] ?? value;
+}
+
+function formatDate(value: string) {
+  return new Date(value).toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
 }
 
 function buildSlug(...parts: string[]) {
