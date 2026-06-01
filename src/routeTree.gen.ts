@@ -34,6 +34,7 @@ import { Route as SitemapXmlRouteImport } from './routes/sitemap.xml'
 import { Route as ShareTokenRouteImport } from './routes/share.$token'
 import { Route as SecurityTxtRouteImport } from './routes/security.txt'
 import { Route as RobotsTxtRouteImport } from './routes/robots.txt'
+import { Route as PortfolioTokenRouteImport } from './routes/portfolio.$token'
 import { Route as ManifestWebmanifestRouteImport } from './routes/manifest.webmanifest'
 import { Route as LowonganSlugRouteImport } from './routes/lowongan.$slug'
 import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
@@ -185,6 +186,11 @@ const SecurityTxtRoute = SecurityTxtRouteImport.update({
 const RobotsTxtRoute = RobotsTxtRouteImport.update({
   id: '/robots/txt',
   path: '/robots/txt',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PortfolioTokenRoute = PortfolioTokenRouteImport.update({
+  id: '/portfolio/$token',
+  path: '/portfolio/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ManifestWebmanifestRoute = ManifestWebmanifestRouteImport.update({
@@ -369,6 +375,7 @@ export interface FileRoutesByFullPath {
   '/blog/$slug': typeof BlogSlugRoute
   '/lowongan/$slug': typeof LowonganSlugRoute
   '/manifest/webmanifest': typeof ManifestWebmanifestRoute
+  '/portfolio/$token': typeof PortfolioTokenRoute
   '/robots/txt': typeof RobotsTxtRoute
   '/security/txt': typeof SecurityTxtRoute
   '/share/$token': typeof ShareTokenRoute
@@ -422,6 +429,7 @@ export interface FileRoutesByTo {
   '/blog/$slug': typeof BlogSlugRoute
   '/lowongan/$slug': typeof LowonganSlugRoute
   '/manifest/webmanifest': typeof ManifestWebmanifestRoute
+  '/portfolio/$token': typeof PortfolioTokenRoute
   '/robots/txt': typeof RobotsTxtRoute
   '/security/txt': typeof SecurityTxtRoute
   '/share/$token': typeof ShareTokenRoute
@@ -478,6 +486,7 @@ export interface FileRoutesById {
   '/blog/$slug': typeof BlogSlugRoute
   '/lowongan/$slug': typeof LowonganSlugRoute
   '/manifest/webmanifest': typeof ManifestWebmanifestRoute
+  '/portfolio/$token': typeof PortfolioTokenRoute
   '/robots/txt': typeof RobotsTxtRoute
   '/security/txt': typeof SecurityTxtRoute
   '/share/$token': typeof ShareTokenRoute
@@ -534,6 +543,7 @@ export interface FileRouteTypes {
     | '/blog/$slug'
     | '/lowongan/$slug'
     | '/manifest/webmanifest'
+    | '/portfolio/$token'
     | '/robots/txt'
     | '/security/txt'
     | '/share/$token'
@@ -587,6 +597,7 @@ export interface FileRouteTypes {
     | '/blog/$slug'
     | '/lowongan/$slug'
     | '/manifest/webmanifest'
+    | '/portfolio/$token'
     | '/robots/txt'
     | '/security/txt'
     | '/share/$token'
@@ -642,6 +653,7 @@ export interface FileRouteTypes {
     | '/blog/$slug'
     | '/lowongan/$slug'
     | '/manifest/webmanifest'
+    | '/portfolio/$token'
     | '/robots/txt'
     | '/security/txt'
     | '/share/$token'
@@ -687,6 +699,7 @@ export interface RootRouteChildren {
   ApiAiCvReviewRoute: typeof ApiAiCvReviewRoute
   ApiHeadersCheckRoute: typeof ApiHeadersCheckRoute
   ManifestWebmanifestRoute: typeof ManifestWebmanifestRoute
+  PortfolioTokenRoute: typeof PortfolioTokenRoute
   RobotsTxtRoute: typeof RobotsTxtRoute
   SecurityTxtRoute: typeof SecurityTxtRoute
   ShareTokenRoute: typeof ShareTokenRoute
@@ -868,6 +881,13 @@ declare module '@tanstack/react-router' {
       path: '/robots/txt'
       fullPath: '/robots/txt'
       preLoaderRoute: typeof RobotsTxtRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/portfolio/$token': {
+      id: '/portfolio/$token'
+      path: '/portfolio/$token'
+      fullPath: '/portfolio/$token'
+      preLoaderRoute: typeof PortfolioTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/manifest/webmanifest': {
@@ -1207,6 +1227,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAiCvReviewRoute: ApiAiCvReviewRoute,
   ApiHeadersCheckRoute: ApiHeadersCheckRoute,
   ManifestWebmanifestRoute: ManifestWebmanifestRoute,
+  PortfolioTokenRoute: PortfolioTokenRoute,
   RobotsTxtRoute: RobotsTxtRoute,
   SecurityTxtRoute: SecurityTxtRoute,
   ShareTokenRoute: ShareTokenRoute,

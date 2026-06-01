@@ -215,7 +215,9 @@ function RootShell({ children }: { children: React.ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const routerState = useRouterState();
-  const isSharePage = routerState.location.pathname.startsWith("/share/");
+  const isSharePage =
+    routerState.location.pathname.startsWith("/share/") ||
+    routerState.location.pathname.startsWith("/portfolio/");
 
   return (
     <QueryClientProvider client={queryClient}>

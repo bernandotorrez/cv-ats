@@ -243,12 +243,15 @@ function CvListPage() {
     }
   };
 
-  const handleCopyShareLink = async () => {
+  const handleCopyShareLink = async (kind: "cv" | "portfolio" = "cv") => {
     if (!shareCv?.share_token) return;
-    const link = `https://cvpintar.web.id/share/${shareCv.share_token}`;
+    const link =
+      kind === "portfolio"
+        ? `https://cvpintar.web.id/portfolio/${shareCv.share_token}`
+        : `https://cvpintar.web.id/share/${shareCv.share_token}`;
     await navigator.clipboard.writeText(link);
     setCopied(true);
-    toast.success("Link disalin!");
+    toast.success(kind === "portfolio" ? "Link portfolio disalin!" : "Link CV disalin!");
     setTimeout(() => setCopied(false), 2000);
   };
 
@@ -277,8 +280,8 @@ function CvListPage() {
               Semua CV kamu, rapi dan siap dipakai untuk role yang berbeda.
             </h1>
             <p className="mt-3 max-w-2xl text-sm leading-7 text-muted-foreground sm:text-base">
-              Buat versi CV, cek skor ATS, aktifkan portfolio publik, dan lanjutkan ke AI tools
-              tanpa kehilangan konteks.
+              Buat versi CV, cek skor ATS, aktifkan shared CV atau portfolio publik, dan lanjutkan
+              ke AI tools tanpa kehilangan konteks.
             </p>
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
               <Button
@@ -401,8 +404,8 @@ function CvListPage() {
             </h2>
           </div>
           <p className="max-w-md text-sm leading-6 text-muted-foreground">
-            Setiap kartu punya shortcut untuk edit, scoring, review, AI tools, portfolio, dan
-            persiapan interview.
+            Setiap kartu punya shortcut untuk edit, scoring, review, AI tools, shared CV, portfolio,
+            dan persiapan interview.
           </p>
         </div>
 
@@ -552,26 +555,52 @@ function CvListPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-lg">
               <Share2 className="h-5 w-5 text-primary" />
-              Portfolio siap dibagikan
+              Link CV dan portfolio siap dibagikan
             </DialogTitle>
             <DialogDescription className="text-sm">
-              Bagikan link ini agar orang lain bisa melihat portfolio dan CV{" "}
-              <strong>{shareCv?.title}</strong> kamu.
+              Pilih link CV-only atau portfolio publik untuk <strong>{shareCv?.title}</strong>.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <Input
-                ref={shareInputRef}
-                readOnly
-                value={`https://cvpintar.web.id/share/${shareCv?.share_token || ""}`}
-                className="h-10 font-mono text-sm"
-                onClick={(e) => (e.target as HTMLInputElement).select()}
-              />
-              <Button size="sm" className="h-10 shrink-0 gap-1.5" onClick={handleCopyShareLink}>
-                {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                {copied ? "Tersalin" : "Salin"}
-              </Button>
+            <div className="space-y-2">
+              <p className="text-xs font-semibold text-muted-foreground">Shared CV</p>
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Input
+                  ref={shareInputRef}
+                  readOnly
+                  value={`https://cvpintar.web.id/share/${shareCv?.share_token || ""}`}
+                  className="h-10 font-mono text-sm"
+                  onClick={(e) => (e.target as HTMLInputElement).select()}
+                />
+                <Button
+                  size="sm"
+                  className="h-10 shrink-0 gap-1.5"
+                  onClick={() => handleCopyShareLink("cv")}
+                >
+                  {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                  Salin
+                </Button>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <p className="text-xs font-semibold text-muted-foreground">Portfolio publik</p>
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Input
+                  readOnly
+                  value={`https://cvpintar.web.id/portfolio/${shareCv?.share_token || ""}`}
+                  className="h-10 font-mono text-sm"
+                  onClick={(e) => (e.target as HTMLInputElement).select()}
+                />
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-10 shrink-0 gap-1.5"
+                  onClick={() => handleCopyShareLink("portfolio")}
+                >
+                  <Copy className="h-4 w-4" />
+                  Salin
+                </Button>
+              </div>
             </div>
             <div className="flex items-center justify-between gap-3">
               <span className="text-xs text-muted-foreground">Bagikan via:</span>
@@ -586,11 +615,14 @@ function CvListPage() {
                   size="sm"
                   className="gap-1"
                   onClick={() =>
-                    window.open(`https://cvpintar.web.id/share/${shareCv?.share_token}`, "_blank")
+                    window.open(
+                      `https://cvpintar.web.id/portfolio/${shareCv?.share_token}`,
+                      "_blank",
+                    )
                   }
                 >
                   <ExternalLink className="h-3.5 w-3.5" />
-                  Buka
+                  Buka Portfolio
                 </Button>
               </div>
             </div>
@@ -746,7 +778,7 @@ function CvCard({
           ) : (
             <Share2 className="h-3.5 w-3.5" />
           )}
-          {cv.share_enabled ? "Portfolio Aktif" : "Portfolio"}
+          {cv.share_enabled ? "Link Aktif" : "Bagikan"}
         </Button>
         <Button
           size="icon"
