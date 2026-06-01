@@ -89,7 +89,7 @@ function CvListPage() {
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [shareCv, setShareCv] = useState<CvRow | null>(null);
   const [shareGenerating, setShareGenerating] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [copiedLink, setCopiedLink] = useState<"cv" | "portfolio" | null>(null);
   const shareInputRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async () => {
@@ -250,9 +250,9 @@ function CvListPage() {
         ? `https://cvpintar.web.id/portfolio/${shareCv.share_token}`
         : `https://cvpintar.web.id/share/${shareCv.share_token}`;
     await navigator.clipboard.writeText(link);
-    setCopied(true);
+    setCopiedLink(kind);
     toast.success(kind === "portfolio" ? "Link portfolio disalin!" : "Link CV disalin!");
-    setTimeout(() => setCopied(false), 2000);
+    setTimeout(() => setCopiedLink(null), 2000);
   };
 
   const handleDelete = async (id: string) => {
@@ -548,7 +548,7 @@ function CvListPage() {
         open={showShareDialog}
         onOpenChange={(open) => {
           setShowShareDialog(open);
-          if (!open) setCopied(false);
+          if (!open) setCopiedLink(null);
         }}
       >
         <DialogContent className="sm:max-w-md">
@@ -577,8 +577,12 @@ function CvListPage() {
                   className="h-10 shrink-0 gap-1.5"
                   onClick={() => handleCopyShareLink("cv")}
                 >
-                  {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                  Salin
+                  {copiedLink === "cv" ? (
+                    <Check className="h-4 w-4" />
+                  ) : (
+                    <Copy className="h-4 w-4" />
+                  )}
+                  {copiedLink === "cv" ? "Tersalin" : "Salin"}
                 </Button>
               </div>
             </div>
@@ -597,8 +601,12 @@ function CvListPage() {
                   className="h-10 shrink-0 gap-1.5"
                   onClick={() => handleCopyShareLink("portfolio")}
                 >
-                  <Copy className="h-4 w-4" />
-                  Salin
+                  {copiedLink === "portfolio" ? (
+                    <Check className="h-4 w-4" />
+                  ) : (
+                    <Copy className="h-4 w-4" />
+                  )}
+                  {copiedLink === "portfolio" ? "Tersalin" : "Salin"}
                 </Button>
               </div>
             </div>

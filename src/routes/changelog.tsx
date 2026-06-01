@@ -35,9 +35,9 @@ const changelog = [
   {
     version: APP_VERSION,
     date: "1 Juni 2026",
-    title: "AI Job Match Score dan Portfolio / Share Page",
+    title: "AI Job Match Score, Shared CV, dan Portfolio Page",
     summary:
-      "Update ini membantu pengguna mengecek kecocokan CV dengan lowongan, lalu membagikan profil profesional lewat portfolio publik yang lebih lengkap.",
+      "Update ini membantu pengguna mengecek kecocokan CV dengan lowongan, membagikan CV printable, dan membuat portfolio publik yang lebih kaya.",
     highlights: [
       {
         icon: FileSearch,
@@ -52,7 +52,12 @@ const changelog = [
       {
         icon: Share2,
         type: "Fitur baru",
-        text: "Meningkatkan Share Page menjadi portfolio publik dengan profil, skill, pengalaman, kontak, dan preview CV printable.",
+        text: "Menambahkan Portfolio Page terpisah di /portfolio yang berisi hero profil, skill, pengalaman, pendidikan, kontak, dan preview CV.",
+      },
+      {
+        icon: FileText,
+        type: "Peningkatan",
+        text: "Mempertahankan Shared CV di /share sebagai halaman khusus preview CV yang ringan, printable, dan mudah dibagikan.",
       },
       {
         icon: BadgeCheck,
