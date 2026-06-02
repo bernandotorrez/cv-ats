@@ -4,11 +4,13 @@ import {
   BadgeCheck,
   CheckCircle2,
   CreditCard,
+  FileSearch,
   FileText,
   Gift,
   LockKeyhole,
   MessageCircle,
   MessageSquareText,
+  RefreshCw,
   ShieldCheck,
   Sparkles,
   Star,
@@ -84,6 +86,7 @@ const tiers = [
       "30x guided mode / bulan",
       "10x cover letter / bulan",
       "10x CV review HR / bulan",
+      "20x AI Job Match Score / bulan",
       "20x keyword extractor / bulan",
       "50x AI chat / bulan",
       "Export PDF tanpa watermark",
@@ -109,6 +112,8 @@ const tiers = [
       "100x guided mode / bulan",
       "50x cover letter / bulan",
       "50x CV review HR / bulan",
+      "100x AI Job Match Score / bulan",
+      "30x Auto Tailor CV / bulan",
       "100x keyword extractor / bulan",
       "50x simulasi wawancara / bulan",
       "200x AI chat / bulan",
@@ -136,12 +141,12 @@ const quickFit = [
   {
     icon: Target,
     title: "Naik ke Starter",
-    desc: "Pilihan paling masuk akal kalau kamu sedang aktif apply beberapa lowongan.",
+    desc: "Pilihan paling masuk akal kalau kamu aktif apply dan ingin cek kecocokan CV dengan lowongan.",
   },
   {
     icon: Zap,
     title: "Pakai Pro",
-    desc: "Untuk banyak role, banyak versi CV, dan latihan interview yang lebih intens.",
+    desc: "Untuk banyak role, versi CV tailored, dan latihan interview yang lebih intens.",
   },
 ] as const;
 
@@ -152,6 +157,8 @@ const comparison = [
   ["ATS scoring", "1x", "10x", "50x"],
   ["Perbaiki teks AI", "5x", "50x", "200x"],
   ["Cover letter", "-", "10x", "50x"],
+  ["AI Job Match Score", "-", "20x", "100x"],
+  ["Auto Tailor CV", "-", "-", "30x"],
   ["Keyword extractor", "-", "20x", "100x"],
   ["Review CV HR", "-", "10x", "50x"],
   ["Simulasi wawancara", "-", "-", "50x"],
@@ -195,7 +202,7 @@ export const Route = createFileRoute("/harga")({
     buildSeo({
       title: "Harga CV Pintar - Mulai Gratis, Upgrade Saat Siap",
       description:
-        "Pilih paket CV Pintar: Free selamanya, Starter Rp 14.900/bulan, atau Pro Rp 39.000/bulan untuk AI CV, scoring ATS, review HR, cover letter, dan interview.",
+        "Pilih paket CV Pintar: Free selamanya, Starter Rp 14.900/bulan, atau Pro Rp 39.000/bulan untuk AI CV, scoring ATS, review HR, Job Match Score, Tailor CV, cover letter, dan interview.",
       path: "/harga",
       keywords: "harga cv builder, cv ats murah, langganan cv ai indonesia, paket cv pintar",
       jsonLd: [
@@ -242,7 +249,7 @@ function HargaPage() {
 
             <p className="mt-6 max-w-2xl text-lg leading-8 text-muted-foreground">
               Pilih paket sesuai ritme lamaranmu. Tidak ada kontrak panjang, tidak ada biaya
-              tersembunyi, dan kamu tetap bisa berhenti kapan saja.
+              tersembunyi, dan kamu bisa mengecek kecocokan CV dengan lowongan sebelum kirim.
             </p>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -288,6 +295,55 @@ function HargaPage() {
               </CardContent>
             </Card>
           ))}
+        </div>
+      </section>
+
+      <section className="border-y border-border/70 bg-card py-14 md:py-20">
+        <div className="container-page grid gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:items-center">
+          <div>
+            <Badge variant="secondary" className="mb-4 px-3 py-1.5">
+              Fitur lowongan
+            </Badge>
+            <h2 className="font-display text-3xl font-bold leading-tight text-foreground md:text-4xl">
+              Paket berbayar membantu CV kamu lebih pas ke lowongan target.
+            </h2>
+            <p className="mt-4 text-lg leading-8 text-muted-foreground">
+              Starter memberi kuota AI Job Match Score untuk mengecek kecocokan CV. Pro menambahkan
+              Auto Tailor CV agar kamu bisa membuat versi yang lebih relevan untuk tiap lowongan.
+            </p>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            {[
+              {
+                icon: FileSearch,
+                title: "AI Job Match Score",
+                tier: "Starter 20x, Pro 100x / bulan",
+                desc: "Bandingkan CV dengan lowongan dari database, URL, atau job description untuk melihat match score dan keyword gap.",
+              },
+              {
+                icon: RefreshCw,
+                title: "Auto Tailor CV",
+                tier: "Pro 30x / bulan",
+                desc: "AI menyesuaikan ringkasan, urutan skill, dan bullet pengalaman agar lebih relevan tanpa mengarang data.",
+              },
+            ].map((item) => (
+              <Card key={item.title} className="border-border/80 shadow-sm">
+                <CardContent className="p-6">
+                  <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                    <item.icon className="h-5 w-5" aria-hidden="true" />
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="font-display text-xl font-bold text-foreground">{item.title}</h3>
+                    <Badge className="bg-info text-info-foreground hover:bg-info">
+                      {item.tier}
+                    </Badge>
+                  </div>
+                  <p className="mt-3 leading-7 text-muted-foreground">{item.desc}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -576,14 +632,14 @@ function PriceSignal() {
             {[
               { icon: Wand2, title: "Banyak apply", desc: "50x saran AI dan 10x scoring" },
               {
-                icon: MessageSquareText,
-                title: "Lebih siap kirim",
-                desc: "Cover letter dan keyword extractor",
+                icon: FileSearch,
+                title: "Cek kecocokan",
+                desc: "20x AI Job Match Score / bulan",
               },
               {
-                icon: ShieldCheck,
-                title: "CV lebih percaya diri",
-                desc: "Review HR dan PDF bersih",
+                icon: MessageSquareText,
+                title: "Lebih siap kirim",
+                desc: "Cover letter, keyword extractor, dan review HR",
               },
             ].map((item) => (
               <div key={item.title} className="flex items-center gap-4 rounded-lg bg-muted/70 p-4">

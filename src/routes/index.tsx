@@ -6,6 +6,7 @@ import {
   CalendarClock,
   CheckCircle2,
   Download,
+  FileSearch,
   FileText,
   Gauge,
   LockKeyhole,
@@ -16,6 +17,7 @@ import {
   ShieldCheck,
   Sparkles,
   Star,
+  RefreshCw,
   TrendingUp,
   UserRoundCheck,
   Video,
@@ -99,6 +101,16 @@ const features = [
     icon: Search,
     title: "Keyword lowongan",
     desc: "Ambil kata kunci penting dari job description agar CV lebih relevan.",
+  },
+  {
+    icon: FileSearch,
+    title: "AI Job Match Score",
+    desc: "Cocokkan CV dengan lowongan untuk melihat skor kecocokan, keyword gap, dan prioritas perbaikan.",
+  },
+  {
+    icon: RefreshCw,
+    title: "Tailor CV untuk lowongan",
+    desc: "Sesuaikan ringkasan, skill, dan bullet pengalaman ke job description tanpa mengarang data.",
   },
   {
     icon: Briefcase,
@@ -216,7 +228,7 @@ function LandingPage() {
 
             <p className="mt-5 max-w-2xl break-words text-base leading-8 text-white/86 sm:text-lg">
               Buat CV ATS friendly, perkuat pesan dengan AI, cek skor, review dari perspektif HR,
-              lalu export PDF yang siap dikirim ke perusahaan impian.
+              sesuaikan ke lowongan target, lalu export PDF yang siap dikirim ke perusahaan impian.
             </p>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -326,6 +338,106 @@ function LandingPage() {
                 </CardContent>
               </Card>
             ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="container-page py-16 md:py-24">
+        <div className="grid gap-10 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
+          <div>
+            <Badge className="bg-info text-info-foreground hover:bg-info">
+              AI Job Match + Tailor CV
+            </Badge>
+            <h2 className="mt-4 font-display text-3xl font-bold tracking-tight md:text-4xl">
+              Jangan kirim CV yang sama ke semua lowongan.
+            </h2>
+            <p className="mt-4 text-base leading-8 text-muted-foreground">
+              Setelah punya CV dasar yang rapi, bandingkan CV dengan lowongan target. AI Job Match
+              Score menunjukkan seberapa cocok CV kamu, keyword yang belum muncul, dan bagian yang
+              perlu dinaikkan. Kalau sudah siap, Tailor CV membantu membuat versi yang lebih relevan
+              tanpa menambahkan pengalaman palsu.
+            </p>
+
+            <div className="mt-7 grid gap-3 sm:grid-cols-2">
+              {[
+                [
+                  FileSearch,
+                  "Cek kecocokan lowongan",
+                  "Lihat match score, keyword gap, dan rekomendasi perbaikan sebelum apply.",
+                ],
+                [
+                  RefreshCw,
+                  "Buat versi tailored",
+                  "Sesuaikan summary, skill, dan bullet pengalaman berdasarkan job description.",
+                ],
+              ].map(([Icon, title, desc]) => (
+                <div key={title as string} className="rounded-lg border border-border bg-card p-4">
+                  <Icon className="h-5 w-5 text-primary" aria-hidden />
+                  <h3 className="mt-3 text-sm font-semibold text-foreground">{title as string}</h3>
+                  <p className="mt-1 text-sm leading-6 text-muted-foreground">{desc as string}</p>
+                </div>
+              ))}
+            </div>
+
+            <Button asChild size="lg" className="mt-8 h-12 px-6 text-base">
+              <Link to="/harga">
+                Lihat paket Job Match
+                <ArrowRight className="h-4 w-4" aria-hidden />
+              </Link>
+            </Button>
+          </div>
+
+          <div className="rounded-lg border border-border bg-card p-4 shadow-xl shadow-primary/10">
+            <div className="rounded-md bg-background p-5">
+              <div className="flex flex-col gap-4 border-b border-border pb-5 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="grid h-14 w-14 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground">
+                    <FileSearch className="h-7 w-7" aria-hidden />
+                  </div>
+                  <div>
+                    <h3 className="font-display text-lg font-bold">Job Match Report</h3>
+                    <p className="text-sm text-muted-foreground">CV vs job description target</p>
+                  </div>
+                </div>
+                <Badge variant="secondary" className="w-fit">
+                  Match 78%
+                </Badge>
+              </div>
+
+              <div className="mt-5 grid gap-4 sm:grid-cols-[0.8fr_1.2fr]">
+                <div className="rounded-lg bg-primary p-5 text-primary-foreground">
+                  <p className="text-sm font-medium text-primary-foreground/85">Kesiapan apply</p>
+                  <div className="mt-3 font-display text-5xl font-bold">78%</div>
+                  <p className="mt-2 text-sm leading-6 text-primary-foreground/90">
+                    Cukup kuat, tapi masih bisa naik dengan keyword dan bukti impact yang lebih
+                    tepat.
+                  </p>
+                </div>
+
+                <div className="space-y-3">
+                  {[
+                    ["Keyword cocok", "Project management, reporting, stakeholder."],
+                    ["Keyword gap", "Budgeting, vendor management, risk tracking."],
+                    ["Tailor next", "Naikkan bullet pengalaman yang paling relevan."],
+                  ].map(([title, desc]) => (
+                    <div key={title} className="rounded-lg border border-border bg-card p-4">
+                      <p className="text-sm font-semibold text-foreground">{title}</p>
+                      <p className="mt-1 text-sm leading-6 text-muted-foreground">{desc}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mt-5 rounded-lg bg-info p-4">
+                <div className="flex items-start gap-3">
+                  <RefreshCw className="mt-0.5 h-5 w-5 shrink-0 text-info-foreground" aria-hidden />
+                  <p className="text-sm leading-6 text-info-foreground">
+                    Tailor CV menjaga fakta tetap sama, lalu mengatur ulang pesan agar lebih dekat
+                    dengan kebutuhan lowongan.
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
