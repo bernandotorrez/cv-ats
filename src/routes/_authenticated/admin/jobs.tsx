@@ -73,7 +73,7 @@ export const Route = createFileRoute("/_authenticated/admin/jobs")({
 
 const PAGE_SIZE = 10;
 
-type Source = "linkedin" | "jobstreet" | "glints" | "kalibrr" | "google";
+type Source = "jobstreet" | "glints" | "kalibrr" | "dealls" | "google";
 
 type JobType = "full-time" | "part-time" | "contract" | "internship";
 type JobLevel = "entry" | "mid" | "senior" | "manager" | "director";
@@ -216,10 +216,10 @@ const emptyForm: JobForm = {
 };
 
 const sourceOptions: Array<{ value: Source; label: string }> = [
-  { value: "linkedin", label: "LinkedIn" },
   { value: "jobstreet", label: "JobStreet" },
   { value: "glints", label: "Glints" },
   { value: "kalibrr", label: "Kalibrr" },
+  { value: "dealls", label: "Dealls" },
   { value: "google", label: "Google" },
 ];
 
@@ -227,7 +227,13 @@ function AdminJobsPage() {
   const [query, setQuery] = useState("Frontend Developer");
   const [location, setLocation] = useState("Indonesia");
   const [limit, setLimit] = useState("8");
-  const [sources, setSources] = useState<Source[]>(["linkedin", "jobstreet", "glints", "kalibrr"]);
+  const [sources, setSources] = useState<Source[]>([
+    "jobstreet",
+    "glints",
+    "kalibrr",
+    "dealls",
+    "google",
+  ]);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<SearchResponse | null>(null);
   const [jobs, setJobs] = useState<JobListing[]>([]);

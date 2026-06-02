@@ -1,7 +1,3 @@
-CREATE EXTENSION IF NOT EXISTS pg_cron WITH SCHEMA pg_catalog;
-CREATE EXTENSION IF NOT EXISTS pg_net WITH SCHEMA extensions;
-CREATE EXTENSION IF NOT EXISTS supabase_vault WITH SCHEMA vault;
-
 CREATE OR REPLACE FUNCTION public.enqueue_viral_job_search_cron()
 RETURNS void
 LANGUAGE plpgsql
@@ -74,18 +70,3 @@ $$;
 
 REVOKE ALL ON FUNCTION public.enqueue_viral_job_search_cron() FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.enqueue_viral_job_search_cron() TO postgres;
-
-DO $$
-BEGIN
-  PERFORM cron.unschedule('cvpintar-viral-job-search-every-3-hours');
-EXCEPTION
-  WHEN OTHERS THEN
-    NULL;
-END;
-$$;
-
-SELECT cron.schedule(
-  'cvpintar-viral-job-search-every-3-hours',
-  '17 */3 * * *',
-  'SELECT public.enqueue_viral_job_search_cron();'
-);
