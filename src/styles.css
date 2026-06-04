@@ -245,6 +245,14 @@
 @media print {
   body { background: white !important; }
   .print\:hidden { display: none !important; }
+  [id*="benix" i],
+  [class*="benix" i],
+  iframe[src*="benixai.web.id" i],
+  iframe[src*="benix-cs-widget" i] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+  }
   .cv-print-area { padding: 0 !important; }
   .cv-print-area > div { 
     border: 0 !important; 
