@@ -37,7 +37,7 @@ function AuthGate() {
   }
 
   return (
-    <div className="pb-[calc(6.75rem+env(safe-area-inset-bottom))] md:pb-0">
+    <div className="pb-[calc(6.75rem+env(safe-area-inset-bottom))] print:pb-0 md:pb-0">
       <Outlet />
       <AuthenticatedBottomNav />
     </div>
@@ -84,7 +84,7 @@ function AuthenticatedBottomNav() {
   });
 
   return (
-    <nav className="fixed bottom-4 left-3 right-[4.75rem] z-40 pb-[env(safe-area-inset-bottom)] md:hidden">
+    <nav className="fixed bottom-4 left-3 right-[4.75rem] z-40 pb-[env(safe-area-inset-bottom)] print:hidden md:hidden">
       <div className="grid grid-cols-5 items-end gap-1 rounded-[1.75rem] border border-white/60 bg-white/70 px-1.5 py-1.5 text-foreground shadow-[0_18px_45px_rgba(15,23,42,0.18)] backdrop-blur-2xl ring-1 ring-black/5 supports-[backdrop-filter]:bg-white/55">
         {bottomNavItems.map((item) => {
           const Icon = item.icon;
