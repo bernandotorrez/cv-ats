@@ -216,7 +216,7 @@ function LandingPage() {
           <div className="w-full max-w-4xl">
             <Badge className="gap-1.5 border-white/20 bg-white/15 text-white hover:bg-white/15">
               <Sparkles className="h-3.5 w-3.5" aria-hidden />
-              Dari CV siap kirim ke kabar diterima kerja
+              Dari CV kosong jadi ATS-friendly, sampai siap menyambut kabar diterima kerja
             </Badge>
 
             <h1 className="mt-5 max-w-4xl break-words font-display text-4xl font-extrabold leading-[1.04] tracking-tight text-white sm:text-5xl lg:text-7xl">
@@ -227,8 +227,8 @@ function LandingPage() {
             </h1>
 
             <p className="mt-5 max-w-2xl break-words text-base leading-8 text-white/86 sm:text-lg">
-              Buat CV ATS friendly, perkuat pesan dengan AI, cek skor, review dari perspektif HR,
-              sesuaikan ke lowongan target, lalu export PDF yang siap dikirim ke perusahaan impian.
+              Mulai dari template ATS, saran AI, skor CV, review ala HR, Job Match, Auto Tailor CV,
+              sampai cover letter dan export PDF/DOCX yang siap dikirim.
             </p>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">

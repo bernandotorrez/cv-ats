@@ -174,44 +174,38 @@ function AdminUsersPage() {
     if (!editUser) return;
     setSaving(true);
 
-    // Update tier — change the tier_id on user_subscriptions
-    // Find the tier_id for the selected slug
-    const { data: tierData } = await supabase
-      .from("subscription_tiers")
-      .select("id")
-      .eq("slug", editTier)
-      .single();
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData.session?.access_token;
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 
-    if (tierData) {
-      const { error: tierErr } = await supabase
-        .from("user_subscriptions")
-        .update({ tier_id: tierData.id })
-        .eq("user_id", editUser.id)
-        .eq("status", "active");
-
-      if (tierErr) {
-        toast.error(tierErr.message);
-        setSaving(false);
-        return;
-      }
+    if (!token || !supabaseUrl) {
+      toast.error("Session admin tidak valid. Silakan login ulang.");
+      setSaving(false);
+      return;
     }
 
-    // Update role (delete old, insert new)
-    if (editRole !== editUser.role) {
-      await supabase
-        .from("user_roles")
-        .delete()
-        .eq("user_id", editUser.id)
-        .eq("role", editUser.role);
-      if (editRole === "admin") {
-        await supabase.from("user_roles").insert({ user_id: editUser.id, role: "admin" });
-      } else {
-        await supabase.from("user_roles").insert({ user_id: editUser.id, role: "user" });
-      }
+    const response = await fetch(`${supabaseUrl}/functions/v1/admin-users`, {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        userId: editUser.id,
+        tier: editTier,
+        role: editRole,
+      }),
+    });
 
-      // SECURITY: Invalidate admin cache for this user
-      invalidateAdminCache(editUser.id);
+    const data = (await response.json().catch(() => ({}))) as { error?: string };
+
+    if (!response.ok || data.error) {
+      toast.error(data.error || "Gagal mengupdate user");
+      setSaving(false);
+      return;
     }
+
+    if (editRole !== editUser.role) invalidateAdminCache(editUser.id);
 
     toast.success(`User ${editUser.full_name || editUser.id.slice(0, 8)} diupdate`);
     setEditUser(null);

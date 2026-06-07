@@ -27,6 +27,15 @@ type AdminUsersPageRow = {
   total_count?: number | null;
 };
 
+type UpdateUserRequest = {
+  userId?: string;
+  tier?: string;
+  role?: string;
+};
+
+const VALID_TIERS = new Set(["free", "starter", "pro"]);
+const VALID_ROLES = new Set(["user", "admin"]);
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders(req) });
@@ -46,6 +55,15 @@ Deno.serve(async (req: Request) => {
     if (roleError) throw roleError;
     if (!requesterRole) {
       return json(req, { error: "Forbidden" }, 403);
+    }
+
+    if (req.method === "PATCH") {
+      const result = await updateUser(req, admin);
+      return json(req, result);
+    }
+
+    if (req.method !== "GET") {
+      return json(req, { error: "Method not allowed" }, 405);
     }
 
     const url = new URL(req.url);
@@ -111,6 +129,93 @@ Deno.serve(async (req: Request) => {
     return json(req, { error: message }, message.startsWith("Unauthorized") ? 401 : 500);
   }
 });
+
+async function updateUser(req: Request, admin: ReturnType<typeof getAdminClient>) {
+  const body = (await req.json().catch(() => ({}))) as UpdateUserRequest;
+  const userId = (body.userId || "").trim();
+  const tier = (body.tier || "").trim().toLowerCase();
+  const role = (body.role || "").trim().toLowerCase();
+
+  if (!isUuid(userId)) {
+    throw new Error("User ID tidak valid");
+  }
+  if (!VALID_TIERS.has(tier)) {
+    throw new Error("Tier tidak valid");
+  }
+  if (!VALID_ROLES.has(role)) {
+    throw new Error("Role tidak valid");
+  }
+
+  const { data: tierData, error: tierError } = await admin
+    .from("subscription_tiers")
+    .select("id")
+    .eq("slug", tier)
+    .single();
+
+  if (tierError || !tierData) {
+    throw new Error("Tier subscription tidak ditemukan");
+  }
+
+  const now = new Date();
+  const defaultEnd = new Date(now);
+  defaultEnd.setFullYear(defaultEnd.getFullYear() + (tier === "free" ? 100 : 1));
+
+  const { data: activeSub, error: activeSubError } = await admin
+    .from("user_subscriptions")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("status", "active")
+    .order("date_end", { ascending: false, nullsFirst: false })
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (activeSubError) throw activeSubError;
+
+  if (activeSub?.id) {
+    const subscriptionUpdate: Record<string, string> = {
+      tier_id: tierData.id,
+      status: "active",
+    };
+    if (tier === "free") {
+      subscriptionUpdate.date_end = defaultEnd.toISOString();
+    }
+
+    const { error: updateSubError } = await admin
+      .from("user_subscriptions")
+      .update(subscriptionUpdate)
+      .eq("id", activeSub.id);
+
+    if (updateSubError) throw updateSubError;
+  } else {
+    const { error: insertSubError } = await admin.from("user_subscriptions").insert({
+      user_id: userId,
+      tier_id: tierData.id,
+      status: "active",
+      date_start: now.toISOString(),
+      date_end: defaultEnd.toISOString(),
+      provider: "manual",
+    });
+
+    if (insertSubError) throw insertSubError;
+  }
+
+  const { error: insertRoleError } = await admin
+    .from("user_roles")
+    .upsert({ user_id: userId, role }, { onConflict: "user_id,role" });
+
+  if (insertRoleError) throw insertRoleError;
+
+  const oldRole = role === "admin" ? "user" : "admin";
+  const { error: deleteOldRoleError } = await admin
+    .from("user_roles")
+    .delete()
+    .eq("user_id", userId)
+    .eq("role", oldRole);
+  if (deleteOldRoleError) throw deleteOldRoleError;
+
+  return { ok: true, userId, tier, role };
+}
 
 async function buildUserRows(admin: ReturnType<typeof getAdminClient>, authUsers: AuthUser[]) {
   const userIds = authUsers.map((user) => user.id);
@@ -191,6 +296,10 @@ function json(req: Request, body: unknown, status = 200) {
 function clampNumber(value: number, min: number, max: number) {
   if (!Number.isFinite(value)) return min;
   return Math.min(Math.max(Math.floor(value), min), max);
+}
+
+function isUuid(value: string) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 }
 
 function getMonthStartIso() {
