@@ -1,8 +1,9 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Menu, FileText, X, LayoutDashboard } from "lucide-react";
-import { useState } from "react";
+import { Menu, FileText, X, LayoutDashboard, ShieldCheck } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-context";
+import { isAdmin } from "@/lib/admin";
 import { cn } from "@/lib/utils";
 
 const nav = [
@@ -17,9 +18,27 @@ const nav = [
 
 export function SiteHeader() {
   const [open, setOpen] = useState(false);
+  const [admin, setAdmin] = useState(false);
   const { user, signOut } = useAuth();
   const routerState = useRouterState();
   const isNavigating = routerState.isLoading;
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (!user) {
+      setAdmin(false);
+      return;
+    }
+
+    isAdmin(user.id).then((ok) => {
+      if (!cancelled) setAdmin(ok);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
 
   return (
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/70 print:hidden">
@@ -58,6 +77,13 @@ export function SiteHeader() {
         <div className="hidden items-center gap-2 md:flex">
           {user ? (
             <>
+              {admin && (
+                <Button asChild variant="ghost" size="sm">
+                  <Link to="/admin">
+                    <ShieldCheck className="h-4 w-4" /> Admin
+                  </Link>
+                </Button>
+              )}
               <Button asChild variant="ghost" size="sm">
                 <Link to="/dashboard">
                   <LayoutDashboard className="h-4 w-4" /> Dashboard
@@ -108,6 +134,13 @@ export function SiteHeader() {
             <div className="mt-2 flex flex-col gap-2">
               {user ? (
                 <>
+                  {admin && (
+                    <Button asChild variant="outline">
+                      <Link to="/admin" onClick={() => setOpen(false)}>
+                        <ShieldCheck className="h-4 w-4" /> Admin
+                      </Link>
+                    </Button>
+                  )}
                   <Button asChild>
                     <Link to="/dashboard" onClick={() => setOpen(false)}>
                       <LayoutDashboard className="h-4 w-4" /> Dashboard

@@ -15,6 +15,7 @@ import appCss from "../styles.css?url";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { BenixCsWidget } from "@/components/site/BenixCsWidget";
+import { FakeBuyerCard } from "@/components/site/FakeBuyerCard";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/lib/auth-context";
 import { Skeleton } from "@/components/ui/skeleton-loading";
@@ -223,9 +224,26 @@ function RootShell({ children }: { children: React.ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const routerState = useRouterState();
-  const isSharePage =
-    routerState.location.pathname.startsWith("/share/") ||
-    routerState.location.pathname.startsWith("/portfolio/");
+  const pathname = routerState.location.pathname;
+  const isSharePage = pathname.startsWith("/share/") || pathname.startsWith("/portfolio/");
+  const authenticatedRoutePrefixes = [
+    "/admin",
+    "/akun",
+    "/analitik",
+    "/compare",
+    "/cv",
+    "/cv-review",
+    "/dashboard",
+    "/job-match",
+    "/lamaran",
+    "/referral",
+    "/score",
+    "/simulasi-wawancara",
+    "/tools",
+  ];
+  const isAuthenticatedRoute = authenticatedRoutePrefixes.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+  );
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -246,6 +264,7 @@ function RootComponent() {
         <Toaster />
         <Analytics />
         <BenixCsWidget disabled={isSharePage} />
+        <FakeBuyerCard disabled={isSharePage || isAuthenticatedRoute} />
       </AuthProvider>
     </QueryClientProvider>
   );
