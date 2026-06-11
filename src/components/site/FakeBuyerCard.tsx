@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { BriefcaseBusiness, Sparkles, X } from "lucide-react";
+import { ArrowRight, BriefcaseBusiness, Sparkles, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { cn } from "@/lib/utils";
@@ -232,7 +232,7 @@ export function FakeBuyerCard({ disabled = false }: { disabled?: boolean }) {
 
             <Link
               to="/harga"
-              className="mt-1.5 inline-flex max-w-full items-center gap-2 text-left text-base font-semibold leading-snug text-primary transition-colors hover:text-primary/80 sm:text-lg"
+              className="mt-2 flex max-w-full items-center gap-2 text-left text-base font-semibold leading-snug text-primary transition-colors hover:text-primary/80 sm:text-lg"
             >
               <BriefcaseBusiness className="h-4 w-4 shrink-0" aria-hidden="true" />
               <span className="truncate">{productName}</span>
@@ -240,9 +240,10 @@ export function FakeBuyerCard({ disabled = false }: { disabled?: boolean }) {
 
             <Link
               to="/harga"
-              className="mt-1.5 inline-flex text-sm font-semibold text-teal-600 transition-colors hover:text-teal-700"
+              className="mt-3 flex w-fit items-center gap-1.5 rounded-full bg-teal-50 px-3 py-1.5 text-sm font-semibold text-teal-700 transition-colors hover:bg-teal-100 hover:text-teal-800"
             >
-              Lihat Paket -&gt;
+              Lihat Paket
+              <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
             </Link>
           </div>
 
