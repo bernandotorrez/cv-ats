@@ -715,6 +715,60 @@ function DashboardPage() {
         }}
       />
 
+      {/* ── CV Kamu ── */}
+      <RecentCvs cvs={cvs} loading={loading} onCreateCv={() => setShowCreateDialog(true)} />
+
+      {/* ── Stats Strip ── */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {[
+          {
+            label: "Total CV",
+            value: cvCount,
+            suffix: limits.maxCvs ? `/ ${limits.maxCvs}` : "",
+            icon: FileText,
+            color: "text-primary bg-primary/10",
+            note: cvCount === 0 ? "Belum ada CV" : cvCount === 1 ? "1 CV tersimpan" : `${cvCount} CV tersimpan`,
+          },
+          {
+            label: "AI digunakan",
+            value: aiUsageCount + scoreUsageCount,
+            suffix: "kali",
+            icon: Sparkles,
+            color: "text-violet-700 bg-violet-500/10",
+            note: "Bulan ini",
+          },
+          {
+            label: "Skor ATS",
+            value: scoreUsageCount,
+            suffix: "x dicek",
+            icon: BarChart3,
+            color: "text-amber-700 bg-amber-500/10",
+            note: scoreUsageCount === 0 ? "Belum pernah cek" : "Bulan ini",
+          },
+          {
+            label: "Paket",
+            value: tierName,
+            suffix: "",
+            icon: Crown,
+            color: tier === "pro" ? "text-amber-700 bg-amber-500/10" : tier === "starter" ? "text-blue-700 bg-blue-500/10" : "text-muted-foreground bg-muted",
+            note: tier === "free" ? "Upgrade tersedia" : "Aktif",
+          },
+        ].map((stat) => (
+          <div key={stat.label} className="rounded-xl border bg-card px-4 py-3 shadow-sm flex items-center gap-3">
+            <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${stat.color}`}>
+              <stat.icon className="h-4 w-4" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs text-muted-foreground">{stat.label}</p>
+              <p className="font-bold text-sm text-foreground truncate">
+                {stat.value}{stat.suffix && <span className="text-xs font-normal text-muted-foreground ml-1">{stat.suffix}</span>}
+              </p>
+              <p className="text-[10px] text-muted-foreground/70 truncate">{stat.note}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
       {/* ── Tier Status + Usage Accordion ── */}
       <details className={cn(
         "rounded-xl border shadow-sm",
@@ -812,9 +866,6 @@ function DashboardPage() {
             onFeatureClick={handleFeatureClick}
             onUpgrade={() => navigate({ to: "/harga" as never })}
           />
-
-          {/* Recent CVs Panel */}
-          <RecentCvs cvs={cvs} loading={loading} onCreateCv={() => setShowCreateDialog(true)} />
         </div>
 
         {/* ── Right Column ── */}

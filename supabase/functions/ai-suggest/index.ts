@@ -91,9 +91,15 @@ ${currentContent ? `Skill saat ini: ${currentContent}\nBuat opsi dengan fokus be
 ${additionalContext ? `Konteks: ${additionalContext}` : ""}
 ${regenerateIndex !== undefined ? `Opsi ke-${regenerateIndex + 1} sebelumnya kurang cocok. Buatkan opsi baru.` : ""}
 
+ATURAN PENTING:
+- Setiap opsi berisi 12-20 skill PENDEK, 1-3 kata per skill (contoh: "React", "Node.js", "REST API", "Problem Solving")
+- JANGAN tulis kalimat panjang, JANGAN tambahkan deskripsi
+- Pisahkan setiap skill dengan koma: "React, Node.js, MySQL, REST API"
+- Campur hard skill (teknis) dan soft skill yang relevan
+
 OUTPUT FORMAT (JSON):
-[{"option": "skill1\\nskill2\\nskill3\\nskill4", "explanation": "fokus opsi ini"}, ...]
-HANYA JSON array.`,
+[{"option": "Skill1, Skill2, Skill3, Skill4, Skill5", "explanation": "fokus opsi ini"}, ...]
+HANYA JSON array, tanpa markdown.`,
     };
 
     const prompt = prompts[section] || prompts.summary;

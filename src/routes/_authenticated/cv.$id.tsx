@@ -1862,10 +1862,12 @@ function EditorForm({
           acceptedIndex={suggestionPanel.acceptedIndex}
           onAccept={(i, opt) => {
             const accepted = onAcceptSuggestion(i, opt);
+            // Support both comma-separated ("React, Node.js") and newline-separated formats
+            const separator = accepted.includes("\n") ? "\n" : ",";
             const names = accepted
-              .split("\n")
-              .filter(Boolean)
-              .map((n: string) => n.trim());
+              .split(separator)
+              .map((n: string) => n.trim())
+              .filter(Boolean);
             setData((d) => ({
               ...d,
               skills: names.map((name) => ({ id: uid(), name, level: "Intermediate" as const })),

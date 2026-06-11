@@ -42,6 +42,40 @@ export function DashboardSkeleton() {
         </div>
       </section>
 
+      {/* ── Recent CVs Skeleton ── */}
+      <section className="rounded-2xl border bg-card shadow-sm overflow-hidden">
+        <div className="px-5 py-4 border-b border-border/60 flex items-center justify-between">
+          <Skeleton className="h-5 w-24" />
+          <Skeleton className="h-8 w-24 rounded-lg" />
+        </div>
+        <div className="p-4 space-y-3">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="flex items-center gap-3 rounded-xl border bg-background px-4 py-3">
+              <Skeleton className="h-10 w-10 shrink-0 rounded-xl" />
+              <div className="flex-1 min-w-0">
+                <Skeleton className="h-4 w-36 mb-1.5" />
+                <Skeleton className="h-3 w-24" />
+              </div>
+              <Skeleton className="h-4 w-4 shrink-0" />
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── Stats Strip Skeleton ── */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {[1, 2, 3, 4].map((i) => (
+          <div key={i} className="rounded-xl border bg-card px-4 py-3 shadow-sm flex items-center gap-3">
+            <Skeleton className="h-9 w-9 shrink-0 rounded-lg" />
+            <div className="min-w-0 flex-1">
+              <Skeleton className="h-3 w-16 mb-1.5" />
+              <Skeleton className="h-4 w-12 mb-1" />
+              <Skeleton className="h-2.5 w-20" />
+            </div>
+          </div>
+        ))}
+      </div>
+
       {/* ── Tier Accordion Skeleton ── */}
       <div className="rounded-xl border bg-card shadow-sm px-4 py-3">
         <div className="flex items-center gap-3.5">
@@ -82,26 +116,6 @@ export function DashboardSkeleton() {
                     <Skeleton className="h-3 w-4/5" />
                   </div>
                 </article>
-              ))}
-            </div>
-          </section>
-
-          {/* Recent CVs Skeleton */}
-          <section className="rounded-2xl border bg-card shadow-sm overflow-hidden">
-            <div className="px-5 py-4 border-b border-border/60 flex items-center justify-between">
-              <Skeleton className="h-5 w-24" />
-              <Skeleton className="h-8 w-24 rounded-lg" />
-            </div>
-            <div className="p-4 space-y-3">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="flex items-center gap-3 rounded-xl border bg-background px-4 py-3">
-                  <Skeleton className="h-10 w-10 shrink-0 rounded-xl" />
-                  <div className="flex-1 min-w-0">
-                    <Skeleton className="h-4 w-36 mb-1.5" />
-                    <Skeleton className="h-3 w-24" />
-                  </div>
-                  <Skeleton className="h-4 w-4 shrink-0" />
-                </div>
               ))}
             </div>
           </section>
