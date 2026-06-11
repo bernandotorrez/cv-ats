@@ -16,7 +16,7 @@ const DEFAULT_SECTION_ORDER = [
   { id: "education", label: "Pendidikan" },
   { id: "experience", label: "Pengalaman Kerja" },
   { id: "skills", label: "Keahlian" },
-  { id: "extras", label: "Bahasa & Sertifikat" },
+  { id: "languages", label: "Bahasa" },
 ] as const;
 
 export function MedanTemplate({ data, showHeader = true, sectionOrder, language = "id" }: Props) {
@@ -87,29 +87,27 @@ export function MedanTemplate({ data, showHeader = true, sectionOrder, language 
         }
         return null;
 
-      case "extras":
-        const extrasContent: React.ReactNode[] = [];
+      case "languages":
         if (languages.length > 0) {
-          extrasContent.push(
-            <p key="languages" style={{ marginBottom: languages.length > 0 && certificates.length > 0 ? 4 : 0 }}>
-              <strong>{t(language, 'languages')}:</strong> {languages.map((l) => `${l.name} (${l.level})`).join(" • ")}
-            </p>
-          );
-        }
-        if (certificates.length > 0) {
-          extrasContent.push(
-            <div key="certificates" style={{ marginBottom: 4 }}>
-              <strong>{t(language, 'certificates')}:</strong>
-              {certificates.map((c) => (
-                <div key={c.id} style={{ marginLeft: 8 }}>{c.name} — {c.issuer} <span style={{ color: "#555" }}>({c.date})</span></div>
-              ))}
-            </div>
-          );
-        }
-        if (extrasContent.length > 0) {
           return (
-            <Section key="extras" title={t(language, 'languagesAndCertificates')}>
-              {extrasContent}
+            <Section key="languages" title={t(language, 'languages')}>
+              <p style={{ fontSize: "10pt" }}>
+                {languages.map((l) => `${l.name} (${l.level})`).join(" • ")}
+              </p>
+            </Section>
+          );
+        }
+        return null;
+
+      case "certificate":
+        if (certificates.length > 0) {
+          return (
+            <Section key="certificate" title={t(language, 'certificates')}>
+              {certificates.map((c) => (
+                <div key={c.id} style={{ marginBottom: 4 }}>
+                  {c.name} — {c.issuer} <span style={{ color: "#555" }}>({c.date})</span>
+                </div>
+              ))}
             </Section>
           );
         }

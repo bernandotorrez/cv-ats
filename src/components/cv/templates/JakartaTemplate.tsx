@@ -16,7 +16,7 @@ const DEFAULT_SECTION_ORDER = [
   { id: "education", label: "Pendidikan" },
   { id: "experience", label: "Pengalaman Kerja" },
   { id: "skills", label: "Keahlian" },
-  { id: "extras", label: "Bahasa & Sertifikat" },
+  { id: "languages", label: "Bahasa" },
 ] as const;
 
 export function JakartaTemplate({ data, showHeader = true, sectionOrder, language = "id" }: Props) {
@@ -103,32 +103,27 @@ export function JakartaTemplate({ data, showHeader = true, sectionOrder, languag
         }
         return null;
 
-      case "extras":
-        // Extras section contains languages and certificates
-        const extrasContent: React.ReactNode[] = [];
+      case "languages":
         if (languages.length > 0) {
-          extrasContent.push(
-            <p key="languages" style={{ marginBottom: languages.length > 0 && certificates.length > 0 ? 4 : 0 }}>
-              <strong>{t(language, 'languages')}:</strong> {languages.map((l) => `${l.name} (${l.level})`).join(" • ")}
-            </p>
+          return (
+            <Section key="languages" title={t(language, 'languages')}>
+              <p>
+                {languages.map((l) => `${l.name} (${l.level})`).join(" • ")}
+              </p>
+            </Section>
           );
         }
+        return null;
+
+      case "certificate":
         if (certificates.length > 0) {
-          extrasContent.push(
-            <div key="certificates" style={{ marginBottom: 4 }}>
-              <strong>{t(language, 'certificates')}:</strong>
+          return (
+            <Section key="certificate" title={t(language, 'certificates')}>
               {certificates.map((c) => (
-                <div key={c.id} style={{ marginLeft: 8 }}>
+                <div key={c.id} style={{ marginBottom: 4 }}>
                   {c.name} — {c.issuer} <span style={{ color: "#555" }}>({c.date})</span>
                 </div>
               ))}
-            </div>
-          );
-        }
-        if (extrasContent.length > 0) {
-          return (
-            <Section key="extras" title={t(language, 'languagesAndCertificates')}>
-              {extrasContent}
             </Section>
           );
         }

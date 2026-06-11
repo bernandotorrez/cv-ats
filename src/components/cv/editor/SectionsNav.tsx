@@ -49,7 +49,7 @@ interface Props {
   renderSectionContent?: (sectionId: string) => React.ReactNode;
 }
 
-const OPTIONAL_SECTIONS = ["internship", "organization"];
+const OPTIONAL_SECTIONS = ["internship", "organization", "certificate"];
 
 function SortableSection({
   section,
@@ -235,7 +235,7 @@ export function getDefaultSections(lang: CvUiLang = "id"): SectionDef[] {
     { id: "education", label: t(lang, "education"), icon: <GraduationCap className="h-4 w-4" /> },
     { id: "experience", label: t(lang, "workExperience"), icon: <Briefcase className="h-4 w-4" /> },
     { id: "skills", label: t(lang, "skills"), icon: <Wrench className="h-4 w-4" /> },
-    { id: "extras", label: t(lang, "extras"), icon: <Award className="h-4 w-4" /> },
+    { id: "languages", label: t(lang, "languagesSection"), icon: <Languages className="h-4 w-4" /> },
     { id: "ats", label: t(lang, "atsView"), icon: <Eye className="h-4 w-4" /> },
   ];
 }

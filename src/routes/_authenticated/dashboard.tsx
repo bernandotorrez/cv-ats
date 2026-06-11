@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { buildSeo } from "@/lib/seo";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -32,6 +33,10 @@ import {
   UpgradeCard,
   TipsCard,
   CvPickerDialog,
+  CareerProgress,
+  getCareerSteps,
+  AiRecommendations,
+  getRecommendations,
 } from "@/components/dashboard";
 import {
   FileText,
@@ -53,6 +58,8 @@ import {
   ArrowLeftRight,
   Loader2,
   RefreshCw,
+  ChevronDown,
+  Star,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -664,24 +671,126 @@ function DashboardPage() {
     setShowCvPicker(null);
   };
 
+  // ─── Career Progress Steps ───
+  const hasCv = cvCount > 0;
+  const careerSteps = getCareerSteps({
+    hasCv,
+    hasScore: hasCv && scoreUsageCount > 0,
+    hasCoverLetter: hasCv && coverLetterUsageCount > 0,
+    hasInterview: hasCv && false, // can be enhanced later with interview data
+    hasApplied: hasCv && false, // can be enhanced later with job application data
+  });
+
+  // ─── AI Recommendations ───
+  const recommendations = getRecommendations({
+    hasCv: cvCount > 0,
+    hasScore: scoreUsageCount > 0,
+    tier,
+    cvCount,
+  });
+
   if (loading) {
     return <DashboardSkeleton />;
   }
 
   return (
-    <div className="container-page space-y-7 py-5 md:space-y-8 md:py-8">
-      {/* ── Welcome Hero ── */}
-      <WelcomeHeader user={user} onCreateCv={() => setShowCreateDialog(true)} />
+    <div className="container-page space-y-6 py-5 md:space-y-7 md:py-8">
+      {/* ── Career Progress Hero Panel ── */}
+      <CareerProgress
+        user={user}
+        steps={careerSteps}
+        onCreateCv={() => setShowCreateDialog(true)}
+        onStepClick={(step) => {
+          if (!step.done) {
+            setShowCreateDialog(true);
+          } else if (step.id === "create-cv") {
+            navigate({ to: "/cv" });
+          } else if (step.id === "score-cv") {
+            handleFeatureClick("score");
+          } else if (step.id === "cover-letter") {
+            handleFeatureClick("cover-letter");
+          } else if (step.id === "interview") {
+            navigate({ to: "/simulasi-wawancara" });
+          }
+        }}
+      />
 
-      {/* ── Tier Banner ── */}
-      <TierBanner tier={tier} limits={limits} cvCount={cvCount} aiUsageCount={aiUsageCount} />
+      {/* ── Tier Status + Usage Accordion ── */}
+      <details className={cn(
+        "rounded-xl border shadow-sm",
+        tier === "pro" ? "bg-amber-50 border-amber-200" :
+        tier === "starter" ? "bg-blue-50 border-blue-200" :
+        "bg-card border-border",
+      )}>
+        <summary className="flex cursor-pointer items-center gap-3.5 px-4 py-3 select-none">
+          {/* Crown icon circle */}
+          <div className={cn(
+            "flex h-9 w-9 shrink-0 items-center justify-center rounded-full",
+            tier === "pro" ? "bg-amber-500" :
+            tier === "starter" ? "bg-blue-500" :
+            "bg-muted-foreground/20",
+          )}>
+            <Crown className="h-4 w-4 text-white" />
+          </div>
+
+          {/* Info */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className={cn(
+                "rounded-full px-2.5 py-0.5 text-[11px] font-bold text-white",
+                tier === "pro" ? "bg-emerald-500" :
+                tier === "starter" ? "bg-blue-500" :
+                "bg-muted-foreground/60",
+              )}>
+                {tierName}
+              </span>
+              <span className={cn(
+                "flex items-center gap-1 text-xs font-medium",
+                tier === "pro" ? "text-emerald-600" :
+                tier === "starter" ? "text-blue-600" :
+                "text-muted-foreground",
+              )}>
+                <Star className="h-3 w-3" />
+                Aktif
+              </span>
+            </div>
+            <p className={cn(
+              "mt-0.5 text-xs truncate",
+              tier === "pro" ? "text-amber-800/70" :
+              tier === "starter" ? "text-blue-800/70" :
+              "text-muted-foreground",
+            )}>
+              {tier === "pro"
+                ? "Siap untuk banyak role, banyak versi CV, dan interview practice."
+                : tier === "starter"
+                ? "Tools dasar untuk membuat CV profesional dan cek skor ATS."
+                : "Mulai buat CV pertama kamu dan cek kesiapan ATS."}
+            </p>
+          </div>
+
+          {/* Right side actions */}
+          <div className="flex items-center gap-2 shrink-0">
+            {tier === "free" && (
+              <Button asChild size="sm" variant="default" className="h-7 text-xs gap-1.5" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
+                <Link to="/harga">
+                  <Crown className="h-3.5 w-3.5" /> Upgrade
+                </Link>
+              </Button>
+            )}
+            <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform [[open]_&]:rotate-180" />
+          </div>
+        </summary>
+        <div className="px-4 pb-4 pt-1">
+          <UsageBars bars={usageBars} />
+        </div>
+      </details>
 
       {/* ── CV Limit Warning ── */}
       {atCvLimit && (
-        <Alert className="border-warning/50 bg-warning/10 rounded-2xl">
+        <Alert className="border-warning/50 bg-warning/10 rounded-xl">
           <AlertCircle className="h-4 w-4 text-warning" />
           <AlertDescription className="flex items-center justify-between gap-2">
-            <span>
+            <span className="text-sm">
               Kuota CV paket <strong>{tierName}</strong> sudah penuh ({cvCount}/{limits.maxCvs}).
             </span>
             <Button asChild size="sm" variant="outline" className="shrink-0 gap-1.5">
@@ -693,44 +802,39 @@ function DashboardPage() {
         </Alert>
       )}
 
-      {/* ── Usage Stats ── */}
-      <section className="space-y-4">
-        <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="mb-2 inline-flex rounded-full bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground">
-              Kuota bulan ini
-            </p>
-            <h2 className="font-display text-xl font-bold text-foreground">Pantau penggunaan</h2>
-          </div>
-          <p className="max-w-md text-sm leading-6 text-muted-foreground">
-            Lihat sisa kuota sebelum membuat banyak versi CV, cover letter, atau latihan interview.
-          </p>
-        </div>
-        <UsageBars bars={usageBars} />
-      </section>
+      {/* ── Main 2-Column Grid ── */}
+      <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
+        {/* ── Left Column ── */}
+        <div className="space-y-6">
+          {/* AI Tools Panel */}
+          <PowerFeatures
+            features={powerFeatures}
+            onFeatureClick={handleFeatureClick}
+            onUpgrade={() => navigate({ to: "/harga" as never })}
+          />
 
-      {/* ── Power Features ── */}
-      <PowerFeatures
-        features={powerFeatures}
-        onFeatureClick={handleFeatureClick}
-        onUpgrade={() => navigate({ to: "/harga" as never })}
-      />
-
-      {/* ── Quick Actions ── */}
-      <QuickActions actions={quickActions} onAction={handleFeatureClick} />
-
-      {/* ── Main Content Grid ── */}
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Left Column */}
-        <div className="space-y-6 lg:col-span-2">
+          {/* Recent CVs Panel */}
           <RecentCvs cvs={cvs} loading={loading} onCreateCv={() => setShowCreateDialog(true)} />
         </div>
 
-        {/* Right Column */}
-        <div className="space-y-6">
+        {/* ── Right Column ── */}
+        <div className="space-y-5">
+          {/* AI Recommendations Carousel */}
+          <AiRecommendations
+            recommendations={recommendations}
+            onAction={(action) => {
+              if (action === "upgrade") {
+                navigate({ to: "/harga" as never });
+              } else if (action === "create-cv") {
+                setShowCreateDialog(true);
+              } else {
+                handleFeatureClick(action);
+              }
+            }}
+          />
+
+          {/* Activity Feed */}
           <ActivityFeed activities={activities} />
-          {tier === "free" && <UpgradeCard />}
-          <TipsCard />
         </div>
       </div>
 

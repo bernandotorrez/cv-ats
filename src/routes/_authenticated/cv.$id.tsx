@@ -507,7 +507,11 @@ function CvEditorPage() {
 
   const handleAcceptSuggestion = useCallback(
     (index: number, option: { option: string; explanation: string }) => {
-      setSuggestionPanel({ section: "summary", suggestions: null, acceptedIndex: null });
+      setSuggestionPanel((prev) => ({
+        section: prev.section,
+        suggestions: null,
+        acceptedIndex: null,
+      }));
       toast.success("Saran AI diterapkan");
       return option.option;
     },
@@ -568,7 +572,8 @@ function CvEditorPage() {
       internship: data.internships?.length || 0,
       organization: data.organizations?.length || 0,
       skills: data.skills.length,
-      extras: (data.languages?.length || 0) + (data.certificates?.length || 0),
+      languages: data.languages?.length || 0,
+      certificate: data.certificates?.length || 0,
       ats: localScore.overallScore,
     }),
     [data, localScore],
@@ -690,7 +695,10 @@ function CvEditorPage() {
               onRemoveSection={(id) => {
                 setSections((prev) => prev.filter((s) => s.id !== id));
                 setActiveSection("personal");
-                const label = id === "internship" ? "Riwayat Magang" : "Organisasi";
+                const label =
+                  id === "internship" ? "Riwayat Magang"
+                  : id === "organization" ? "Organisasi"
+                  : "Sertifikat";
                 toast.success(`Bagian ${label} dihapus`);
               }}
               itemCounts={itemCounts}
@@ -1047,8 +1055,34 @@ function CvEditorPage() {
               </button>
             )}
 
+            {/* Sertifikat */}
+            {!sections.find(s => s.id === "certificate") && (
+              <button
+                type="button"
+                onClick={() => {
+                  const newSection = { id: "certificate", label: "Sertifikat", icon: <Award className="h-4 w-4" /> };
+                  const insertIndex = Math.max(0, sections.length - 1);
+                  setSections(prev => [...prev.slice(0, insertIndex), newSection, ...prev.slice(insertIndex)]);
+                  setActiveSection("certificate");
+                  setShowAddSection(false);
+                  toast.success("Bagian Sertifikat ditambahkan!");
+                }}
+                className="flex items-start gap-4 rounded-xl border border-border p-4 text-left transition-all hover:border-primary/40 hover:bg-primary/5"
+              >
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-rose-50 text-rose-600">
+                  <Award className="h-5 w-5" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-semibold">Sertifikat</h4>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Tampilkan sertifikasi dan penghargaan yang kamu miliki untuk memperkuat kredibilitas.
+                  </p>
+                </div>
+              </button>
+            )}
+
             {/* Show message if all optional sections already added */}
-            {sections.find(s => s.id === "internship") && sections.find(s => s.id === "organization") && (
+            {sections.find(s => s.id === "internship") && sections.find(s => s.id === "organization") && sections.find(s => s.id === "certificate") && (
               <div className="text-center py-6 text-muted-foreground">
                 <CheckCircle2 className="h-10 w-10 mx-auto mb-2 text-primary/50" />
                 <p className="text-sm">Semua bagian opsional sudah ditambahkan!</p>
@@ -1235,7 +1269,7 @@ function EditorForm({
               icon={<Pencil className="h-4 w-4" />}
             />
             <Field
-              label="Posisi / Headline"
+              label="Posisi"
               value={data.personal.headline}
               onChange={(v) => updatePersonal("headline", v)}
               placeholder="Frontend Developer"
@@ -1842,80 +1876,82 @@ function EditorForm({
         />
       )}
 
-      {/* Extras */}
-      {activeSection === "extras" && (
-        <div className="space-y-6">
-          <ListSectionCard
-            title="Bahasa"
-            icon={<Globe className="h-5 w-5" />}
-            items={data.languages}
-            compact
-            accentColor="from-teal-500/5 to-cyan-500/5"
-            onAdd={() =>
-              setData((d) => ({
-                ...d,
-                languages: [...d.languages, { id: uid(), name: "", level: "Mahir" }],
-              }))
-            }
-            onRemove={(i) =>
-              setData((d) => ({ ...d, languages: d.languages.filter((_, idx) => idx !== i) }))
-            }
-            renderItem={(item, i) => (
-              <div className="grid grid-cols-2 gap-3">
-                <Field
-                  label="Bahasa"
-                  value={item.name}
-                  onChange={(v) => mutate(setData, "languages", i, "name", v)}
-                  icon={<Languages className="h-4 w-4" />}
-                />
-                <Field
-                  label="Level"
-                  value={item.level}
-                  onChange={(v) => mutate(setData, "languages", i, "level", v)}
-                  icon={<BarChart3 className="h-4 w-4" />}
-                />
-              </div>
-            )}
-          />
-          <ListSectionCard
-            title="Sertifikat"
-            icon={<Award className="h-5 w-5" />}
-            items={data.certificates}
-            compact
-            accentColor="from-rose-500/5 to-pink-500/5"
-            onAdd={() =>
-              setData((d) => ({
-                ...d,
-                certificates: [...d.certificates, { id: uid(), name: "", issuer: "", date: "" }],
-              }))
-            }
-            onRemove={(i) =>
-              setData((d) => ({ ...d, certificates: d.certificates.filter((_, idx) => idx !== i) }))
-            }
-            renderItem={(item, i) => (
-              <div className="grid gap-3 sm:grid-cols-3">
-                <Field
-                  label="Nama"
-                  value={item.name}
-                  onChange={(v) => mutate(setData, "certificates", i, "name", v)}
-                  icon={<Trophy className="h-4 w-4" />}
-                />
-                <Field
-                  label="Penerbit"
-                  value={item.issuer}
-                  onChange={(v) => mutate(setData, "certificates", i, "issuer", v)}
-                  icon={<Landmark className="h-4 w-4" />}
-                />
-                <Field
-                  label="Tanggal"
-                  value={item.date}
-                  onChange={(v) => mutate(setData, "certificates", i, "date", v)}
-                  icon={<Calendar className="h-4 w-4" />}
-                />
-              </div>
-            )}
-          />
-        </div>
+      {/* Languages / Bahasa */}
+      {activeSection === "languages" && (
+        <ListSectionCard
+          title="Bahasa"
+          icon={<Globe className="h-5 w-5" />}
+          items={data.languages}
+          compact
+          accentColor="from-teal-500/5 to-cyan-500/5"
+          onAdd={() =>
+            setData((d) => ({
+              ...d,
+              languages: [...d.languages, { id: uid(), name: "", level: "Mahir" }],
+            }))
+          }
+          onRemove={(i) =>
+            setData((d) => ({ ...d, languages: d.languages.filter((_, idx) => idx !== i) }))
+          }
+          renderItem={(item, i) => (
+            <div className="grid grid-cols-2 gap-3">
+              <Field
+                label="Bahasa"
+                value={item.name}
+                onChange={(v) => mutate(setData, "languages", i, "name", v)}
+                icon={<Languages className="h-4 w-4" />}
+              />
+              <Field
+                label="Level"
+                value={item.level}
+                onChange={(v) => mutate(setData, "languages", i, "level", v)}
+                icon={<BarChart3 className="h-4 w-4" />}
+              />
+            </div>
+          )}
+        />
+      )}
+
+      {/* Certificate / Sertifikat (optional section) */}
+      {activeSection === "certificate" && (
+        <ListSectionCard
+          title="Sertifikat"
+          icon={<Award className="h-5 w-5" />}
+          items={data.certificates}
+          compact
+          accentColor="from-rose-500/5 to-pink-500/5"
+          onAdd={() =>
+            setData((d) => ({
+              ...d,
+              certificates: [...d.certificates, { id: uid(), name: "", issuer: "", date: "" }],
+            }))
+          }
+          onRemove={(i) =>
+            setData((d) => ({ ...d, certificates: d.certificates.filter((_, idx) => idx !== i) }))
+          }
+          renderItem={(item, i) => (
+            <div className="grid gap-3 sm:grid-cols-3">
+              <Field
+                label="Nama"
+                value={item.name}
+                onChange={(v) => mutate(setData, "certificates", i, "name", v)}
+                icon={<Trophy className="h-4 w-4" />}
+              />
+              <Field
+                label="Penerbit"
+                value={item.issuer}
+                onChange={(v) => mutate(setData, "certificates", i, "issuer", v)}
+                icon={<Landmark className="h-4 w-4" />}
+              />
+              <Field
+                label="Tanggal"
+                value={item.date}
+                onChange={(v) => mutate(setData, "certificates", i, "date", v)}
+                icon={<Calendar className="h-4 w-4" />}
+              />
+            </div>
+          )}
+        />
       )}
 
       {/* ATS View */}

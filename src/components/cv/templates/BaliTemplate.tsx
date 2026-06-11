@@ -15,7 +15,7 @@ const DEFAULT_SECTION_ORDER = [
   { id: "education", label: "Pendidikan" },
   { id: "experience", label: "Pengalaman Kerja" },
   { id: "skills", label: "Keahlian" },
-  { id: "extras", label: "Bahasa & Sertifikat" },
+  { id: "languages", label: "Bahasa" },
 ] as const;
 
 export function BaliTemplate({ data, showHeader = true, sectionOrder, language = "id" }: Props) {
@@ -105,34 +105,29 @@ export function BaliTemplate({ data, showHeader = true, sectionOrder, language =
         }
         return null;
 
-      case "extras":
-        const extrasContent: React.ReactNode[] = [];
+      case "languages":
         if (languages.length > 0) {
-          extrasContent.push(
-            <div key="languages" style={{ marginBottom: languages.length > 0 && certificates.length > 0 ? 6 : 0 }}>
-              <strong style={{ fontSize: "9.5pt" }}>{t(language, 'languages')}:</strong>
-              <span style={{ fontSize: "9.5pt", color: "#64748b" }}>
-                {" "}{languages.map((l) => `${l.name} (${l.level})`).join(", ")}
-              </span>
-            </div>
+          return (
+            <Section key="languages" title={t(language, 'languages')}>
+              <div>
+                <span style={{ fontSize: "9.5pt", color: "#64748b" }}>
+                  {languages.map((l) => `${l.name} (${l.level})`).join(", ")}
+                </span>
+              </div>
+            </Section>
           );
         }
+        return null;
+
+      case "certificate":
         if (certificates.length > 0) {
-          extrasContent.push(
-            <div key="certificates">
-              <strong style={{ fontSize: "9.5pt" }}>{t(language, 'certificates')}:</strong>
+          return (
+            <Section key="certificate" title={t(language, 'certificates')}>
               {certificates.map((c) => (
-                <div key={c.id} style={{ fontSize: "9.5pt", color: "#64748b", marginLeft: 12 }}>
+                <div key={c.id} style={{ fontSize: "9.5pt", color: "#64748b", marginBottom: 4, marginLeft: 12 }}>
                   {c.name} — {c.issuer} ({c.date})
                 </div>
               ))}
-            </div>
-          );
-        }
-        if (extrasContent.length > 0) {
-          return (
-            <Section key="extras" title={t(language, 'languagesAndCertificates')}>
-              {extrasContent}
             </Section>
           );
         }

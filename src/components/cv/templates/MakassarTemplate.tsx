@@ -15,7 +15,7 @@ const DEFAULT_SECTION_ORDER = [
   { id: "education", label: "Pendidikan" },
   { id: "experience", label: "Pengalaman Kerja" },
   { id: "skills", label: "Keahlian" },
-  { id: "extras", label: "Bahasa & Sertifikat" },
+  { id: "languages", label: "Bahasa" },
 ] as const;
 
 export function MakassarTemplate({ data, showHeader = true, sectionOrder, language = "id" }: Props) {
@@ -135,29 +135,27 @@ export function MakassarTemplate({ data, showHeader = true, sectionOrder, langua
         }
         return null;
 
-      case "extras":
-        const extrasContent: React.ReactNode[] = [];
+      case "languages":
         if (languages.length > 0) {
-          extrasContent.push(
-            <p key="languages" style={{ fontSize: "9pt", marginBottom: 4 }}>
-              <strong>{t(language, 'languages')}:</strong> {languages.map((l) => `${l.name} (${l.level})`).join(", ")}
-            </p>
-          );
-        }
-        if (certificates.length > 0) {
-          extrasContent.push(
-            <div key="certificates">
-              <strong style={{ fontSize: "9pt" }}>{t(language, 'certificates')}:</strong>
-              {certificates.map((c) => (
-                <div key={c.id} style={{ fontSize: "9pt", marginLeft: 8 }}>{c.name} — {c.issuer}</div>
-              ))}
-            </div>
-          );
-        }
-        if (extrasContent.length > 0) {
           return (
-            <Section key="extras" title={t(language, 'languagesAndCertificates')}>
-              {extrasContent}
+            <Section key="languages" title={t(language, 'languages')}>
+              <p style={{ fontSize: "9pt" }}>
+                {languages.map((l) => `${l.name} (${l.level})`).join(", ")}
+              </p>
+            </Section>
+          );
+        }
+        return null;
+
+      case "certificate":
+        if (certificates.length > 0) {
+          return (
+            <Section key="certificate" title={t(language, 'certificates')}>
+              {certificates.map((c) => (
+                <div key={c.id} style={{ fontSize: "9pt", marginBottom: 4 }}>
+                  {c.name} — {c.issuer}
+                </div>
+              ))}
             </Section>
           );
         }
