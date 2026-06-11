@@ -131,7 +131,8 @@ function CvEditorPage() {
     section: SuggestSection;
     suggestions: Array<{ option: string; explanation: string }> | null;
     acceptedIndex: number | null;
-  }>({ section: "summary", suggestions: null, acceptedIndex: null });
+    targetId: string | null;
+  }>({ section: "summary", suggestions: null, acceptedIndex: null, targetId: null });
   const [chatOpen, setChatOpen] = useState(false);
   const [shareEnabled, setShareEnabled] = useState(false);
   const [shareToken, setShareToken] = useState<string | null>(null);
@@ -479,9 +480,15 @@ function CvEditorPage() {
       currentContent?: string,
       additionalContext?: string,
       regenerateIndex?: number,
+      targetId?: string,
     ) => {
       setAiLoading(section);
-      setSuggestionPanel({ section, suggestions: null, acceptedIndex: null });
+      setSuggestionPanel({
+        section,
+        suggestions: null,
+        acceptedIndex: null,
+        targetId: targetId ?? null,
+      });
       try {
         const result = await suggestSection({
           data: {
@@ -494,7 +501,12 @@ function CvEditorPage() {
             language: cvLanguage,
           },
         });
-        setSuggestionPanel({ section, suggestions: result.suggestions, acceptedIndex: null });
+        setSuggestionPanel({
+          section,
+          suggestions: result.suggestions,
+          acceptedIndex: null,
+          targetId: targetId ?? null,
+        });
       } catch (e: any) {
         toast.error(e.message || "Gagal menghasilkan saran AI");
         return null;
@@ -511,6 +523,7 @@ function CvEditorPage() {
         section: prev.section,
         suggestions: null,
         acceptedIndex: null,
+        targetId: null,
       }));
       toast.success("Saran AI diterapkan");
       return option.option;
@@ -522,17 +535,28 @@ function CvEditorPage() {
     (index: number) => {
       const s = suggestionPanel.section;
       // Regenerate single option — pass regenerateIndex
-      handleAiSuggest(s, undefined, undefined, index);
+      handleAiSuggest(s, undefined, undefined, index, suggestionPanel.targetId ?? undefined);
     },
-    [suggestionPanel.section, handleAiSuggest],
+    [suggestionPanel.section, suggestionPanel.targetId, handleAiSuggest],
   );
 
   const handleRegenerateAll = useCallback(() => {
-    handleAiSuggest(suggestionPanel.section);
-  }, [suggestionPanel.section, handleAiSuggest]);
+    handleAiSuggest(
+      suggestionPanel.section,
+      undefined,
+      undefined,
+      undefined,
+      suggestionPanel.targetId ?? undefined,
+    );
+  }, [suggestionPanel.section, suggestionPanel.targetId, handleAiSuggest]);
 
   const closeSuggestionPanel = useCallback(() => {
-    setSuggestionPanel((prev) => ({ ...prev, suggestions: null, acceptedIndex: null }));
+    setSuggestionPanel((prev) => ({
+      ...prev,
+      suggestions: null,
+      acceptedIndex: null,
+      targetId: null,
+    }));
   }, []);
 
   const [polishingField, setPolishingField] = useState<string | null>(null);
@@ -1202,6 +1226,7 @@ function EditorForm({
     currentContent?: string,
     additionalContext?: string,
     regenerateIndex?: number,
+    targetId?: string,
   ) => void;
   handlePolishText: (
     fieldKey: string,
@@ -1215,6 +1240,7 @@ function EditorForm({
     section: SuggestSection;
     suggestions: Array<{ option: string; explanation: string }> | null;
     acceptedIndex: number | null;
+    targetId: string | null;
   };
   onAcceptSuggestion: (index: number, option: { option: string; explanation: string }) => string;
   onRegenerateSuggestion: (index: number) => void;
@@ -1476,6 +1502,8 @@ function EditorForm({
                             "experience",
                             item.description,
                             `Posisi: ${item.position} di ${item.company}`,
+                            undefined,
+                            item.id,
                           )
                         }
                       />
@@ -1486,22 +1514,23 @@ function EditorForm({
                   value={item.descriptionAlign}
                   onChange={(v) => mutate(setData, "experiences", i, "descriptionAlign", v)}
                 />
-                {suggestionPanel.section === "experience" && (
-                  <SuggestionPanel
-                    open={suggestionPanel.suggestions !== null}
-                    onClose={onCloseSuggestion}
-                    section="experience"
-                    loading={aiLoading === "experience"}
-                    suggestions={suggestionPanel.suggestions}
-                    acceptedIndex={suggestionPanel.acceptedIndex}
-                    onAccept={(idx, opt) => {
-                      const accepted = onAcceptSuggestion(idx, opt);
-                      mutate(setData, "experiences", i, "description", accepted);
-                    }}
-                    onRegenerate={onRegenerateSuggestion}
-                    onRegenerateAll={onRegenerateAll}
-                  />
-                )}
+                {suggestionPanel.section === "experience" &&
+                  suggestionPanel.targetId === item.id && (
+                    <SuggestionPanel
+                      open={suggestionPanel.suggestions !== null}
+                      onClose={onCloseSuggestion}
+                      section="experience"
+                      loading={aiLoading === "experience"}
+                      suggestions={suggestionPanel.suggestions}
+                      acceptedIndex={suggestionPanel.acceptedIndex}
+                      onAccept={(idx, opt) => {
+                        const accepted = onAcceptSuggestion(idx, opt);
+                        mutate(setData, "experiences", i, "description", accepted);
+                      }}
+                      onRegenerate={onRegenerateSuggestion}
+                      onRegenerateAll={onRegenerateAll}
+                    />
+                  )}
               </div>
             </div>
           )}
@@ -1591,6 +1620,8 @@ function EditorForm({
                             "education",
                             item.description || "",
                             `${item.degree} ${item.field || ""} di ${item.school}`,
+                            undefined,
+                            item.id,
                           )
                         }
                       />
@@ -1601,22 +1632,23 @@ function EditorForm({
                   value={item.descriptionAlign}
                   onChange={(v) => mutate(setData, "educations", i, "descriptionAlign", v)}
                 />
-                {suggestionPanel.section === "education" && (
-                  <SuggestionPanel
-                    open={suggestionPanel.suggestions !== null}
-                    onClose={onCloseSuggestion}
-                    section="education"
-                    loading={aiLoading === "education"}
-                    suggestions={suggestionPanel.suggestions}
-                    acceptedIndex={suggestionPanel.acceptedIndex}
-                    onAccept={(idx, opt) => {
-                      const accepted = onAcceptSuggestion(idx, opt);
-                      mutate(setData, "educations", i, "description", accepted);
-                    }}
-                    onRegenerate={onRegenerateSuggestion}
-                    onRegenerateAll={onRegenerateAll}
-                  />
-                )}
+                {suggestionPanel.section === "education" &&
+                  suggestionPanel.targetId === item.id && (
+                    <SuggestionPanel
+                      open={suggestionPanel.suggestions !== null}
+                      onClose={onCloseSuggestion}
+                      section="education"
+                      loading={aiLoading === "education"}
+                      suggestions={suggestionPanel.suggestions}
+                      acceptedIndex={suggestionPanel.acceptedIndex}
+                      onAccept={(idx, opt) => {
+                        const accepted = onAcceptSuggestion(idx, opt);
+                        mutate(setData, "educations", i, "description", accepted);
+                      }}
+                      onRegenerate={onRegenerateSuggestion}
+                      onRegenerateAll={onRegenerateAll}
+                    />
+                  )}
               </div>
             </div>
           )}
