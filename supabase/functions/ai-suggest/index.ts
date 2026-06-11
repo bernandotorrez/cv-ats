@@ -25,6 +25,18 @@ Deno.serve(async (req: Request) => {
         ? 'Use active verbs such as "Led", "Developed", "Increased", "Managed", "Designed", "Optimized".'
         : 'Gunakan kata kerja aktif seperti "Memimpin", "Mengembangkan", "Meningkatkan", "Mengelola", "Merancang", "Mengoptimalkan".';
 
+    const normalizeExperienceBullets = (text: string) =>
+      text
+        .split("\n")
+        .map((line) => {
+          const trimmed = line.trimStart();
+          if (/^[-*]\s+/.test(trimmed)) {
+            return `${line.slice(0, line.length - trimmed.length)}• ${trimmed.replace(/^[-*]\s+/, "")}`;
+          }
+          return line;
+        })
+        .join("\n");
+
     const prompts: Record<string, string> = {
       summary: `Buatkan 3 opsi ringkasan profil profesional (2-4 kalimat) ${getLanguageInstruction(lang)}. Setiap opsi harus punya gaya berbeda.
 ${languageRule}
@@ -54,13 +66,13 @@ ${additionalContext ? `Konteks: ${additionalContext}` : ""}
 ${regenerateIndex !== undefined ? `Opsi ke-${regenerateIndex + 1} sebelumnya kurang cocok. Buatkan opsi baru.` : ""}
 
 ATURAN PENTING untuk setiap opsi:
-- Setiap poin DIAWALI dengan dash: "- "
+- Setiap poin DIAWALI dengan bullet lingkaran: "• "
 - ${activeVerbRule}
 - Sertakan metrik kuantitatif: "...meningkatkan 35%", "...mengelola tim 8 orang"
 - Fokus pada PENCAPAIAN, bukan tugas harian.
 
 OUTPUT FORMAT (JSON):
-[{"option": "- poin 1\\n- poin 2\\n- poin 3", "explanation": "kenapa deskripsi ini kuat"}, ...]
+[{"option": "• poin 1\\n• poin 2\\n• poin 3", "explanation": "kenapa deskripsi ini kuat"}, ...]
 HANYA JSON array, tanpa markdown.`,
 
       education: `Buatkan 3 opsi deskripsi pendidikan (1-3 kalimat) ${getLanguageInstruction(lang)}.
@@ -102,6 +114,13 @@ HANYA JSON array.`,
       suggestions = [
         { option: result.trim(), explanation: lang === "en" ? "AI suggestion" : "Saran dari AI" },
       ];
+    }
+
+    if (section === "experience") {
+      suggestions = suggestions.map((suggestion) => ({
+        ...suggestion,
+        option: normalizeExperienceBullets(suggestion.option),
+      }));
     }
 
     return corsResponse({ suggestions }, 200, req);

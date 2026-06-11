@@ -420,6 +420,8 @@ function splitContentIntoPages(
     skills: [],
     languages: [],
     certificates: [],
+    internships: [],
+    organizations: [],
   };
   let currentHeight = 0;
 
@@ -438,6 +440,8 @@ function splitContentIntoPages(
         skills: currentPage.skills || [],
         languages: currentPage.languages || [],
         certificates: currentPage.certificates || [],
+        internships: currentPage.internships || [],
+        organizations: currentPage.organizations || [],
       });
       currentPage = {
         personal: { ...data.personal },
@@ -446,6 +450,8 @@ function splitContentIntoPages(
         skills: [],
         languages: [],
         certificates: [],
+        internships: [],
+        organizations: [],
       };
       currentHeight = 0;
     }
@@ -538,6 +544,8 @@ function splitContentIntoPages(
       skills: currentPage.skills || [],
       languages: currentPage.languages || [],
       certificates: currentPage.certificates || [],
+      internships: currentPage.internships || [],
+      organizations: currentPage.organizations || [],
     });
   }
 

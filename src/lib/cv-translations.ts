@@ -22,6 +22,8 @@ export const cvTranslations = {
     profileAndContact: "Profil & Kontak",
     atsView: "ATS View",
     extras: "Bahasa & Sertifikat",
+    internship: "Riwayat Magang",
+    organization: "Organisasi",
     watermark: "Dibuat dengan CV Pintar",
   },
   en: {
@@ -45,6 +47,8 @@ export const cvTranslations = {
     profileAndContact: "Profile & Contact",
     atsView: "ATS View",
     extras: "Languages & Certificates",
+    internship: "Internship Experience",
+    organization: "Organizations",
     watermark: "Made with CV Pintar",
   },
 } as const;

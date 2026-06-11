@@ -79,6 +79,7 @@ import {
   Crown,
   Crosshair,
   User,
+  Users,
   Pencil,
   Mail,
   Phone,
@@ -97,6 +98,7 @@ import {
   Link2,
   ShieldX,
   RefreshCw,
+  LayoutGrid,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/cv/$id")({
@@ -141,6 +143,7 @@ function CvEditorPage() {
   const [showTemplatePicker, setShowTemplatePicker] = useState(false);
   const [showGuidedMode, setShowGuidedMode] = useState(search.guided === "true");
   const [showCvUpload, setShowCvUpload] = useState(false);
+    const [showAddSection, setShowAddSection] = useState(false);
   const [cvUploadFile, setCvUploadFile] = useState<File | null>(null);
   const [cvUploadExtracting, setCvUploadExtracting] = useState(false);
   const [cvUploadParsing, setCvUploadParsing] = useState(false);
@@ -153,7 +156,7 @@ function CvEditorPage() {
   // ─── 3-Panel Layout State ─────────────────────────────────────
   const [activeSection, setActiveSection] = useState("personal");
   const [sections, setSections] = useState<SectionDef[]>(getDefaultSections());
-  const [previewScale, setPreviewScale] = useState<PreviewScale>(70);
+  const [previewScale, setPreviewScale] = useState<PreviewScale>(85);
   const [showNav, setShowNav] = useState(true);
   const [mobileTab, setMobileTab] = useState<EditorTab>("form");
 
@@ -218,7 +221,7 @@ function CvEditorPage() {
   const { triggerSave } = useAutosave({
     onSave: saveCvToDb,
     delay: 2000,
-    showToasts: true,
+    showToasts: false,
   });
 
   // Trigger debounced save whenever data changes
@@ -347,6 +350,10 @@ function CvEditorPage() {
       merged.languages = imported.languages as any;
     if (imported.certificates?.length && data.certificates.length === 0)
       merged.certificates = imported.certificates as any;
+    if ((imported as any).internships?.length && (data.internships?.length || 0) === 0)
+      (merged as any).internships = (imported as any).internships;
+    if ((imported as any).organizations?.length && (data.organizations?.length || 0) === 0)
+      (merged as any).organizations = (imported as any).organizations;
     if (imported.personal) merged.personal = { ...data.personal, ...imported.personal };
     setData(merged as CvData);
     toast.success("Profil LinkedIn berhasil diimpor!");
@@ -433,6 +440,20 @@ function CvEditorPage() {
       ) {
         merged.certificates = parsed.certificates as any;
       }
+      if (
+        (parsed as any).internships &&
+        Array.isArray((parsed as any).internships) &&
+        (parsed as any).internships.length > 0
+      ) {
+        (merged as any).internships = (parsed as any).internships;
+      }
+      if (
+        (parsed as any).organizations &&
+        Array.isArray((parsed as any).organizations) &&
+        (parsed as any).organizations.length > 0
+      ) {
+        (merged as any).organizations = (parsed as any).organizations;
+      }
       if (parsed.personal) {
         merged.personal = { ...data.personal, ...parsed.personal };
       }
@@ -486,7 +507,7 @@ function CvEditorPage() {
 
   const handleAcceptSuggestion = useCallback(
     (index: number, option: { option: string; explanation: string }) => {
-      setSuggestionPanel((prev) => ({ ...prev, acceptedIndex: index }));
+      setSuggestionPanel({ section: "summary", suggestions: null, acceptedIndex: null });
       toast.success("Saran AI diterapkan");
       return option.option;
     },
@@ -536,6 +557,21 @@ function CvEditorPage() {
   const localScore = useMemo(
     () => scoreCvLocally(data, targetRole || undefined),
     [data, targetRole],
+  );
+
+  // Item counts per section for badge display
+  const itemCounts = useMemo(
+    () => ({
+      personal: data.personal.fullName ? 1 : 0,
+      education: data.educations.length,
+      experience: data.experiences.length,
+      internship: data.internships?.length || 0,
+      organization: data.organizations?.length || 0,
+      skills: data.skills.length,
+      extras: (data.languages?.length || 0) + (data.certificates?.length || 0),
+      ats: localScore.overallScore,
+    }),
+    [data, localScore],
   );
 
   if (loading) return <EditorSkeleton />;
@@ -609,48 +645,88 @@ function CvEditorPage() {
         </div>
       </div>
 
-      {/* ─── MAIN CONTENT ─── */}
+      {/* ─── MAIN CONTENT: 2-Column Layout ─── */}
       <div className="flex flex-1 overflow-hidden print:block print:overflow-visible print:!visible">
-        {/* Desktop: Sections Nav (3-panel) */}
-        {showNav && (
-          <aside className="hidden w-[272px] shrink-0 overflow-y-auto border-r border-border bg-background/70 p-4 print:hidden lg:block">
+        {/* Left Panel: Import + Accordion Sections */}
+        <div
+          className={cn(
+            "hidden flex-col overflow-y-auto bg-background/80 print:hidden md:flex",
+            showNav ? "w-[480px] shrink-0 border-r border-border" : "w-[520px] shrink-0 border-r border-border",
+          )}
+        >
+          <div className="p-4 lg:p-5 space-y-4">
+            {/* Import dari CV Lama */}
+            <div className="rounded-2xl border-2 border-dashed border-primary/20 bg-gradient-to-br from-blue-50 to-indigo-50 p-4">
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                  <Upload className="h-5 w-5" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-sm font-bold text-foreground">Import dari CV Lama</h3>
+                  <p className="mt-0.5 text-xs text-muted-foreground leading-relaxed">
+                    Upload PDF untuk mengisi profil otomatis dengan cepat.
+                  </p>
+                  <Button
+                    size="sm"
+                    className="mt-2 gap-1.5 rounded-xl"
+                    onClick={() => {
+                      setShowCvUpload(true);
+                      setCvUploadFile(null);
+                      setCvUploadError(null);
+                    }}
+                  >
+                    <Upload className="h-3.5 w-3.5" /> Upload
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            {/* Accordion Sections with Inline Forms */}
             <SectionsNav
               sections={sections}
               activeSection={activeSection}
               onSelectSection={setActiveSection}
               onReorderSections={setSections}
+              onRemoveSection={(id) => {
+                setSections((prev) => prev.filter((s) => s.id !== id));
+                setActiveSection("personal");
+                const label = id === "internship" ? "Riwayat Magang" : "Organisasi";
+                toast.success(`Bagian ${label} dihapus`);
+              }}
+              itemCounts={itemCounts}
+              renderSectionContent={(sectionId) => (
+                <EditorForm
+                  data={data}
+                  setData={setData}
+                  activeSection={sectionId}
+                  setActiveSection={setActiveSection}
+                  targetRole={targetRole}
+                  aiLoading={aiLoading}
+                  handleAiSuggest={handleAiSuggest}
+                  handlePolishText={handlePolishText}
+                  polishingField={polishingField}
+                  updatePersonal={updatePersonal}
+                  handleLinkedInImport={handleLinkedInImport}
+                  suggestionPanel={suggestionPanel}
+                  onAcceptSuggestion={handleAcceptSuggestion}
+                  onRegenerateSuggestion={handleRegenerateSuggestion}
+                  onRegenerateAll={handleRegenerateAll}
+                  onCloseSuggestion={closeSuggestionPanel}
+                  localScore={localScore}
+                  cvLanguage={cvLanguage}
+                />
+              )}
             />
-          </aside>
-        )}
 
-        {/* Form Panel (Desktop + Tablet) */}
-        <div
-          className={cn(
-            "hidden flex-col overflow-y-auto bg-background/80 print:hidden md:flex",
-            showNav ? "shrink-0 border-r border-border lg:w-[460px]" : "shrink-0 lg:w-[520px]",
-          )}
-        >
-          <div className="p-4 lg:p-5">
-            <EditorForm
-              data={data}
-              setData={setData}
-              activeSection={activeSection}
-              setActiveSection={setActiveSection}
-              targetRole={targetRole}
-              aiLoading={aiLoading}
-              handleAiSuggest={handleAiSuggest}
-              handlePolishText={handlePolishText}
-              polishingField={polishingField}
-              updatePersonal={updatePersonal}
-              handleLinkedInImport={handleLinkedInImport}
-              suggestionPanel={suggestionPanel}
-              onAcceptSuggestion={handleAcceptSuggestion}
-              onRegenerateSuggestion={handleRegenerateSuggestion}
-              onRegenerateAll={handleRegenerateAll}
-              onCloseSuggestion={closeSuggestionPanel}
-              localScore={localScore}
-              cvLanguage={cvLanguage}
-            />
+            {/* Tambah Bagian Button */}
+            <button
+              type="button"
+              className="w-full rounded-2xl border-2 border-dashed border-border py-4 text-sm font-medium text-muted-foreground transition-all hover:border-primary/40 hover:bg-primary/5 hover:text-primary"
+              onClick={() => setShowAddSection(true)}
+            >
+              <Plus className="mr-1.5 inline h-4 w-4" />
+              Tambah Bagian
+            </button>
           </div>
         </div>
 
@@ -680,7 +756,7 @@ function CvEditorPage() {
           </div>
         )}
 
-        {/* Preview Panel (Desktop + Tablet + Mobile preview tab) */}
+        {/* Right Panel: Preview */}
         <div
           className={cn(
             "flex flex-1 flex-col overflow-hidden print:flex print:overflow-visible print:!visible",
@@ -743,6 +819,17 @@ function CvEditorPage() {
             </div>
           </div>
         )}
+      </div>
+
+      {/* ─── FLOATING ATS SCORE CARD ─── */}
+      <div className="fixed bottom-20 right-4 z-40 print:hidden md:bottom-6">
+        <AtsScoreWidget
+          overallScore={localScore.overallScore}
+          breakdown={localScore.breakdown}
+          suggestions={localScore.suggestions}
+          compact
+          className="w-72 shadow-xl shadow-slate-900/15 border-primary/20"
+        />
       </div>
 
       {/* ─── MOBILE TAB BAR ─── */}
@@ -890,6 +977,83 @@ function CvEditorPage() {
                 </>
               )}
             </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Tambah Bagian Dialog */}
+      <Dialog open={showAddSection} onOpenChange={setShowAddSection}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <LayoutGrid className="h-5 w-5 text-primary" />
+              Tambah Bagian Baru
+            </DialogTitle>
+            <DialogDescription>
+              Pilih bagian yang ingin ditambahkan ke CV kamu untuk melengkapi informasi.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid gap-3 py-4">
+            {/* Riwayat Magang */}
+            {!sections.find(s => s.id === "internship") && (
+              <button
+                type="button"
+                onClick={() => {
+                  const newSection = { id: "internship", label: "Riwayat Magang", icon: <Building2 className="h-4 w-4" /> };
+                  const insertIndex = Math.max(0, sections.length - 1);
+                  setSections(prev => [...prev.slice(0, insertIndex), newSection, ...prev.slice(insertIndex)]);
+                  setActiveSection("internship");
+                  setShowAddSection(false);
+                  toast.success("Bagian Riwayat Magang ditambahkan!");
+                }}
+                className="flex items-start gap-4 rounded-xl border border-border p-4 text-left transition-all hover:border-primary/40 hover:bg-primary/5"
+              >
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                  <Building2 className="h-5 w-5" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-semibold">Riwayat Magang</h4>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Tambahkan pengalaman magang untuk menunjukkan keahlian praktis yang pernah kamu dapatkan.
+                  </p>
+                </div>
+              </button>
+            )}
+
+            {/* Organisasi */}
+            {!sections.find(s => s.id === "organization") && (
+              <button
+                type="button"
+                onClick={() => {
+                  const newSection = { id: "organization", label: "Organisasi", icon: <Users className="h-4 w-4" /> };
+                  const insertIndex = Math.max(0, sections.length - 1);
+                  setSections(prev => [...prev.slice(0, insertIndex), newSection, ...prev.slice(insertIndex)]);
+                  setActiveSection("organization");
+                  setShowAddSection(false);
+                  toast.success("Bagian Organisasi ditambahkan!");
+                }}
+                className="flex items-start gap-4 rounded-xl border border-border p-4 text-left transition-all hover:border-primary/40 hover:bg-primary/5"
+              >
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-purple-50 text-purple-600">
+                  <Users className="h-5 w-5" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-semibold">Organisasi</h4>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Tampilkan keterlibatan dalam organisasi untuk menunjukkan kemampuan kepemimpinan dan kerja sama.
+                  </p>
+                </div>
+              </button>
+            )}
+
+            {/* Show message if all optional sections already added */}
+            {sections.find(s => s.id === "internship") && sections.find(s => s.id === "organization") && (
+              <div className="text-center py-6 text-muted-foreground">
+                <CheckCircle2 className="h-10 w-10 mx-auto mb-2 text-primary/50" />
+                <p className="text-sm">Semua bagian opsional sudah ditambahkan!</p>
+              </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>
@@ -1425,6 +1589,206 @@ function EditorForm({
         />
       )}
 
+      {/* Internship / Riwayat Magang */}
+      {activeSection === "internship" && (
+        <ListSectionCard
+          title="Riwayat Magang"
+          icon={<Building2 className="h-5 w-5" />}
+          items={data.internships || []}
+          accentColor="from-cyan-500/5 to-sky-500/5"
+          onAdd={() =>
+            setData((d) => ({
+              ...d,
+              internships: [
+                ...(d.internships || []),
+                {
+                  id: uid(),
+                  company: "",
+                  position: "",
+                  startDate: "",
+                  endDate: "",
+                  description: "",
+                },
+              ],
+            }))
+          }
+          onRemove={(i) =>
+            setData((d) => ({
+              ...d,
+              internships: (d.internships || []).filter((_, idx) => idx !== i),
+            }))
+          }
+          renderItem={(item, i) => (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field
+                label="Posisi"
+                value={item.position}
+                onChange={(v) => mutate(setData, "internships", i, "position", v)}
+                icon={<Crosshair className="h-4 w-4" />}
+              />
+              <Field
+                label="Perusahaan"
+                value={item.company}
+                onChange={(v) => mutate(setData, "internships", i, "company", v)}
+                icon={<Building2 className="h-4 w-4" />}
+              />
+              <Field
+                label="Mulai"
+                value={item.startDate}
+                onChange={(v) => mutate(setData, "internships", i, "startDate", v)}
+                icon={<Calendar className="h-4 w-4" />}
+              />
+              <Field
+                label="Selesai"
+                value={item.endDate}
+                onChange={(v) => mutate(setData, "internships", i, "endDate", v)}
+                icon={<Calendar className="h-4 w-4" />}
+              />
+              <div className="sm:col-span-2 space-y-2">
+                <TextareaField
+                  label="Deskripsi"
+                  value={item.description}
+                  onChange={(v) => mutate(setData, "internships", i, "description", v)}
+                  placeholder="Deskripsikan tugas dan pencapaian selama magang..."
+                  rows={3}
+                  hint="Tip: Fokus pada skill yang dipelajari dan kontribusi yang diberikan"
+                  icon={<FileText className="h-4 w-4" />}
+                  extra={
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 gap-1 text-xs rounded-lg text-muted-foreground hover:text-primary"
+                        disabled={polishingField === `intern-${i}`}
+                        onClick={async () => {
+                          const result = await handlePolishText(
+                            `intern-${i}`,
+                            item.description,
+                            `Magang: ${item.position} di ${item.company}`,
+                          );
+                          if (result) mutate(setData, "internships", i, "description", result);
+                        }}
+                      >
+                        {polishingField === `intern-${i}` ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <Wand2 className="h-3 w-3" />
+                        )}
+                        Perbaiki
+                      </Button>
+                    </div>
+                  }
+                />
+                <TextAlignPicker
+                  value={item.descriptionAlign}
+                  onChange={(v) => mutate(setData, "internships", i, "descriptionAlign", v)}
+                />
+              </div>
+            </div>
+          )}
+        />
+      )}
+
+      {/* Organization / Organisasi */}
+      {activeSection === "organization" && (
+        <ListSectionCard
+          title="Organisasi"
+          icon={<Users className="h-5 w-5" />}
+          items={data.organizations || []}
+          accentColor="from-pink-500/5 to-rose-500/5"
+          onAdd={() =>
+            setData((d) => ({
+              ...d,
+              organizations: [
+                ...(d.organizations || []),
+                {
+                  id: uid(),
+                  name: "",
+                  role: "",
+                  startDate: "",
+                  endDate: "",
+                  description: "",
+                },
+              ],
+            }))
+          }
+          onRemove={(i) =>
+            setData((d) => ({
+              ...d,
+              organizations: (d.organizations || []).filter((_, idx) => idx !== i),
+            }))
+          }
+          renderItem={(item, i) => (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field
+                label="Nama Organisasi"
+                value={item.name}
+                onChange={(v) => mutate(setData, "organizations", i, "name", v)}
+                icon={<Users className="h-4 w-4" />}
+              />
+              <Field
+                label="Jabatan / Peran"
+                value={item.role}
+                onChange={(v) => mutate(setData, "organizations", i, "role", v)}
+                icon={<Crosshair className="h-4 w-4" />}
+              />
+              <Field
+                label="Mulai"
+                value={item.startDate}
+                onChange={(v) => mutate(setData, "organizations", i, "startDate", v)}
+                icon={<Calendar className="h-4 w-4" />}
+              />
+              <Field
+                label="Selesai"
+                value={item.endDate}
+                onChange={(v) => mutate(setData, "organizations", i, "endDate", v)}
+                icon={<Calendar className="h-4 w-4" />}
+              />
+              <div className="sm:col-span-2 space-y-2">
+                <TextareaField
+                  label="Deskripsi"
+                  value={item.description}
+                  onChange={(v) => mutate(setData, "organizations", i, "description", v)}
+                  placeholder="Deskripsikan peran dan pencapaian di organisasi..."
+                  rows={3}
+                  hint="Tip: Sertakan tanggung jawab utama dan dampak yang diberikan"
+                  icon={<FileText className="h-4 w-4" />}
+                  extra={
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 gap-1 text-xs rounded-lg text-muted-foreground hover:text-primary"
+                        disabled={polishingField === `org-${i}`}
+                        onClick={async () => {
+                          const result = await handlePolishText(
+                            `org-${i}`,
+                            item.description,
+                            `Organisasi: ${item.role} di ${item.name}`,
+                          );
+                          if (result) mutate(setData, "organizations", i, "description", result);
+                        }}
+                      >
+                        {polishingField === `org-${i}` ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <Wand2 className="h-3 w-3" />
+                        )}
+                        Perbaiki
+                      </Button>
+                    </div>
+                  }
+                />
+                <TextAlignPicker
+                  value={item.descriptionAlign}
+                  onChange={(v) => mutate(setData, "organizations", i, "descriptionAlign", v)}
+                />
+              </div>
+            </div>
+          )}
+        />
+      )}
+
       {/* Skills */}
       {activeSection === "skills" && (
         <ListSectionCard
@@ -1557,14 +1921,6 @@ function EditorForm({
       {/* ATS View */}
       {activeSection === "ats" && <AtsPreview data={data} />}
 
-      {/* Local Score Widget — always visible in form panel */}
-      <AtsScoreWidget
-        overallScore={localScore.overallScore}
-        breakdown={localScore.breakdown}
-        suggestions={localScore.suggestions}
-        compact
-        className="mt-6"
-      />
     </div>
   );
 }

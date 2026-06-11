@@ -12,14 +12,16 @@ interface Props {
 
 const DEFAULT_SECTION_ORDER = [
   { id: "personal", label: "Profil & Kontak" },
-  { id: "experience", label: "Pengalaman Kerja" },
   { id: "education", label: "Pendidikan" },
+  { id: "experience", label: "Pengalaman Kerja" },
   { id: "skills", label: "Keahlian" },
   { id: "extras", label: "Bahasa & Sertifikat" },
 ] as const;
 
 export function MakassarTemplate({ data, showHeader = true, sectionOrder, language = "id" }: Props) {
   const { personal, experiences, educations, skills, languages, certificates } = data;
+  const internships = data.internships || [];
+  const organizations = data.organizations || [];
   const orderedSections = sectionOrder?.filter(s => s.id !== "ats") || DEFAULT_SECTION_ORDER;
 
   const hasPersonalContent = personal.fullName || personal.headline;
@@ -162,6 +164,44 @@ export function MakassarTemplate({ data, showHeader = true, sectionOrder, langua
         return null;
 
       default:
+        return null;
+
+      case "internship":
+        if (internships.length > 0) {
+          return (
+            <Section key="internship" title={t(language, 'internship')}>
+              {internships.map((item) => (
+                <div key={item.id} style={{ marginBottom: 10 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 1 }}>
+                    <strong style={{ fontSize: "10.5pt" }}>{item.position}</strong>
+                    <span style={{ fontSize: "8.5pt", color: "#666" }}>{item.startDate} – {item.endDate}</span>
+                  </div>
+                  <div style={{ fontSize: "9.5pt", color: "#444", marginBottom: 2 }}>{item.company}</div>
+                  {item.description && <p style={{ fontSize: "9pt", whiteSpace: "pre-wrap", lineHeight: 1.5, color: "#333", margin: 0, textAlign: item.descriptionAlign || "left" }}>{item.description}</p>}
+                </div>
+              ))}
+            </Section>
+          );
+        }
+        return null;
+
+      case "organization":
+        if (organizations.length > 0) {
+          return (
+            <Section key="organization" title={t(language, 'organization')}>
+              {organizations.map((item) => (
+                <div key={item.id} style={{ marginBottom: 10 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 1 }}>
+                    <strong style={{ fontSize: "10.5pt" }}>{item.role}</strong>
+                    <span style={{ fontSize: "8.5pt", color: "#666" }}>{item.startDate} – {item.endDate}</span>
+                  </div>
+                  <div style={{ fontSize: "9.5pt", color: "#444", marginBottom: 2 }}>{item.name}</div>
+                  {item.description && <p style={{ fontSize: "9pt", whiteSpace: "pre-wrap", lineHeight: 1.5, color: "#333", margin: 0, textAlign: item.descriptionAlign || "left" }}>{item.description}</p>}
+                </div>
+              ))}
+            </Section>
+          );
+        }
         return null;
     }
   };

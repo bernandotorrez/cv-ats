@@ -52,6 +52,27 @@ export interface CvCertificate {
   date: string;
 }
 
+export interface CvInternship {
+  id: string;
+  company: string;
+  position: string;
+  location?: string;
+  startDate: string;
+  endDate: string;
+  description: string;
+  descriptionAlign?: "left" | "center" | "right" | "justify";
+}
+
+export interface CvOrganization {
+  id: string;
+  name: string;
+  role: string;
+  startDate: string;
+  endDate: string;
+  description: string;
+  descriptionAlign?: "left" | "center" | "right" | "justify";
+}
+
 export interface CvData {
   personal: CvPersonal;
   experiences: CvExperience[];
@@ -59,6 +80,8 @@ export interface CvData {
   skills: CvSkill[];
   languages: CvLanguage[];
   certificates: CvCertificate[];
+  internships: CvInternship[];
+  organizations: CvOrganization[];
 }
 
 export const emptyCv: CvData = {
@@ -68,6 +91,8 @@ export const emptyCv: CvData = {
   skills: [],
   languages: [],
   certificates: [],
+  internships: [],
+  organizations: [],
 };
 
 export const TEMPLATES = [

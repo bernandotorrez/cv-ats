@@ -35,10 +35,10 @@ const BREAKDOWN_LABELS: Record<string, { label: string; description: string }> =
 };
 
 function getGrade(score: number) {
-  if (score >= 85) return { grade: "A", color: "text-primary", bg: "bg-primary/10" };
-  if (score >= 70) return { grade: "B", color: "text-primary/80", bg: "bg-primary/5" };
-  if (score >= 55) return { grade: "C", color: "text-warning-foreground", bg: "bg-warning/10" };
-  return { grade: "D", color: "text-destructive", bg: "bg-destructive/10" };
+  if (score >= 85) return { grade: "A", color: "text-emerald-700", bg: "bg-emerald-100 hover:bg-emerald-200" };
+  if (score >= 70) return { grade: "B", color: "text-blue-700", bg: "bg-blue-100 hover:bg-blue-200" };
+  if (score >= 55) return { grade: "C", color: "text-amber-700", bg: "bg-amber-100 hover:bg-amber-200" };
+  return { grade: "D", color: "text-red-700", bg: "bg-red-100 hover:bg-red-200" };
 }
 
 function CircularScore({ score, size = 100 }: { score: number; size?: number }) {
@@ -98,10 +98,10 @@ export function AtsScoreWidget({
   const { grade, color, bg } = getGrade(overallScore);
 
   return (
-    <Card className={cn("overflow-hidden", className)}>
+    <Card className={cn("overflow-hidden", compact && expanded && "flex flex-col max-h-[70vh]", className)}>
       <CardHeader
         className={cn(
-          "cursor-pointer select-none",
+          "cursor-pointer select-none shrink-0 py-3 px-4",
           !compact && "cursor-default",
         )}
         onClick={compact ? () => setExpanded((v) => !v) : undefined}
@@ -112,7 +112,7 @@ export function AtsScoreWidget({
             Skor ATS CV Anda
           </CardTitle>
           <div className="flex items-center gap-2">
-            <Badge className={cn("text-xs", bg, color)}>
+            <Badge variant="outline" className={cn("text-xs border-0", bg, color)}>
               Grade {grade}
             </Badge>
             {compact && (
@@ -123,10 +123,13 @@ export function AtsScoreWidget({
           </div>
         </div>
       </CardHeader>
-      <CardContent className={cn(compact && !expanded && "hidden")}>
+      <CardContent className={cn(
+        compact && !expanded && "hidden",
+        compact && expanded && "flex-1 overflow-y-auto min-h-0 px-4 pb-4 pt-2",
+      )}>
         {/* Overall Score */}
-        <div className="flex items-center gap-6 mb-6">
-          <CircularScore score={overallScore} size={100} />
+        <div className="flex items-center gap-4 mb-4">
+          <CircularScore score={overallScore} size={72} />
           <div className="flex-1">
             {summary ? (
               <p className="text-sm text-muted-foreground">{summary}</p>
@@ -140,14 +143,14 @@ export function AtsScoreWidget({
 
         {/* Breakdown */}
         {breakdown && (
-          <div className="space-y-3 mb-4">
+          <div className="space-y-2 mb-3">
             {Object.entries(breakdown).map(([key, val]) => {
               const meta = BREAKDOWN_LABELS[key] || { label: key, description: "" };
               const scoreColor =
                 val >= 85 ? "text-primary" : val >= 70 ? "text-warning-foreground" : "text-destructive";
               return (
                 <div key={key}>
-                  <div className="flex justify-between text-sm mb-1">
+                  <div className="flex justify-between text-xs mb-0.5">
                     <div>
                       <span className="font-medium">{meta.label}</span>
                       <span className="ml-1.5 text-xs text-muted-foreground">
@@ -158,7 +161,7 @@ export function AtsScoreWidget({
                   </div>
                   <Progress
                     value={val}
-                    className={`h-2 ${
+                    className={`h-1.5 ${
                       val >= 85 ? "[&>div]:bg-primary" : val >= 70 ? "[&>div]:bg-warning" : "[&>div]:bg-destructive"
                     }`}
                   />
