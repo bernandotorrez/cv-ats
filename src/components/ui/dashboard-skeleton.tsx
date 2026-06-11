@@ -7,7 +7,7 @@ export function DashboardSkeleton() {
       {/* ── Career Progress Hero Skeleton ── */}
       <section className="rounded-2xl border bg-card shadow-sm overflow-hidden">
         {/* gradient accent bar */}
-        <div className="h-1 bg-gradient-to-r from-primary/30 via-primary/15 to-sky-300/30" />
+        <div className="h-1 bg-gradient-to-r from-primary/30 via-primary/15 to-emerald-300/30" />
         <div className="px-5 py-5 sm:px-6 sm:py-6">
           {/* Row 1: Avatar + name + progress */}
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -43,14 +43,14 @@ export function DashboardSkeleton() {
       </section>
 
       {/* ── Recent CVs Skeleton ── */}
-      <section className="rounded-2xl border bg-sky-50 border-sky-200 shadow-sm overflow-hidden">
-        <div className="px-5 py-4 border-b border-sky-200/70 bg-sky-100/60 flex items-center justify-between">
+      <section className="rounded-2xl border bg-card border-border shadow-sm overflow-hidden">
+        <div className="px-5 py-4 border-b border-border/60 flex items-center justify-between">
           <Skeleton className="h-5 w-24" />
           <Skeleton className="h-8 w-24 rounded-lg" />
         </div>
         <div className="p-4 space-y-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="flex items-center gap-3 rounded-xl border bg-white/70 px-4 py-3">
+            <div key={i} className="flex items-center gap-3 rounded-xl border bg-background px-4 py-3">
               <Skeleton className="h-10 w-10 shrink-0 rounded-xl" />
               <div className="flex-1 min-w-0">
                 <Skeleton className="h-4 w-36 mb-1.5" />
