@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { ArrowRight, Lock, Zap } from "lucide-react";
+import { ArrowRight, ChevronDown, ChevronUp, Lock } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 interface PowerFeature {
@@ -24,85 +26,97 @@ interface PowerFeaturesProps {
 }
 
 export function PowerFeatures({ features, onFeatureClick, onUpgrade }: PowerFeaturesProps) {
+  const [expanded, setExpanded] = useState(false);
   const visible = features.filter((f) => f.visible);
   if (visible.length === 0) return null;
 
+  const displayed = expanded ? visible : visible.slice(0, 4);
+  const hasMore = visible.length > 4;
+
   return (
     <section className="space-y-4">
-      <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+      <div className="flex items-center justify-between">
         <div>
-          <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-700">
-            <Zap className="h-3.5 w-3.5" />
-            Tools paling berdampak
-          </div>
-          <h2 className="font-display text-xl font-bold text-foreground">
-            Pilih langkah berikutnya
-          </h2>
+          <h2 className="font-display text-lg font-bold text-foreground">Tools AI</h2>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            Pilih langkah berikutnya untuk optimalkan CV-mu
+          </p>
         </div>
-        <p className="max-w-md text-sm leading-6 text-muted-foreground">
-          Mulai dari audit CV, cek ATS, lalu siapkan jawaban interview dengan alur yang lebih fokus.
-        </p>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-        {visible.map((f, index) => (
+      <div className="grid gap-3 sm:grid-cols-2">
+        {displayed.map((f) => (
           <button
             key={f.label}
             type="button"
             onClick={() => (f.locked ? onUpgrade() : onFeatureClick(f.action))}
-            className="group h-full text-left"
+            className="group text-left"
           >
             <article
               className={cn(
-                "flex h-full flex-col rounded-2xl border bg-card p-5 shadow-sm transition-all",
+                "flex items-start gap-3.5 rounded-xl border bg-card p-4 transition-all",
                 f.locked
-                  ? "border-dashed opacity-80 hover:border-amber-400"
-                  : "hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-md",
+                  ? "border-dashed opacity-75 hover:border-amber-400/60"
+                  : "hover:border-primary/30 hover:shadow-sm hover:-translate-y-px",
               )}
             >
-              <div className="flex items-start justify-between gap-3">
-                <div
-                  className={cn(
-                    "flex h-11 w-11 items-center justify-center rounded-xl",
-                    index % 3 === 0
-                      ? "bg-primary/10 text-primary"
-                      : index % 3 === 1
-                        ? "bg-sky-500/10 text-sky-700"
-                        : "bg-rose-500/10 text-rose-700",
-                  )}
-                >
-                  <f.icon className="h-5 w-5" />
-                </div>
-                {f.locked ? (
-                  <Badge variant="outline" className="gap-1 border-amber-400/50 text-amber-700">
-                    <Lock className="h-3 w-3" />
-                    {f.upgradeTier}
-                  </Badge>
-                ) : (
-                  <div className="flex flex-wrap justify-end gap-2">
-                    {f.isNew && (
-                      <Badge className="bg-primary text-primary-foreground hover:bg-primary">
-                        New
-                      </Badge>
-                    )}
-                    <Badge variant="secondary">{f.badge}</Badge>
-                  </div>
+              <div
+                className={cn(
+                  "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg",
+                  f.gradient
+                    ? `${f.gradient} text-white`
+                    : "bg-primary/10 text-primary",
                 )}
+              >
+                <f.icon className="h-4.5 w-4.5" />
               </div>
-
-              <h3 className="mt-5 font-display text-base font-bold text-foreground transition-colors group-hover:text-primary">
-                {f.label}
-              </h3>
-              <p className="mt-2 line-clamp-3 text-sm leading-6 text-muted-foreground">{f.desc}</p>
-
-              <div className="mt-auto flex items-center gap-2 pt-5 text-sm font-semibold text-primary">
-                {f.locked ? "Lihat paket" : "Buka fitur"}
-                {f.locked ? <Lock className="h-4 w-4" /> : <ArrowRight className="h-4 w-4" />}
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-bold text-foreground truncate group-hover:text-primary transition-colors">
+                    {f.label}
+                  </h3>
+                  {f.locked ? (
+                    <Badge variant="outline" className="gap-1 border-amber-400/50 text-amber-700 text-[10px] py-0 px-1.5 shrink-0">
+                      <Lock className="h-2.5 w-2.5" />
+                      {f.upgradeTier}
+                    </Badge>
+                  ) : (
+                    <>
+                      {f.isNew && (
+                        <Badge className="bg-primary text-primary-foreground hover:bg-primary text-[10px] py-0 px-1.5 shrink-0">
+                          New
+                        </Badge>
+                      )}
+                    </>
+                  )}
+                </div>
+                <p className="mt-1 text-xs leading-5 text-muted-foreground line-clamp-2">{f.desc}</p>
               </div>
             </article>
           </button>
         ))}
       </div>
+
+      {hasMore && !expanded && (
+        <button
+          type="button"
+          onClick={() => setExpanded(true)}
+          className="flex items-center gap-1.5 text-sm font-medium text-primary hover:text-primary/80 transition-colors mx-auto"
+        >
+          Lihat semua tools ({visible.length})
+          <ChevronDown className="h-4 w-4" />
+        </button>
+      )}
+      {hasMore && expanded && (
+        <button
+          type="button"
+          onClick={() => setExpanded(false)}
+          className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors mx-auto"
+        >
+          Sembunyikan
+          <ChevronUp className="h-4 w-4" />
+        </button>
+      )}
     </section>
   );
 }
