@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
 import {
   Outlet,
   Link,
@@ -198,6 +198,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   errorComponent: ErrorComponent,
 });
 
+function ScrollToTop() {
+  const { location } = useRouterState();
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  }, [location.pathname]);
+  return null;
+}
+
 function RootShell({ children }: { children: React.ReactNode }) {
   return (
     <html lang="id">
@@ -222,6 +230,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
+        <ScrollToTop />
         <a href="#main" className="skip-link">
           Lewati ke konten utama
         </a>

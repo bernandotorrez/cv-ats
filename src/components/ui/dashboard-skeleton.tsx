@@ -43,14 +43,14 @@ export function DashboardSkeleton() {
       </section>
 
       {/* ── Recent CVs Skeleton ── */}
-      <section className="rounded-2xl border bg-card shadow-sm overflow-hidden">
-        <div className="px-5 py-4 border-b border-border/60 flex items-center justify-between">
+      <section className="rounded-2xl border bg-sky-50 border-sky-200 shadow-sm overflow-hidden">
+        <div className="px-5 py-4 border-b border-sky-200/70 bg-sky-100/60 flex items-center justify-between">
           <Skeleton className="h-5 w-24" />
           <Skeleton className="h-8 w-24 rounded-lg" />
         </div>
         <div className="p-4 space-y-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="flex items-center gap-3 rounded-xl border bg-background px-4 py-3">
+            <div key={i} className="flex items-center gap-3 rounded-xl border bg-white/70 px-4 py-3">
               <Skeleton className="h-10 w-10 shrink-0 rounded-xl" />
               <div className="flex-1 min-w-0">
                 <Skeleton className="h-4 w-36 mb-1.5" />

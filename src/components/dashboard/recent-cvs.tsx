@@ -51,9 +51,9 @@ function timeAgo(dateStr: string): { label: string; isStale: boolean } {
 
 export function RecentCvs({ cvs, onCreateCv }: RecentCvsProps) {
   return (
-    <section className="rounded-2xl border bg-card shadow-sm overflow-hidden">
+    <section className="rounded-2xl border bg-sky-50 border-sky-200 shadow-sm overflow-hidden dark:bg-sky-950/20 dark:border-sky-800/40">
       {/* Header */}
-      <div className="flex items-center justify-between px-5 py-4 border-b border-border/60">
+      <div className="flex items-center justify-between px-5 py-4 border-b border-sky-200/70 dark:border-sky-800/40 bg-sky-100/60 dark:bg-sky-900/20">
         <div>
           <h2 className="font-display text-base font-bold text-foreground">CV Kamu</h2>
           <p className="text-xs text-muted-foreground mt-0.5">
@@ -97,7 +97,7 @@ export function RecentCvs({ cvs, onCreateCv }: RecentCvsProps) {
           )}
         </div>
       ) : (
-        <div className="divide-y divide-border/50">
+        <div className="divide-y divide-sky-200/60 dark:divide-sky-800/30">
           {cvs.slice(0, 4).map((cv, idx) => {
             const tpl = TEMPLATES.find((t) => t.id === cv.template_id);
             const isDraft = cv.status === "draft";
@@ -109,7 +109,7 @@ export function RecentCvs({ cvs, onCreateCv }: RecentCvsProps) {
                 key={cv.id}
                 to="/cv/$id"
                 params={{ id: cv.id }}
-                className="group flex items-center gap-4 px-5 py-3.5 transition-colors hover:bg-muted/30"
+                className="group flex items-center gap-4 px-5 py-3.5 transition-colors hover:bg-sky-100/70 dark:hover:bg-sky-900/20"
               >
                 {/* Icon */}
                 <div
@@ -171,7 +171,7 @@ export function RecentCvs({ cvs, onCreateCv }: RecentCvsProps) {
           })}
 
           {/* Footer — quick create */}
-          <div className="px-5 py-3 flex items-center justify-between bg-muted/20">
+          <div className="px-5 py-3 flex items-center justify-between bg-sky-100/60 dark:bg-sky-900/20 border-t border-sky-200/60 dark:border-sky-800/30">
             <p className="text-xs text-muted-foreground flex items-center gap-1.5">
               <TrendingUp className="h-3.5 w-3.5" />
               Perbarui CV secara rutin untuk hasil ATS terbaik
