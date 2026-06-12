@@ -14,7 +14,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useAuth } from "@/lib/auth-context";
-import { isAdmin } from "@/lib/admin";
 import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
 import { getUserTier, getTierLimits, type Tier, type TierLimits } from "@/lib/subscription";
@@ -27,7 +26,6 @@ import {
   TierBanner,
   UsageBars,
   PowerFeatures,
-  QuickActions,
   RecentCvs,
   ActivityFeed,
   UpgradeCard,
@@ -49,7 +47,6 @@ import {
   Key,
   Type,
   MessageSquare,
-  Shield,
   Mic,
   Gift,
   TrendingUp,
@@ -117,7 +114,6 @@ type UserSubscriptionResult = {
 function DashboardPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [admin, setAdmin] = useState(false);
   const [tier, setTier] = useState<Tier>("free");
   const [limits, setLimits] = useState<TierLimits>(getTierLimits("free"));
   const [tierQuotas, setTierQuotas] = useState<TierQuotaRow | null>(null);
@@ -145,7 +141,6 @@ function DashboardPage() {
   useEffect(() => {
     if (!user?.id) return;
     Promise.all([
-      isAdmin(user.id).then(setAdmin),
       getUserTier(user.id).then((t) => {
         setTier(t);
         setLimits(getTierLimits(t));
@@ -501,126 +496,37 @@ function DashboardPage() {
       upgradeTier: "Starter",
       gradient: "bg-gradient-to-r from-blue-500 to-indigo-500",
     },
-  ];
-
-  const quickActions: {
-    icon: typeof FileText;
-    label: string;
-    action: string;
-    color: string;
-    visible: boolean;
-    locked?: boolean;
-    upgradeTier?: string;
-  }[] = [
-    {
-      icon: FileText,
-      label: "Kelola CV",
-      action: "manage",
-      color: "bg-primary-soft text-primary",
-      visible: true,
-    },
-    {
-      icon: Sparkles,
-      label: "AI Saran",
-      action: "ai-suggest",
-      color: "bg-violet-500/10 text-violet-600",
-      visible: true,
-    },
-    {
-      icon: BarChart3,
-      label: "CV Scoring",
-      action: "score",
-      color: "bg-amber-500/10 text-amber-600",
-      visible: true,
-    },
-    {
-      icon: FileSearch,
-      label: "Job Match",
-      action: "job-match",
-      color: "bg-lime-500/10 text-lime-700",
-      visible: true,
-      locked: tier === "free",
-      upgradeTier: "Starter",
-    },
-    {
-      icon: RefreshCw,
-      label: "Tailor CV",
-      action: "tailor-cv",
-      color: "bg-cyan-500/10 text-cyan-700",
-      visible: true,
-      locked: tier !== "pro",
-      upgradeTier: "Pro",
-    },
-    {
-      icon: ArrowLeftRight,
-      label: "Compare",
-      action: "compare",
-      color: "bg-indigo-500/10 text-indigo-600",
-      visible: true,
-      locked: (tierQuotas?.enable_cv_comparison ?? limits.canCompare) === false,
-      upgradeTier: "Pro",
-    },
     {
       icon: Briefcase,
       label: "Pelamaran",
+      desc: "Lacak semua lamaran kerja dan statusnya di satu dashboard.",
       action: "lamaran",
-      color: "bg-blue-500/10 text-blue-600",
+      badge: "Tracker",
       visible: true,
-    },
-    {
-      icon: Mic,
-      label: "Simulasi",
-      action: "simulasi",
-      color: "bg-rose-500/10 text-rose-600",
-      visible: true,
-      locked: (tierQuotas?.enable_interview_simulator ?? limits.canInterviewSimulator) === false,
-      upgradeTier: "Pro",
-    },
-    {
-      icon: FileCheck,
-      label: "Cover Letter",
-      action: "cover-letter",
-      color: "bg-teal-500/10 text-teal-600",
-      visible: true,
-      locked: (tierQuotas?.enable_cover_letter ?? limits.canCoverLetter) === false,
-      upgradeTier: "Starter",
-    },
-    {
-      icon: Key,
-      label: "Keyword",
-      action: "keyword-extractor",
-      color: "bg-blue-500/10 text-blue-600",
-      visible: true,
-      locked: (tierQuotas?.enable_keyword_extractor ?? limits.canKeywordExtract) === false,
-      upgradeTier: "Starter",
-    },
-    {
-      icon: Gift,
-      label: "Referral",
-      action: "referral",
-      color: "bg-pink-500/10 text-pink-600",
-      visible: true,
+      locked: false,
+      gradient: "bg-gradient-to-r from-blue-500 to-sky-500",
     },
     {
       icon: TrendingUp,
       label: "Analitik",
+      desc: "Pantau performa CV: berapa kali dilihat, diunduh, dan dibagikan.",
       action: "analitik",
-      color: "bg-indigo-500/10 text-indigo-600",
+      badge: "Pro",
       visible: true,
       locked: (tierQuotas?.enable_analytics ?? limits.canAnalytics) === false,
       upgradeTier: "Pro",
+      gradient: "bg-gradient-to-r from-indigo-500 to-purple-500",
     },
-    ...(admin
-      ? [
-          {
-            icon: Shield,
-            label: "Admin",
-            action: "admin" as const,
-            color: "bg-red-500/10 text-red-600",
-            visible: true,
-          },
-        ]
-      : []),
+    {
+      icon: Gift,
+      label: "Referral",
+      desc: "Undang teman dan dapatkan bonus kuota AI gratis.",
+      action: "referral",
+      badge: "Bonus",
+      visible: true,
+      locked: false,
+      gradient: "bg-gradient-to-r from-pink-500 to-rose-500",
+    },
   ];
 
   const CV_PICKER_ACTIONS = [
@@ -679,6 +585,7 @@ function DashboardPage() {
     hasCoverLetter: hasCv && coverLetterUsageCount > 0,
     hasInterview: hasCv && false, // can be enhanced later with interview data
     hasApplied: hasCv && false, // can be enhanced later with job application data
+    tier,
   });
 
   // ─── AI Recommendations ───

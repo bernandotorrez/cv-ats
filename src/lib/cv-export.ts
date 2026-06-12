@@ -26,6 +26,16 @@ const COLOR_HEADING_BORDER = "222222";
 const COLOR_BG_BANDUNG = "468432";
 const COLOR_SURABAYA_BORDER = "468432";
 const COLOR_SURABAYA_HEADLINE = "468432";
+const COLOR_MEDAN_NAVY = "1a365d";
+const COLOR_MEDAN_SUBTITLE = "2d3748";
+const COLOR_MEDAN_CONTACT = "4a5568";
+const COLOR_MAKASSAR_NAME = "1e3a8a";
+const COLOR_MAKASSAR_HEADLINE = "3b82f6";
+const COLOR_MAKASSAR_ACCENT = "1e40af";
+const COLOR_SEMARANG_BG = "059669";
+const COLOR_SEMARANG_BG2 = "047857";
+const COLOR_BALI_ACCENT = "0891b2";
+const COLOR_BALI_HEADING = "0f172a";
 
 function headingSection(text: string, spacing?: { before?: number; after?: number }): Paragraph[] {
   return [
@@ -268,6 +278,204 @@ function buildYogyaHeader(cv: CvData): Paragraph[] {
   ];
 }
 
+function buildMedanHeader(cv: CvData): Paragraph[] {
+  const fullName = cv.personal.fullName || "Nama Lengkap";
+  const contactLine1 = [cv.personal.email, cv.personal.phone, cv.personal.location]
+    .filter(Boolean)
+    .join(" • ");
+  const contactLine2 = [cv.personal.linkedin, cv.personal.website].filter(Boolean).join(" • ");
+
+  const paras: Paragraph[] = [
+    new Paragraph({
+      children: [
+        new TextRun({ text: fullName, bold: true, size: 36, font: FONT_DISPLAY, color: COLOR_MEDAN_NAVY }),
+      ],
+      alignment: AlignmentType.CENTER,
+      spacing: { after: 40 },
+    }),
+  ];
+
+  if (cv.personal.headline) {
+    paras.push(
+      new Paragraph({
+        children: [
+          new TextRun({ text: cv.personal.headline, size: 20, font: FONT_NAME, color: COLOR_MEDAN_SUBTITLE, bold: true }),
+        ],
+        alignment: AlignmentType.CENTER,
+        spacing: { after: 40 },
+      }),
+    );
+  }
+
+  if (contactLine1) {
+    paras.push(
+      new Paragraph({
+        children: [new TextRun({ text: contactLine1, size: 18, font: FONT_NAME, color: COLOR_MEDAN_CONTACT })],
+        alignment: AlignmentType.CENTER,
+        spacing: { after: 20 },
+      }),
+    );
+  }
+  if (contactLine2) {
+    paras.push(
+      new Paragraph({
+        children: [new TextRun({ text: contactLine2, size: 17, font: FONT_NAME, color: "718096" })],
+        alignment: AlignmentType.CENTER,
+        spacing: { after: 20 },
+      }),
+    );
+  }
+
+  // Navy bottom border
+  paras.push(
+    new Paragraph({
+      border: { bottom: { style: BorderStyle.SINGLE, size: 4, color: COLOR_MEDAN_NAVY, space: 4 } },
+      spacing: { after: 120 },
+      children: [],
+    }),
+  );
+
+  return paras;
+}
+
+function buildMakassarHeader(cv: CvData): Paragraph[] {
+  const fullName = cv.personal.fullName || "Nama Lengkap";
+  const contact = [cv.personal.email, cv.personal.phone, cv.personal.location, cv.personal.linkedin]
+    .filter(Boolean)
+    .join(" • ");
+
+  const paras: Paragraph[] = [
+    new Paragraph({
+      children: [
+        new TextRun({ text: fullName, bold: true, size: 36, font: FONT_DISPLAY, color: COLOR_MAKASSAR_NAME }),
+      ],
+      spacing: { after: 40 },
+    }),
+  ];
+
+  if (cv.personal.headline) {
+    paras.push(
+      new Paragraph({
+        children: [
+          new TextRun({ text: cv.personal.headline, size: 20, font: FONT_NAME, color: COLOR_MAKASSAR_HEADLINE }),
+        ],
+        spacing: { after: 40 },
+      }),
+    );
+  }
+
+  // Blue accent line
+  paras.push(
+    new Paragraph({
+      border: { bottom: { style: BorderStyle.SINGLE, size: 3, color: COLOR_MAKASSAR_ACCENT, space: 4 } },
+      spacing: { after: 40 },
+      children: [],
+    }),
+  );
+
+  if (contact) {
+    paras.push(
+      new Paragraph({
+        children: [new TextRun({ text: contact, size: 18, font: FONT_NAME, color: COLOR_MUTED })],
+        spacing: { after: 120 },
+      }),
+    );
+  }
+
+  return paras;
+}
+
+function buildSemarangHeader(cv: CvData): Paragraph[] {
+  const fullName = cv.personal.fullName || "Nama Lengkap";
+  const contact = [cv.personal.email, cv.personal.phone, cv.personal.location]
+    .filter(Boolean)
+    .join(" • ");
+
+  const paras: Paragraph[] = [
+    new Paragraph({
+      children: [
+        new TextRun({ text: fullName, bold: true, size: 40, font: FONT_DISPLAY, color: "FFFFFF" }),
+      ],
+      shading: { type: ShadingType.SOLID, color: COLOR_SEMARANG_BG, fill: COLOR_SEMARANG_BG },
+      alignment: AlignmentType.CENTER,
+      spacing: { after: 40 },
+    }),
+  ];
+
+  if (cv.personal.headline) {
+    paras.push(
+      new Paragraph({
+        children: [
+          new TextRun({ text: cv.personal.headline, size: 21, font: FONT_NAME, color: "FFFFFF" }),
+        ],
+        shading: { type: ShadingType.SOLID, color: COLOR_SEMARANG_BG, fill: COLOR_SEMARANG_BG },
+        alignment: AlignmentType.CENTER,
+        spacing: { after: 40 },
+      }),
+    );
+  }
+
+  paras.push(
+    new Paragraph({
+      children: [new TextRun({ text: contact, size: 18, font: FONT_NAME, color: "FFFFFF" })],
+      shading: { type: ShadingType.SOLID, color: COLOR_SEMARANG_BG, fill: COLOR_SEMARANG_BG },
+      alignment: AlignmentType.CENTER,
+      spacing: { after: 200 },
+    }),
+  );
+
+  return paras;
+}
+
+function buildBaliHeader(cv: CvData): Paragraph[] {
+  const fullName = cv.personal.fullName || "Nama Lengkap";
+  const contact = [cv.personal.email, cv.personal.phone, cv.personal.location, cv.personal.linkedin]
+    .filter(Boolean)
+    .join(" • ");
+
+  const paras: Paragraph[] = [];
+
+  // Cyan accent strip (simulated as a thin colored paragraph border)
+  paras.push(
+    new Paragraph({
+      border: { bottom: { style: BorderStyle.SINGLE, size: 6, color: COLOR_BALI_ACCENT, space: 4 } },
+      spacing: { after: 100 },
+      children: [],
+    }),
+  );
+
+  paras.push(
+    new Paragraph({
+      children: [
+        new TextRun({ text: fullName, bold: true, size: 44, font: FONT_DISPLAY, color: COLOR_BALI_HEADING }),
+      ],
+      spacing: { after: 40 },
+    }),
+  );
+
+  if (cv.personal.headline) {
+    paras.push(
+      new Paragraph({
+        children: [
+          new TextRun({ text: cv.personal.headline, size: 22, font: FONT_NAME, color: COLOR_BALI_ACCENT, bold: true }),
+        ],
+        spacing: { after: 60 },
+      }),
+    );
+  }
+
+  if (contact) {
+    paras.push(
+      new Paragraph({
+        children: [new TextRun({ text: contact, size: 18, font: FONT_NAME, color: "64748b" })],
+        spacing: { after: 120 },
+      }),
+    );
+  }
+
+  return paras;
+}
+
 // ─── Main DOCX Generator ──────────────────────────────────────
 
 export async function generateDocx(cv: CvData, options: ExportOptions): Promise<Blob> {
@@ -285,6 +493,18 @@ export async function generateDocx(cv: CvData, options: ExportOptions): Promise<
       break;
     case "yogya":
       sections.push(...buildYogyaHeader(cv));
+      break;
+    case "medan":
+      sections.push(...buildMedanHeader(cv));
+      break;
+    case "makassar":
+      sections.push(...buildMakassarHeader(cv));
+      break;
+    case "semarang":
+      sections.push(...buildSemarangHeader(cv));
+      break;
+    case "bali":
+      sections.push(...buildBaliHeader(cv));
       break;
     case "jakarta":
     default:
@@ -386,6 +606,84 @@ export async function generateDocx(cv: CvData, options: ExportOptions): Promise<
     sections.push(
       bodyParagraph(cv.skills.map((s) => s.name).join(" • "), { spacing: { after: 80 } }),
     );
+  }
+
+  // ─── Internship ────────────────────────────────────────────────
+  const internships = cv.internships || [];
+  if (internships.length > 0) {
+    sections.push(...headingSection("Magang"));
+
+    for (const item of internships) {
+      sections.push(
+        new Paragraph({
+          children: [
+            new TextRun({
+              text: `${item.position} — ${item.company}`,
+              bold: true,
+              size: 21,
+              font: FONT_NAME,
+              color: COLOR_TEXT,
+            }),
+          ],
+          spacing: { before: 100, after: 20 },
+        }),
+      );
+      sections.push(
+        new Paragraph({
+          children: [
+            new TextRun({
+              text: `${item.startDate} – ${item.endDate}`,
+              size: 19,
+              font: FONT_NAME,
+              color: COLOR_MUTED,
+            }),
+          ],
+          spacing: { after: 40 },
+        }),
+      );
+      if (item.description) {
+        sections.push(bodyParagraph(item.description, { spacing: { after: 60 } }));
+      }
+    }
+  }
+
+  // ─── Organization ──────────────────────────────────────────────
+  const organizations = cv.organizations || [];
+  if (organizations.length > 0) {
+    sections.push(...headingSection("Organisasi"));
+
+    for (const item of organizations) {
+      sections.push(
+        new Paragraph({
+          children: [
+            new TextRun({
+              text: `${item.role} — ${item.name}`,
+              bold: true,
+              size: 21,
+              font: FONT_NAME,
+              color: COLOR_TEXT,
+            }),
+          ],
+          spacing: { before: 100, after: 20 },
+        }),
+      );
+      sections.push(
+        new Paragraph({
+          children: [
+            new TextRun({
+              text: `${item.startDate} – ${item.endDate}`,
+              size: 19,
+              font: FONT_NAME,
+              color: COLOR_MUTED,
+            }),
+          ],
+          spacing: { after: 40 },
+        }),
+      );
+      if (item.description) {
+        sections.push(bodyParagraph(item.description, { spacing: { after: 60 } }));
+      }
+    }
   }
 
   // ─── Languages ────────────────────────────────────────────────

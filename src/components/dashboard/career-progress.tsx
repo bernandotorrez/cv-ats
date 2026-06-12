@@ -34,7 +34,7 @@ interface CareerProgressProps {
 }
 
 /** Returns motivational copy based on progress */
-function getMotivation(pct: number, nextStepLabel?: string): {
+function getMotivation(pct: number, stepPct: number, nextStepLabel?: string): {
   emoji: string;
   headline: string;
   sub: string;
@@ -51,7 +51,7 @@ function getMotivation(pct: number, nextStepLabel?: string): {
   if (pct < 40) {
     return {
       emoji: "💪",
-      headline: `Selesaikan "${nextStepLabel}" untuk naik ke ${pct + 20}%`,
+      headline: `Selesaikan "${nextStepLabel}" untuk naik ke ${Math.min(pct + stepPct, 100)}%`,
       sub: "Kamu sudah mulai! Satu langkah lagi membawamu lebih dekat.",
       ctaLabel: "Lanjutkan",
     };
@@ -116,7 +116,8 @@ export function CareerProgress({ user, steps, onCreateCv, onStepClick }: CareerP
 
   const nextStep = steps.find((s) => !s.done);
   const nextStepIdx = steps.findIndex((s) => !s.done);
-  const motivation = getMotivation(progressPct, nextStep?.label);
+  const stepPct = Math.round(100 / totalSteps);
+  const motivation = getMotivation(progressPct, stepPct, nextStep?.label);
 
   // Points to reward completed steps (20 pts each)
   const points = completedSteps * 20;
@@ -318,15 +319,19 @@ export function CareerProgress({ user, steps, onCreateCv, onStepClick }: CareerP
   );
 }
 
-// Default steps definition
+// Default steps definition — filtered by tier
+// Free: Buat CV, Cek Skor ATS, Lamaran (no Cover Letter / Interview)
+// Starter: Buat CV, Cek Skor ATS, Cover Letter, Lamaran (no Interview)
+// Pro: all 5 steps
 export function getCareerSteps(data: {
   hasCv: boolean;
   hasScore: boolean;
   hasCoverLetter: boolean;
   hasInterview: boolean;
   hasApplied: boolean;
+  tier: "free" | "starter" | "pro";
 }): CareerStep[] {
-  return [
+  const allSteps: (CareerStep & { hidden?: boolean })[] = [
     {
       id: "create-cv",
       label: "Buat CV",
@@ -348,6 +353,8 @@ export function getCareerSteps(data: {
       description: "Tulis surat lamaran dengan AI",
       icon: FileCheck,
       done: data.hasCoverLetter,
+      // Starter+ only
+      hidden: data.tier === "free",
     },
     {
       id: "interview",
@@ -355,6 +362,8 @@ export function getCareerSteps(data: {
       description: "Latihan jawab pertanyaan HR",
       icon: Mic,
       done: data.hasInterview,
+      // Pro only
+      hidden: data.tier !== "pro",
     },
     {
       id: "apply",
@@ -364,4 +373,6 @@ export function getCareerSteps(data: {
       done: data.hasApplied,
     },
   ];
+
+  return allSteps.filter((s) => !("hidden" in s && s.hidden));
 }

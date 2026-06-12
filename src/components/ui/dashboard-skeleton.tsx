@@ -99,17 +99,14 @@ export function DashboardSkeleton() {
 
           {/* Power Features Skeleton */}
           <section className="rounded-2xl border bg-card shadow-sm overflow-hidden">
-            <div className="px-5 py-4 border-b border-border/60 flex items-center justify-between">
-              <div>
-                <Skeleton className="h-5 w-32 mb-1.5" />
-                <Skeleton className="h-3 w-52" />
-              </div>
-              <Skeleton className="h-8 w-24 rounded-lg" />
+            <div className="px-5 py-4 border-b border-border/60">
+              <Skeleton className="h-5 w-32 mb-1.5" />
+              <Skeleton className="h-3 w-52" />
             </div>
-            <div className="p-4 grid gap-3 md:grid-cols-2 xl:grid-cols-2">
+            <div className="p-4 grid gap-2.5 sm:grid-cols-2">
               {[1, 2, 3, 4].map((i) => (
-                <article key={i} className="flex items-start gap-3 rounded-xl border bg-background p-4">
-                  <Skeleton className="h-10 w-10 shrink-0 rounded-xl" />
+                <article key={i} className="flex items-start gap-3.5 rounded-xl border bg-background p-4">
+                  <Skeleton className="h-10 w-10 shrink-0 rounded-lg" />
                   <div className="flex-1 min-w-0">
                     <Skeleton className="h-4 w-28 mb-2" />
                     <Skeleton className="h-3 w-full mb-1" />
