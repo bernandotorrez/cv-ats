@@ -32,13 +32,21 @@ function formatCvDescriptions(data: CvData): CvData {
   const normalizeDesc = (d: unknown): string => {
     if (!d) return "";
     if (typeof d === "string") return formatDescription(d);
-    if (Array.isArray(d)) return formatDescription(d.map((line) => line.startsWith("•") || line.startsWith("-") ? line : `• ${line}`).join("\n"));
+    if (Array.isArray(d))
+      return formatDescription(
+        d
+          .map((line) => (line.startsWith("•") || line.startsWith("-") ? line : `• ${line}`))
+          .join("\n"),
+      );
     return formatDescription(String(d));
   };
   return {
     ...data,
     experiences: data.experiences.map((e) => ({ ...e, description: normalizeDesc(e.description) })),
-    educations: data.educations.map((e) => ({ ...e, description: e.description ? normalizeDesc(e.description) : e.description })),
+    educations: data.educations.map((e) => ({
+      ...e,
+      description: e.description ? normalizeDesc(e.description) : e.description,
+    })),
   };
 }
 
@@ -73,22 +81,38 @@ export function CvPreview({
   const renderTemplate = () => {
     switch (template) {
       case "bandung":
-        return <BandungTemplate data={formattedData} sectionOrder={sectionOrder} language={language} />;
+        return (
+          <BandungTemplate data={formattedData} sectionOrder={sectionOrder} language={language} />
+        );
       case "surabaya":
-        return <SurabayaTemplate data={formattedData} sectionOrder={sectionOrder} language={language} />;
+        return (
+          <SurabayaTemplate data={formattedData} sectionOrder={sectionOrder} language={language} />
+        );
       case "yogya":
-        return <YogyaTemplate data={formattedData} sectionOrder={sectionOrder} language={language} />;
+        return (
+          <YogyaTemplate data={formattedData} sectionOrder={sectionOrder} language={language} />
+        );
       case "medan":
-        return <MedanTemplate data={formattedData} sectionOrder={sectionOrder} language={language} />;
+        return (
+          <MedanTemplate data={formattedData} sectionOrder={sectionOrder} language={language} />
+        );
       case "makassar":
-        return <MakassarTemplate data={formattedData} sectionOrder={sectionOrder} language={language} />;
+        return (
+          <MakassarTemplate data={formattedData} sectionOrder={sectionOrder} language={language} />
+        );
       case "semarang":
-        return <SemarangTemplate data={formattedData} sectionOrder={sectionOrder} language={language} />;
+        return (
+          <SemarangTemplate data={formattedData} sectionOrder={sectionOrder} language={language} />
+        );
       case "bali":
-        return <BaliTemplate data={formattedData} sectionOrder={sectionOrder} language={language} />;
+        return (
+          <BaliTemplate data={formattedData} sectionOrder={sectionOrder} language={language} />
+        );
       case "jakarta":
       default:
-        return <JakartaTemplate data={formattedData} sectionOrder={sectionOrder} language={language} />;
+        return (
+          <JakartaTemplate data={formattedData} sectionOrder={sectionOrder} language={language} />
+        );
     }
   };
 
@@ -257,9 +281,7 @@ function renderTemplateById(
                 {data.personal.fullName || "Nama Lengkap"}
               </h1>
               {data.personal.headline && (
-                <p style={{ margin: "4px 0 0", opacity: 0.95 }}>
-                  {data.personal.headline}
-                </p>
+                <p style={{ margin: "4px 0 0", opacity: 0.95 }}>{data.personal.headline}</p>
               )}
               <p style={{ margin: "6px 0 0", fontSize: "9.5pt" }}>
                 {[
@@ -334,9 +356,7 @@ function renderTemplateById(
                 {data.personal.fullName || "Nama Lengkap"}
               </h1>
               {data.personal.headline && (
-                <p style={{ margin: "2px 0 6px", color: "#666" }}>
-                  {data.personal.headline}
-                </p>
+                <p style={{ margin: "2px 0 6px", color: "#666" }}>{data.personal.headline}</p>
               )}
               <p style={{ fontSize: "9.5pt", color: "#444", margin: 0 }}>
                 {[
@@ -357,15 +377,14 @@ function renderTemplateById(
 
     case "jakarta":
     default:
-      return <JakartaTemplate data={dataWithHiddenHeader} showHeader={showHeader} language={language} />;
+      return (
+        <JakartaTemplate data={dataWithHiddenHeader} showHeader={showHeader} language={language} />
+      );
   }
 }
 
 // Estimate content height and split into pages
-function splitContentIntoPages(
-  data: CvData,
-  maxHeight: number
-): CvData[] {
+function splitContentIntoPages(data: CvData, maxHeight: number): CvData[] {
   // Estimate each section height in mm
   const estimateSectionHeight = (section: string, items: unknown[]): number => {
     const baseHeight = 15; // header + margin
@@ -373,7 +392,7 @@ function splitContentIntoPages(
 
     switch (section) {
       case "summary":
-        return baseHeight + (data.personal.summary?.length || 0) / 50 * 5;
+        return baseHeight + ((data.personal.summary?.length || 0) / 50) * 5;
       case "experiences":
         return baseHeight + items.length * 25 + (data.personal.summary ? 20 : 0);
       case "educations":
@@ -429,7 +448,7 @@ function splitContentIntoPages(
   const addToCurrentPage = (
     section: string,
     sectionData: Partial<CvData>,
-    sectionHeight: number
+    sectionHeight: number,
   ) => {
     if (currentHeight + sectionHeight > maxHeight) {
       // Push current page and start new one
@@ -466,19 +485,31 @@ function splitContentIntoPages(
     // Add section data
     switch (section) {
       case "experiences":
-        currentPage.experiences = [...(currentPage.experiences || []), ...(sectionData.experiences || [])];
+        currentPage.experiences = [
+          ...(currentPage.experiences || []),
+          ...(sectionData.experiences || []),
+        ];
         break;
       case "educations":
-        currentPage.educations = [...(currentPage.educations || []), ...(sectionData.educations || [])];
+        currentPage.educations = [
+          ...(currentPage.educations || []),
+          ...(sectionData.educations || []),
+        ];
         break;
       case "skills":
         currentPage.skills = [...(currentPage.skills || []), ...(sectionData.skills || [])];
         break;
       case "languages":
-        currentPage.languages = [...(currentPage.languages || []), ...(sectionData.languages || [])];
+        currentPage.languages = [
+          ...(currentPage.languages || []),
+          ...(sectionData.languages || []),
+        ];
         break;
       case "certificates":
-        currentPage.certificates = [...(currentPage.certificates || []), ...(sectionData.certificates || [])];
+        currentPage.certificates = [
+          ...(currentPage.certificates || []),
+          ...(sectionData.certificates || []),
+        ];
         break;
     }
   };

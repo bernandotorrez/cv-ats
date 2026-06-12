@@ -1,4 +1,15 @@
-import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, PageOrientation, convertInchesToTwip, BorderStyle, ShadingType } from "docx";
+import {
+  Document,
+  Packer,
+  Paragraph,
+  TextRun,
+  HeadingLevel,
+  AlignmentType,
+  PageOrientation,
+  convertInchesToTwip,
+  BorderStyle,
+  ShadingType,
+} from "docx";
 import type { CvData, TemplateId } from "./cv-types";
 
 export interface ExportOptions {
@@ -40,7 +51,10 @@ function headingSection(text: string, spacing?: { before?: number; after?: numbe
   ];
 }
 
-function bodyParagraph(text: string, options?: { spacing?: { before?: number; after?: number }; fontSize?: number }): Paragraph {
+function bodyParagraph(
+  text: string,
+  options?: { spacing?: { before?: number; after?: number }; fontSize?: number },
+): Paragraph {
   return new Paragraph({
     children: [
       new TextRun({
@@ -92,26 +106,39 @@ function buildJakartaHeader(cv: CvData): Paragraph[] {
   paras.push(
     new Paragraph({
       children: [
-        new TextRun({ text: fullName, bold: true, size: 40, font: FONT_DISPLAY, color: COLOR_TEXT }),
+        new TextRun({
+          text: fullName,
+          bold: true,
+          size: 40,
+          font: FONT_DISPLAY,
+          color: COLOR_TEXT,
+        }),
       ],
       alignment: AlignmentType.CENTER,
       spacing: { after: 40 },
-    })
+    }),
   );
 
   if (cv.personal.headline) {
     paras.push(
       new Paragraph({
         children: [
-          new TextRun({ text: cv.personal.headline, size: 22, font: FONT_NAME, color: COLOR_MUTED }),
+          new TextRun({
+            text: cv.personal.headline,
+            size: 22,
+            font: FONT_NAME,
+            color: COLOR_MUTED,
+          }),
         ],
         alignment: AlignmentType.CENTER,
         spacing: { after: 40 },
-      })
+      }),
     );
   }
 
-  const contactLine1 = [cv.personal.email, cv.personal.phone, cv.personal.location].filter(Boolean).join(" • ");
+  const contactLine1 = [cv.personal.email, cv.personal.phone, cv.personal.location]
+    .filter(Boolean)
+    .join(" • ");
   const contactLine2 = [cv.personal.linkedin, cv.personal.website].filter(Boolean).join(" • ");
 
   if (contactLine1) paras.push(mutedParagraph(contactLine1));
@@ -122,7 +149,9 @@ function buildJakartaHeader(cv: CvData): Paragraph[] {
 
 function buildBandungHeader(cv: CvData): Paragraph[] {
   const fullName = cv.personal.fullName || "Nama Lengkap";
-  const contact = [cv.personal.email, cv.personal.phone, cv.personal.location, cv.personal.linkedin].filter(Boolean).join(" • ");
+  const contact = [cv.personal.email, cv.personal.phone, cv.personal.location, cv.personal.linkedin]
+    .filter(Boolean)
+    .join(" • ");
 
   return [
     new Paragraph({
@@ -136,7 +165,12 @@ function buildBandungHeader(cv: CvData): Paragraph[] {
       ? [
           new Paragraph({
             children: [
-              new TextRun({ text: cv.personal.headline, size: 22, font: FONT_NAME, color: "FFFFFF" }),
+              new TextRun({
+                text: cv.personal.headline,
+                size: 22,
+                font: FONT_NAME,
+                color: "FFFFFF",
+              }),
             ],
             shading: { type: ShadingType.SOLID, color: COLOR_BG_BANDUNG, fill: COLOR_BG_BANDUNG },
             spacing: { after: 60 },
@@ -144,9 +178,7 @@ function buildBandungHeader(cv: CvData): Paragraph[] {
         ]
       : []),
     new Paragraph({
-      children: [
-        new TextRun({ text: contact, size: 19, font: FONT_NAME, color: "FFFFFF" }),
-      ],
+      children: [new TextRun({ text: contact, size: 19, font: FONT_NAME, color: "FFFFFF" })],
       shading: { type: ShadingType.SOLID, color: COLOR_BG_BANDUNG, fill: COLOR_BG_BANDUNG },
       spacing: { after: 200 },
     }),
@@ -155,30 +187,44 @@ function buildBandungHeader(cv: CvData): Paragraph[] {
 
 function buildSurabayaHeader(cv: CvData): Paragraph[] {
   const fullName = cv.personal.fullName || "Nama Lengkap";
-  const contact = [cv.personal.email, cv.personal.phone, cv.personal.location, cv.personal.linkedin].filter(Boolean).join(" • ");
+  const contact = [cv.personal.email, cv.personal.phone, cv.personal.location, cv.personal.linkedin]
+    .filter(Boolean)
+    .join(" • ");
 
   return [
     new Paragraph({
       children: [
-        new TextRun({ text: fullName, bold: true, size: 44, font: FONT_DISPLAY, color: COLOR_TEXT }),
+        new TextRun({
+          text: fullName,
+          bold: true,
+          size: 44,
+          font: FONT_DISPLAY,
+          color: COLOR_TEXT,
+        }),
       ],
-      border: { left: { style: BorderStyle.SINGLE, size: 12, color: COLOR_SURABAYA_BORDER, space: 12 } },
+      border: {
+        left: { style: BorderStyle.SINGLE, size: 12, color: COLOR_SURABAYA_BORDER, space: 12 },
+      },
       spacing: { after: 20 },
     }),
     ...(cv.personal.headline
       ? [
           new Paragraph({
             children: [
-              new TextRun({ text: cv.personal.headline, bold: true, size: 22, font: FONT_NAME, color: COLOR_SURABAYA_HEADLINE }),
+              new TextRun({
+                text: cv.personal.headline,
+                bold: true,
+                size: 22,
+                font: FONT_NAME,
+                color: COLOR_SURABAYA_HEADLINE,
+              }),
             ],
             spacing: { after: 40 },
           }),
         ]
       : []),
     new Paragraph({
-      children: [
-        new TextRun({ text: contact, size: 19, font: FONT_NAME, color: COLOR_MUTED }),
-      ],
+      children: [new TextRun({ text: contact, size: 19, font: FONT_NAME, color: COLOR_MUTED })],
       spacing: { after: 120 },
     }),
   ];
@@ -186,29 +232,32 @@ function buildSurabayaHeader(cv: CvData): Paragraph[] {
 
 function buildYogyaHeader(cv: CvData): Paragraph[] {
   const fullName = cv.personal.fullName || "Nama Lengkap";
-  const contact = [cv.personal.email, cv.personal.phone, cv.personal.location, cv.personal.linkedin].filter(Boolean).join(" • ");
+  const contact = [cv.personal.email, cv.personal.phone, cv.personal.location, cv.personal.linkedin]
+    .filter(Boolean)
+    .join(" • ");
 
   return [
     new Paragraph({
-      children: [
-        new TextRun({ text: fullName, size: 48, font: FONT_DISPLAY, color: COLOR_TEXT }),
-      ],
+      children: [new TextRun({ text: fullName, size: 48, font: FONT_DISPLAY, color: COLOR_TEXT })],
       spacing: { after: 20 },
     }),
     ...(cv.personal.headline
       ? [
           new Paragraph({
             children: [
-              new TextRun({ text: cv.personal.headline, size: 22, font: FONT_NAME, color: "666666" }),
+              new TextRun({
+                text: cv.personal.headline,
+                size: 22,
+                font: FONT_NAME,
+                color: "666666",
+              }),
             ],
             spacing: { after: 60 },
           }),
         ]
       : []),
     new Paragraph({
-      children: [
-        new TextRun({ text: contact, size: 19, font: FONT_NAME, color: COLOR_MUTED }),
-      ],
+      children: [new TextRun({ text: contact, size: 19, font: FONT_NAME, color: COLOR_MUTED })],
       spacing: { after: 40 },
     }),
     new Paragraph({
@@ -257,18 +306,29 @@ export async function generateDocx(cv: CvData, options: ExportOptions): Promise<
       sections.push(
         new Paragraph({
           children: [
-            new TextRun({ text: `${exp.position} — ${exp.company}`, bold: true, size: 21, font: FONT_NAME, color: COLOR_TEXT }),
+            new TextRun({
+              text: `${exp.position} — ${exp.company}`,
+              bold: true,
+              size: 21,
+              font: FONT_NAME,
+              color: COLOR_TEXT,
+            }),
           ],
           spacing: { before: 100, after: 20 },
-        })
+        }),
       );
       sections.push(
         new Paragraph({
           children: [
-            new TextRun({ text: `${exp.startDate} – ${exp.current ? "Sekarang" : exp.endDate}`, size: 19, font: FONT_NAME, color: COLOR_MUTED }),
+            new TextRun({
+              text: `${exp.startDate} – ${exp.current ? "Sekarang" : exp.endDate}`,
+              size: 19,
+              font: FONT_NAME,
+              color: COLOR_MUTED,
+            }),
           ],
           spacing: { after: exp.location ? 20 : 40 },
-        })
+        }),
       );
       if (exp.location) {
         sections.push(mutedParagraph(exp.location));
@@ -291,7 +351,7 @@ export async function generateDocx(cv: CvData, options: ExportOptions): Promise<
             new TextRun({ text: title, bold: true, size: 21, font: FONT_NAME, color: COLOR_TEXT }),
           ],
           spacing: { before: 100, after: 20 },
-        })
+        }),
       );
       sections.push(
         new Paragraph({
@@ -299,15 +359,20 @@ export async function generateDocx(cv: CvData, options: ExportOptions): Promise<
             new TextRun({ text: edu.school, size: 20, font: FONT_NAME, color: COLOR_TEXT }),
           ],
           spacing: { after: 20 },
-        })
+        }),
       );
       sections.push(
         new Paragraph({
           children: [
-            new TextRun({ text: `${edu.startDate} – ${edu.endDate}`, size: 19, font: FONT_NAME, color: COLOR_MUTED }),
+            new TextRun({
+              text: `${edu.startDate} – ${edu.endDate}`,
+              size: 19,
+              font: FONT_NAME,
+              color: COLOR_MUTED,
+            }),
           ],
           spacing: { after: 40 },
-        })
+        }),
       );
       if (edu.description) {
         sections.push(bodyParagraph(edu.description, { spacing: { after: 60 } }));
@@ -318,13 +383,19 @@ export async function generateDocx(cv: CvData, options: ExportOptions): Promise<
   // ─── Skills ────────────────────────────────────────────────────
   if (cv.skills.length > 0) {
     sections.push(...headingSection("Keahlian"));
-    sections.push(bodyParagraph(cv.skills.map(s => s.name).join(" • "), { spacing: { after: 80 } }));
+    sections.push(
+      bodyParagraph(cv.skills.map((s) => s.name).join(" • "), { spacing: { after: 80 } }),
+    );
   }
 
   // ─── Languages ────────────────────────────────────────────────
   if (cv.languages.length > 0) {
     sections.push(...headingSection("Bahasa"));
-    sections.push(bodyParagraph(cv.languages.map(l => `${l.name} (${l.level})`).join(" • "), { spacing: { after: 80 } }));
+    sections.push(
+      bodyParagraph(cv.languages.map((l) => `${l.name} (${l.level})`).join(" • "), {
+        spacing: { after: 80 },
+      }),
+    );
   }
 
   // ─── Certificates ─────────────────────────────────────────────
@@ -334,11 +405,22 @@ export async function generateDocx(cv: CvData, options: ExportOptions): Promise<
       sections.push(
         new Paragraph({
           children: [
-            new TextRun({ text: `${cert.name}`, bold: true, size: 21, font: FONT_NAME, color: COLOR_TEXT }),
-            new TextRun({ text: ` — ${cert.issuer} (${cert.date})`, size: 21, font: FONT_NAME, color: COLOR_TEXT }),
+            new TextRun({
+              text: `${cert.name}`,
+              bold: true,
+              size: 21,
+              font: FONT_NAME,
+              color: COLOR_TEXT,
+            }),
+            new TextRun({
+              text: ` — ${cert.issuer} (${cert.date})`,
+              size: 21,
+              font: FONT_NAME,
+              color: COLOR_TEXT,
+            }),
           ],
           spacing: { after: 40 },
-        })
+        }),
       );
     }
   }
@@ -348,11 +430,16 @@ export async function generateDocx(cv: CvData, options: ExportOptions): Promise<
     sections.push(
       new Paragraph({
         children: [
-          new TextRun({ text: "Dibuat dengan CV Pintar — cvpintar.web.id", size: 18, font: FONT_NAME, color: "999999" }),
+          new TextRun({
+            text: "Dibuat dengan CV Pintar — cvpintar.web.id",
+            size: 18,
+            font: FONT_NAME,
+            color: "999999",
+          }),
         ],
         alignment: AlignmentType.CENTER,
         spacing: { before: 400 },
-      })
+      }),
     );
   }
 
@@ -411,11 +498,115 @@ export function downloadBlob(blob: Blob, fileName: string) {
 
 /**
  * Download CV as PDF (via print dialog)
- * Forces the preview panel to be visible and ensures proper rendering before printing
+ * Prints a standalone clone of the rendered CV so editor layout/hidden tabs
+ * cannot leak into the browser print preview.
  */
-export function downloadPdf(cv: CvData, fileName: string = "CV.pdf") {
-  // Small delay to ensure DOM is ready and any pending renders complete
-  setTimeout(() => {
+export function downloadPdf(_cv: CvData, fileName: string = "CV.pdf") {
+  const printSource =
+    document.querySelector<HTMLElement>(".cv-print-document .cv-print-area") ||
+    document.querySelector<HTMLElement>(".cv-print-area");
+
+  if (!printSource) {
     window.print();
-  }, 100);
+    return;
+  }
+
+  const iframe = document.createElement("iframe");
+  iframe.setAttribute("aria-hidden", "true");
+  iframe.style.position = "fixed";
+  iframe.style.right = "0";
+  iframe.style.bottom = "0";
+  iframe.style.width = "1px";
+  iframe.style.height = "1px";
+  iframe.style.border = "0";
+  iframe.style.opacity = "0";
+  iframe.style.pointerEvents = "none";
+  document.body.appendChild(iframe);
+
+  const printDocument = iframe.contentDocument;
+  const printWindow = iframe.contentWindow;
+
+  if (!printDocument || !printWindow) {
+    iframe.remove();
+    window.print();
+    return;
+  }
+
+  const styleNodes = Array.from(document.querySelectorAll<HTMLStyleElement>("style"))
+    .map((node) => `<style>${node.textContent || ""}</style>`)
+    .join("\n");
+  const stylesheetNodes = Array.from(
+    document.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"]'),
+  )
+    .map((node) => `<link rel="stylesheet" href="${node.href}" />`)
+    .join("\n");
+  const clonedCv = printSource.cloneNode(true) as HTMLElement;
+
+  printDocument.open();
+  printDocument.write(`<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>${fileName.replace(/[<>]/g, "")}</title>
+    ${stylesheetNodes}
+    ${styleNodes}
+    <style>
+      html,
+      body {
+        margin: 0 !important;
+        padding: 0 !important;
+        background: white !important;
+      }
+
+      .cv-print-area {
+        display: block !important;
+        padding: 0 !important;
+        background: white !important;
+        overflow: visible !important;
+      }
+
+      .cv-print-area > div,
+      .cv-preview-container,
+      .cv-preview {
+        display: block !important;
+        width: auto !important;
+        height: auto !important;
+        min-width: 0 !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+        border: 0 !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        transform: none !important;
+        overflow: visible !important;
+      }
+
+      .cv-preview {
+        padding: 0 !important;
+      }
+
+      @page {
+        size: A4;
+        margin: 16mm;
+      }
+    </style>
+  </head>
+  <body></body>
+</html>`);
+  printDocument.close();
+  printDocument.body.appendChild(clonedCv);
+
+  let cleanedUp = false;
+  const cleanup = () => {
+    if (cleanedUp) return;
+    cleanedUp = true;
+    setTimeout(() => iframe.remove(), 1000);
+  };
+
+  printWindow.addEventListener("afterprint", cleanup, { once: true });
+  setTimeout(() => {
+    printWindow.focus();
+    printWindow.print();
+  }, 250);
+  setTimeout(cleanup, 60000);
 }
