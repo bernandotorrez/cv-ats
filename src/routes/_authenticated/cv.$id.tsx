@@ -144,7 +144,7 @@ function CvEditorPage() {
   const [showTemplatePicker, setShowTemplatePicker] = useState(false);
   const [showGuidedMode, setShowGuidedMode] = useState(search.guided === "true");
   const [showCvUpload, setShowCvUpload] = useState(false);
-    const [showAddSection, setShowAddSection] = useState(false);
+  const [showAddSection, setShowAddSection] = useState(false);
   const [cvUploadFile, setCvUploadFile] = useState<File | null>(null);
   const [cvUploadExtracting, setCvUploadExtracting] = useState(false);
   const [cvUploadParsing, setCvUploadParsing] = useState(false);
@@ -680,7 +680,9 @@ function CvEditorPage() {
         <div
           className={cn(
             "hidden flex-col overflow-y-auto bg-background/80 print:hidden md:flex",
-            showNav ? "w-[480px] shrink-0 border-r border-border" : "w-[520px] shrink-0 border-r border-border",
+            showNav
+              ? "w-[480px] shrink-0 border-r border-border"
+              : "w-[520px] shrink-0 border-r border-border",
           )}
         >
           <div className="p-4 lg:p-5 space-y-4">
@@ -720,9 +722,11 @@ function CvEditorPage() {
                 setSections((prev) => prev.filter((s) => s.id !== id));
                 setActiveSection("personal");
                 const label =
-                  id === "internship" ? "Riwayat Magang"
-                  : id === "organization" ? "Organisasi"
-                  : "Sertifikat";
+                  id === "internship"
+                    ? "Riwayat Magang"
+                    : id === "organization"
+                      ? "Organisasi"
+                      : "Sertifikat";
                 toast.success(`Bagian ${label} dihapus`);
               }}
               itemCounts={itemCounts}
@@ -1028,13 +1032,21 @@ function CvEditorPage() {
 
           <div className="grid gap-3 py-4">
             {/* Riwayat Magang */}
-            {!sections.find(s => s.id === "internship") && (
+            {!sections.find((s) => s.id === "internship") && (
               <button
                 type="button"
                 onClick={() => {
-                  const newSection = { id: "internship", label: "Riwayat Magang", icon: <Building2 className="h-4 w-4" /> };
+                  const newSection = {
+                    id: "internship",
+                    label: "Riwayat Magang",
+                    icon: <Building2 className="h-4 w-4" />,
+                  };
                   const insertIndex = Math.max(0, sections.length - 1);
-                  setSections(prev => [...prev.slice(0, insertIndex), newSection, ...prev.slice(insertIndex)]);
+                  setSections((prev) => [
+                    ...prev.slice(0, insertIndex),
+                    newSection,
+                    ...prev.slice(insertIndex),
+                  ]);
                   setActiveSection("internship");
                   setShowAddSection(false);
                   toast.success("Bagian Riwayat Magang ditambahkan!");
@@ -1047,20 +1059,29 @@ function CvEditorPage() {
                 <div>
                   <h4 className="text-sm font-semibold">Riwayat Magang</h4>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    Tambahkan pengalaman magang untuk menunjukkan keahlian praktis yang pernah kamu dapatkan.
+                    Tambahkan pengalaman magang untuk menunjukkan keahlian praktis yang pernah kamu
+                    dapatkan.
                   </p>
                 </div>
               </button>
             )}
 
             {/* Organisasi */}
-            {!sections.find(s => s.id === "organization") && (
+            {!sections.find((s) => s.id === "organization") && (
               <button
                 type="button"
                 onClick={() => {
-                  const newSection = { id: "organization", label: "Organisasi", icon: <Users className="h-4 w-4" /> };
+                  const newSection = {
+                    id: "organization",
+                    label: "Organisasi",
+                    icon: <Users className="h-4 w-4" />,
+                  };
                   const insertIndex = Math.max(0, sections.length - 1);
-                  setSections(prev => [...prev.slice(0, insertIndex), newSection, ...prev.slice(insertIndex)]);
+                  setSections((prev) => [
+                    ...prev.slice(0, insertIndex),
+                    newSection,
+                    ...prev.slice(insertIndex),
+                  ]);
                   setActiveSection("organization");
                   setShowAddSection(false);
                   toast.success("Bagian Organisasi ditambahkan!");
@@ -1073,20 +1094,29 @@ function CvEditorPage() {
                 <div>
                   <h4 className="text-sm font-semibold">Organisasi</h4>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    Tampilkan keterlibatan dalam organisasi untuk menunjukkan kemampuan kepemimpinan dan kerja sama.
+                    Tampilkan keterlibatan dalam organisasi untuk menunjukkan kemampuan kepemimpinan
+                    dan kerja sama.
                   </p>
                 </div>
               </button>
             )}
 
             {/* Sertifikat */}
-            {!sections.find(s => s.id === "certificate") && (
+            {!sections.find((s) => s.id === "certificate") && (
               <button
                 type="button"
                 onClick={() => {
-                  const newSection = { id: "certificate", label: "Sertifikat", icon: <Award className="h-4 w-4" /> };
+                  const newSection = {
+                    id: "certificate",
+                    label: "Sertifikat",
+                    icon: <Award className="h-4 w-4" />,
+                  };
                   const insertIndex = Math.max(0, sections.length - 1);
-                  setSections(prev => [...prev.slice(0, insertIndex), newSection, ...prev.slice(insertIndex)]);
+                  setSections((prev) => [
+                    ...prev.slice(0, insertIndex),
+                    newSection,
+                    ...prev.slice(insertIndex),
+                  ]);
                   setActiveSection("certificate");
                   setShowAddSection(false);
                   toast.success("Bagian Sertifikat ditambahkan!");
@@ -1099,19 +1129,22 @@ function CvEditorPage() {
                 <div>
                   <h4 className="text-sm font-semibold">Sertifikat</h4>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    Tampilkan sertifikasi dan penghargaan yang kamu miliki untuk memperkuat kredibilitas.
+                    Tampilkan sertifikasi dan penghargaan yang kamu miliki untuk memperkuat
+                    kredibilitas.
                   </p>
                 </div>
               </button>
             )}
 
             {/* Show message if all optional sections already added */}
-            {sections.find(s => s.id === "internship") && sections.find(s => s.id === "organization") && sections.find(s => s.id === "certificate") && (
-              <div className="text-center py-6 text-muted-foreground">
-                <CheckCircle2 className="h-10 w-10 mx-auto mb-2 text-primary/50" />
-                <p className="text-sm">Semua bagian opsional sudah ditambahkan!</p>
-              </div>
-            )}
+            {sections.find((s) => s.id === "internship") &&
+              sections.find((s) => s.id === "organization") &&
+              sections.find((s) => s.id === "certificate") && (
+                <div className="text-center py-6 text-muted-foreground">
+                  <CheckCircle2 className="h-10 w-10 mx-auto mb-2 text-primary/50" />
+                  <p className="text-sm">Semua bagian opsional sudah ditambahkan!</p>
+                </div>
+              )}
           </div>
         </DialogContent>
       </Dialog>
@@ -1578,10 +1611,17 @@ function EditorForm({
                 icon={<BookOpen className="h-4 w-4" />}
               />
               <Field
-                label="Periode"
-                value={`${item.startDate}${item.endDate ? " - " + item.endDate : ""}`}
-                onChange={(v) => {}}
-                placeholder="2020 - 2024"
+                label="Mulai"
+                value={item.startDate}
+                onChange={(v) => mutate(setData, "educations", i, "startDate", v)}
+                placeholder="2020"
+                icon={<Calendar className="h-4 w-4" />}
+              />
+              <Field
+                label="Selesai"
+                value={item.endDate}
+                onChange={(v) => mutate(setData, "educations", i, "endDate", v)}
+                placeholder="2024"
                 icon={<Calendar className="h-4 w-4" />}
               />
               <div className="sm:col-span-2 space-y-2">
@@ -1990,7 +2030,6 @@ function EditorForm({
 
       {/* ATS View */}
       {activeSection === "ats" && <AtsPreview data={data} />}
-
     </div>
   );
 }
