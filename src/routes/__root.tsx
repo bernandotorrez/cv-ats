@@ -226,6 +226,7 @@ function RootComponent() {
   const routerState = useRouterState();
   const pathname = routerState.location.pathname;
   const isSharePage = pathname.startsWith("/share/") || pathname.startsWith("/portfolio/");
+  const isCvBuilderPage = /^\/cv\/[^/]+\/?$/.test(pathname);
   const authenticatedRoutePrefixes = [
     "/admin",
     "/akun",
@@ -263,7 +264,7 @@ function RootComponent() {
         </div>
         <Toaster />
         <Analytics />
-        <BenixCsWidget disabled={isSharePage} />
+        <BenixCsWidget disabled={isSharePage} hidden={isCvBuilderPage} />
         <FakeBuyerCard disabled={isSharePage || isAuthenticatedRoute} />
       </AuthProvider>
     </QueryClientProvider>

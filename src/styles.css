@@ -240,6 +240,15 @@
   .animate-indeterminate-loading {
     animation: indeterminate-loading 1.5s ease-in-out infinite;
   }
+
+  body.benix-cs-widget-hidden [id*="benix" i],
+  body.benix-cs-widget-hidden [class*="benix" i],
+  body.benix-cs-widget-hidden iframe[src*="benixai.web.id" i],
+  body.benix-cs-widget-hidden iframe[src*="benix-cs-widget" i] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+  }
 }
 
 @media print {

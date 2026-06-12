@@ -20,6 +20,10 @@ export const Route = createFileRoute("/_authenticated")({
 
 function AuthGate() {
   const { user, loading } = useAuth();
+  const pathname = useRouterState({
+    select: (state) => state.location.pathname,
+  });
+  const isCvBuilderPage = /^\/cv\/[^/]+\/?$/.test(pathname);
 
   if (loading || !user) {
     return (
@@ -37,9 +41,14 @@ function AuthGate() {
   }
 
   return (
-    <div className="pb-[calc(6.75rem+env(safe-area-inset-bottom))] print:pb-0 md:pb-0">
+    <div
+      className={cn(
+        "print:pb-0 md:pb-0",
+        isCvBuilderPage ? "pb-0" : "pb-[calc(6.75rem+env(safe-area-inset-bottom))]",
+      )}
+    >
       <Outlet />
-      <AuthenticatedBottomNav />
+      {!isCvBuilderPage && <AuthenticatedBottomNav />}
     </div>
   );
 }
