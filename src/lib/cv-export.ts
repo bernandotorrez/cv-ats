@@ -582,12 +582,12 @@ export function downloadPdf(_cv: CvData, fileName: string = "CV.pdf") {
       }
 
       .cv-preview {
-        padding: 0 !important;
+        padding: 16mm !important;
       }
 
       @page {
         size: A4;
-        margin: 16mm;
+        margin: 0;
       }
     </style>
   </head>

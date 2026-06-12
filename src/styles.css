@@ -280,11 +280,12 @@
     height: auto !important;
     overflow: visible !important;
     box-shadow: none !important;
+    padding: 16mm !important;
   }
   .cv-preview-container {
     width: auto !important;
     height: auto !important;
   }
   .cv-preview { box-shadow: none !important; margin: 0 !important; }
-  @page { size: A4; margin: 16mm; }
+  @page { size: A4; margin: 0; }
 }

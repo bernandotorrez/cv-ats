@@ -180,12 +180,8 @@ export function SemarangTemplate({ data, showHeader = true, sectionOrder, langua
           style={{
             textAlign: "center",
             marginBottom: 12,
-            padding: "12px 0",
+            padding: "12px 16px",
             background: "linear-gradient(135deg, #059669 0%, #047857 100%)",
-            marginLeft: -16,
-            marginRight: -16,
-            paddingLeft: 16,
-            paddingRight: 16,
           }}
         >
           <h1 style={{ fontSize: "20pt", fontWeight: 800, margin: 0, color: "#fff" }}>

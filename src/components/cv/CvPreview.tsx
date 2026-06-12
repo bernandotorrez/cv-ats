@@ -274,7 +274,7 @@ function renderTemplateById(
                 background: "#468432",
                 color: "#fff",
                 padding: "14px 16px",
-                margin: "-16mm -16mm 14px -16mm",
+                marginBottom: 14,
               }}
             >
               <h1 style={{ fontSize: "22pt", fontWeight: 800, margin: 0 }}>
@@ -604,7 +604,7 @@ export const cvPrintStyles = `
   .cv-preview {
     box-shadow: none !important;
     margin: 0 !important;
-    padding: 0 !important;
+    padding: 16mm !important;
     width: auto !important;
     height: auto !important;
     min-height: 0 !important;
@@ -633,7 +633,7 @@ export const cvPrintStyles = `
 
   @page {
     size: A4;
-    margin: 16mm;
+    margin: 0;
   }
 
   /* Section headings: keep with next content */

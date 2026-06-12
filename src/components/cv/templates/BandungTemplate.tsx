@@ -17,7 +17,7 @@ export function BandungTemplate({ data, sectionOrder, language = "id" }: Props) 
           background: "#468432",
           color: "#fff",
           padding: "14px 16px",
-          margin: "-16mm -16mm 14px -16mm",
+          marginBottom: 14,
         }}
       >
         <h1 style={{ fontSize: "22pt", fontWeight: 800, margin: 0 }}>
