@@ -271,7 +271,7 @@ function renderTemplateById(
           {showHeader && (
             <header
               style={{
-                background: "#468432",
+                backgroundColor: "#468432",
                 color: "#fff",
                 padding: "14px 16px",
                 marginBottom: 14,
@@ -586,6 +586,13 @@ function splitContentIntoPages(data: CvData, maxHeight: number): CvData[] {
 // CSS for print
 export const cvPrintStyles = `
 @media print {
+  /* Force browsers to print background colors and images */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
   .cv-editor-page {
     height: auto !important;
     display: block !important;

@@ -226,7 +226,7 @@ export function MakassarTemplate({ data, showHeader = true, sectionOrder, langua
 
       {/* Right Main Content */}
       <div style={{ flex: 1 }}>
-        {showHeader && <div style={{ height: 1, background: "#1e40af", marginBottom: 10 }} />}
+        {showHeader && <div style={{ height: 1, backgroundColor: "#1e40af", marginBottom: 10 }} />}
         {rightSections.map((s) => renderRightSection(s))}
       </div>
     </div>

@@ -197,7 +197,7 @@ export function BaliTemplate({ data, showHeader = true, sectionOrder, language =
       {showHeader && hasPersonalContent && (
         <header style={{ marginBottom: 12 }}>
           {/* Accent color strip */}
-          <div style={{ height: 4, background: "#0891b2", marginBottom: 10, borderRadius: 2 }} />
+          <div style={{ height: 4, backgroundColor: "#0891b2", marginBottom: 10, borderRadius: 2 }} />
           
           <h1 style={{ fontSize: "22pt", fontWeight: 700, margin: 0, color: "#0f172a", letterSpacing: -0.5 }}>
             {personal.fullName || "Nama Lengkap"}

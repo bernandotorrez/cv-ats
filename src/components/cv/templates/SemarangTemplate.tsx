@@ -86,7 +86,7 @@ export function SemarangTemplate({ data, showHeader = true, sectionOrder, langua
                   <span
                     key={s.id}
                     style={{
-                      background: "#ecfdf5",
+                      backgroundColor: "#ecfdf5",
                       color: "#059669",
                       padding: "2px 8px",
                       borderRadius: 4,
@@ -181,7 +181,7 @@ export function SemarangTemplate({ data, showHeader = true, sectionOrder, langua
             textAlign: "center",
             marginBottom: 12,
             padding: "12px 16px",
-            background: "linear-gradient(135deg, #059669 0%, #047857 100%)",
+            backgroundImage: "linear-gradient(135deg, #059669 0%, #047857 100%)",
           }}
         >
           <h1 style={{ fontSize: "20pt", fontWeight: 800, margin: 0, color: "#fff" }}>

@@ -252,6 +252,12 @@
 }
 
 @media print {
+  /* Force browsers to print background colors and images */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
   body { background: white !important; }
   .print\:hidden { display: none !important; }
   [id*="benix" i],

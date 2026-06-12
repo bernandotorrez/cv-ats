@@ -558,6 +558,13 @@ export function downloadPdf(_cv: CvData, fileName: string = "CV.pdf") {
         background: white !important;
       }
 
+      /* Force browsers to print background colors and images */
+      * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+      }
+
       .cv-print-area {
         display: block !important;
         padding: 0 !important;

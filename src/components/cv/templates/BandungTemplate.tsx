@@ -14,7 +14,7 @@ export function BandungTemplate({ data, sectionOrder, language = "id" }: Props) 
     <div>
       <header
         style={{
-          background: "#468432",
+          backgroundColor: "#468432",
           color: "#fff",
           padding: "14px 16px",
           marginBottom: 14,
