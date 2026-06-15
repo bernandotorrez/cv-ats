@@ -1,6 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
-  ArrowLeft,
   BadgeCheck,
   BriefcaseBusiness,
   CheckCircle2,
@@ -23,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { BackButton } from "@/components/ui/back-button";
 import {
   Select,
   SelectContent,
@@ -202,12 +202,7 @@ function TailorCvPage() {
   return (
     <main className="container-page py-6 sm:py-8 lg:py-10">
       <div className="mb-6">
-        <Button asChild variant="ghost" size="sm" className="rounded-lg px-2">
-          <Link to="/tools" search={{ cvId }}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Kembali ke AI Tools
-          </Link>
-        </Button>
+        <BackButton />
       </div>
 
       <section className="grid gap-6 lg:grid-cols-[1.08fr_0.92fr]">

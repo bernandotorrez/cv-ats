@@ -1,6 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
-  ArrowLeft,
   ArrowRight,
   BadgeCheck,
   BookOpen,
@@ -34,6 +33,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { checkFeatureAccess, getUserTier } from "@/lib/subscription";
 import { buildSeo } from "@/lib/seo";
+import { BackButton } from "@/components/ui/back-button";
 
 export const Route = createFileRoute("/_authenticated/tools/")({
   head: () =>
@@ -196,12 +196,7 @@ function ToolsIndexPage() {
   return (
     <main className="container-page py-6 sm:py-8 lg:py-10">
       <div className="mb-6">
-        <Button asChild variant="ghost" size="sm" className="rounded-lg px-2">
-          <Link to="/dashboard">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Kembali ke dashboard
-          </Link>
-        </Button>
+        <BackButton />
       </div>
 
       <section className="grid gap-6 lg:grid-cols-[1.12fr_0.88fr]">

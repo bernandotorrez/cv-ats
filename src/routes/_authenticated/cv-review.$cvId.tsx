@@ -34,6 +34,7 @@ import {
   User,
   Zap,
 } from "lucide-react";
+import { BackButton } from "@/components/ui/back-button";
 
 export const Route = createFileRoute("/_authenticated/cv-review/$cvId")({
   head: () =>
@@ -298,12 +299,7 @@ function CvReviewPage() {
       <section className="rounded-[1.25rem] border bg-card p-5 shadow-sm sm:p-6 md:p-8">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
           <div>
-            <Button asChild variant="ghost" size="sm" className="-ml-2 mb-3 gap-2">
-              <Link to="/cv/$id" params={{ id: cvId }}>
-                <ArrowLeft className="h-4 w-4" />
-                Kembali ke Editor
-              </Link>
-            </Button>
+            <BackButton />
             <div className="mb-4 inline-flex items-center gap-2 rounded-full border bg-primary/5 px-3 py-1 text-xs font-semibold text-primary">
               <Brain className="h-3.5 w-3.5" />
               HR review for saved CV

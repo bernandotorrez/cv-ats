@@ -26,12 +26,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { Skeleton } from "@/components/ui/skeleton-loading";
 import { cn } from "@/lib/utils";
+import { BackButton } from "@/components/ui/back-button";
 import {
   Briefcase,
   Plus,
   Pencil,
   Trash2,
-  ArrowLeft,
   ArrowRight,
   BookmarkCheck,
   Building2,
@@ -476,11 +476,7 @@ function LamaranPage() {
     <div className="container-page py-10">
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
         <div className="flex items-center gap-3">
-          <Button asChild variant="ghost" size="sm">
-            <Link to="/dashboard">
-              <ArrowLeft className="h-4 w-4" />
-            </Link>
-          </Button>
+          <BackButton />
           <div>
             <h1 className="font-display text-2xl font-bold">Pelacak Lamaran</h1>
             <p className="text-sm text-muted-foreground">

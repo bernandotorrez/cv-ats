@@ -13,6 +13,7 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
+import { BackButton } from "@/components/ui/back-button";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -148,6 +149,7 @@ function JobMatchPage() {
 
   return (
     <div className="container-page space-y-6 py-5 md:py-8">
+      <BackButton />
       <section className="overflow-hidden rounded-2xl border bg-card">
         <div className="grid gap-6 p-5 md:p-7 lg:grid-cols-[1fr_0.7fr] lg:items-center">
           <div>

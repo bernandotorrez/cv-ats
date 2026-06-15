@@ -13,7 +13,6 @@ import { useSpeechRecognition } from "@/hooks/use-speech-recognition";
 import { cn } from "@/lib/utils";
 import {
   AlertTriangle,
-  ArrowLeft,
   BarChart3,
   CheckCircle2,
   ChevronLeft,
@@ -396,8 +395,8 @@ function InterviewSessionPage() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex items-start gap-3">
             <Button asChild variant="outline" size="icon" className="h-10 w-10 shrink-0">
-              <Link to="/simulasi-wawancara" aria-label="Kembali ke daftar simulasi">
-                <ArrowLeft className="h-4 w-4" />
+              <Link to="/simulasi-wawancara" aria-label="Kembali">
+                <ChevronLeft className="h-4 w-4" />
               </Link>
             </Button>
             <div>

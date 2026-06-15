@@ -2,6 +2,7 @@ import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from "@tan
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { buildSeo } from "@/lib/seo";
+import { BackButton } from "@/components/ui/back-button";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -29,7 +30,6 @@ import { useAuth } from "@/lib/auth-context";
 import { getUserTier } from "@/lib/subscription";
 import { cn } from "@/lib/utils";
 import {
-  ArrowLeft,
   ArrowRight,
   BarChart3,
   Brain,
@@ -299,12 +299,7 @@ function SimulasiWawancaraPage() {
                 Upgrade ke Pro
               </Link>
             </Button>
-            <Button asChild size="lg" variant="outline" className="gap-2">
-              <Link to="/dashboard">
-                <ArrowLeft className="h-4 w-4" />
-                Kembali
-              </Link>
-            </Button>
+            <BackButton className="mb-0" />
           </div>
         </section>
       </div>
@@ -336,12 +331,7 @@ function SimulasiWawancaraPage() {
                 <Play className="h-4 w-4" />
                 Mulai Latihan
               </Button>
-              <Button asChild size="lg" variant="outline" className="gap-2">
-                <Link to="/dashboard">
-                  <ArrowLeft className="h-4 w-4" />
-                  Dashboard
-                </Link>
-              </Button>
+              <BackButton className="mb-0" />
             </div>
           </div>
 

@@ -12,8 +12,9 @@ import { WhatsAppShare } from "@/components/share/WhatsAppShare";
 import { SITE_URL } from "@/lib/seo";
 import {
   Gift, Copy, Check, Users, UserPlus, TrendingUp, Crown,
-  ArrowLeft, Share2, Zap, Star,
+  Share2, Zap, Star,
 } from "lucide-react";
+import { BackButton } from "@/components/ui/back-button";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/referral")({
@@ -109,9 +110,7 @@ function ReferralPage() {
   return (
     <div className="container-page py-10">
       <div className="flex items-center gap-3 mb-6">
-        <Button asChild variant="ghost" size="sm">
-          <Link to="/dashboard"><ArrowLeft className="h-4 w-4" /></Link>
-        </Button>
+        <BackButton />
         <div>
           <h1 className="font-display text-2xl font-bold">Program Referral</h1>
           <p className="text-sm text-muted-foreground">Ajak teman gabung, kamu dapat gratis!</p>

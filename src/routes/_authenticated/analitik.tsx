@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getUserTier } from "@/lib/subscription";
 import { useAuth } from "@/lib/auth-context";
 import { Skeleton } from "@/components/ui/skeleton-loading";
+import { BackButton } from "@/components/ui/back-button";
 import { TEMPLATES } from "@/lib/cv-types";
 import {
   BarChart3, Eye, Download, Share2, TrendingUp,
@@ -123,9 +124,7 @@ function AnalitikPage() {
   return (
     <div className="container-page py-10">
       <div className="flex items-center gap-3 mb-6">
-        <Button asChild variant="ghost" size="sm">
-          <Link to="/dashboard"><ArrowLeft className="h-4 w-4" /></Link>
-        </Button>
+        <BackButton />
         <div>
           <h1 className="font-display text-2xl font-bold">Analitik CV</h1>
           <p className="text-sm text-muted-foreground">Statistik views, downloads, dan shares CV kamu.</p>

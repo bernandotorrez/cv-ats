@@ -15,6 +15,7 @@ import {
   Target,
   TrendingUp,
 } from "lucide-react";
+import { BackButton } from "@/components/ui/back-button";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -145,12 +146,7 @@ function CvScorePage() {
   return (
     <main className="container-page overflow-x-hidden py-6 sm:py-8 lg:py-10">
       <div className="mb-6">
-        <Button asChild variant="ghost" size="sm" className="rounded-lg px-2">
-          <Link to="/cv/$id" params={{ id: cvId }}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Kembali ke editor
-          </Link>
-        </Button>
+        <BackButton />
       </div>
 
       <section className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1.12fr)_minmax(0,0.88fr)] lg:items-stretch">

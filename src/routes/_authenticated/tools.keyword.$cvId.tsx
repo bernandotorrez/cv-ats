@@ -1,6 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
-  ArrowLeft,
   BadgeCheck,
   CheckCircle2,
   Copy,
@@ -27,6 +26,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton-loading";
 import { Textarea } from "@/components/ui/textarea";
+import { BackButton } from "@/components/ui/back-button";
 import { supabase } from "@/integrations/supabase/client";
 import { extractKeywords } from "@/lib/ai-functions";
 import { useAuth } from "@/lib/auth-context";
@@ -189,12 +189,7 @@ function KeywordExtractorPage() {
   return (
     <main className="container-page py-6 sm:py-8 lg:py-10">
       <div className="mb-6">
-        <Button asChild variant="ghost" size="sm" className="rounded-lg px-2">
-          <Link to="/tools" search={{ cvId }}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Kembali ke AI Tools
-          </Link>
-        </Button>
+        <BackButton />
       </div>
 
       <section className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">

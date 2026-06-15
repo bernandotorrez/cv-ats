@@ -7,7 +7,7 @@ import { CvComparison } from "@/components/cv/CvComparison";
 import { emptyCv, type CvData } from "@/lib/cv-types";
 import { useAuth } from "@/lib/auth-context";
 import { getUserLimits, type TierLimits } from "@/lib/subscription";
-import { ArrowLeft } from "lucide-react";
+import { BackButton } from "@/components/ui/back-button";
 
 interface CvRow {
   id: string;
@@ -67,11 +67,7 @@ function ComparePage() {
     <div className="container-page py-10">
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <Button asChild variant="ghost" size="sm" className="mb-2">
-            <Link to="/cv">
-              <ArrowLeft className="h-4 w-4" /> Kembali ke CV Saya
-            </Link>
-          </Button>
+          <BackButton />
           <h1 className="font-display text-3xl font-bold text-foreground">Bandingkan CV</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Lihat perbedaan struktur, keyword, dan kelengkapan dua versi CV sebelum apply.

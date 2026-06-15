@@ -50,6 +50,7 @@ import {
   Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { BackButton } from "@/components/ui/back-button";
 
 export const Route = createFileRoute("/_authenticated/cv/")({
   head: () =>
@@ -269,6 +270,7 @@ function CvListPage() {
 
   return (
     <div className="container-page space-y-7 py-5 md:space-y-8 md:py-8">
+      <BackButton />
       <section className="rounded-[1.25rem] border bg-card p-5 shadow-sm sm:p-6 md:p-8">
         <div className="grid gap-6 lg:grid-cols-[1fr_340px] lg:items-center">
           <div>

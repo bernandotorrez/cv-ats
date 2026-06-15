@@ -15,6 +15,7 @@ import { extractCvText, renderPdfToImages } from "@/lib/cv-text-extractor";
 import { CvFileUpload } from "@/components/cv/CvFileUpload";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { BackButton } from "@/components/ui/back-button";
 import {
   AlertCircle,
   ArrowLeft,
@@ -275,12 +276,7 @@ function CvReviewUploadPage() {
       <section className="rounded-[1.25rem] border bg-card p-5 shadow-sm sm:p-6 md:p-8">
         <div className="grid gap-6 lg:grid-cols-[1fr_340px] lg:items-center">
           <div>
-            <Button asChild variant="ghost" size="sm" className="-ml-2 mb-3 gap-2">
-              <Link to="/cv">
-                <ArrowLeft className="h-4 w-4" />
-                CV Saya
-              </Link>
-            </Button>
+            <BackButton />
             <div className="mb-4 inline-flex items-center gap-2 rounded-full border bg-primary/5 px-3 py-1 text-xs font-semibold text-primary">
               <Brain className="h-3.5 w-3.5" />
               HR review workspace

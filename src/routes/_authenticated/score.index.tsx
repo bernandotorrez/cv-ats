@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { AlertCircle, ArrowRight, BarChart3, FileText, Plus, Sparkles, Target } from "lucide-react";
 import { buildSeo } from "@/lib/seo";
+import { BackButton } from "@/components/ui/back-button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
@@ -60,6 +61,7 @@ function AtsScoreIndexPage() {
 
   return (
     <div className="container-page space-y-6 py-5 md:py-8">
+      <BackButton />
       <section className="overflow-hidden rounded-2xl border bg-card">
         <div className="grid gap-5 p-5 sm:p-6 lg:grid-cols-[1fr_0.75fr] lg:items-center">
           <div>
