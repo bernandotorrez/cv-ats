@@ -38,6 +38,7 @@ import { Route as PortfolioTokenRouteImport } from './routes/portfolio.$token'
 import { Route as ManifestWebmanifestRouteImport } from './routes/manifest.webmanifest'
 import { Route as LowonganSlugRouteImport } from './routes/lowongan.$slug'
 import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
+import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as ApiHeadersCheckRouteImport } from './routes/api.headers-check'
 import { Route as ApiAiCvReviewRouteImport } from './routes/api/ai-cv-review'
 import { Route as AuthenticatedSimulasiWawancaraRouteImport } from './routes/_authenticated/simulasi-wawancara'
@@ -209,6 +210,11 @@ const BlogSlugRoute = BlogSlugRouteImport.update({
   path: '/$slug',
   getParentRoute: () => BlogRoute,
 } as any)
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
+  id: '/auth/callback',
+  path: '/auth/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiHeadersCheckRoute = ApiHeadersCheckRouteImport.update({
   id: '/api/headers-check',
   path: '/api/headers-check',
@@ -379,6 +385,7 @@ export interface FileRoutesByFullPath {
   '/simulasi-wawancara': typeof AuthenticatedSimulasiWawancaraRouteWithChildren
   '/api/ai-cv-review': typeof ApiAiCvReviewRoute
   '/api/headers-check': typeof ApiHeadersCheckRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/lowongan/$slug': typeof LowonganSlugRoute
   '/manifest/webmanifest': typeof ManifestWebmanifestRoute
@@ -434,6 +441,7 @@ export interface FileRoutesByTo {
   '/simulasi-wawancara': typeof AuthenticatedSimulasiWawancaraRouteWithChildren
   '/api/ai-cv-review': typeof ApiAiCvReviewRoute
   '/api/headers-check': typeof ApiHeadersCheckRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/lowongan/$slug': typeof LowonganSlugRoute
   '/manifest/webmanifest': typeof ManifestWebmanifestRoute
@@ -492,6 +500,7 @@ export interface FileRoutesById {
   '/_authenticated/simulasi-wawancara': typeof AuthenticatedSimulasiWawancaraRouteWithChildren
   '/api/ai-cv-review': typeof ApiAiCvReviewRoute
   '/api/headers-check': typeof ApiHeadersCheckRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/lowongan/$slug': typeof LowonganSlugRoute
   '/manifest/webmanifest': typeof ManifestWebmanifestRoute
@@ -550,6 +559,7 @@ export interface FileRouteTypes {
     | '/simulasi-wawancara'
     | '/api/ai-cv-review'
     | '/api/headers-check'
+    | '/auth/callback'
     | '/blog/$slug'
     | '/lowongan/$slug'
     | '/manifest/webmanifest'
@@ -605,6 +615,7 @@ export interface FileRouteTypes {
     | '/simulasi-wawancara'
     | '/api/ai-cv-review'
     | '/api/headers-check'
+    | '/auth/callback'
     | '/blog/$slug'
     | '/lowongan/$slug'
     | '/manifest/webmanifest'
@@ -662,6 +673,7 @@ export interface FileRouteTypes {
     | '/_authenticated/simulasi-wawancara'
     | '/api/ai-cv-review'
     | '/api/headers-check'
+    | '/auth/callback'
     | '/blog/$slug'
     | '/lowongan/$slug'
     | '/manifest/webmanifest'
@@ -711,6 +723,7 @@ export interface RootRouteChildren {
   VerifyEmailRoute: typeof VerifyEmailRoute
   ApiAiCvReviewRoute: typeof ApiAiCvReviewRoute
   ApiHeadersCheckRoute: typeof ApiHeadersCheckRoute
+  AuthCallbackRoute: typeof AuthCallbackRoute
   ManifestWebmanifestRoute: typeof ManifestWebmanifestRoute
   PortfolioTokenRoute: typeof PortfolioTokenRoute
   RobotsTxtRoute: typeof RobotsTxtRoute
@@ -923,6 +936,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/blog/$slug'
       preLoaderRoute: typeof BlogSlugRouteImport
       parentRoute: typeof BlogRoute
+    }
+    '/auth/callback': {
+      id: '/auth/callback'
+      path: '/auth/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/headers-check': {
       id: '/api/headers-check'
@@ -1248,6 +1268,7 @@ const rootRouteChildren: RootRouteChildren = {
   VerifyEmailRoute: VerifyEmailRoute,
   ApiAiCvReviewRoute: ApiAiCvReviewRoute,
   ApiHeadersCheckRoute: ApiHeadersCheckRoute,
+  AuthCallbackRoute: AuthCallbackRoute,
   ManifestWebmanifestRoute: ManifestWebmanifestRoute,
   PortfolioTokenRoute: PortfolioTokenRoute,
   RobotsTxtRoute: RobotsTxtRoute,

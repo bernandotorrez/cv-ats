@@ -3,6 +3,7 @@ import {
   ArrowRight,
   BadgeCheck,
   Bug,
+  Chrome,
   FileSearch,
   FileText,
   GitBranch,
@@ -35,6 +36,25 @@ export const Route = createFileRoute("/changelog")({
 const changelog = [
   {
     version: APP_VERSION,
+    date: "15 Juni 2026",
+    title: "Sign in & Sign Up dengan Google",
+    summary:
+      "Fitur Baru! Sign in dan Sign Up dengan Google, sekarang daftar dan login jadi lebih mudah!",
+    highlights: [
+      {
+        icon: Chrome,
+        type: "Fitur baru",
+        text: "Menambahkan fitur Sign in dan Sign Up dengan Google agar pengguna bisa daftar dan login hanya dalam satu klik tanpa perlu isi form.",
+      },
+      {
+        icon: Sparkles,
+        type: "Peningkatan",
+        text: "Menyederhanakan alur autentikasi sehingga pengalaman pertama memakai CV Pintar terasa lebih cepat dan nyaman.",
+      },
+    ],
+  },
+  {
+    version: "v1.4.1-live",
     date: "1 Juni 2026",
     title: "Auto Tailor CV, quota Pro, dan AI Job Match Score",
     summary:

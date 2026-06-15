@@ -81,6 +81,7 @@ TEKS PERBAIKAN:`;
       .replace(/^["']|["']$/g, "")
       .replace(/^```[\s\S]*?\n?/, "")
       .replace(/\n?```$/, "")
+      .replace(/^\* /gm, "- ")   // normalize markdown bullet * → -
       .trim();
 
     // Track quota usage

@@ -18,6 +18,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { HCaptchaWidget } from "@/components/ui/hcaptcha";
 import { Loader2, Eye, EyeOff, ShieldAlert } from "lucide-react";
+import { FcGoogle } from "react-icons/fc";
 
 const schema = z.object({
   email: z.string().email("Email tidak valid").max(255),
@@ -101,6 +102,7 @@ function LoginPage() {
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [captchaError, setCaptchaError] = useState<string | null>(null);
   const [captchaResetKey, setCaptchaResetKey] = useState(0);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [hydrated, setHydrated] = useState(false);
 
   // Mark as hydrated after first client-side render
@@ -232,6 +234,45 @@ function LoginPage() {
               </div>
             </div>
           )}
+
+          {/* Google Sign-In */}
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            disabled={googleLoading || lockout.locked}
+            onClick={async () => {
+              setGoogleLoading(true);
+              const { error } = await supabase.auth.signInWithOAuth({
+                provider: "google",
+                options: {
+                  redirectTo: `${window.location.origin}/auth/callback`,
+                },
+              });
+              if (error) {
+                setGoogleLoading(false);
+                toast.error("Gagal masuk dengan Google");
+              }
+            }}
+          >
+            {googleLoading ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <FcGoogle className="mr-2 h-5 w-5" />
+            )}
+            Masuk dengan Google
+          </Button>
+
+          <div className="relative my-4">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-card px-2 text-muted-foreground">
+                atau
+              </span>
+            </div>
+          </div>
 
           <form onSubmit={handleSubmit} className="space-y-4" noValidate>
             <div className="space-y-2">
