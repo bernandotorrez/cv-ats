@@ -215,11 +215,16 @@ export function CareerProgress({ user, steps, onCreateCv, onStepClick }: CareerP
           {steps.map((step, idx) => {
             const StepIcon = step.icon;
             const isNext = idx === nextStepIdx;
+            const useLink = !!(step.link && (step.done || step.id !== "create-cv"));
+            const Comp = useLink ? Link : "button";
+            const extraProps = useLink
+              ? { to: step.link as never }
+              : { type: "button" as const, onClick: () => onStepClick?.(step) };
+
             return (
-              <button
+              <Comp
                 key={step.id}
-                type="button"
-                onClick={() => onStepClick?.(step)}
+                {...extraProps}
                 className={cn(
                   "group flex items-center gap-1.5 shrink-0 rounded-lg px-3 py-2 transition-all duration-200",
                   step.done
@@ -261,7 +266,7 @@ export function CareerProgress({ user, steps, onCreateCv, onStepClick }: CareerP
                 {idx < steps.length - 1 && (
                   <span className="text-muted-foreground/30 ml-0.5 text-[10px]">→</span>
                 )}
-              </button>
+              </Comp>
             );
           })}
         </div>
@@ -362,6 +367,7 @@ export function getCareerSteps(data: {
       description: "Latihan jawab pertanyaan HR",
       icon: Mic,
       done: data.hasInterview,
+      link: "/simulasi-wawancara",
       // Pro only
       hidden: data.tier !== "pro",
     },
@@ -371,6 +377,7 @@ export function getCareerSteps(data: {
       description: "Apply ke pekerjaan impianmu",
       icon: Send,
       done: data.hasApplied,
+      link: "/lamaran",
     },
   ];
 

@@ -608,16 +608,20 @@ function DashboardPage() {
         steps={careerSteps}
         onCreateCv={() => setShowCreateDialog(true)}
         onStepClick={(step) => {
-          if (!step.done) {
-            setShowCreateDialog(true);
-          } else if (step.id === "create-cv") {
-            navigate({ to: "/cv" });
+          if (step.id === "create-cv") {
+            if (!step.done) {
+              setShowCreateDialog(true);
+            } else {
+              navigate({ to: "/cv" });
+            }
           } else if (step.id === "score-cv") {
             handleFeatureClick("score");
           } else if (step.id === "cover-letter") {
             handleFeatureClick("cover-letter");
           } else if (step.id === "interview") {
             navigate({ to: "/simulasi-wawancara" });
+          } else if (step.id === "apply") {
+            navigate({ to: "/lamaran" });
           }
         }}
       />
