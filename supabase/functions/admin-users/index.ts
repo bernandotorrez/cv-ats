@@ -71,12 +71,15 @@ Deno.serve(async (req: Request) => {
     const perPage = clampNumber(Number(url.searchParams.get("perPage") || "10"), 1, 100);
     const search = (url.searchParams.get("search") || "").trim().toLowerCase();
     const tier = (url.searchParams.get("tier") || "all").trim().toLowerCase();
+    const sort = (url.searchParams.get("sort") || "desc").trim().toLowerCase();
+    const sortOrder = sort === "asc" ? "asc" : "desc";
 
     const { data, error } = await admin.rpc("admin_list_users_page", {
       search_text: search,
       tier_filter: tier,
       page_num: page,
       page_size: perPage,
+      sort_order: sortOrder,
     });
 
     if (!error) {

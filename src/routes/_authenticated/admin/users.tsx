@@ -88,6 +88,7 @@ function AdminUsersPage() {
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [filterTier, setFilterTier] = useState("all");
+  const [sortOrder, setSortOrder] = useState("desc");
   const [editUser, setEditUser] = useState<UserRow | null>(null);
   const [editTier, setEditTier] = useState("");
   const [editRole, setEditRole] = useState("");
@@ -100,7 +101,7 @@ function AdminUsersPage() {
   });
 
   // Load users with pagination
-  const loadUsers = useCallback(async (page: number = 1, query = "", tier = "all") => {
+  const loadUsers = useCallback(async (page: number = 1, query = "", tier = "all", sort = "desc") => {
     setLoading(true);
 
     const { data: sessionData } = await supabase.auth.getSession();
@@ -120,6 +121,7 @@ function AdminUsersPage() {
 
     if (query) params.set("search", query);
     if (tier !== "all") params.set("tier", tier);
+    params.set("sort", sort);
 
     const response = await fetch(`${supabaseUrl}/functions/v1/admin-users?${params}`, {
       method: "GET",
@@ -158,11 +160,11 @@ function AdminUsersPage() {
 
   useEffect(() => {
     setPagination((prev) => ({ ...prev, page: 1 }));
-  }, [debouncedSearch, filterTier]);
+  }, [debouncedSearch, filterTier, sortOrder]);
 
   useEffect(() => {
-    loadUsers(pagination.page, debouncedSearch, filterTier);
-  }, [debouncedSearch, filterTier, loadUsers, pagination.page]);
+    loadUsers(pagination.page, debouncedSearch, filterTier, sortOrder);
+  }, [debouncedSearch, filterTier, sortOrder, loadUsers, pagination.page]);
 
   const handleEdit = (u: UserRow) => {
     setEditUser(u);
@@ -210,7 +212,7 @@ function AdminUsersPage() {
     toast.success(`User ${editUser.full_name || editUser.id.slice(0, 8)} diupdate`);
     setEditUser(null);
     setSaving(false);
-    loadUsers(pagination.page, debouncedSearch, filterTier);
+    loadUsers(pagination.page, debouncedSearch, filterTier, sortOrder);
   };
 
   // Pagination handlers
@@ -256,6 +258,15 @@ function AdminUsersPage() {
             <SelectItem value="free">Free</SelectItem>
             <SelectItem value="starter">Starter</SelectItem>
             <SelectItem value="pro">Pro</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={sortOrder} onValueChange={setSortOrder}>
+          <SelectTrigger className="w-44">
+            <SelectValue placeholder="Urutkan" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="desc">User Terbaru</SelectItem>
+            <SelectItem value="asc">User Terlama</SelectItem>
           </SelectContent>
         </Select>
       </div>
