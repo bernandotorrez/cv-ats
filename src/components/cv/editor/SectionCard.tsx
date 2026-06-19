@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { FileText, Plus, X } from "lucide-react";
+import { ChevronDown, ChevronUp, FileText, Plus, X } from "lucide-react";
 import { type Key, type ReactNode } from "react";
 
 interface SectionCardProps {
@@ -56,6 +56,8 @@ export function ListSectionCard<T>({
   items,
   onAdd,
   onRemove,
+  onMoveUp,
+  onMoveDown,
   renderItem,
   compact,
   extraAction,
@@ -66,6 +68,8 @@ export function ListSectionCard<T>({
   items: T[];
   onAdd: () => void;
   onRemove: (i: number) => void;
+  onMoveUp?: (i: number) => void;
+  onMoveDown?: (i: number) => void;
   renderItem: (item: T, i: number) => React.ReactNode;
   compact?: boolean;
   extraAction?: React.ReactNode;
@@ -109,7 +113,35 @@ export function ListSectionCard<T>({
               compact ? "bg-background" : "bg-muted/25",
             )}
           >
-            <div className="absolute right-3 top-3 z-10 opacity-100 sm:opacity-0 sm:transition-opacity sm:group-focus-within:opacity-100 sm:group-hover:opacity-100">
+            <div className="absolute right-3 top-3 z-10 flex items-center gap-1 opacity-100 sm:opacity-0 sm:transition-opacity sm:group-focus-within:opacity-100 sm:group-hover:opacity-100">
+              {onMoveUp && (
+                <button
+                  type="button"
+                  onClick={() => onMoveUp(i)}
+                  disabled={i === 0}
+                  className={cn(
+                    "flex h-7 w-7 items-center justify-center rounded-full bg-background text-muted-foreground shadow-sm ring-1 ring-border transition-transform hover:scale-105 hover:bg-primary/10 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:scale-95",
+                    i === 0 && "cursor-not-allowed opacity-30 hover:bg-background hover:text-muted-foreground",
+                  )}
+                  aria-label="Pindah ke atas"
+                >
+                  <ChevronUp className="h-3.5 w-3.5" />
+                </button>
+              )}
+              {onMoveDown && (
+                <button
+                  type="button"
+                  onClick={() => onMoveDown(i)}
+                  disabled={i === items.length - 1}
+                  className={cn(
+                    "flex h-7 w-7 items-center justify-center rounded-full bg-background text-muted-foreground shadow-sm ring-1 ring-border transition-transform hover:scale-105 hover:bg-primary/10 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:scale-95",
+                    i === items.length - 1 && "cursor-not-allowed opacity-30 hover:bg-background hover:text-muted-foreground",
+                  )}
+                  aria-label="Pindah ke bawah"
+                >
+                  <ChevronDown className="h-3.5 w-3.5" />
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => onRemove(i)}

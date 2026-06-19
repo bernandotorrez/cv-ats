@@ -1907,6 +1907,22 @@ function EditorForm({
           onRemove={(i) =>
             setData((d) => ({ ...d, skills: d.skills.filter((_, idx) => idx !== i) }))
           }
+          onMoveUp={(i) => {
+            if (i === 0) return;
+            setData((d) => {
+              const skills = [...d.skills];
+              [skills[i - 1], skills[i]] = [skills[i], skills[i - 1]];
+              return { ...d, skills };
+            });
+          }}
+          onMoveDown={(i) => {
+            setData((d) => {
+              if (i >= d.skills.length - 1) return d;
+              const skills = [...d.skills];
+              [skills[i], skills[i + 1]] = [skills[i + 1], skills[i]];
+              return { ...d, skills };
+            });
+          }}
           renderItem={(item, i) => (
             <Field
               label="Nama Skill"
