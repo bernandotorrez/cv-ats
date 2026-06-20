@@ -184,14 +184,31 @@ export function SemarangTemplate({ data, showHeader = true, sectionOrder, langua
             backgroundImage: "linear-gradient(135deg, #059669 0%, #047857 100%)",
           }}
         >
-          <h1 style={{ fontSize: "20pt", fontWeight: 800, margin: 0, color: "#fff" }}>
-            {personal.fullName || "Nama Lengkap"}
-          </h1>
-          {personal.headline && (
-            <p style={{ fontSize: "10.5pt", margin: "4px 0 0", color: "rgba(255,255,255,0.9)", fontWeight: 500 }}>
-              {personal.headline}
-            </p>
-          )}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 15 }}>
+            {personal.photoUrl && (
+              <img
+                src={personal.photoUrl}
+                alt="Profile"
+                style={{
+                  width: 45,
+                  height: 45,
+                  borderRadius: "50%",
+                  objectFit: "cover",
+                  border: "2px solid rgba(255, 255, 255, 0.4)",
+                }}
+              />
+            )}
+            <div style={{ textAlign: personal.photoUrl ? "left" : "center" }}>
+              <h1 style={{ fontSize: "20pt", fontWeight: 800, margin: 0, color: "#fff", lineHeight: 1.1 }}>
+                {personal.fullName || "Nama Lengkap"}
+              </h1>
+              {personal.headline && (
+                <p style={{ fontSize: "10.5pt", margin: "4px 0 0", color: "rgba(255,255,255,0.9)", fontWeight: 500 }}>
+                  {personal.headline}
+                </p>
+              )}
+            </div>
+          </div>
           <p style={{ fontSize: "9pt", color: "rgba(255,255,255,0.8)", margin: "6px 0 0" }}>
             {[personal.email, personal.phone, personal.location].filter(Boolean).join(" • ")}
           </p>

@@ -199,15 +199,31 @@ export function BaliTemplate({ data, showHeader = true, sectionOrder, language =
           {/* Accent color strip */}
           <div style={{ height: 4, backgroundColor: "#0891b2", marginBottom: 10, borderRadius: 2 }} />
           
-          <h1 style={{ fontSize: "22pt", fontWeight: 700, margin: 0, color: "#0f172a", letterSpacing: -0.5 }}>
-            {personal.fullName || "Nama Lengkap"}
-          </h1>
-          
-          {personal.headline && (
-            <p style={{ fontSize: "11pt", margin: "4px 0", color: "#0891b2", fontWeight: 600 }}>
-              {personal.headline}
-            </p>
-          )}
+          <div style={{ display: "flex", alignItems: "center", gap: 15, marginBottom: 4 }}>
+            {personal.photoUrl && (
+              <img
+                src={personal.photoUrl}
+                alt="Profile"
+                style={{
+                  width: 45,
+                  height: 45,
+                  borderRadius: "50%",
+                  objectFit: "cover",
+                }}
+              />
+            )}
+            <div>
+              <h1 style={{ fontSize: "22pt", fontWeight: 700, margin: 0, color: "#0f172a", letterSpacing: -0.5, lineHeight: 1.1 }}>
+                {personal.fullName || "Nama Lengkap"}
+              </h1>
+              
+              {personal.headline && (
+                <p style={{ fontSize: "11pt", margin: "4px 0 0 0", color: "#0891b2", fontWeight: 600 }}>
+                  {personal.headline}
+                </p>
+              )}
+            </div>
+          </div>
           
           {/* Contact info in a row */}
           <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 16px", fontSize: "9pt", color: "#64748b", marginTop: 6 }}>

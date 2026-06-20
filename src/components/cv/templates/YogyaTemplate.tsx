@@ -13,19 +13,36 @@ export function YogyaTemplate({ data, sectionOrder, language = "id" }: Props) {
   return (
     <div>
       <header style={{ textAlign: "left", marginBottom: 12 }}>
-        <h1
-          style={{
-            fontSize: "24pt",
-            fontWeight: 300,
-            margin: 0,
-            letterSpacing: 1,
-          }}
-        >
-          {data.personal.fullName || "Nama Lengkap"}
-        </h1>
-        {data.personal.headline && (
-          <p style={{ margin: "2px 0 6px", color: "#666" }}>{data.personal.headline}</p>
-        )}
+        <div style={{ display: "flex", alignItems: "center", gap: 15, marginBottom: 4 }}>
+          {data.personal.photoUrl && (
+            <img
+              src={data.personal.photoUrl}
+              alt="Profile"
+              style={{
+                width: 45,
+                height: 45,
+                borderRadius: "50%",
+                objectFit: "cover",
+              }}
+            />
+          )}
+          <div>
+            <h1
+              style={{
+                fontSize: "24pt",
+                fontWeight: 300,
+                margin: 0,
+                letterSpacing: 1,
+                lineHeight: 1.1,
+              }}
+            >
+              {data.personal.fullName || "Nama Lengkap"}
+            </h1>
+            {data.personal.headline && (
+              <p style={{ margin: "2px 0 0 0", color: "#666" }}>{data.personal.headline}</p>
+            )}
+          </div>
+        </div>
         <p style={{ fontSize: "9.5pt", color: "#444", margin: 0 }}>
           {[
             data.personal.email,

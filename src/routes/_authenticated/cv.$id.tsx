@@ -38,6 +38,8 @@ import { EditorSkeleton } from "@/components/ui/skeleton-loading";
 import { CvFileUpload } from "@/components/cv/CvFileUpload";
 import { extractCvText, renderPdfToImages } from "@/lib/cv-text-extractor";
 
+import { PhotoUpload } from "@/components/cv/editor/PhotoUpload";
+
 // New editor components
 import {
   EditorToolbar,
@@ -750,6 +752,8 @@ function CvEditorPage() {
                   onCloseSuggestion={closeSuggestionPanel}
                   localScore={localScore}
                   cvLanguage={cvLanguage}
+                  userId={user?.id}
+                  cvId={id}
                 />
               )}
             />
@@ -788,6 +792,8 @@ function CvEditorPage() {
               onCloseSuggestion={closeSuggestionPanel}
               localScore={localScore}
               cvLanguage={cvLanguage}
+              userId={user?.id}
+              cvId={id}
             />
           </div>
         )}
@@ -1247,6 +1253,8 @@ function EditorForm({
   onCloseSuggestion,
   localScore,
   cvLanguage,
+  userId,
+  cvId,
 }: {
   data: CvData;
   setData: React.Dispatch<React.SetStateAction<CvData>>;
@@ -1287,6 +1295,8 @@ function EditorForm({
     suggestions: string[];
   };
   cvLanguage: CvUiLang;
+  userId?: string;
+  cvId?: string;
 }) {
   return (
     <div className="space-y-6">
@@ -1320,6 +1330,14 @@ function EditorForm({
           icon={<User className="h-5 w-5" />}
           accentColor="from-blue-500/5 to-purple-500/5"
         >
+          {userId && cvId && (
+            <PhotoUpload
+              photoUrl={data.personal.photoUrl}
+              userId={userId}
+              cvId={cvId}
+              onPhotoChange={(url) => updatePersonal("photoUrl", url)}
+            />
+          )}
           <div className="grid gap-4 sm:grid-cols-2">
             <Field
               label="Nama Lengkap"

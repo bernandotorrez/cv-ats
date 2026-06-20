@@ -211,6 +211,19 @@ export function MakassarTemplate({ data, showHeader = true, sectionOrder, langua
         {/* Header in sidebar */}
         {showHeader && hasPersonalContent && (
           <div style={{ marginBottom: 12 }}>
+            {personal.photoUrl && (
+              <img
+                src={personal.photoUrl}
+                alt="Profile"
+                style={{
+                  width: 50,
+                  height: 50,
+                  borderRadius: "50%",
+                  objectFit: "cover",
+                  marginBottom: 8,
+                }}
+              />
+            )}
             <h1 style={{ fontSize: "16pt", fontWeight: 800, margin: 0, color: "#1e3a8a", lineHeight: 1.2 }}>
               {personal.fullName || "Nama Lengkap"}
             </h1>

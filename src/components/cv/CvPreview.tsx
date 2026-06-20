@@ -277,12 +277,29 @@ function renderTemplateById(
                 marginBottom: 14,
               }}
             >
-              <h1 style={{ fontSize: "22pt", fontWeight: 800, margin: 0 }}>
-                {data.personal.fullName || "Nama Lengkap"}
-              </h1>
-              {data.personal.headline && (
-                <p style={{ margin: "4px 0 0", opacity: 0.95 }}>{data.personal.headline}</p>
-              )}
+              <div style={{ display: "flex", alignItems: "center", gap: 15 }}>
+                {data.personal.photoUrl && (
+                  <img
+                    src={data.personal.photoUrl}
+                    alt="Profile"
+                    style={{
+                      width: 45,
+                      height: 45,
+                      borderRadius: "50%",
+                      objectFit: "cover",
+                      border: "2px solid rgba(255, 255, 255, 0.4)",
+                    }}
+                  />
+                )}
+                <div>
+                  <h1 style={{ fontSize: "22pt", fontWeight: 800, margin: 0, lineHeight: 1.1 }}>
+                    {data.personal.fullName || "Nama Lengkap"}
+                  </h1>
+                  {data.personal.headline && (
+                    <p style={{ margin: "4px 0 0", opacity: 0.95 }}>{data.personal.headline}</p>
+                  )}
+                </div>
+              </div>
               <p style={{ margin: "6px 0 0", fontSize: "9.5pt" }}>
                 {[
                   data.personal.email,
@@ -310,20 +327,36 @@ function renderTemplateById(
                 marginBottom: 12,
               }}
             >
-              <h1 style={{ fontSize: "22pt", fontWeight: 800, margin: 0 }}>
-                {data.personal.fullName || "Nama Lengkap"}
-              </h1>
-              {data.personal.headline && (
-                <p
-                  style={{
-                    margin: "2px 0",
-                    color: "#468432",
-                    fontWeight: 600,
-                  }}
-                >
-                  {data.personal.headline}
-                </p>
-              )}
+              <div style={{ display: "flex", alignItems: "center", gap: 15, marginBottom: 4 }}>
+                {data.personal.photoUrl && (
+                  <img
+                    src={data.personal.photoUrl}
+                    alt="Profile"
+                    style={{
+                      width: 45,
+                      height: 45,
+                      borderRadius: "50%",
+                      objectFit: "cover",
+                    }}
+                  />
+                )}
+                <div>
+                  <h1 style={{ fontSize: "22pt", fontWeight: 800, margin: 0, lineHeight: 1.1 }}>
+                    {data.personal.fullName || "Nama Lengkap"}
+                  </h1>
+                  {data.personal.headline && (
+                    <p
+                      style={{
+                        margin: "2px 0 0 0",
+                        color: "#468432",
+                        fontWeight: 600,
+                      }}
+                    >
+                      {data.personal.headline}
+                    </p>
+                  )}
+                </div>
+              </div>
               <p style={{ fontSize: "9.5pt", color: "#444", margin: "4px 0" }}>
                 {[
                   data.personal.email,
@@ -345,19 +378,36 @@ function renderTemplateById(
         <div>
           {showHeader && (
             <header style={{ textAlign: "left", marginBottom: 12 }}>
-              <h1
-                style={{
-                  fontSize: "24pt",
-                  fontWeight: 300,
-                  margin: 0,
-                  letterSpacing: 1,
-                }}
-              >
-                {data.personal.fullName || "Nama Lengkap"}
-              </h1>
-              {data.personal.headline && (
-                <p style={{ margin: "2px 0 6px", color: "#666" }}>{data.personal.headline}</p>
-              )}
+              <div style={{ display: "flex", alignItems: "center", gap: 15, marginBottom: 4 }}>
+                {data.personal.photoUrl && (
+                  <img
+                    src={data.personal.photoUrl}
+                    alt="Profile"
+                    style={{
+                      width: 45,
+                      height: 45,
+                      borderRadius: "50%",
+                      objectFit: "cover",
+                    }}
+                  />
+                )}
+                <div>
+                  <h1
+                    style={{
+                      fontSize: "24pt",
+                      fontWeight: 300,
+                      margin: 0,
+                      letterSpacing: 1,
+                      lineHeight: 1.1,
+                    }}
+                  >
+                    {data.personal.fullName || "Nama Lengkap"}
+                  </h1>
+                  {data.personal.headline && (
+                    <p style={{ margin: "2px 0 0 0", color: "#666" }}>{data.personal.headline}</p>
+                  )}
+                </div>
+              </div>
               <p style={{ fontSize: "9.5pt", color: "#444", margin: 0 }}>
                 {[
                   data.personal.email,

@@ -160,14 +160,30 @@ export function MedanTemplate({ data, showHeader = true, sectionOrder, language 
     <>
       {showHeader && hasPersonalContent && (
         <header style={{ textAlign: "center", marginBottom: 12, paddingBottom: 10, borderBottom: "2px solid #1a365d" }}>
-          <h1 style={{ fontSize: "18pt", fontWeight: 800, margin: 0, color: "#1a365d", letterSpacing: 0.5 }}>
-            {personal.fullName || "Nama Lengkap"}
-          </h1>
-          {personal.headline && (
-            <p style={{ fontSize: "10pt", margin: "3px 0", color: "#2d3748", fontWeight: 500 }}>
-              {personal.headline}
-            </p>
-          )}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 15, marginBottom: 4 }}>
+            {personal.photoUrl && (
+              <img
+                src={personal.photoUrl}
+                alt="Profile"
+                style={{
+                  width: 45,
+                  height: 45,
+                  borderRadius: "50%",
+                  objectFit: "cover",
+                }}
+              />
+            )}
+            <div style={{ textAlign: personal.photoUrl ? "left" : "center" }}>
+              <h1 style={{ fontSize: "18pt", fontWeight: 800, margin: 0, color: "#1a365d", letterSpacing: 0.5, lineHeight: 1.1 }}>
+                {personal.fullName || "Nama Lengkap"}
+              </h1>
+              {personal.headline && (
+                <p style={{ fontSize: "10pt", margin: "3px 0 0 0", color: "#2d3748", fontWeight: 500 }}>
+                  {personal.headline}
+                </p>
+              )}
+            </div>
+          </div>
           <p style={{ fontSize: "9pt", color: "#4a5568", margin: "3px 0" }}>
             {[personal.email, personal.phone, personal.location].filter(Boolean).join(" • ")}
           </p>

@@ -8,6 +8,7 @@ export interface CvPersonal {
   linkedin?: string;
   summary: string;
   summaryAlign?: "left" | "center" | "right" | "justify";
+  photoUrl?: string;
 }
 
 export interface CvExperience {

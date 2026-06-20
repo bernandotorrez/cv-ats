@@ -186,14 +186,30 @@ export function JakartaTemplate({ data, showHeader = true, sectionOrder, languag
     <>
       {showHeader && hasPersonalContent && (
         <header style={{ textAlign: "center", marginBottom: 10 }}>
-          <h1 style={{ fontSize: "20pt", fontWeight: 800, margin: 0 }}>
-            {personal.fullName || "Nama Lengkap"}
-          </h1>
-          {personal.headline && (
-            <p style={{ fontSize: "11pt", margin: "4px 0", color: "#444" }}>
-              {personal.headline}
-            </p>
-          )}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 15, marginBottom: 4 }}>
+            {personal.photoUrl && (
+              <img
+                src={personal.photoUrl}
+                alt="Profile"
+                style={{
+                  width: 45,
+                  height: 45,
+                  borderRadius: "50%",
+                  objectFit: "cover",
+                }}
+              />
+            )}
+            <div style={{ textAlign: personal.photoUrl ? "left" : "center" }}>
+              <h1 style={{ fontSize: "20pt", fontWeight: 800, margin: 0, lineHeight: 1.1 }}>
+                {personal.fullName || "Nama Lengkap"}
+              </h1>
+              {personal.headline && (
+                <p style={{ fontSize: "11pt", margin: "2px 0 0 0", color: "#444" }}>
+                  {personal.headline}
+                </p>
+              )}
+            </div>
+          </div>
           <p style={{ fontSize: "9.5pt", color: "#444", margin: "4px 0" }}>
             {[personal.email, personal.phone, personal.location].filter(Boolean).join(" • ")}
           </p>

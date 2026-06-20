@@ -6,6 +6,7 @@ import type { CvData } from "@/lib/cv-types";
 import {
   User, Pencil, Crosshair, Mail, Phone, MapPin, Linkedin, FileText,
 } from "lucide-react";
+import { PhotoUpload } from "../PhotoUpload";
 
 export type SuggestSection = "summary" | "headline" | "experience" | "education" | "skills";
 
@@ -19,13 +20,23 @@ interface Props {
   onRegenerateSuggestion: (index: number) => void;
   onRegenerateAll: () => void;
   onCloseSuggestion: () => void;
+  userId?: string;
+  cvId?: string;
 }
 
 export function PersonalSection(props: Props) {
-  const { data, updatePersonal, aiLoading, handleAiSuggest, suggestionPanel, onAcceptSuggestion, onRegenerateSuggestion, onRegenerateAll, onCloseSuggestion } = props;
+  const { data, updatePersonal, aiLoading, handleAiSuggest, suggestionPanel, onAcceptSuggestion, onRegenerateSuggestion, onRegenerateAll, onCloseSuggestion, userId, cvId } = props;
 
   return (
     <SectionCard title="Data Pribadi" icon={<User className="h-5 w-5" />} accentColor="from-blue-500/5 to-purple-500/5">
+      {userId && cvId && (
+        <PhotoUpload
+          photoUrl={data.personal.photoUrl}
+          userId={userId}
+          cvId={cvId}
+          onPhotoChange={(url) => updatePersonal("photoUrl", url)}
+        />
+      )}
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Nama Lengkap" value={data.personal.fullName} onChange={(v) => updatePersonal("fullName", v)} icon={<Pencil className="h-4 w-4" />} />
         <Field label="Posisi / Headline" value={data.personal.headline} onChange={(v) => updatePersonal("headline", v)} placeholder="Frontend Developer"
