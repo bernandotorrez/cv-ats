@@ -49,7 +49,7 @@ const changelog = [
       {
         icon: ShieldCheck,
         type: "Keamanan",
-        text: "Penyimpanan foto privat di Supabase Storage ('cv-photos' bucket) menggunakan signed URL yang aman dan kebijakan RLS (Row Level Security).",
+        text: "Penyimpanan foto profil yang aman untuk menjaga privasi data pengguna.",
       },
       {
         icon: FileText,

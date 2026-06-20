@@ -9,7 +9,7 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Fitur Baru
 - Penambahan fitur upload foto profil (opsional) di CV.
-- Penyimpanan foto privat menggunakan Supabase Storage (`cv-photos` bucket) dengan sistem signed URL dan kebijakan keamanan RLS.
+- Penyimpanan foto profil yang aman untuk menjaga privasi data pengguna.
 - Integrasi tampilan foto profil yang ATS-friendly pada seluruh template CV (Jakarta, Bandung, Bali, Surabaya, Yogya, Medan, Makassar, Semarang).
 
 ## [v1.5.0-live] - 2026-06-15
