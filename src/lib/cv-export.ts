@@ -36,6 +36,19 @@ const COLOR_SEMARANG_BG = "059669";
 const COLOR_SEMARANG_BG2 = "047857";
 const COLOR_BALI_ACCENT = "0891b2";
 const COLOR_BALI_HEADING = "0f172a";
+const COLOR_MALANG_NAVY = "1a2744";
+const COLOR_MALANG_GOLD = "d4943a";
+const COLOR_MALANG_GOLD_LIGHT = "e8b56a";
+const COLOR_MALANG_DARK_TEXT = "2d3748";
+const COLOR_SOLO_BG = "1a1a2e";
+const COLOR_SOLO_TEAL = "00d4aa";
+const COLOR_SOLO_TEXT = "f0f0f5";
+const COLOR_DENPASAR_TERRA = "c75b39";
+const COLOR_DENPASAR_DARK = "2c1810";
+const COLOR_DENPASAR_TEXT = "4a3728";
+const COLOR_BATU_PURPLE = "7c3aed";
+const COLOR_BATU_PINK = "ec4899";
+const COLOR_BATU_DARK = "1f1235";
 
 function headingSection(text: string, spacing?: { before?: number; after?: number }): Paragraph[] {
   return [
@@ -476,6 +489,162 @@ function buildBaliHeader(cv: CvData): Paragraph[] {
   return paras;
 }
 
+function buildMalangHeader(cv: CvData): Paragraph[] {
+  const fullName = cv.personal.fullName || "Nama Lengkap";
+  const headline = cv.personal.headline || "";
+  const contactItems = [cv.personal.email, cv.personal.phone, cv.personal.location, cv.personal.linkedin, cv.personal.website]
+    .filter(Boolean);
+  const contact = contactItems.join("  \u2022  ");
+
+  const paras: Paragraph[] = [];
+
+  // Navy banner with name in gold
+  paras.push(
+    new Paragraph({
+      shading: { type: ShadingType.SOLID, color: COLOR_MALANG_NAVY, fill: COLOR_MALANG_NAVY },
+      spacing: { before: 80, after: headline ? 20 : 60 },
+      children: [
+        new TextRun({ text: "  " + fullName.toUpperCase(), bold: true, size: 48, font: FONT_DISPLAY, color: COLOR_MALANG_GOLD }),
+      ],
+    }),
+  );
+
+  // Headline in white on navy
+  if (headline) {
+    paras.push(
+      new Paragraph({
+        shading: { type: ShadingType.SOLID, color: COLOR_MALANG_NAVY, fill: COLOR_MALANG_NAVY },
+        spacing: { after: 60 },
+        children: [
+          new TextRun({ text: "  " + headline.toUpperCase(), size: 22, font: FONT_NAME, color: "ffffff" }),
+        ],
+      }),
+    );
+  }
+
+  // Gold accent line + contact info
+  if (contact) {
+    paras.push(
+      new Paragraph({
+        children: [new TextRun({ text: contact, size: 18, font: FONT_NAME, color: COLOR_MALANG_DARK_TEXT })],
+        spacing: { before: 80, after: 120 },
+        border: { top: { style: BorderStyle.SINGLE, size: 6, color: COLOR_MALANG_GOLD, space: 6 } },
+      }),
+    );
+  }
+
+  return paras;
+}
+
+function buildSoloHeader(cv: CvData): Paragraph[] {
+  const fullName = cv.personal.fullName || "Nama Lengkap";
+  const contact = [cv.personal.email, cv.personal.phone, cv.personal.location, cv.personal.linkedin, cv.personal.website]
+    .filter(Boolean).join("  \u2022  ");
+  const paras: Paragraph[] = [];
+  paras.push(
+    new Paragraph({
+      shading: { type: ShadingType.SOLID, color: COLOR_SOLO_BG, fill: COLOR_SOLO_BG },
+      spacing: { before: 80, after: cv.personal.headline ? 20 : 60 },
+      children: [
+        new TextRun({ text: "  " + fullName, bold: true, size: 48, font: FONT_DISPLAY, color: COLOR_SOLO_TEXT }),
+      ],
+    }),
+  );
+  if (cv.personal.headline) {
+    paras.push(
+      new Paragraph({
+        shading: { type: ShadingType.SOLID, color: COLOR_SOLO_BG, fill: COLOR_SOLO_BG },
+        spacing: { after: 40 },
+        children: [
+          new TextRun({ text: "  " + cv.personal.headline, size: 22, font: FONT_NAME, color: COLOR_SOLO_TEAL }),
+        ],
+      }),
+    );
+  }
+  if (contact) {
+    paras.push(
+      new Paragraph({
+        children: [new TextRun({ text: contact, size: 18, font: FONT_NAME, color: COLOR_MALANG_DARK_TEXT })],
+        spacing: { before: 60, after: 120 },
+        border: { top: { style: BorderStyle.SINGLE, size: 4, color: COLOR_SOLO_TEAL, space: 4 } },
+      }),
+    );
+  }
+  return paras;
+}
+
+function buildDenpasarHeader(cv: CvData): Paragraph[] {
+  const fullName = cv.personal.fullName || "Nama Lengkap";
+  const contact = [cv.personal.email, cv.personal.phone, cv.personal.location, cv.personal.linkedin, cv.personal.website]
+    .filter(Boolean).join("  \u2022  ");
+  const paras: Paragraph[] = [];
+  paras.push(
+    new Paragraph({
+      spacing: { before: 60, after: cv.personal.headline ? 20 : 40 },
+      children: [
+        new TextRun({ text: fullName, bold: true, size: 48, font: "Georgia", color: COLOR_DENPASAR_DARK }),
+      ],
+    }),
+  );
+  if (cv.personal.headline) {
+    paras.push(
+      new Paragraph({
+        spacing: { after: 40 },
+        children: [
+          new TextRun({ text: cv.personal.headline, italics: true, size: 22, font: "Georgia", color: COLOR_DENPASAR_TERRA }),
+        ],
+      }),
+    );
+  }
+  if (contact) {
+    paras.push(
+      new Paragraph({
+        children: [new TextRun({ text: contact, size: 18, font: FONT_NAME, color: COLOR_DENPASAR_TEXT })],
+        spacing: { after: 120 },
+        border: { top: { style: BorderStyle.SINGLE, size: 6, color: COLOR_DENPASAR_TERRA, space: 6 } },
+      }),
+    );
+  }
+  return paras;
+}
+
+function buildBatuHeader(cv: CvData): Paragraph[] {
+  const fullName = cv.personal.fullName || "Nama Lengkap";
+  const contact = [cv.personal.email, cv.personal.phone, cv.personal.location, cv.personal.linkedin, cv.personal.website]
+    .filter(Boolean).join("  \u2022  ");
+  const paras: Paragraph[] = [];
+  paras.push(
+    new Paragraph({
+      shading: { type: ShadingType.SOLID, color: COLOR_BATU_PURPLE, fill: COLOR_BATU_PURPLE },
+      spacing: { before: 80, after: cv.personal.headline ? 20 : 60 },
+      children: [
+        new TextRun({ text: "  " + fullName, bold: true, size: 48, font: FONT_DISPLAY, color: "ffffff" }),
+      ],
+    }),
+  );
+  if (cv.personal.headline) {
+    paras.push(
+      new Paragraph({
+        shading: { type: ShadingType.SOLID, color: COLOR_BATU_PURPLE, fill: COLOR_BATU_PURPLE },
+        spacing: { after: 60 },
+        children: [
+          new TextRun({ text: "  " + cv.personal.headline, size: 22, font: FONT_NAME, color: "ffffff" }),
+        ],
+      }),
+    );
+  }
+  if (contact) {
+    paras.push(
+      new Paragraph({
+        children: [new TextRun({ text: contact, size: 18, font: FONT_NAME, color: COLOR_BATU_DARK })],
+        spacing: { before: 60, after: 120 },
+        border: { top: { style: BorderStyle.SINGLE, size: 6, color: COLOR_BATU_PINK, space: 6 } },
+      }),
+    );
+  }
+  return paras;
+}
+
 // ─── Main DOCX Generator ──────────────────────────────────────
 
 export async function generateDocx(cv: CvData, options: ExportOptions): Promise<Blob> {
@@ -505,6 +674,18 @@ export async function generateDocx(cv: CvData, options: ExportOptions): Promise<
       break;
     case "bali":
       sections.push(...buildBaliHeader(cv));
+      break;
+    case "malang":
+      sections.push(...buildMalangHeader(cv));
+      break;
+    case "solo":
+      sections.push(...buildSoloHeader(cv));
+      break;
+    case "denpasar":
+      sections.push(...buildDenpasarHeader(cv));
+      break;
+    case "batu":
+      sections.push(...buildBatuHeader(cv));
       break;
     case "jakarta":
     default:

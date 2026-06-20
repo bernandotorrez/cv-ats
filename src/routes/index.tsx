@@ -26,6 +26,10 @@ import {
 import { BaliTemplate } from "@/components/cv/templates/BaliTemplate";
 import { BandungTemplate } from "@/components/cv/templates/BandungTemplate";
 import { JakartaTemplate } from "@/components/cv/templates/JakartaTemplate";
+import { MalangTemplate } from "@/components/cv/templates/MalangTemplate";
+import { SoloTemplate } from "@/components/cv/templates/SoloTemplate";
+import { DenpasarTemplate } from "@/components/cv/templates/DenpasarTemplate";
+import { BatuTemplate } from "@/components/cv/templates/BatuTemplate";
 import { MedanTemplate } from "@/components/cv/templates/MedanTemplate";
 import { previewData } from "@/components/site/TemplatePreview";
 import {
@@ -687,6 +691,10 @@ function LandingPage() {
               { name: "Bandung", template: BandungTemplate, data: previewData.bandung },
               { name: "Bali", template: BaliTemplate, data: previewData.bali },
               { name: "Medan", template: MedanTemplate, data: previewData.medan },
+              { name: "Malang", template: MalangTemplate, data: previewData.malang },
+              { name: "Solo", template: SoloTemplate, data: previewData.solo },
+              { name: "Denpasar", template: DenpasarTemplate, data: previewData.denpasar },
+              { name: "Batu", template: BatuTemplate, data: previewData.batu },
             ].map(({ name, template: Template, data }) => (
               <Link key={name} to="/template" className="group block">
                 <div className="aspect-[3/4] overflow-hidden rounded-lg border border-border bg-background p-3 transition-shadow group-hover:shadow-md">

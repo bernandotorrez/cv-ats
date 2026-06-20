@@ -7,3 +7,7 @@ export { MedanTemplate } from "./MedanTemplate";
 export { MakassarTemplate } from "./MakassarTemplate";
 export { SemarangTemplate } from "./SemarangTemplate";
 export { BaliTemplate } from "./BaliTemplate";
+export { MalangTemplate } from "./MalangTemplate";
+export { SoloTemplate } from "./SoloTemplate";
+export { DenpasarTemplate } from "./DenpasarTemplate";
+export { BatuTemplate } from "./BatuTemplate";

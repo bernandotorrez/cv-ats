@@ -104,6 +104,10 @@ export const TEMPLATES = [
   { id: "makassar", name: "Makassar", description: "Dua kolom modern, clean layout." },
   { id: "semarang", name: "Semarang", description: "Modern corporate dengan aksen hijau." },
   { id: "bali", name: "Bali", description: "Clean minimalist dengan aksen cyan." },
+  { id: "malang", name: "Malang", description: "Design creative dengan gradient modern dan dua kolom." },
+  { id: "solo", name: "Solo", description: "Dark tech-creative dengan aksen teal dan timeline." },
+  { id: "denpasar", name: "Denpasar", description: "Editorial kreatif hangat dengan tipografi serif." },
+  { id: "batu", name: "Batu", description: "Gradient modern kreatif dengan card-style entries." },
 ] as const;
 
 export type TemplateId = (typeof TEMPLATES)[number]["id"];

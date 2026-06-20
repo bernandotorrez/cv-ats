@@ -27,6 +27,10 @@ import { MedanTemplate } from "@/components/cv/templates/MedanTemplate";
 import { SemarangTemplate } from "@/components/cv/templates/SemarangTemplate";
 import { SurabayaTemplate } from "@/components/cv/templates/SurabayaTemplate";
 import { YogyaTemplate } from "@/components/cv/templates/YogyaTemplate";
+import { MalangTemplate } from "@/components/cv/templates/MalangTemplate";
+import { SoloTemplate } from "@/components/cv/templates/SoloTemplate";
+import { DenpasarTemplate } from "@/components/cv/templates/DenpasarTemplate";
+import { BatuTemplate } from "@/components/cv/templates/BatuTemplate";
 import { previewData, type TemplateSlug } from "@/components/site/TemplatePreview";
 import { TemplateCardSkeleton } from "@/components/ui/skeleton-loading";
 import { Badge } from "@/components/ui/badge";
@@ -50,10 +54,14 @@ const templateComponents = {
   semarang: SemarangTemplate,
   surabaya: SurabayaTemplate,
   yogya: YogyaTemplate,
+  malang: MalangTemplate,
+  solo: SoloTemplate,
+  denpasar: DenpasarTemplate,
+  batu: BatuTemplate,
 };
 
 const FREE_TEMPLATES = ["jakarta", "bandung"];
-const PRO_TEMPLATES = ["semarang", "surabaya"];
+const PRO_TEMPLATES = ["semarang", "surabaya", "malang", "solo", "denpasar", "batu"];
 
 export const Route = createFileRoute("/template")({
   pendingComponent: TemplateLoading,
@@ -126,6 +134,34 @@ const templates = [
     bestFor: "Content & communication",
     tags: ["Kreatif", "Content", "Modern"],
   },
+  {
+    slug: "malang" as TemplateSlug,
+    name: "Malang",
+    desc: "Design creative dengan gradient modern, dua kolom eye-catching, dan skill pills. Sempurna untuk desainer, creative director, dan profesional industri kreatif.",
+    bestFor: "Design & creative",
+    tags: ["Kreatif", "Design", "Eye-catching"],
+  },
+  {
+    slug: "solo" as TemplateSlug,
+    name: "Solo",
+    desc: "Dark theme tech-creative dengan aksen teal neon dan timeline interaktif. Ideal untuk tech lead, developer, dan digital marketer.",
+    bestFor: "Tech & digital",
+    tags: ["Tech", "Dark", "Timeline"],
+  },
+  {
+    slug: "denpasar" as TemplateSlug,
+    name: "Denpasar",
+    desc: "Editorial kreatif dengan nuansa hangat earth-tone, tipografi serif, dan dot-rating skills. Sempurna untuk penulis, editor, dan fotografer.",
+    bestFor: "Editorial & writing",
+    tags: ["Editorial", "Serif", "Earth-tone"],
+  },
+  {
+    slug: "batu" as TemplateSlug,
+    name: "Batu",
+    desc: "Gradient modern kreatif dengan purple-pink accents, card-style entries, dan gradient skill bars. Ideal untuk UI/UX designer dan startup founder.",
+    bestFor: "UI/UX & startup",
+    tags: ["Kreatif", "Gradient", "Modern"],
+  },
 ].map((template) => {
   const isFree = FREE_TEMPLATES.includes(template.slug);
   const isPro = PRO_TEMPLATES.includes(template.slug);
@@ -138,7 +174,7 @@ const templates = [
   };
 });
 
-const filterCategories = ["Semua", "Korporat", "Tech", "Kreatif", "HR", "Finance", "PM", "Startup"];
+const filterCategories = ["Semua", "Korporat", "Tech", "Kreatif", "Design", "HR", "Finance", "PM", "Startup", "Editorial"];
 
 const trustPoints = [
   { icon: BadgeCheck, label: "ATS friendly" },

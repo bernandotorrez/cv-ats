@@ -11,6 +11,10 @@ import {
   MakassarTemplate,
   SemarangTemplate,
   BaliTemplate,
+  MalangTemplate,
+  SoloTemplate,
+  DenpasarTemplate,
+  BatuTemplate,
 } from "./templates";
 
 function formatDescription(text: string): string {
@@ -107,6 +111,22 @@ export function CvPreview({
       case "bali":
         return (
           <BaliTemplate data={formattedData} sectionOrder={sectionOrder} language={language} />
+        );
+      case "malang":
+        return (
+          <MalangTemplate data={formattedData} sectionOrder={sectionOrder} language={language} />
+        );
+      case "solo":
+        return (
+          <SoloTemplate data={formattedData} sectionOrder={sectionOrder} language={language} />
+        );
+      case "denpasar":
+        return (
+          <DenpasarTemplate data={formattedData} sectionOrder={sectionOrder} language={language} />
+        );
+      case "batu":
+        return (
+          <BatuTemplate data={formattedData} sectionOrder={sectionOrder} language={language} />
         );
       case "jakarta":
       default:
