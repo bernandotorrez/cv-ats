@@ -41,18 +41,18 @@ export function BandungTemplate({ data, sectionOrder, language = "id" }: Props) 
             {data.personal.headline && (
               <p style={{ margin: "4px 0 0", opacity: 0.95 }}>{data.personal.headline}</p>
             )}
+            <p style={{ margin: "4px 0 0 0", fontSize: "9.5pt" }}>
+              {[
+                data.personal.email,
+                data.personal.phone,
+                data.personal.location,
+                data.personal.linkedin,
+              ]
+                .filter(Boolean)
+                .join(" • ")}
+            </p>
           </div>
         </div>
-        <p style={{ margin: "12px 0 0", fontSize: "9.5pt" }}>
-          {[
-            data.personal.email,
-            data.personal.phone,
-            data.personal.location,
-            data.personal.linkedin,
-          ]
-            .filter(Boolean)
-            .join(" • ")}
-        </p>
       </header>
       <JakartaTemplate
         data={{

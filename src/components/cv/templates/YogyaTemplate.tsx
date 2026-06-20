@@ -13,7 +13,7 @@ export function YogyaTemplate({ data, sectionOrder, language = "id" }: Props) {
   return (
     <div>
       <header style={{ textAlign: "left", marginBottom: 12 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 15, marginBottom: 4 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 15 }}>
           {data.personal.photoUrl && (
             <img
               src={data.personal.photoUrl}
@@ -41,18 +41,18 @@ export function YogyaTemplate({ data, sectionOrder, language = "id" }: Props) {
             {data.personal.headline && (
               <p style={{ margin: "2px 0 0 0", color: "#666" }}>{data.personal.headline}</p>
             )}
+            <p style={{ fontSize: "9.5pt", color: "#444", margin: "4px 0 0 0" }}>
+              {[
+                data.personal.email,
+                data.personal.phone,
+                data.personal.location,
+                data.personal.linkedin,
+              ]
+                .filter(Boolean)
+                .join(" • ")}
+            </p>
           </div>
         </div>
-        <p style={{ fontSize: "9.5pt", color: "#444", margin: "12px 0 0" }}>
-          {[
-            data.personal.email,
-            data.personal.phone,
-            data.personal.location,
-            data.personal.linkedin,
-          ]
-            .filter(Boolean)
-            .join(" • ")}
-        </p>
         <hr style={{ border: 0, borderTop: "1px solid #ccc", margin: "8px 0 0" }} />
       </header>
       <JakartaTemplate

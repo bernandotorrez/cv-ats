@@ -300,13 +300,20 @@ export function SemarangTemplate({
       {showHeader && hasPersonalContent && (
         <header
           style={{
-            textAlign: "center",
+            textAlign: personal.photoUrl ? "left" : "center",
             marginBottom: 12,
             padding: "12px 16px",
             backgroundImage: "linear-gradient(135deg, #059669 0%, #047857 100%)",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 15 }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: personal.photoUrl ? "flex-start" : "center",
+              gap: 15,
+            }}
+          >
             {personal.photoUrl && (
               <img
                 src={personal.photoUrl}
@@ -344,16 +351,24 @@ export function SemarangTemplate({
                   {personal.headline}
                 </p>
               )}
+              <div style={{ fontSize: "9pt", color: "rgba(255,255,255,0.8)", marginTop: 4 }}>
+                <p style={{ margin: 0 }}>
+                  {[personal.email, personal.phone, personal.location].filter(Boolean).join(" • ")}
+                </p>
+                {(personal.linkedin || personal.website) && (
+                  <p
+                    style={{
+                      fontSize: "8.5pt",
+                      color: "rgba(255,255,255,0.7)",
+                      margin: "2px 0 0 0",
+                    }}
+                  >
+                    {[personal.linkedin, personal.website].filter(Boolean).join(" • ")}
+                  </p>
+                )}
+              </div>
             </div>
           </div>
-          <p style={{ fontSize: "9pt", color: "rgba(255,255,255,0.8)", margin: "12px 0 0" }}>
-            {[personal.email, personal.phone, personal.location].filter(Boolean).join(" • ")}
-          </p>
-          {(personal.linkedin || personal.website) && (
-            <p style={{ fontSize: "8.5pt", color: "rgba(255,255,255,0.7)", margin: "4px 0 0" }}>
-              {[personal.linkedin, personal.website].filter(Boolean).join(" • ")}
-            </p>
-          )}
         </header>
       )}
 

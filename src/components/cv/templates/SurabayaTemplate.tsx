@@ -13,7 +13,7 @@ export function SurabayaTemplate({ data, sectionOrder, language = "id" }: Props)
   return (
     <div>
       <header style={{ borderLeft: "6px solid #468432", paddingLeft: 12, marginBottom: 12 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 15, marginBottom: 4 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 15 }}>
           {data.personal.photoUrl && (
             <img
               src={data.personal.photoUrl}
@@ -35,18 +35,18 @@ export function SurabayaTemplate({ data, sectionOrder, language = "id" }: Props)
                 {data.personal.headline}
               </p>
             )}
+            <p style={{ fontSize: "9.5pt", color: "#444", margin: "4px 0 0 0" }}>
+              {[
+                data.personal.email,
+                data.personal.phone,
+                data.personal.location,
+                data.personal.linkedin,
+              ]
+                .filter(Boolean)
+                .join(" • ")}
+            </p>
           </div>
         </div>
-        <p style={{ fontSize: "9.5pt", color: "#444", margin: "12px 0 4px" }}>
-          {[
-            data.personal.email,
-            data.personal.phone,
-            data.personal.location,
-            data.personal.linkedin,
-          ]
-            .filter(Boolean)
-            .join(" • ")}
-        </p>
       </header>
       <JakartaTemplate
         data={{

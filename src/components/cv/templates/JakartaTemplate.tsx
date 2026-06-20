@@ -229,12 +229,12 @@ export function JakartaTemplate({ data, showHeader = true, sectionOrder, languag
   return (
     <>
       {showHeader && hasPersonalContent && (
-        <header style={{ textAlign: "center", marginBottom: 10 }}>
+        <header style={{ textAlign: personal.photoUrl ? "left" : "center", marginBottom: 10 }}>
           <div
             style={{
               display: "flex",
               alignItems: "center",
-              justifyContent: "center",
+              justifyContent: personal.photoUrl ? "flex-start" : "center",
               gap: 15,
               marginBottom: 4,
             }}
@@ -260,14 +260,18 @@ export function JakartaTemplate({ data, showHeader = true, sectionOrder, languag
                   {personal.headline}
                 </p>
               )}
+              <div style={{ fontSize: "9.5pt", color: "#444", marginTop: 4 }}>
+                <p style={{ margin: 0 }}>
+                  {[personal.email, personal.phone, personal.location].filter(Boolean).join(" • ")}
+                </p>
+                {(personal.linkedin || personal.website) && (
+                  <p style={{ margin: "2px 0 0 0" }}>
+                    {[personal.linkedin, personal.website].filter(Boolean).join(" • ")}
+                  </p>
+                )}
+              </div>
             </div>
           </div>
-          <p style={{ fontSize: "9.5pt", color: "#444", margin: "12px 0 4px" }}>
-            {[personal.email, personal.phone, personal.location].filter(Boolean).join(" • ")}
-          </p>
-          <p style={{ fontSize: "9.5pt", color: "#444", margin: "4px 0" }}>
-            {[personal.linkedin, personal.website].filter(Boolean).join(" • ")}
-          </p>
         </header>
       )}
 

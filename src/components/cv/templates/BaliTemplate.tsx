@@ -298,7 +298,7 @@ export function BaliTemplate({ data, showHeader = true, sectionOrder, language =
             style={{ height: 4, backgroundColor: "#0891b2", marginBottom: 10, borderRadius: 2 }}
           />
 
-          <div style={{ display: "flex", alignItems: "center", gap: 15, marginBottom: 4 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 15 }}>
             {personal.photoUrl && (
               <img
                 src={personal.photoUrl}
@@ -337,25 +337,25 @@ export function BaliTemplate({ data, showHeader = true, sectionOrder, language =
                   {personal.headline}
                 </p>
               )}
-            </div>
-          </div>
 
-          {/* Contact info in a row */}
-          <div
-            style={{
-              display: "flex",
-              flexWrap: "wrap",
-              gap: "4px 16px",
-              fontSize: "9pt",
-              color: "#64748b",
-              marginTop: 12,
-            }}
-          >
-            {personal.email && <span>{personal.email}</span>}
-            {personal.phone && <span>{personal.phone}</span>}
-            {personal.location && <span>{personal.location}</span>}
-            {personal.linkedin && <span>LinkedIn: {personal.linkedin}</span>}
-            {personal.website && <span>Web: {personal.website}</span>}
+              {/* Contact info in a row */}
+              <div
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: "4px 16px",
+                  fontSize: "9pt",
+                  color: "#64748b",
+                  marginTop: 4,
+                }}
+              >
+                {personal.email && <span>{personal.email}</span>}
+                {personal.phone && <span>{personal.phone}</span>}
+                {personal.location && <span>{personal.location}</span>}
+                {personal.linkedin && <span>LinkedIn: {personal.linkedin}</span>}
+                {personal.website && <span>Web: {personal.website}</span>}
+              </div>
+            </div>
           </div>
         </header>
       )}

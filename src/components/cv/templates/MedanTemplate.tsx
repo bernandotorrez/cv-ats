@@ -254,7 +254,7 @@ export function MedanTemplate({ data, showHeader = true, sectionOrder, language 
       {showHeader && hasPersonalContent && (
         <header
           style={{
-            textAlign: "center",
+            textAlign: personal.photoUrl ? "left" : "center",
             marginBottom: 12,
             paddingBottom: 10,
             borderBottom: "2px solid #1a365d",
@@ -264,7 +264,7 @@ export function MedanTemplate({ data, showHeader = true, sectionOrder, language 
             style={{
               display: "flex",
               alignItems: "center",
-              justifyContent: "center",
+              justifyContent: personal.photoUrl ? "flex-start" : "center",
               gap: 15,
               marginBottom: 4,
             }}
@@ -306,16 +306,18 @@ export function MedanTemplate({ data, showHeader = true, sectionOrder, language 
                   {personal.headline}
                 </p>
               )}
+              <div style={{ fontSize: "9pt", color: "#4a5568", marginTop: 4 }}>
+                <p style={{ margin: 0 }}>
+                  {[personal.email, personal.phone, personal.location].filter(Boolean).join(" • ")}
+                </p>
+                {(personal.linkedin || personal.website) && (
+                  <p style={{ margin: "2px 0 0 0", fontSize: "8.5pt", color: "#718096" }}>
+                    {[personal.linkedin, personal.website].filter(Boolean).join(" • ")}
+                  </p>
+                )}
+              </div>
             </div>
           </div>
-          <p style={{ fontSize: "9pt", color: "#4a5568", margin: "12px 0 4px" }}>
-            {[personal.email, personal.phone, personal.location].filter(Boolean).join(" • ")}
-          </p>
-          {personal.linkedin || personal.website ? (
-            <p style={{ fontSize: "8.5pt", color: "#718096", margin: "4px 0" }}>
-              {[personal.linkedin, personal.website].filter(Boolean).join(" • ")}
-            </p>
-          ) : null}
         </header>
       )}
 
