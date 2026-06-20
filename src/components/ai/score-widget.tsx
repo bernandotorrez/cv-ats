@@ -35,9 +35,12 @@ const BREAKDOWN_LABELS: Record<string, { label: string; description: string }> =
 };
 
 function getGrade(score: number) {
-  if (score >= 85) return { grade: "A", color: "text-emerald-700", bg: "bg-emerald-100 hover:bg-emerald-200" };
-  if (score >= 70) return { grade: "B", color: "text-blue-700", bg: "bg-blue-100 hover:bg-blue-200" };
-  if (score >= 55) return { grade: "C", color: "text-amber-700", bg: "bg-amber-100 hover:bg-amber-200" };
+  if (score >= 85)
+    return { grade: "A", color: "text-emerald-700", bg: "bg-emerald-100 hover:bg-emerald-200" };
+  if (score >= 70)
+    return { grade: "B", color: "text-blue-700", bg: "bg-blue-100 hover:bg-blue-200" };
+  if (score >= 55)
+    return { grade: "C", color: "text-amber-700", bg: "bg-amber-100 hover:bg-amber-200" };
   return { grade: "D", color: "text-red-700", bg: "bg-red-100 hover:bg-red-200" };
 }
 
@@ -49,7 +52,12 @@ function CircularScore({ score, size = 100 }: { score: number; size?: number }) 
   const strokeDashoffset = circumference * (1 - progress);
 
   const { grade, color } = getGrade(score);
-  const trackColor = score >= 70 ? "var(--color-primary)" : score >= 55 ? "var(--color-warning)" : "var(--color-destructive)";
+  const trackColor =
+    score >= 70
+      ? "var(--color-primary)"
+      : score >= 55
+        ? "var(--color-warning)"
+        : "var(--color-destructive)";
 
   return (
     <div className="relative inline-flex items-center justify-center" aria-hidden>
@@ -98,7 +106,13 @@ export function AtsScoreWidget({
   const { grade, color, bg } = getGrade(overallScore);
 
   return (
-    <Card className={cn("overflow-hidden", compact && expanded && "flex flex-col max-h-[70vh]", className)}>
+    <Card
+      className={cn(
+        "overflow-hidden",
+        compact && expanded && "flex flex-col max-h-[70vh]",
+        className,
+      )}
+    >
       <CardHeader
         className={cn(
           "cursor-pointer select-none shrink-0 py-3 px-4",
@@ -123,10 +137,12 @@ export function AtsScoreWidget({
           </div>
         </div>
       </CardHeader>
-      <CardContent className={cn(
-        compact && !expanded && "hidden",
-        compact && expanded && "flex-1 overflow-y-auto min-h-0 px-4 pb-4 pt-2",
-      )}>
+      <CardContent
+        className={cn(
+          compact && !expanded && "hidden",
+          compact && expanded && "flex-1 overflow-y-auto min-h-0 px-4 pb-4 pt-2",
+        )}
+      >
         {/* Overall Score */}
         <div className="flex items-center gap-4 mb-4">
           <CircularScore score={overallScore} size={72} />
@@ -135,7 +151,8 @@ export function AtsScoreWidget({
               <p className="text-sm text-muted-foreground">{summary}</p>
             ) : (
               <p className="text-sm text-muted-foreground">
-                Analisis ATS-friendly untuk CV kamu. Optimalkan keyword dan struktur untuk meningkatkan skor.
+                Analisis ATS-friendly untuk CV kamu. Optimalkan keyword dan struktur untuk
+                meningkatkan skor.
               </p>
             )}
           </div>
@@ -147,7 +164,11 @@ export function AtsScoreWidget({
             {Object.entries(breakdown).map(([key, val]) => {
               const meta = BREAKDOWN_LABELS[key] || { label: key, description: "" };
               const scoreColor =
-                val >= 85 ? "text-primary" : val >= 70 ? "text-warning-foreground" : "text-destructive";
+                val >= 85
+                  ? "text-primary"
+                  : val >= 70
+                    ? "text-warning-foreground"
+                    : "text-destructive";
               return (
                 <div key={key}>
                   <div className="flex justify-between text-xs mb-0.5">
@@ -162,7 +183,11 @@ export function AtsScoreWidget({
                   <Progress
                     value={val}
                     className={`h-1.5 ${
-                      val >= 85 ? "[&>div]:bg-primary" : val >= 70 ? "[&>div]:bg-warning" : "[&>div]:bg-destructive"
+                      val >= 85
+                        ? "[&>div]:bg-primary"
+                        : val >= 70
+                          ? "[&>div]:bg-warning"
+                          : "[&>div]:bg-destructive"
                     }`}
                   />
                 </div>
@@ -211,12 +236,7 @@ export function AtsScoreWidget({
             </Button>
           )}
           {onFixWithAi && (
-            <Button
-              size="sm"
-              variant="secondary"
-              onClick={onFixWithAi}
-              className="gap-1"
-            >
+            <Button size="sm" variant="secondary" onClick={onFixWithAi} className="gap-1">
               <Lightbulb className="h-3.5 w-3.5" /> Perbaiki dengan AI
             </Button>
           )}

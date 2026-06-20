@@ -10,6 +10,7 @@
 ## PRE-FLIGHT CHECKLIST (Baca Sebelum Mulai)
 
 Sebelum menulis kode apapun, pastikan:
+
 - [x] Sudah baca `prd.md` lengkap
 - [x] Sudah baca `skill.md` lengkap (terutama Project Structure dan Security)
 - [x] Sudah baca `design.md` lengkap (terutama Color System dan Accessibility)
@@ -23,11 +24,13 @@ Sebelum menulis kode apapun, pastikan:
 ## FASE 0: Project Setup
 
 ### TASK-001: Inisialisasi Project ✅
+
 **Priority**: P0 | **Estimasi**: 2 jam
 
 **Stack**: TanStack Start + Vite + TypeScript + Tailwind CSS v4 + Supabase
 
 **Deliverables**:
+
 - [x] App berjalan di `localhost:3000` (via `vite dev`)
 - [x] Tailwind terkonfigurasi dengan color palette brand (lihat design.md)
 - [x] TypeScript strict mode aktif
@@ -37,10 +40,12 @@ Sebelum menulis kode apapun, pastikan:
 ---
 
 ### TASK-002: Konfigurasi Tailwind dengan Design System ✅
+
 **Priority**: P0 | **Estimasi**: 1 jam  
 **Reference**: `design.md` section 2, 3, 4
 
 **Deliverables**:
+
 - [x] `styles.css` dengan CSS custom properties (design tokens) — primary #468432, secondary #9AD872, warning #FFA02E, info #FFEF91
 - [x] Google Fonts (Plus Jakarta Sans + Inter) ter-load dengan benar
 - [x] Test: render komponen `<Button>` dengan semua variants
@@ -48,10 +53,12 @@ Sebelum menulis kode apapun, pastikan:
 ---
 
 ### TASK-003: Supabase Setup + Database Migration 🚧
+
 **Priority**: P0 | **Estimasi**: 3 jam  
 **Reference**: `skill.md` section 3
 
 **Sub-tasks**:
+
 - [x] **TASK-003a**: Setup Supabase client — `integrations/supabase/client.ts`, `client.server.ts`, `auth-middleware.ts`
 - [x] **TASK-003b**: Jalankan migration (7 file di `supabase/migrations/` — phase 1-7)
 - [x] **TASK-003c**: RLS policies aktif (via migrations)
@@ -60,6 +67,7 @@ Sebelum menulis kode apapun, pastikan:
   - ⚠️ Content articles (tips/blog) masih static di frontend code — belum butuh DB table
 
 **Deliverables**:
+
 - [x] Semua tabel terbuat dengan benar
 - [x] RLS aktif dan teruji
 - [x] TypeScript types lengkap ✅
@@ -68,6 +76,7 @@ Sebelum menulis kode apapun, pastikan:
 ---
 
 ### TASK-004: Security Headers + Middleware ✅
+
 **Priority**: P0 | **Estimasi**: 1 jam  
 **Reference**: `skill.md` section 5.1, 5.2
 
@@ -88,12 +97,14 @@ Sebelum menulis kode apapun, pastikan:
 ## FASE 1: Authentication
 
 ### TASK-005: Register Page ✅
+
 **Priority**: P0 | **Estimasi**: 4 jam  
 **Reference**: `prd.md` F-01, `design.md` section 5.1, 5.2
 
 **File**: `routes/register.tsx`, `components/ui/password-strength.tsx`
 
 **Implementasi**:
+
 - [x] Form: nama lengkap, email, password, checkbox TOS
 - [x] Zod validation (RegisterSchema)
 - [x] Password strength indicator real-time (4 level: Lemah/Cukup/Kuat/Sangat Kuat)
@@ -107,11 +118,13 @@ Sebelum menulis kode apapun, pastikan:
 ---
 
 ### TASK-006: Email Verifikasi Handler ✅
+
 **Priority**: P0 | **Estimasi**: 2 jam
 
 **File**: `routes/verify-email.tsx`
 
 **Implementasi**:
+
 - [x] Halaman "Cek Email Anda": instruksi + tombol "Kirim Ulang" (cooldown 60 detik)
 - [x] Halaman sukses verifikasi (`?confirmed=true`)
 - [x] Halaman error (link expired → opsi kirim ulang)
@@ -120,12 +133,14 @@ Sebelum menulis kode apapun, pastikan:
 ---
 
 ### TASK-007: Login Page ✅
+
 **Priority**: P0 | **Estimasi**: 3 jam  
 **Reference**: `prd.md` F-03
 
 **File**: `routes/login.tsx`, `routes/lupa-password.tsx`, `routes/reset-password.tsx`
 
 **Implementasi**:
+
 - [x] Form: email + password
 - [x] "Ingat saya" checkbox
 - [x] Login via `supabase.auth.signInWithPassword()`
@@ -140,6 +155,7 @@ Sebelum menulis kode apapun, pastikan:
 ---
 
 ### TASK-008: Auth Layout + Protected Routes ✅
+
 **Priority**: P0 | **Estimasi**: 2 jam
 
 - [x] `_authenticated.tsx` — auth gate + loading state + redirect
@@ -153,12 +169,14 @@ Sebelum menulis kode apapun, pastikan:
 ## FASE 2: CV Builder Core
 
 ### TASK-009: Template Selector Page ✅
+
 **Priority**: P0 | **Estimasi**: 4 jam  
 **Reference**: `prd.md` F-04, `design.md` section 5.3
 
 **File**: `components/cv/TemplateGallery.tsx`
 
 **Implementasi**:
+
 - [x] Grid template cards (4 kolom desktop, 2 tablet, 1 mobile)
 - [x] Thumbnail preview, nama template, badge tier (Free/Pro)
 - [x] Hover: subtle lift + border hijau
@@ -170,27 +188,32 @@ Sebelum menulis kode apapun, pastikan:
 ---
 
 ### TASK-010: CV Data Model + Store ✅
-**Priority**: P0 | **Estimasi**: 3 jam  
+
+**Priority**: P0 | **Estimasi**: 3 jam
 
 **File**: `lib/cv-types.ts`, `lib/hooks/use-autosave.ts`
 
 **Types**:
+
 - [x] `CvPersonal`, `CvExperience`, `CvEducation`, `CvSkill`, `CvLanguage`, `CvCertificate`, `CvData`
 - [x] `TEMPLATES` array, `TemplateId` type, `emptyCv` default
 
 **Store**:
+
 - [x] CV state via React useState di `cv.$id.tsx`
 - [x] Auto-save: debounce 2 detik via `useAutosave` hook
 
 ---
 
 ### TASK-011: CV Editor Layout ✅
+
 **Priority**: P0 | **Estimasi**: 5 jam  
 **Reference**: `design.md` section 6.2
 
 **File**: `routes/_authenticated/cv.$id.tsx`, `components/cv/editor/SectionsNav.tsx`, `components/cv/editor/PreviewToolbar.tsx`
 
 **Implementasi**:
+
 - [x] 3-panel layout desktop (250px sections nav | 420px form | flex-1 preview) — dengan toggle sembunyi/tampil nav
 - [x] Sections nav: daftar section dengan ikon + drag & drop via `@dnd-kit` (pointer + keyboard sensors)
 - [x] Mobile: bottom tab bar "Form | Preview | Skor"
@@ -205,11 +228,13 @@ Sebelum menulis kode apapun, pastikan:
 ---
 
 ### TASK-012: Section Form Components ✅
+
 **Priority**: P0 | **Estimasi**: 8 jam
 
 **Integrated in**: `routes/_authenticated/cv.$id.tsx` (all sections in one file with tabs)
 
 **Implementasi per section**:
+
 - [x] Personal: fullName, headline, email, phone, location, linkedin, website, summary
 - [x] Experience: position, company, location, dates, current toggle, description
 - [x] Education: school, degree, field, dates, description
@@ -224,11 +249,13 @@ Sebelum menulis kode apapun, pastikan:
 ---
 
 ### TASK-013: CV Template Renderers ✅
+
 **Priority**: P0 | **Estimasi**: 8 jam
 
 **File**: `components/cv/CvPreview.tsx`, `components/cv/templates/`
 
 **Implementasi**:
+
 - [x] 4 template renderers: Jakarta (klasik), Bandung (modern header), Surabaya (left border), Yogya (minimalis)
 - [x] Ukuran A4 (210mm × 297mm) di preview, scale-able via CSS transform
 - [x] Font ATS-safe: Inter, system-ui
@@ -251,11 +278,13 @@ Sebelum menulis kode apapun, pastikan:
 ---
 
 ### TASK-014: PDF Download ✅
+
 **Priority**: P0 | **Estimasi**: 5 jam
 
 **File**: `supabase/functions/generate-pdf/index.ts`, `src/lib/cv-export.ts`, `src/components/cv/DownloadDropdown.tsx`
 
 **Implementasi**:
+
 - [x] PDF generation via HTML-to-PDF Edge Function
 - [x] Free tier: PDF dengan watermark "Dibuat dengan CV Pintar"
 - [x] Starter+: PDF tanpa watermark
@@ -276,11 +305,13 @@ Sebelum menulis kode apapun, pastikan:
 ---
 
 ### TASK-015: Auto-save + CV List Dashboard ✅
+
 **Priority**: P0 | **Estimasi**: 3 jam
 
 **File**: `lib/hooks/use-autosave.ts`, `routes/_authenticated/dashboard.tsx`, `routes/_authenticated/cv.index.tsx`
 
 **Implementasi**:
+
 - [x] Dashboard: welcome message, quick stats (CV, AI calls, tier), CTA "Buat CV Baru", recent CVs, tips
 - [x] CV List: semua CV dengan card (judul, template, status, last updated)
 - [x] CV card actions: Edit, Skor, AI Tools, Compare (Pro), Delete
@@ -296,12 +327,14 @@ Sebelum menulis kode apapun, pastikan:
 ## FASE 3: AI Features
 
 ### TASK-016: AI Suggestion ✅
+
 **Priority**: P1 | **Estimasi**: 6 jam  
 **Reference**: `prd.md` F-05
 
 **File**: `supabase/functions/ai-suggest/index.ts`, `supabase/functions/_shared/ai-common.ts`, `supabase/functions/_shared/cors.ts`, `lib/ai-functions.ts`
 
 **Implementasi**:
+
 - [x] `_shared` utilities: cors, auth (getUserId), rate-limit (quota check), AI gateway client
 - [x] `ai-suggest` Edge Function — saran per section (summary, headline, experience, education, skills) dengan 3 opsi
 - [x] AI Saran button di setiap section form (tombol "Sarankan AI")
@@ -314,12 +347,14 @@ Sebelum menulis kode apapun, pastikan:
 ---
 
 ### TASK-017: ATS Scoring Engine + UI ✅
+
 **Priority**: P1 | **Estimasi**: 6 jam  
 **Reference**: `prd.md` F-06
 
 **File**: `supabase/functions/ai-score/index.ts`, `components/ai/score-widget.tsx`, `routes/_authenticated/score.$cvId.tsx`
 
 **Implementasi**:
+
 - [x] `ai-score` Edge Function — full AI analysis dengan Job Description matching
 - [x] Score page terpisah (`/score/$cvId`) — overall score, breakdown, strengths, weaknesses, suggestions, history
 - [x] Score widget component — circular gauge, 5 sub-scores, recommendations, grade badge (A/B/C/D)
@@ -334,12 +369,14 @@ Sebelum menulis kode apapun, pastikan:
 ---
 
 ### TASK-018: AI Guided Mode ✅
+
 **Priority**: P1 | **Estimasi**: 5 jam  
 **Reference**: `prd.md` F-07
 
 **File**: `components/ai/guided-mode.tsx`, `supabase/functions/ai-chat/index.ts`
 
 **Implementasi**:
+
 - [x] Guided mode component — chat-like step-by-step interface
 - [x] 7 step progression: greeting → headline → summary → experience → education → skills → complete
 - [x] AI chat via `ai-chat` Edge Function
@@ -355,11 +392,13 @@ Sebelum menulis kode apapun, pastikan:
 ## FASE 4: Subscription & Payment
 
 ### TASK-019: Pricing Page ✅
-**Priority**: P0 | **Estimasi**: 4 jam  
+
+**Priority**: P0 | **Estimasi**: 4 jam
 
 **File**: `routes/harga.tsx`
 
 **Implementasi**:
+
 - [x] 3 tier: Free (Rp 0), Starter (Rp 19rb/bln), Pro (Rp 49rb/bln)
 - [x] Highlight Pro sebagai "Paling Populer" dengan badge
 - [x] Feature list per tier
@@ -372,11 +411,13 @@ Sebelum menulis kode apapun, pastikan:
 ---
 
 ### TASK-020: Midtrans Integration 🚧
+
 **Priority**: P0 | **Estimasi**: 6 jam
 
 **File**: `supabase/functions/payment-webhook/index.ts`, `routes/_authenticated/akun.tsx`
 
 **Implementasi**:
+
 - [x] Payment webhook Edge Function — signature verification (SHA-512), idempotency, status handling
 - [x] Subscription page (`/akun`) — current tier, usage stats, upgrade prompts
 - [x] Tier info display — Free/Starter/Pro dengan badge warna
@@ -388,6 +429,7 @@ Sebelum menulis kode apapun, pastikan:
 - [ ] Invoice auto-generate — 🚧 belum
 
 **Security**:
+
 - [x] Signature verification wajib di webhook
 - [x] Idempotency: duplicate webhook check
 - [ ] Server-side amount validation — 🚧 partial
@@ -395,11 +437,13 @@ Sebelum menulis kode apapun, pastikan:
 ---
 
 ### TASK-021: Feature Gating ✅
+
 **Priority**: P0 | **Estimasi**: 3 jam
 
 **File**: `lib/subscription.ts`, `components/subscription/feature-gate.tsx`
 
 **Implementasi**:
+
 - [x] `getUserTier()`, `getTierLimits()` utility functions
 - [x] TIER_LIMITS — Free/Starter/Pro/Pro+ dengan semua limit
 - [x] `FeatureGate` component — conditional render berdasarkan tier
@@ -412,12 +456,14 @@ Sebelum menulis kode apapun, pastikan:
 ## FASE 5: Content & SEO
 
 ### TASK-022: Landing Page ✅
+
 **Priority**: P0 | **Estimasi**: 8 jam  
 **Reference**: `design.md` section 6.1 dan SEO section 10
 
 **File**: `routes/index.tsx`, `routes/__root.tsx`
 
 **Sections**:
+
 - [x] Hero: headline, subheadline, dual CTA, mockup visual CV + ATS score
 - [x] Problem-Solution: "85% CV ditolak ATS" + solusi
 - [x] Trust/Stats bar: 10.000+ CV, 92% lolos, 4.8 rating, <10 mnt
@@ -436,11 +482,13 @@ Sebelum menulis kode apapun, pastikan:
 ---
 
 ### TASK-023: Header & Footer Components ✅
+
 **Priority**: P0 | **Estimasi**: 3 jam
 
 **File**: `components/site/SiteHeader.tsx`, `components/site/SiteFooter.tsx`
 
 **Implementasi**:
+
 - [x] Marketing header: logo, nav (Fitur, Template, Harga, Panduan, Tips Interview), CTA "Daftar Gratis" + "Login"
 - [x] Auth-aware: Dashboard/Keluar vs Login/Daftar
 - [x] Mobile: hamburger menu dengan slide-in
@@ -451,11 +499,13 @@ Sebelum menulis kode apapun, pastikan:
 ---
 
 ### TASK-024: Tips & Blog Content Pages ✅
+
 **Priority**: P1 | **Estimasi**: 4 jam
 
 **File**: `routes/blog.tsx`, `routes/blog.$slug.tsx`, `routes/tips-interview.tsx`, `routes/tips-interview.$slug.tsx`
 
 **Implementasi**:
+
 - [x] Blog listing: grid card (kategori, judul, excerpt, tanggal)
 - [x] Blog detail: full article, back link, Article JSON-LD
 - [x] Tips listing: grid card per kategori
@@ -468,11 +518,13 @@ Sebelum menulis kode apapun, pastikan:
 ---
 
 ### TASK-025: Dynamic Sitemap + robots.txt ✅
-**Priority**: P0 | **Estimasi**: 1 jam  
+
+**Priority**: P0 | **Estimasi**: 1 jam
 
 **File**: `routes/sitemap.xml.tsx`, `routes/robots.txt.tsx`
 
 **Implementasi**:
+
 - [x] Sitemap XML — static paths + tips slugs + blog slugs + changefreq
 - [x] robots.txt — allow all, disallow /dashboard, /cv, /akun
 - [x] Dynamic content — all blog & tips slugs included, sourced from same data as routes
@@ -480,11 +532,13 @@ Sebelum menulis kode apapun, pastikan:
 ---
 
 ### TASK-026: Template Gallery (Public) ✅
+
 **Priority**: P1 | **Estimasi**: 3 jam
 
 **File**: `routes/template.tsx`
 
 **Implementasi**:
+
 - [x] Showcase 6 template (termasuk Premium dengan badge)
 - [x] Hover effect: lift + shadow
 - [x] CTA: "Mulai pakai template gratis" → register
@@ -497,11 +551,13 @@ Sebelum menulis kode apapun, pastikan:
 ## FASE 6: Polish & Production
 
 ### TASK-027: Email Templates 🚧
+
 **Priority**: P0 | **Estimasi**: 3 jam
 
 **File**: `supabase/functions/send-email/index.ts`, `emails/`
 
 **Email templates dibuat**:
+
 - [x] `emails/verify-email.html` — branded, Bahasa Indonesia
 - [x] `emails/password-reset.html` — branded, valid 1 jam
 - [x] `emails/welcome.html` — 5 step onboarding
@@ -511,6 +567,7 @@ Sebelum menulis kode apapun, pastikan:
 - [ ] `emails/subscription-cancelled.html` — 🚧 belum
 
 **Implementasi**:
+
 - [x] Branded email template (warna hijau #468432, typography bersih)
 - [x] Bahasa Indonesia
 - [x] Mobile-responsive HTML email
@@ -520,6 +577,7 @@ Sebelum menulis kode apapun, pastikan:
 ---
 
 ### TASK-028: Error Pages ✅
+
 **Priority**: P0 | **Estimasi**: 1 jam
 
 - [x] 404 page — `notFoundComponent` di `__root.tsx`
@@ -530,11 +588,13 @@ Sebelum menulis kode apapun, pastikan:
 ---
 
 ### TASK-029: Loading States & Skeletons ✅
+
 **Priority**: P0 | **Estimasi**: 3 jam
 
 **File**: `components/ui/skeleton-loading.tsx`
 
 **Skeleton components dibuat**:
+
 - [x] `Skeleton` base, `CardSkeleton`, `CvCardSkeleton`, `TemplateCardSkeleton`
 - [x] `ArticleCardSkeleton`, `EditorSkeleton`, `DashboardSkeleton`
 - [x] `PricingPageSkeleton`, `ScorePageSkeleton`
@@ -546,6 +606,7 @@ Sebelum menulis kode apapun, pastikan:
 ---
 
 ### TASK-030: Analytics & Monitoring ❌
+
 **Priority**: P1 | **Estimasi**: 2 jam
 
 - [ ] Vercel/Cloudflare Analytics integration
@@ -556,6 +617,7 @@ Sebelum menulis kode apapun, pastikan:
 ---
 
 ### TASK-031: PWA Configuration 🚧
+
 **Priority**: P2 | **Estimasi**: 2 jam
 
 - [x] `routes/manifest.webmanifest.tsx` — dengan brand colors
@@ -566,6 +628,7 @@ Sebelum menulis kode apapun, pastikan:
 ---
 
 ### TASK-032: Performance Audit ❌
+
 **Priority**: P0 | **Estimasi**: 3 jam
 
 - [ ] Run Lighthouse audit semua halaman public (target: ≥90)
@@ -578,6 +641,7 @@ Sebelum menulis kode apapun, pastikan:
 ---
 
 ### TASK-033: Security Audit ❌
+
 **Priority**: P0 | **Estimasi**: 2 jam
 
 - [ ] Test RLS policies (akses data user lain → harus gagal)
@@ -591,6 +655,7 @@ Sebelum menulis kode apapun, pastikan:
 ---
 
 ### TASK-034: Accessibility Audit ❌
+
 **Priority**: P0 | **Estimasi**: 2 jam
 
 - [ ] axe-core scan semua halaman (target: 0 violations)
@@ -604,6 +669,7 @@ Sebelum menulis kode apapun, pastikan:
 ---
 
 ### TASK-035: Deployment & CI/CD ❌
+
 **Priority**: P0 | **Estimasi**: 3 jam
 
 - [ ] CI/CD pipeline (GitHub Actions)
@@ -617,6 +683,7 @@ Sebelum menulis kode apapun, pastikan:
 ## FASE 7: Phase 1.5 Features (Post-MVP)
 
 ### TASK-036: Cover Letter Generator (Pro) 🚧
+
 - [x] Edge Function: `supabase/functions/ai-cover-letter/index.ts`
 - [x] UI: `routes/_authenticated/tools.$cvId.tsx` (cover letter tab)
 - [x] Input: CV data + Job Description paste
@@ -625,6 +692,7 @@ Sebelum menulis kode apapun, pastikan:
 - [ ] Download PDF + DOCX — 🚧 belum
 
 ### TASK-037: Interview Tips Content (Full) 🚧
+
 - [x] 6 artikel tips interview (static content)
 - [x] Kategori: Fresh Graduate, HR Interview, Technical, Karier, Behavioral
 - [ ] AI Interview Simulator — 🚧 belum
@@ -633,12 +701,14 @@ Sebelum menulis kode apapun, pastikan:
 - [ ] Dress code guide — 🚧 belum
 
 ### TASK-038: Referral Program ❌
+
 - [ ] Referral code system
 - [ ] Landing page `/referral/[code]`
 - [ ] Tracking dan reward automation
 - [ ] Dashboard referral
 
 ### TASK-039: LinkedIn Optimizer (Pro+) ❌
+
 - [ ] Input: LinkedIn URL atau manual copy-paste
 - [ ] AI analysis: headline, summary, experience
 - [ ] Keyword optimization suggestions

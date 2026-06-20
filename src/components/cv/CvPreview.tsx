@@ -283,8 +283,8 @@ function renderTemplateById(
                     src={data.personal.photoUrl}
                     alt="Profile"
                     style={{
-                      width: 45,
-                      height: 45,
+                      width: 80,
+                      height: 80,
                       borderRadius: "50%",
                       objectFit: "cover",
                       border: "2px solid rgba(255, 255, 255, 0.4)",
@@ -300,7 +300,7 @@ function renderTemplateById(
                   )}
                 </div>
               </div>
-              <p style={{ margin: "6px 0 0", fontSize: "9.5pt" }}>
+              <p style={{ margin: "12px 0 0", fontSize: "9.5pt" }}>
                 {[
                   data.personal.email,
                   data.personal.phone,
@@ -333,8 +333,8 @@ function renderTemplateById(
                     src={data.personal.photoUrl}
                     alt="Profile"
                     style={{
-                      width: 45,
-                      height: 45,
+                      width: 80,
+                      height: 80,
                       borderRadius: "50%",
                       objectFit: "cover",
                     }}
@@ -357,7 +357,7 @@ function renderTemplateById(
                   )}
                 </div>
               </div>
-              <p style={{ fontSize: "9.5pt", color: "#444", margin: "4px 0" }}>
+              <p style={{ fontSize: "9.5pt", color: "#444", margin: "12px 0 4px" }}>
                 {[
                   data.personal.email,
                   data.personal.phone,
@@ -384,8 +384,8 @@ function renderTemplateById(
                     src={data.personal.photoUrl}
                     alt="Profile"
                     style={{
-                      width: 45,
-                      height: 45,
+                      width: 80,
+                      height: 80,
                       borderRadius: "50%",
                       objectFit: "cover",
                     }}
@@ -408,7 +408,7 @@ function renderTemplateById(
                   )}
                 </div>
               </div>
-              <p style={{ fontSize: "9.5pt", color: "#444", margin: 0 }}>
+              <p style={{ fontSize: "9.5pt", color: "#444", margin: "12px 0 0" }}>
                 {[
                   data.personal.email,
                   data.personal.phone,

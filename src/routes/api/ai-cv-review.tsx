@@ -24,13 +24,13 @@ export const Route = createFileRoute("/api/ai-cv-review")({
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              "Authorization": request.headers.get("Authorization") || "",
+              Authorization: request.headers.get("Authorization") || "",
             },
             body: JSON.stringify(await request.json()),
           });
 
           const data = await response.json();
-          
+
           return new Response(JSON.stringify(data), {
             status: response.status,
             headers: {
@@ -39,13 +39,16 @@ export const Route = createFileRoute("/api/ai-cv-review")({
             },
           });
         } catch (error) {
-          return new Response(JSON.stringify({ error: "Internal server error", details: String(error) }), {
-            status: 500,
-            headers: {
-              ...corsHeaders,
-              "Content-Type": "application/json",
+          return new Response(
+            JSON.stringify({ error: "Internal server error", details: String(error) }),
+            {
+              status: 500,
+              headers: {
+                ...corsHeaders,
+                "Content-Type": "application/json",
+              },
             },
-          });
+          );
         }
       },
     },

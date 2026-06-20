@@ -288,7 +288,13 @@ function buildMedanHeader(cv: CvData): Paragraph[] {
   const paras: Paragraph[] = [
     new Paragraph({
       children: [
-        new TextRun({ text: fullName, bold: true, size: 36, font: FONT_DISPLAY, color: COLOR_MEDAN_NAVY }),
+        new TextRun({
+          text: fullName,
+          bold: true,
+          size: 36,
+          font: FONT_DISPLAY,
+          color: COLOR_MEDAN_NAVY,
+        }),
       ],
       alignment: AlignmentType.CENTER,
       spacing: { after: 40 },
@@ -299,7 +305,13 @@ function buildMedanHeader(cv: CvData): Paragraph[] {
     paras.push(
       new Paragraph({
         children: [
-          new TextRun({ text: cv.personal.headline, size: 20, font: FONT_NAME, color: COLOR_MEDAN_SUBTITLE, bold: true }),
+          new TextRun({
+            text: cv.personal.headline,
+            size: 20,
+            font: FONT_NAME,
+            color: COLOR_MEDAN_SUBTITLE,
+            bold: true,
+          }),
         ],
         alignment: AlignmentType.CENTER,
         spacing: { after: 40 },
@@ -310,7 +322,14 @@ function buildMedanHeader(cv: CvData): Paragraph[] {
   if (contactLine1) {
     paras.push(
       new Paragraph({
-        children: [new TextRun({ text: contactLine1, size: 18, font: FONT_NAME, color: COLOR_MEDAN_CONTACT })],
+        children: [
+          new TextRun({
+            text: contactLine1,
+            size: 18,
+            font: FONT_NAME,
+            color: COLOR_MEDAN_CONTACT,
+          }),
+        ],
         alignment: AlignmentType.CENTER,
         spacing: { after: 20 },
       }),
@@ -347,7 +366,13 @@ function buildMakassarHeader(cv: CvData): Paragraph[] {
   const paras: Paragraph[] = [
     new Paragraph({
       children: [
-        new TextRun({ text: fullName, bold: true, size: 36, font: FONT_DISPLAY, color: COLOR_MAKASSAR_NAME }),
+        new TextRun({
+          text: fullName,
+          bold: true,
+          size: 36,
+          font: FONT_DISPLAY,
+          color: COLOR_MAKASSAR_NAME,
+        }),
       ],
       spacing: { after: 40 },
     }),
@@ -357,7 +382,12 @@ function buildMakassarHeader(cv: CvData): Paragraph[] {
     paras.push(
       new Paragraph({
         children: [
-          new TextRun({ text: cv.personal.headline, size: 20, font: FONT_NAME, color: COLOR_MAKASSAR_HEADLINE }),
+          new TextRun({
+            text: cv.personal.headline,
+            size: 20,
+            font: FONT_NAME,
+            color: COLOR_MAKASSAR_HEADLINE,
+          }),
         ],
         spacing: { after: 40 },
       }),
@@ -367,7 +397,9 @@ function buildMakassarHeader(cv: CvData): Paragraph[] {
   // Blue accent line
   paras.push(
     new Paragraph({
-      border: { bottom: { style: BorderStyle.SINGLE, size: 3, color: COLOR_MAKASSAR_ACCENT, space: 4 } },
+      border: {
+        bottom: { style: BorderStyle.SINGLE, size: 3, color: COLOR_MAKASSAR_ACCENT, space: 4 },
+      },
       spacing: { after: 40 },
       children: [],
     }),
@@ -438,7 +470,9 @@ function buildBaliHeader(cv: CvData): Paragraph[] {
   // Cyan accent strip (simulated as a thin colored paragraph border)
   paras.push(
     new Paragraph({
-      border: { bottom: { style: BorderStyle.SINGLE, size: 6, color: COLOR_BALI_ACCENT, space: 4 } },
+      border: {
+        bottom: { style: BorderStyle.SINGLE, size: 6, color: COLOR_BALI_ACCENT, space: 4 },
+      },
       spacing: { after: 100 },
       children: [],
     }),
@@ -447,7 +481,13 @@ function buildBaliHeader(cv: CvData): Paragraph[] {
   paras.push(
     new Paragraph({
       children: [
-        new TextRun({ text: fullName, bold: true, size: 44, font: FONT_DISPLAY, color: COLOR_BALI_HEADING }),
+        new TextRun({
+          text: fullName,
+          bold: true,
+          size: 44,
+          font: FONT_DISPLAY,
+          color: COLOR_BALI_HEADING,
+        }),
       ],
       spacing: { after: 40 },
     }),
@@ -457,7 +497,13 @@ function buildBaliHeader(cv: CvData): Paragraph[] {
     paras.push(
       new Paragraph({
         children: [
-          new TextRun({ text: cv.personal.headline, size: 22, font: FONT_NAME, color: COLOR_BALI_ACCENT, bold: true }),
+          new TextRun({
+            text: cv.personal.headline,
+            size: 22,
+            font: FONT_NAME,
+            color: COLOR_BALI_ACCENT,
+            bold: true,
+          }),
         ],
         spacing: { after: 60 },
       }),

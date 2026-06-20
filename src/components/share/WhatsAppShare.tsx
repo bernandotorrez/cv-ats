@@ -17,7 +17,14 @@ const WHATSAPP_ICON = (
   </svg>
 );
 
-export function WhatsAppShare({ shareUrl, cvId, fullName, variant = "outline", size = "sm", className }: Props) {
+export function WhatsAppShare({
+  shareUrl,
+  cvId,
+  fullName,
+  variant = "outline",
+  size = "sm",
+  className,
+}: Props) {
   const message = fullName
     ? `✨ Lihat CV ATS-friendly ${fullName}! Dibuat dalam 1 menit pakai cvpintar.web.id\n\n${shareUrl}`
     : `✨ CV ATS-friendly yang siap melamar! Dibuat dalam 1 menit pakai cvpintar.web.id\n\n${shareUrl}`;

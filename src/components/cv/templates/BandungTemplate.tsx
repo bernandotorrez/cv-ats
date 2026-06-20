@@ -26,8 +26,8 @@ export function BandungTemplate({ data, sectionOrder, language = "id" }: Props) 
               src={data.personal.photoUrl}
               alt="Profile"
               style={{
-                width: 45,
-                height: 45,
+                width: 80,
+                height: 80,
                 borderRadius: "50%",
                 objectFit: "cover",
                 border: "2px solid rgba(255, 255, 255, 0.4)",
@@ -43,7 +43,7 @@ export function BandungTemplate({ data, sectionOrder, language = "id" }: Props) 
             )}
           </div>
         </div>
-        <p style={{ margin: "6px 0 0", fontSize: "9.5pt" }}>
+        <p style={{ margin: "12px 0 0", fontSize: "9.5pt" }}>
           {[
             data.personal.email,
             data.personal.phone,

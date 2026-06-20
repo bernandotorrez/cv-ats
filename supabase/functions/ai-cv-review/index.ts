@@ -2,17 +2,17 @@
  * AI CV Review — Professional HR Recruitment Review (20+ years experience)
  * Persona: Senior HR Recruitment Expert
  * Target Users: Starter & Pro tiers only
- * 
+ *
  * POST /ai-cv-review
  * Body: { cvData: object, targetRole?: string, jobDescription?: string }
  */
 
-import { 
-  aiComplete, 
-  checkAndTrackQuota, 
-  corsResponse, 
-  errorResponse, 
-  getAdminClient, 
+import {
+  aiComplete,
+  checkAndTrackQuota,
+  corsResponse,
+  errorResponse,
+  getAdminClient,
   getUserId,
   getLanguageInstruction,
   type CvUiLang,
@@ -36,11 +36,16 @@ Deno.serve(async (req: Request) => {
 
     const tier = (userSub as any)?.subscription_tiers;
     if (!tier?.enable_cv_review) {
-      return corsResponse({
-        error: "Fitur Review CV by HR hanya tersedia untuk paket Starter ke atas. Silakan upgrade untuk mengakses fitur ini.",
-        requiresUpgrade: true,
-        upgradeUrl: "/harga"
-      }, 403, req);
+      return corsResponse(
+        {
+          error:
+            "Fitur Review CV by HR hanya tersedia untuk paket Starter ke atas. Silakan upgrade untuk mengakses fitur ini.",
+          requiresUpgrade: true,
+          upgradeUrl: "/harga",
+        },
+        403,
+        req,
+      );
     }
 
     const { cvId, cvData, targetRole, jobDescription, language } = await req.json();
@@ -49,7 +54,7 @@ Deno.serve(async (req: Request) => {
     if (!cvData) {
       throw new Error("Data CV diperlukan untuk review");
     }
-    
+
     const tierSlug = (tier as any)?.slug || "free";
 
     // Convert CV data to text for analysis
@@ -198,33 +203,36 @@ ${hrPersonaPrompt}`;
     }
 
     // Return structured response
-    return corsResponse({
-      success: true,
-      review: {
-        reviewer: parsed.reviewer || {
-          name: "Hira AI",
-          title: "Senior HR Recruitment Consultant",
-          experience: "20+ tahun"
+    return corsResponse(
+      {
+        success: true,
+        review: {
+          reviewer: parsed.reviewer || {
+            name: "Hira AI",
+            title: "Senior HR Recruitment Consultant",
+            experience: "20+ tahun",
+          },
+          scores: {
+            overall: parsed.overallScore || 0,
+            firstImpression: parsed.firstImpression || 0,
+            format: parsed.formatScore || 0,
+            content: parsed.contentScore || 0,
+            achievement: parsed.achievementScore || 0,
+            presentation: parsed.presentationScore || 0,
+          },
+          strengths: parsed.strengths || [],
+          weaknesses: parsed.weaknesses || [],
+          suggestions: parsed.suggestions || [],
+          industryBenchmark: parsed.industryBenchmark || {},
+          hrVerdict: parsed.hrVerdict || {},
+          quickWins: parsed.quickWins || [],
         },
-        scores: {
-          overall: parsed.overallScore || 0,
-          firstImpression: parsed.firstImpression || 0,
-          format: parsed.formatScore || 0,
-          content: parsed.contentScore || 0,
-          achievement: parsed.achievementScore || 0,
-          presentation: parsed.presentationScore || 0,
-        },
-        strengths: parsed.strengths || [],
-        weaknesses: parsed.weaknesses || [],
-        suggestions: parsed.suggestions || [],
-        industryBenchmark: parsed.industryBenchmark || {},
-        hrVerdict: parsed.hrVerdict || {},
-        quickWins: parsed.quickWins || [],
+        tier: tierSlug,
+        isHrPersona: true,
       },
-      tier: tierSlug,
-      isHrPersona: true,
-    }, 200, req);
-
+      200,
+      req,
+    );
   } catch (e) {
     return errorResponse(e, req);
   }
@@ -257,10 +265,12 @@ function extractCvText(cvData: Record<string, unknown>): string {
   if (experiences && Array.isArray(experiences) && experiences.length > 0) {
     lines.push("\nPENGALAMAN KERJA:");
     experiences.forEach((exp, i) => {
-      lines.push(`${i + 1}. ${exp.position || 'Posisi'}`);
-      lines.push(`   Perusahaan: ${exp.company || '-'}`);
-      lines.push(`   Lokasi: ${exp.location || '-'}`);
-      lines.push(`   Periode: ${exp.startDate || '-'} - ${exp.current ? 'Sekarang' : exp.endDate || '-'}`);
+      lines.push(`${i + 1}. ${exp.position || "Posisi"}`);
+      lines.push(`   Perusahaan: ${exp.company || "-"}`);
+      lines.push(`   Lokasi: ${exp.location || "-"}`);
+      lines.push(
+        `   Periode: ${exp.startDate || "-"} - ${exp.current ? "Sekarang" : exp.endDate || "-"}`,
+      );
       if (exp.description) lines.push(`   Deskripsi: ${exp.description}`);
     });
   }
@@ -270,9 +280,9 @@ function extractCvText(cvData: Record<string, unknown>): string {
   if (educations && Array.isArray(educations) && educations.length > 0) {
     lines.push("\nPENDIDIKAN:");
     educations.forEach((edu, i) => {
-      lines.push(`${i + 1}. ${edu.degree || '-'} ${edu.field ? `(${edu.field})` : ''}`);
-      lines.push(`   Institusi: ${edu.school || '-'}`);
-      lines.push(`   Tahun: ${edu.startDate || '-'} - ${edu.endDate || '-'}`);
+      lines.push(`${i + 1}. ${edu.degree || "-"} ${edu.field ? `(${edu.field})` : ""}`);
+      lines.push(`   Institusi: ${edu.school || "-"}`);
+      lines.push(`   Tahun: ${edu.startDate || "-"} - ${edu.endDate || "-"}`);
       if (edu.description) lines.push(`   Deskripsi: ${edu.description}`);
     });
   }
@@ -281,9 +291,9 @@ function extractCvText(cvData: Record<string, unknown>): string {
   const skills = cvData.skills as Array<Record<string, unknown>> | undefined;
   if (skills && Array.isArray(skills) && skills.length > 0) {
     lines.push("\nKEAHLIAN:");
-    const skillNames = skills.map(s => s.name).filter(Boolean);
+    const skillNames = skills.map((s) => s.name).filter(Boolean);
     if (skillNames.length > 0) {
-      lines.push(skillNames.join(', '));
+      lines.push(skillNames.join(", "));
     }
   }
 
@@ -291,8 +301,8 @@ function extractCvText(cvData: Record<string, unknown>): string {
   const languages = cvData.languages as Array<Record<string, unknown>> | undefined;
   if (languages && Array.isArray(languages) && languages.length > 0) {
     lines.push("\nBAHASA:");
-    languages.forEach(lang => {
-      lines.push(`${lang.name || '-'}: ${lang.level || '-'}`);
+    languages.forEach((lang) => {
+      lines.push(`${lang.name || "-"}: ${lang.level || "-"}`);
     });
   }
 
@@ -300,10 +310,10 @@ function extractCvText(cvData: Record<string, unknown>): string {
   const certificates = cvData.certificates as Array<Record<string, unknown>> | undefined;
   if (certificates && Array.isArray(certificates) && certificates.length > 0) {
     lines.push("\nSERTIFIKAT:");
-    certificates.forEach(cert => {
-      lines.push(`- ${cert.name || '-'} — ${cert.issuer || '-'} (${cert.date || '-'})`);
+    certificates.forEach((cert) => {
+      lines.push(`- ${cert.name || "-"} — ${cert.issuer || "-"} (${cert.date || "-"})`);
     });
   }
 
-  return lines.join('\n');
+  return lines.join("\n");
 }

@@ -1,4 +1,3 @@
-
 # CV Builder ATS-Friendly Indonesia
 
 Aplikasi web pembuat CV ATS-friendly berbahasa Indonesia dengan AI assistant, scoring, dan subscription. Dibangun di atas TanStack Start + Lovable Cloud (Supabase) + Lovable AI Gateway, deploy ke Vercel.
@@ -6,6 +5,7 @@ Aplikasi web pembuat CV ATS-friendly berbahasa Indonesia dengan AI assistant, sc
 ## 1. Brand & Design System
 
 **Color palette** (oklch tokens di `src/styles.css`):
+
 - Primary `#468432` (hijau) — CTA utama, header
 - Secondary `#9AD872` (hijau muda) — accent, highlight sukses
 - Third `#FFEF91` (kuning lembut) — badge, info background
@@ -13,6 +13,7 @@ Aplikasi web pembuat CV ATS-friendly berbahasa Indonesia dengan AI assistant, sc
 - Neutral base putih bersih + abu-abu lembut untuk teks & surface
 
 **Prinsip UI/UX**:
+
 - Clean, minimalis ala Linear/Notion. Banyak white space, tipografi besar mudah dibaca.
 - Font: Inter (body) + Plus Jakarta Sans (headings) — keduanya optimal untuk Bahasa Indonesia.
 - Mobile-first, breakpoint sm/md/lg/xl. Bottom nav di mobile, sidebar di desktop.
@@ -45,17 +46,17 @@ src/routes/
 
 ## 3. Database Schema (Lovable Cloud / Supabase)
 
-| Tabel | Kolom utama | Catatan |
-|---|---|---|
-| `profiles` | id (FK auth.users), full_name, phone, created_at | trigger on signup |
-| `user_roles` | id, user_id, role enum('user','admin') | role TIDAK di profiles (anti privilege escalation) |
-| `subscriptions` | id, user_id, tier enum('free','starter','pro'), status, current_period_end, provider, external_id | |
-| `cvs` | id, user_id, title, template_id, data jsonb, target_role, target_industry, language, updated_at | data berisi semua field CV |
-| `cv_versions` | id, cv_id, snapshot jsonb, created_at | history/undo |
-| `cv_scores` | id, cv_id, overall_score, breakdown jsonb, suggestions jsonb, job_description text, created_at | hasil AI scoring |
-| `ai_usage` | id, user_id, feature, tokens_used, created_at | quota tracking per tier |
-| `templates` | id, slug, name, description, preview_url, is_premium | seed data |
-| `interview_tips` | id, slug, title, category, content, published_at, seo_meta jsonb | konten editorial |
+| Tabel            | Kolom utama                                                                                       | Catatan                                            |
+| ---------------- | ------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| `profiles`       | id (FK auth.users), full_name, phone, created_at                                                  | trigger on signup                                  |
+| `user_roles`     | id, user_id, role enum('user','admin')                                                            | role TIDAK di profiles (anti privilege escalation) |
+| `subscriptions`  | id, user_id, tier enum('free','starter','pro'), status, current_period_end, provider, external_id |                                                    |
+| `cvs`            | id, user_id, title, template_id, data jsonb, target_role, target_industry, language, updated_at   | data berisi semua field CV                         |
+| `cv_versions`    | id, cv_id, snapshot jsonb, created_at                                                             | history/undo                                       |
+| `cv_scores`      | id, cv_id, overall_score, breakdown jsonb, suggestions jsonb, job_description text, created_at    | hasil AI scoring                                   |
+| `ai_usage`       | id, user_id, feature, tokens_used, created_at                                                     | quota tracking per tier                            |
+| `templates`      | id, slug, name, description, preview_url, is_premium                                              | seed data                                          |
+| `interview_tips` | id, slug, title, category, content, published_at, seo_meta jsonb                                  | konten editorial                                   |
 
 **RLS**: semua tabel enable RLS. Policy `auth.uid() = user_id` untuk read/write data sendiri. Function `public.has_role(uid, role)` SECURITY DEFINER untuk admin checks. Templates & interview_tips public read.
 
@@ -74,6 +75,7 @@ src/routes/
 **6. Panduan AI (chat)**: panel chat streaming SSE, context-aware (tahu CV mana yang sedang diedit), bantu draft kalimat & jawab pertanyaan.
 
 **7. Subscription Tier** (UI + DB siap, payment di-mock dulu):
+
 - **Free** Rp 0 — 1 CV, 2 template basic, 5x AI saran/bulan, scoring 1x/bulan, watermark kecil di PDF
 - **Starter** Rp 19.000/bln — 3 CV, semua template, 50x AI saran, scoring 10x, tanpa watermark
 - **Pro** Rp 49.000/bln — unlimited CV, prioritas AI, scoring unlimited, export DOCX (future), interview prep premium
@@ -83,6 +85,7 @@ Quota di-enforce di server function via cek `ai_usage` + `subscriptions.tier`.
 **8. Tips & Trik Interview**: hub artikel (SEO), kategori (HR, technical, behavioral, fresh graduate, career switcher). Konten dikelola di tabel `interview_tips`.
 
 **9. Fitur unggulan tambahan**:
+
 - **AI Cover Letter generator** dari CV + job description
 - **Keyword extractor** dari URL/teks lowongan → highlight skill yang harus ada
 - **CV Comparison** (Pro): bandingkan 2 versi side-by-side
@@ -95,7 +98,7 @@ Quota di-enforce di server function via cek `ai_usage` + `subscriptions.tier`.
 - `head()` per route dengan title <60 char + meta description <160 char unik. Format: `Judul Halaman | CV Pintar`.
 - Keywords target: "buat cv ats", "contoh CV Pintar", "template cv ats gratis", "cv generator ai indonesia", "tips interview kerja", dll.
 - Single H1 per page, semantic `<header><main><article><section>`, alt text deskriptif.
-namis (gabung route statis + slug dari `interview_tips` & `blog`), `/robots.txt` allow - JSON-LD: `Organization`, `WebSite` di root; `Article` di blog/tips; `FAQPage` di landing & harga; `Product` + `Offer` di harga; `BreadcrumbList`.
+  namis (gabung route statis + slug dari `interview_tips` & `blog`), `/robots.txt` allow - JSON-LD: `Organization`, `WebSite` di root; `Article` di blog/tips; `FAQPage` di landing & harga; `Product` + `Offer` di harga; `BreadcrumbList`.
 - `<link rel="canonical">` per route.
 - `og:image` 1200x630 unik untuk landing & artikel utama (di-generate sebagai asset).
 - Server route `/sitemap.xml` di+ sitemap link.
@@ -105,6 +108,7 @@ namis (gabung route statis + slug dari `interview_tips` & `blog`), `/robots.txt`
 ## 6. Keamanan
 
 **Frontend**:
+
 - Content Security Policy via Vercel `vercel.json` headers: `default-src 'self'`, allow Supabase + AI Gateway domain, `frame-ancestors 'none'`, no inline scripts (TanStack mendukung).
 - Headers tambahan: `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy` minimal, `Strict-Transport-Security`.
 - XSS: tidak pernah `dangerouslySetInnerHTML` dengan input user. Semua user input di-escape oleh React. Konten artikel di-render via markdown library yang aman (sanitize).
@@ -112,6 +116,7 @@ namis (gabung route statis + slug dari `interview_tips` & `blog`), `/robots.txt`
 - Tidak ada secret di frontend; hanya `VITE_SUPABASE_URL` + publishable key.
 
 **Backend**:
+
 - Auth: Supabase Auth, email verifikasi wajib sebelum akses dashboard. HIBP password check diaktifkan.
 - RLS strict di semua tabel data user. Service role key HANYA di server function.
 - SQL injection: query lewat Supabase client (parameterized) — tidak pernah string concat SQL.
@@ -124,7 +129,7 @@ namis (gabung route statis + slug dari `interview_tips` & `blog`), `/robots.txt`
 
 OWASP Top 10 coverage: A01 (RLS + role table), A02 (Supabase TLS, no plaintext secrets), A03 (Zod + parameterized queries + React escape), A04 (rencana arsitektur secure-by-default), A05 (CSP & security headers), A07 (email verify + HIBP), A08 (input validation), A09 (logging), A10 (no client-side fetch ke origin user-controlled).
 
-*Catatan: rate limiting backend belum ada primitif resmi di Lovable Cloud — saya enforce via quota tabel + Cloudflare/Vercel edge nanti bila perlu.*
+_Catatan: rate limiting backend belum ada primitif resmi di Lovable Cloud — saya enforce via quota tabel + Cloudflare/Vercel edge nanti bila perlu._
 
 ## 7. Stack & Deployment
 
@@ -142,6 +147,7 @@ OWASP Top 10 coverage: A01 (RLS + role table), A02 (Supabase TLS, no plaintext s
 Karena scope sangat besar, saya bangun bertahap dalam pesan-pesan berikutnya. Phase 1 berikut yang akan saya mulai jika kamu setujui plan ini:
 
 **Phase 1 — Fondasi & Landing (saya implement dulu)**
+
 1. Enable Lovable Cloud
 2. Setup design system (color tokens, font, base components)
 3. Landing page lengkap (hero, fitur, template preview, harga, FAQ, footer) dengan SEO
@@ -150,17 +156,21 @@ Karena scope sangat besar, saya bangun bertahap dalam pesan-pesan berikutnya. Ph
 6. Security headers via `vercel.json`
 
 **Phase 2 — Auth & Dashboard**
+
 - Register/login/verify/reset, profiles + user_roles + RLS, dashboard kosong, guard `_authenticated`
 
 **Phase 3 — CV Editor & Template**
+
 - 4 template ATS, editor form + live preview, auto-save, export PDF
 
 **Phase 4 — AI Features**
+
 - Saran pengisian, scoring, panduan chat, cover letter, keyword extractor
 
 **Phase 5 — Subscription & Konten**
+
 - Tier UI + quota enforcement (mock payment), seed konten interview tips, blog system
 
 **Phase 6 — Polish**
-- A11y audit (axe), Lighthouse 95+, security scan, share link, comparison
 
+- A11y audit (axe), Lighthouse 95+, security scan, share link, comparison

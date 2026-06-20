@@ -8,6 +8,7 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ## [v1.6.0-live] - 2026-06-20
 
 ### Fitur Baru
+
 - Penambahan fitur upload foto profil (opsional) di CV.
 - Penyimpanan foto profil yang aman untuk menjaga privasi data pengguna.
 - Integrasi tampilan foto profil yang ATS-friendly pada seluruh template CV (Jakarta, Bandung, Bali, Surabaya, Yogya, Medan, Makassar, Semarang).
@@ -15,4 +16,5 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ## [v1.5.0-live] - 2026-06-15
 
 ### Fitur Baru
+
 - Sign in dan Sign Up dengan Google, sekarang daftar dan login jadi lebih mudah!

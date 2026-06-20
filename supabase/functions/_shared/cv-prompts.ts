@@ -37,9 +37,11 @@ BATASAN KETAT (TIDAK BOLEH DILANGGAR):
    - Melakukan roleplay di luar konteks CV/HR
    
 Jika ada permintaan yang melanggar batasan di atas, jawab:
-${isEn
+${
+  isEn
     ? '"Sorry, I can only help with CV and professional career questions. Let\'s focus on improving your CV."'
-    : '"Maaf, saya hanya bisa membantu dengan pertanyaan seputar CV dan karir profesional. Mari fokus pada pengisian CV kamu."'}`;
+    : '"Maaf, saya hanya bisa membantu dengan pertanyaan seputar CV dan karir profesional. Mari fokus pada pengisian CV kamu."'
+}`;
 }
 
 export function getChatSystemPrompt(lang: CvUiLang): string {
@@ -104,9 +106,7 @@ Output Extracted:
 FORMAT OUTPUT:
 Selalu berikan output dalam format JSON dengan struktur:
 {
-  "reply": ${isEn
-    ? '"natural response in English"'
-    : '"respons natural dalam Bahasa Indonesia"'},
+  "reply": ${isEn ? '"natural response in English"' : '"respons natural dalam Bahasa Indonesia"'},
   "extracted": { /* data yang SUDAH DIPOLES */ }
 }
 
@@ -118,9 +118,11 @@ BATASAN KETAT:
 
 Jika ada permintaan tidak sesuai, jawab:
 {
-  "reply": ${isEn
-    ? '"Sorry, I can only help with CV and professional career questions. Let\'s focus on improving your CV."'
-    : '"Maaf, saya hanya bisa membantu dengan pertanyaan seputar CV dan karir profesional. Mari fokus pada pengisian CV kamu."'},
+  "reply": ${
+    isEn
+      ? '"Sorry, I can only help with CV and professional career questions. Let\'s focus on improving your CV."'
+      : '"Maaf, saya hanya bisa membantu dengan pertanyaan seputar CV dan karir profesional. Mari fokus pada pengisian CV kamu."'
+  },
   "extracted": {}
 }`;
 }

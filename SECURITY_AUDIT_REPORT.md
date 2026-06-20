@@ -1,4 +1,5 @@
 # 🔒 Security Audit Report - CV Sukses Nusantara
+
 **Project:** cv-sukses-nusantara  
 **Date:** 2026-05-12  
 **Auditor:** Security Expert (20+ years experience)  
@@ -53,7 +54,8 @@ Project ini adalah aplikasi CV builder berbasis TypeScript/React menggunakan Tan
 
 ## 🔴 Critical Issues (Perbaikan Segera)
 
-### 1. **Supabase Publishable Key Exposed in .env** 
+### 1. **Supabase Publishable Key Exposed in .env**
+
 **Severity:** CRITICAL 🔴  
 **File:** `.env`
 
@@ -63,10 +65,12 @@ VITE_SUPABASE_PUBLISHABLE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 ```
 
 **Impact:**
+
 - Publishable key bisa digunakan untuk akses data public
 - Jika digabungkan dengan RLS bypass, bisa akses data pengguna
 
 **Recommendation:**
+
 ```bash
 # Hapus publishable key dari .env file
 # Publishable key HARUS dimulai dengan VITE_ prefix untuk client-side
@@ -78,6 +82,7 @@ VITE_SUPABASE_PUBLISHABLE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 ---
 
 ### 2. **Account Takeover via Referral Code Parameter**
+
 **Severity:** HIGH 🔴  
 **File:** `src/routes/register.tsx` (line ~105-110)
 
@@ -95,11 +100,13 @@ if (refCode && data?.user?.id) {
 ```
 
 **Impact:**
+
 - Referral code tidak divalidasi proper
 - Bisa digunakan untuk CSRF attack
 - Tidak ada token validation
 
 **Recommendation:**
+
 - Validate referral code format (alphanumeric, length check)
 - Add rate limiting untuk referral tracking
 - Consider using signed tokens for referral
@@ -109,6 +116,7 @@ if (refCode && data?.user?.id) {
 ---
 
 ### 3. **Payment Webhook - User ID Extraction Vulnerability**
+
 **Severity:** HIGH 🔴  
 **File:** `supabase/functions/payment-webhook/index.ts`
 
@@ -120,10 +128,12 @@ if (metadataUserId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]
 ```
 
 **Impact:**
+
 - Attacker bisa inject arbitrary user_id via metadata
 - Privilege escalation dari payment webhook
 
 **Recommendation:**
+
 - REMOVE metadata fallback untuk user_id extraction
 - User ID HARUS berasal dari database lookup berdasarkan order_id
 - Add database transaction untuk atomic operations
@@ -133,6 +143,7 @@ if (metadataUserId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]
 ---
 
 ### 4. **CSP Bypasses - unsafe-inline & unsafe-eval**
+
 **Severity:** MEDIUM 🟡  
 **File:** `src/lib/security-headers.ts`
 
@@ -144,10 +155,12 @@ const CSP_DIRECTIVES = [
 ```
 
 **Impact:**
+
 - XSS attacks lebih mudah dilakukan jika ada input sanitization bypass
 - Dynamic code execution dimungkinkan
 
 **Recommendation:**
+
 1. **unsafe-inline untuk styles:** Gunakan nonce atau hash untuk inline styles
 2. **unsafe-eval:** Identifikasi kode yang butuh eval, refactor jika memungkinkan
 3. Audit library dependencies untuk eval usage
@@ -158,6 +171,7 @@ const CSP_DIRECTIVES = [
 ---
 
 ### 5. **Admin Role Caching - Privilege Escalation Risk**
+
 **Severity:** MEDIUM 🟡  
 **File:** `src/lib/admin.ts`
 
@@ -175,11 +189,13 @@ export async function isAdmin(userId: string): Promise<boolean> {
 ```
 
 **Impact:**
+
 - Admin status di-cache indefinitely
 - Role revocation tidak langsung efektif
 - Jika admin role dicabut, user masih punya akses sampai cache expire
 
 **Recommendation:**
+
 - Add TTL untuk admin cache (max 5 minutes)
 - Clear cache on role change
 - Add cache invalidation mechanism
@@ -191,6 +207,7 @@ export async function isAdmin(userId: string): Promise<boolean> {
 ## 🟡 Medium Issues (Perbaikan Prioritas)
 
 ### 6. **No Rate Limit on User Data Fetching**
+
 **Severity:** MEDIUM 🟡  
 **File:** `src/routes/_authenticated/admin/users.tsx`
 
@@ -200,11 +217,13 @@ const { data: profiles } = await supabase.from("profiles").select("id, full_name
 ```
 
 **Impact:**
+
 - Information disclosure
 - Performance degradation dengan banyak user
 - No DoS protection
 
 **Recommendation:**
+
 - Add pagination (limit/offset)
 - Add server-side rate limiting
 - Implement cursor-based pagination untuk scalability
@@ -214,24 +233,27 @@ const { data: profiles } = await supabase.from("profiles").select("id, full_name
 ---
 
 ### 7. **Missing Rate Limit Response Headers**
+
 **Severity:** LOW 🟡  
 **File:** `supabase/functions/_shared/rate-limit.ts`
 
 **Impact:**
+
 - Client tidak tahu kapan rate limit reset
 - Tidak ada visibility untuk rate limit status
 
 **Recommendation:**
+
 ```typescript
 export function checkRateLimitWithHeaders(key: string, maxRequests: number, windowMs: number) {
   // ... existing logic
   return {
     allowed: boolean,
     headers: {
-      'X-RateLimit-Limit': maxRequests,
-      'X-RateLimit-Remaining': remaining,
-      'X-RateLimit-Reset': resetAt,
-    }
+      "X-RateLimit-Limit": maxRequests,
+      "X-RateLimit-Remaining": remaining,
+      "X-RateLimit-Reset": resetAt,
+    },
   };
 }
 ```
@@ -241,6 +263,7 @@ export function checkRateLimitWithHeaders(key: string, maxRequests: number, wind
 ---
 
 ### 8. **CORS Wildcard on API Routes**
+
 **Severity:** LOW 🟡  
 **File:** `src/routes/api/ai-cv-review.tsx`
 
@@ -252,10 +275,12 @@ const corsHeaders = {
 ```
 
 **Impact:**
+
 - API bisa diakses dari domain manapun
 - Tidak sesuai best practice untuk authenticated endpoints
 
 **Recommendation:**
+
 - Use specific origin whitelist untuk production
 - Consider Vary: Origin header
 
@@ -264,16 +289,20 @@ const corsHeaders = {
 ---
 
 ### 9. **Missing Input Sanitization for CV Data**
+
 **Severity:** MEDIUM 🟡  
-**Files:** 
+**Files:**
+
 - `src/lib/cv-text-extractor.ts`
 - `src/routes/_authenticated/cv.$id.tsx`
 
 **Impact:**
+
 - Stored XSS melalui CV content
 - Malicious content dalam CV bisa affect pengguna lain
 
 **Recommendation:**
+
 - Sanitize all CV content before rendering
 - Use DOMPurify atau similar library
 - Implement CSP to mitigate impact
@@ -283,6 +312,7 @@ const corsHeaders = {
 ---
 
 ### 10. **No SQL Injection Protection for RPC Calls**
+
 **Severity:** MEDIUM 🟡  
 **File:** `src/lib/admin.ts`
 
@@ -294,10 +324,12 @@ const { data } = await supabase.rpc("has_role", {
 ```
 
 **Impact:**
+
 - RPC calls tidak memiliki parameterized query protection
 - Potentially vulnerable jika underlying SQL tidak secure
 
 **Recommendation:**
+
 - Review all RPC functions untuk SQL injection
 - Use parameterized queries in PostgreSQL functions
 - Add logging untuk RPC calls
@@ -309,11 +341,13 @@ const { data } = await supabase.rpc("has_role", {
 ## 🔵 Low Priority / Informational
 
 ### 11. **Error Messages Information Disclosure**
+
 **Files:** Multiple
 
 Generic error messages sudah digunakan dengan baik (login page), tapi perlu audit menyeluruh untuk memastikan tidak ada stack traces atau database errors yang ter expose.
 
 **Recommendation:**
+
 - Ensure all error handlers catch and log details server-side
 - Return generic messages to client
 - Implement proper error tracking (Sentry, etc.)
@@ -323,10 +357,12 @@ Generic error messages sudah digunakan dengan baik (login page), tapi perlu audi
 ---
 
 ### 12. **Missing Security.txt**
+
 **Severity:** LOW  
 **Impact:** No designated way for security researchers to report vulnerabilities
 
 **Recommendation:**
+
 - Create `/.well-known/security.txt`
 - Include contact information and PGP key
 
@@ -335,10 +371,12 @@ Generic error messages sudah digunakan dengan baik (login page), tapi perlu audi
 ---
 
 ### 13. **No Subresource Integrity (SRI)**
+
 **Severity:** LOW  
 **Files:** External scripts (hCaptcha, Midtrans)
 
 **Recommendation:**
+
 - Add SRI hashes untuk all external scripts
 - Ensure CDN resources tidak dimodifikasi
 
@@ -348,27 +386,28 @@ Generic error messages sudah digunakan dengan baik (login page), tapi perlu audi
 
 ## 📊 Vulnerability Summary Table
 
-| ID | Title | Severity | Status |
-|----|-------|----------|--------|
-| CRIT-001 | Supabase Key Exposure | 🔴 CRITICAL | OPEN |
-| HIGH-001 | Referral Code Injection | 🔴 HIGH | OPEN |
-| HIGH-002 | Payment Webhook User ID Bypass | 🔴 HIGH | OPEN |
-| MED-001 | CSP Unsafe Directives | 🟡 MEDIUM | OPEN |
-| MED-002 | Admin Cache Indefinite TTL | 🟡 MEDIUM | OPEN |
-| MED-003 | No Pagination on Admin Users | 🟡 MEDIUM | OPEN |
-| MED-004 | CV Data XSS Risk | 🟡 MEDIUM | OPEN |
-| MED-005 | RPC SQL Injection Risk | 🟡 MEDIUM | OPEN |
-| LOW-001 | Rate Limit Headers Missing | 🟢 LOW | OPEN |
-| LOW-002 | CORS Wildcard | 🟢 LOW | OPEN |
-| LOW-003 | Error Message Disclosure | 🟢 LOW | OPEN |
-| INFO-001 | Security.txt Missing | ℹ️ INFO | OPEN |
-| INFO-002 | SRI Not Implemented | ℹ️ INFO | OPEN |
+| ID       | Title                          | Severity    | Status |
+| -------- | ------------------------------ | ----------- | ------ |
+| CRIT-001 | Supabase Key Exposure          | 🔴 CRITICAL | OPEN   |
+| HIGH-001 | Referral Code Injection        | 🔴 HIGH     | OPEN   |
+| HIGH-002 | Payment Webhook User ID Bypass | 🔴 HIGH     | OPEN   |
+| MED-001  | CSP Unsafe Directives          | 🟡 MEDIUM   | OPEN   |
+| MED-002  | Admin Cache Indefinite TTL     | 🟡 MEDIUM   | OPEN   |
+| MED-003  | No Pagination on Admin Users   | 🟡 MEDIUM   | OPEN   |
+| MED-004  | CV Data XSS Risk               | 🟡 MEDIUM   | OPEN   |
+| MED-005  | RPC SQL Injection Risk         | 🟡 MEDIUM   | OPEN   |
+| LOW-001  | Rate Limit Headers Missing     | 🟢 LOW      | OPEN   |
+| LOW-002  | CORS Wildcard                  | 🟢 LOW      | OPEN   |
+| LOW-003  | Error Message Disclosure       | 🟢 LOW      | OPEN   |
+| INFO-001 | Security.txt Missing           | ℹ️ INFO     | OPEN   |
+| INFO-002 | SRI Not Implemented            | ℹ️ INFO     | OPEN   |
 
 ---
 
 ## 🛠️ Security Fix Tasks
 
 ### TASK-001: Remove Publishable Keys from .env
+
 ```
 Priority: CRITICAL
 Files: .env, .env.example
@@ -380,6 +419,7 @@ Action:
 ```
 
 ### TASK-002: Secure Referral Code Handling
+
 ```
 Priority: HIGH
 Files: src/routes/register.tsx
@@ -391,6 +431,7 @@ Action:
 ```
 
 ### TASK-003: Fix Payment Webhook User ID Extraction
+
 ```
 Priority: HIGH
 Files: supabase/functions/payment-webhook/index.ts
@@ -405,6 +446,7 @@ Action:
 ```
 
 ### TASK-004: Improve CSP Configuration
+
 ```
 Priority: MEDIUM
 Files: src/lib/security-headers.ts
@@ -416,6 +458,7 @@ Action:
 ```
 
 ### TASK-005: Add TTL to Admin Cache
+
 ```
 Priority: MEDIUM
 Files: src/lib/admin.ts
@@ -427,6 +470,7 @@ Action:
 ```
 
 ### TASK-006: Add Pagination to Admin Users List
+
 ```
 Priority: MEDIUM
 Files: src/routes/_authenticated/admin/users.tsx
@@ -438,6 +482,7 @@ Action:
 ```
 
 ### TASK-007: Implement Rate Limit Headers
+
 ```
 Priority: LOW
 Files: supabase/functions/_shared/rate-limit.ts
@@ -448,6 +493,7 @@ Action:
 ```
 
 ### TASK-008: Restrict CORS Origins
+
 ```
 Priority: LOW
 Files: src/routes/api/*.tsx, supabase/functions/_shared/cors.ts
@@ -458,6 +504,7 @@ Action:
 ```
 
 ### TASK-009: Sanitize CV Data
+
 ```
 Priority: MEDIUM
 Files: src/lib/cv-text-extractor.ts, template files
@@ -469,6 +516,7 @@ Action:
 ```
 
 ### TASK-010: Secure RPC Functions
+
 ```
 Priority: MEDIUM
 Files: supabase/functions/*/index.ts, supabase migrations
@@ -480,6 +528,7 @@ Action:
 ```
 
 ### TASK-011: Error Handling Audit
+
 ```
 Priority: LOW
 Files: Multiple
@@ -491,6 +540,7 @@ Action:
 ```
 
 ### TASK-012: Add Security.txt
+
 ```
 Priority: LOW
 Files: public/.well-known/security.txt
@@ -501,6 +551,7 @@ Action:
 ```
 
 ### TASK-013: Implement Subresource Integrity
+
 ```
 Priority: LOW
 Files: All external script includes
@@ -514,13 +565,13 @@ Action:
 
 ## 📅 Recommended Security Review Schedule
 
-| Frequency | Activity |
-|-----------|----------|
-| Daily | Monitor error logs for suspicious activity |
-| Weekly | Review failed login attempts |
-| Monthly | Review Supabase usage logs |
-| Quarterly | Full security audit |
-| On-demand | After major updates or breaches |
+| Frequency | Activity                                   |
+| --------- | ------------------------------------------ |
+| Daily     | Monitor error logs for suspicious activity |
+| Weekly    | Review failed login attempts               |
+| Monthly   | Review Supabase usage logs                 |
+| Quarterly | Full security audit                        |
+| On-demand | After major updates or breaches            |
 
 ---
 

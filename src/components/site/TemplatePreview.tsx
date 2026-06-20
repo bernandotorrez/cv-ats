@@ -11,7 +11,8 @@ export const previewData = {
       phone: "0812-3456-7890",
       location: "Denpasar, Bali",
       linkedin: "linkedin.com/in/dewikartika",
-      summary: "Profesional digital marketing dengan pengalaman 4+ tahun dalam pengelolaan kampanye media sosial, SEO, dan content marketing. Telah berhasil meningkatkan brand awareness berbagai perusahaan di Bali dan nasional.",
+      summary:
+        "Profesional digital marketing dengan pengalaman 4+ tahun dalam pengelolaan kampanye media sosial, SEO, dan content marketing. Telah berhasil meningkatkan brand awareness berbagai perusahaan di Bali dan nasional.",
       summaryAlign: "left" as const,
     },
     experiences: [
@@ -23,7 +24,8 @@ export const previewData = {
         startDate: "Mar 2022",
         current: true,
         endDate: "",
-        description: "Mengelola kampanye digital untuk destinasi wisata Bali dengan budget Rp 500 juta/bulan. Meningkatkan engagement 45% dan konversi pemesanan tour 30%.",
+        description:
+          "Mengelola kampanye digital untuk destinasi wisata Bali dengan budget Rp 500 juta/bulan. Meningkatkan engagement 45% dan konversi pemesanan tour 30%.",
       },
       {
         id: "2",
@@ -33,7 +35,8 @@ export const previewData = {
         startDate: "Jun 2020",
         current: false,
         endDate: "Feb 2022",
-        description: "Membangun presence brand di Instagram, TikTok, dan Facebook dengan follower grow 200%. Membuat 100+ konten video per bulan.",
+        description:
+          "Membangun presence brand di Instagram, TikTok, dan Facebook dengan follower grow 200%. Membuat 100+ konten video per bulan.",
       },
     ],
     educations: [
@@ -57,9 +60,7 @@ export const previewData = {
       { id: "1", name: "Bahasa Indonesia", level: "Native" },
       { id: "2", name: "English", level: "Advanced" },
     ],
-    certificates: [
-      { id: "1", name: "Google Digital Garage", issuer: "Google", date: "2023" },
-    ],
+    certificates: [{ id: "1", name: "Google Digital Garage", issuer: "Google", date: "2023" }],
   } as CvData,
   jakarta: {
     personal: {
@@ -70,7 +71,8 @@ export const previewData = {
       location: "Jakarta Selatan",
       linkedin: "linkedin.com/in/ahmadrizki",
       website: "ahmadrizki.dev",
-      summary: "Software engineer dengan 5+ tahun pengalaman dalam pengembangan aplikasi web dan mobile. Spesialisasi dalam ekosistem JavaScript/TypeScript dan cloud infrastructure.",
+      summary:
+        "Software engineer dengan 5+ tahun pengalaman dalam pengembangan aplikasi web dan mobile. Spesialisasi dalam ekosistem JavaScript/TypeScript dan cloud infrastructure.",
       summaryAlign: "left" as const,
     },
     experiences: [
@@ -82,7 +84,8 @@ export const previewData = {
         startDate: "Jan 2023",
         current: true,
         endDate: "",
-        description: "Tech lead untuk tim e-commerce dengan 5 engineer. Migrasi monolithic ke microservices menggunakan Kubernetes dan AWS.",
+        description:
+          "Tech lead untuk tim e-commerce dengan 5 engineer. Migrasi monolithic ke microservices menggunakan Kubernetes dan AWS.",
       },
       {
         id: "2",
@@ -92,7 +95,8 @@ export const previewData = {
         startDate: "Mar 2020",
         current: false,
         endDate: "Des 2022",
-        description: "Mengembangkan fitur driver app dan customer app dengan React Native. Implementasi real-time notification system.",
+        description:
+          "Mengembangkan fitur driver app dan customer app dengan React Native. Implementasi real-time notification system.",
       },
     ],
     educations: [
@@ -128,7 +132,8 @@ export const previewData = {
       phone: "0813-9876-5432",
       location: "Makassar, Sulawesi Selatan",
       linkedin: "linkedin.com/in/nurulhidayati",
-      summary: "HR professional dengan pengalaman 7+ tahun di perusahaan multinasional dan startup. Spesialisasi dalam talent acquisition dan organizational development.",
+      summary:
+        "HR professional dengan pengalaman 7+ tahun di perusahaan multinasional dan startup. Spesialisasi dalam talent acquisition dan organizational development.",
       summaryAlign: "left" as const,
     },
     experiences: [
@@ -140,7 +145,8 @@ export const previewData = {
         startDate: "Jan 2022",
         current: true,
         endDate: "",
-        description: "Memimpin tim HR dengan 8 staff. Menyusun talent succession plan dan leadership development program.",
+        description:
+          "Memimpin tim HR dengan 8 staff. Menyusun talent succession plan dan leadership development program.",
       },
       {
         id: "2",
@@ -150,7 +156,8 @@ export const previewData = {
         startDate: "Mar 2019",
         current: false,
         endDate: "Des 2021",
-        description: "Memimpin recruitment untuk area Sulawesi & Kalimantan dengan target 150 posisi/tahun.",
+        description:
+          "Memimpin recruitment untuk area Sulawesi & Kalimantan dengan target 150 posisi/tahun.",
       },
     ],
     educations: [
@@ -174,9 +181,7 @@ export const previewData = {
       { id: "1", name: "Bahasa Indonesia", level: "Native" },
       { id: "2", name: "English", level: "Business" },
     ],
-    certificates: [
-      { id: "1", name: "SPMB (HR Strategist)", issuer: "PPRI", date: "2022" },
-    ],
+    certificates: [{ id: "1", name: "SPMB (HR Strategist)", issuer: "PPRI", date: "2022" }],
   } as CvData,
   bandung: {
     personal: {
@@ -187,7 +192,8 @@ export const previewData = {
       location: "Bandung, Jawa Barat",
       linkedin: "linkedin.com/in/rizkyramadhan",
       website: "rizkyramadhan.design",
-      summary: "Desainer UI/UX dengan passion dalam menciptakan pengalaman digital yang intuitif. 4+ tahun pengalaman dalam desain aplikasi mobile dan design system.",
+      summary:
+        "Desainer UI/UX dengan passion dalam menciptakan pengalaman digital yang intuitif. 4+ tahun pengalaman dalam desain aplikasi mobile dan design system.",
       summaryAlign: "left" as const,
     },
     experiences: [
@@ -199,7 +205,8 @@ export const previewData = {
         startDate: "Jul 2022",
         current: true,
         endDate: "",
-        description: "Lead designer untuk fitur e-wallet utama dengan 15 juta+ users. Membuat design system yang digunakan 8 tim product.",
+        description:
+          "Lead designer untuk fitur e-wallet utama dengan 15 juta+ users. Membuat design system yang digunakan 8 tim product.",
       },
       {
         id: "2",
@@ -209,7 +216,8 @@ export const previewData = {
         startDate: "Jan 2020",
         current: false,
         endDate: "Jun 2022",
-        description: "Designer untuk tim flights & hotels booking flow. Mengurangi checkout abandonment 35%.",
+        description:
+          "Designer untuk tim flights & hotels booking flow. Mengurangi checkout abandonment 35%.",
       },
     ],
     educations: [
@@ -245,7 +253,8 @@ export const previewData = {
       phone: "0812-5678-9012",
       location: "Medan, Sumatera Utara",
       linkedin: "linkedin.com/in/putriayuwulandari",
-      summary: "Professional finance dengan pengalaman 8+ tahun di industri manufaktur dan perbankan. Spesialisasi dalam financial analysis, budgeting, dan tax planning.",
+      summary:
+        "Professional finance dengan pengalaman 8+ tahun di industri manufaktur dan perbankan. Spesialisasi dalam financial analysis, budgeting, dan tax planning.",
       summaryAlign: "left" as const,
     },
     experiences: [
@@ -257,7 +266,8 @@ export const previewData = {
         startDate: "Jan 2021",
         current: true,
         endDate: "",
-        description: "Memimpin tim finance dengan 12 staff. Menyusun annual budget dan financial forecast. Tax planning yang menghemat Rp 2M/tahun.",
+        description:
+          "Memimpin tim finance dengan 12 staff. Menyusun annual budget dan financial forecast. Tax planning yang menghemat Rp 2M/tahun.",
       },
       {
         id: "2",
@@ -267,7 +277,8 @@ export const previewData = {
         startDate: "Mar 2017",
         current: false,
         endDate: "Des 2020",
-        description: "Financial reporting dan analysis untuk branch dengan asset Rp 500M. Audit coordination dengan KAP Big Four.",
+        description:
+          "Financial reporting dan analysis untuk branch dengan asset Rp 500M. Audit coordination dengan KAP Big Four.",
       },
     ],
     educations: [
@@ -300,9 +311,7 @@ export const previewData = {
       { id: "1", name: "Bahasa Indonesia", level: "Native" },
       { id: "2", name: "English", level: "Advanced" },
     ],
-    certificates: [
-      { id: "1", name: "CPA Indonesia", issuer: "IAPI", date: "2018" },
-    ],
+    certificates: [{ id: "1", name: "CPA Indonesia", issuer: "IAPI", date: "2018" }],
   } as CvData,
   semarang: {
     personal: {
@@ -312,7 +321,8 @@ export const previewData = {
       phone: "0813-2468-1357",
       location: "Semarang, Jawa Tengah",
       linkedin: "linkedin.com/in/bayusetiawan",
-      summary: "Project manager bersertifikasi PMP dengan pengalaman 6+ tahun mengelola proyek IT dan konstruksi. Track record menyelesaikan proyek tepat waktu dan within budget.",
+      summary:
+        "Project manager bersertifikasi PMP dengan pengalaman 6+ tahun mengelola proyek IT dan konstruksi. Track record menyelesaikan proyek tepat waktu dan within budget.",
       summaryAlign: "left" as const,
     },
     experiences: [
@@ -324,7 +334,8 @@ export const previewData = {
         startDate: "Jun 2022",
         current: true,
         endDate: "",
-        description: "Mengelola 5 proyek IT concurrently dengan total nilai Rp 15M. Implementasi Agile methodology yang meningkatkan delivery speed 40%.",
+        description:
+          "Mengelola 5 proyek IT concurrently dengan total nilai Rp 15M. Implementasi Agile methodology yang meningkatkan delivery speed 40%.",
       },
       {
         id: "2",
@@ -334,7 +345,8 @@ export const previewData = {
         startDate: "Jan 2019",
         current: false,
         endDate: "Mei 2022",
-        description: "Assisted dalam pengelolaan proyek infrastruktur Rp 50M+. Koordinasi dengan 20+ vendor dan subcontractor.",
+        description:
+          "Assisted dalam pengelolaan proyek infrastruktur Rp 50M+. Koordinasi dengan 20+ vendor dan subcontractor.",
       },
     ],
     educations: [
@@ -371,7 +383,8 @@ export const previewData = {
       phone: "0821-3456-7890",
       location: "Surabaya, Jawa Timur",
       linkedin: "linkedin.com/in/mayaanggraini",
-      summary: "Supply chain profesional dengan pengalaman 7+ tahun di industri FMCG dan manufaktur. Spesialisasi dalam procurement optimization dan logistics management.",
+      summary:
+        "Supply chain profesional dengan pengalaman 7+ tahun di industri FMCG dan manufaktur. Spesialisasi dalam procurement optimization dan logistics management.",
       summaryAlign: "left" as const,
     },
     experiences: [
@@ -383,7 +396,8 @@ export const previewData = {
         startDate: "Mar 2021",
         current: true,
         endDate: "",
-        description: "Memimpin tim SCM dengan 25 staff. Implementasi Vendor Management System yang menghemat biaya procurement 15%. Optimasi rute distribusi.",
+        description:
+          "Memimpin tim SCM dengan 25 staff. Implementasi Vendor Management System yang menghemat biaya procurement 15%. Optimasi rute distribusi.",
       },
       {
         id: "2",
@@ -393,7 +407,8 @@ export const previewData = {
         startDate: "Agt 2017",
         current: false,
         endDate: "Feb 2021",
-        description: "Mengelola pengadaan material konstruksi Rp 20M/tahun. Negosiasi kontrak dengan 50+ supplier. Vendor performance evaluation system.",
+        description:
+          "Mengelola pengadaan material konstruksi Rp 20M/tahun. Negosiasi kontrak dengan 50+ supplier. Vendor performance evaluation system.",
       },
     ],
     educations: [
@@ -426,9 +441,7 @@ export const previewData = {
       { id: "2", name: "English", level: "Advanced" },
       { id: "3", name: "Jawa", level: "Native" },
     ],
-    certificates: [
-      { id: "1", name: "CIPS Level 5", issuer: "CIPS", date: "2019" },
-    ],
+    certificates: [{ id: "1", name: "CIPS Level 5", issuer: "CIPS", date: "2019" }],
   } as CvData,
   yogya: {
     personal: {
@@ -439,7 +452,8 @@ export const previewData = {
       location: "Yogyakarta",
       linkedin: "linkedin.com/in/dimasprasetyo",
       website: "dimasprasetyo.my.id",
-      summary: "Content creator dengan 4+ tahun pengalaman menciptakan konten digital yang engaging. Spesialisasi dalam storytelling dan brand content strategy untuk millennial dan Gen Z.",
+      summary:
+        "Content creator dengan 4+ tahun pengalaman menciptakan konten digital yang engaging. Spesialisasi dalam storytelling dan brand content strategy untuk millennial dan Gen Z.",
       summaryAlign: "left" as const,
     },
     experiences: [
@@ -451,7 +465,8 @@ export const previewData = {
         startDate: "Jan 2023",
         current: true,
         endDate: "",
-        description: "Merancang content strategy untuk 3 brand. Viral campaign dengan 5M+ reach organik. Partnership dengan 20+ KOL.",
+        description:
+          "Merancang content strategy untuk 3 brand. Viral campaign dengan 5M+ reach organik. Partnership dengan 20+ KOL.",
       },
       {
         id: "2",
@@ -461,7 +476,8 @@ export const previewData = {
         startDate: "Mar 2020",
         current: false,
         endDate: "Des 2022",
-        description: "Memproduksi konten video dan written content untuk social media. YouTube channel growth dari 10K ke 500K subscribers.",
+        description:
+          "Memproduksi konten video dan written content untuk social media. YouTube channel growth dari 10K ke 500K subscribers.",
       },
     ],
     educations: [
@@ -486,9 +502,7 @@ export const previewData = {
       { id: "2", name: "English", level: "Advanced" },
       { id: "3", name: "Jawa", level: "Native" },
     ],
-    certificates: [
-      { id: "1", name: "Google Digital Marketing", issuer: "Google", date: "2023" },
-    ],
+    certificates: [{ id: "1", name: "Google Digital Marketing", issuer: "Google", date: "2023" }],
   } as CvData,
 };
 

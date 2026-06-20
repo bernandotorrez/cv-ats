@@ -28,9 +28,7 @@ export function UsageBars({ bars }: UsageBarsProps) {
   const visibleBars = bars.filter((b) => b.visible);
   if (visibleBars.length === 0) return null;
 
-  const warningCount = visibleBars.filter(
-    (b) => b.max !== null && b.used / b.max >= 0.8,
-  ).length;
+  const warningCount = visibleBars.filter((b) => b.max !== null && b.used / b.max >= 0.8).length;
 
   return (
     <div className="space-y-3">
@@ -47,8 +45,7 @@ export function UsageBars({ bars }: UsageBarsProps) {
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {visibleBars.map((bar) => {
           const status = getStatus(bar.used, bar.max);
-          const pct =
-            bar.max === null ? 100 : Math.min((bar.used / bar.max) * 100, 100);
+          const pct = bar.max === null ? 100 : Math.min((bar.used / bar.max) * 100, 100);
           const remaining = bar.max === null ? null : Math.max(bar.max - bar.used, 0);
 
           return (
@@ -111,11 +108,7 @@ export function UsageBars({ bars }: UsageBarsProps) {
                     {bar.used}
                   </p>
                   <p className="text-[11px] text-muted-foreground flex items-center justify-end gap-0.5">
-                    {bar.max === null ? (
-                      <InfinityIcon className="h-3 w-3" />
-                    ) : (
-                      `/ ${bar.max}`
-                    )}
+                    {bar.max === null ? <InfinityIcon className="h-3 w-3" /> : `/ ${bar.max}`}
                   </p>
                 </div>
               </div>

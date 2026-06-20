@@ -162,9 +162,15 @@
 }
 
 @keyframes indeterminate-loading {
-  0% { transform: translateX(-100%); }
-  50% { transform: translateX(30%); }
-  100% { transform: translateX(100%); }
+  0% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(30%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
 }
 
 @layer base {
@@ -185,7 +191,12 @@
     text-rendering: optimizeLegibility;
   }
 
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     font-family: var(--font-display);
     letter-spacing: -0.02em;
   }
@@ -197,7 +208,9 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after {
+    *,
+    *::before,
+    *::after {
       animation-duration: 0.01ms !important;
       animation-iteration-count: 1 !important;
       transition-duration: 0.01ms !important;
@@ -215,13 +228,23 @@
     max-width: 80rem;
   }
   @media (min-width: 768px) {
-    .container-page { padding-inline: 2rem; }
+    .container-page {
+      padding-inline: 2rem;
+    }
   }
 
   .bg-grad-hero {
     background-image:
-      radial-gradient(60% 50% at 80% 0%, color-mix(in oklab, var(--color-secondary) 35%, transparent), transparent 60%),
-      radial-gradient(50% 40% at 0% 10%, color-mix(in oklab, var(--color-info) 45%, transparent), transparent 60%);
+      radial-gradient(
+        60% 50% at 80% 0%,
+        color-mix(in oklab, var(--color-secondary) 35%, transparent),
+        transparent 60%
+      ),
+      radial-gradient(
+        50% 40% at 0% 10%,
+        color-mix(in oklab, var(--color-info) 45%, transparent),
+        transparent 60%
+      );
   }
 
   .skip-link {
@@ -235,7 +258,9 @@
     z-index: 100;
     transition: top 0.2s;
   }
-  .skip-link:focus { top: 0.5rem; }
+  .skip-link:focus {
+    top: 0.5rem;
+  }
 
   .animate-indeterminate-loading {
     animation: indeterminate-loading 1.5s ease-in-out infinite;
@@ -258,8 +283,12 @@
     print-color-adjust: exact !important;
     color-adjust: exact !important;
   }
-  body { background: white !important; }
-  .print\:hidden { display: none !important; }
+  body {
+    background: white !important;
+  }
+  .print\:hidden {
+    display: none !important;
+  }
   [id*="benix" i],
   [class*="benix" i],
   iframe[src*="benixai.web.id" i],
@@ -268,11 +297,13 @@
     visibility: hidden !important;
     opacity: 0 !important;
   }
-  .cv-print-area { padding: 0 !important; }
-  .cv-print-area > div { 
-    border: 0 !important; 
-    padding: 0 !important; 
-    background: white !important; 
+  .cv-print-area {
+    padding: 0 !important;
+  }
+  .cv-print-area > div {
+    border: 0 !important;
+    padding: 0 !important;
+    background: white !important;
     transform: none !important;
     width: auto !important;
     height: auto !important;
@@ -292,6 +323,12 @@
     width: auto !important;
     height: auto !important;
   }
-  .cv-preview { box-shadow: none !important; margin: 0 !important; }
-  @page { size: A4; margin: 0; }
+  .cv-preview {
+    box-shadow: none !important;
+    margin: 0 !important;
+  }
+  @page {
+    size: A4;
+    margin: 0;
+  }
 }

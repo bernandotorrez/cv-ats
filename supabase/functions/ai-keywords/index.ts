@@ -2,7 +2,15 @@
  * AI Keywords — ekstrak keyword dari deskripsi pekerjaan
  * POST /ai-keywords
  */
-import { aiComplete, checkAndTrackQuota, corsResponse, errorResponse, getAdminClient, getUserId, type CvUiLang } from "../_shared/ai-common.ts";
+import {
+  aiComplete,
+  checkAndTrackQuota,
+  corsResponse,
+  errorResponse,
+  getAdminClient,
+  getUserId,
+  type CvUiLang,
+} from "../_shared/ai-common.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 
 Deno.serve(async (req: Request) => {
@@ -61,13 +69,17 @@ Output JSON:
 
     await checkAndTrackQuota(admin, userId, "keyword_extract", 300);
 
-    return corsResponse({
-      hardSkills: parsed.hard_skills,
-      softSkills: parsed.soft_skills,
-      qualifications: parsed.qualifications,
-      actionVerbs: parsed.action_verbs,
-      keywordsSummary: parsed.keywords_summary,
-    }, 200, req);
+    return corsResponse(
+      {
+        hardSkills: parsed.hard_skills,
+        softSkills: parsed.soft_skills,
+        qualifications: parsed.qualifications,
+        actionVerbs: parsed.action_verbs,
+        keywordsSummary: parsed.keywords_summary,
+      },
+      200,
+      req,
+    );
   } catch (e) {
     return errorResponse(e, req);
   }

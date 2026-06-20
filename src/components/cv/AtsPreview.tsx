@@ -24,7 +24,9 @@ export function AtsPreview({ data }: Props) {
     if (experiences.length > 0) {
       lines.push("PENGALAMAN KERJA");
       experiences.forEach((e) => {
-        lines.push(`${e.position} — ${e.company} (${e.startDate} – ${e.current ? "Sekarang" : e.endDate})`);
+        lines.push(
+          `${e.position} — ${e.company} (${e.startDate} – ${e.current ? "Sekarang" : e.endDate})`,
+        );
         if (e.location) lines.push(`  Lokasi: ${e.location}`);
         if (e.description) lines.push(`  ${e.description}`);
         lines.push("");
@@ -33,7 +35,9 @@ export function AtsPreview({ data }: Props) {
     if (educations.length > 0) {
       lines.push("PENDIDIKAN");
       educations.forEach((ed) => {
-        lines.push(`${ed.degree}${ed.field ? `, ${ed.field}` : ""} — ${ed.school} (${ed.startDate} – ${ed.endDate})`);
+        lines.push(
+          `${ed.degree}${ed.field ? `, ${ed.field}` : ""} — ${ed.school} (${ed.startDate} – ${ed.endDate})`,
+        );
         if (ed.description) lines.push(`  ${ed.description}`);
         lines.push("");
       });
@@ -70,12 +74,14 @@ export function AtsPreview({ data }: Props) {
         <CardTitle className="text-base flex items-center gap-2">
           <Eye className="h-4 w-4" /> ATS Preview
         </CardTitle>
-        <Badge variant="secondary" className="text-xs">Plain Text</Badge>
+        <Badge variant="secondary" className="text-xs">
+          Plain Text
+        </Badge>
       </CardHeader>
       <CardContent>
         <p className="text-xs text-muted-foreground mb-3">
-          Seperti inilah kira-kira CV kamu dibaca oleh Applicant Tracking System (ATS).
-          Format plain text, tanpa styling, tabel, atau gambar.
+          Seperti inilah kira-kira CV kamu dibaca oleh Applicant Tracking System (ATS). Format plain
+          text, tanpa styling, tabel, atau gambar.
         </p>
         <pre className="bg-muted/50 rounded-lg p-4 text-xs font-mono whitespace-pre-wrap max-h-96 overflow-y-auto border border-border">
           {text || "Belum ada data CV."}

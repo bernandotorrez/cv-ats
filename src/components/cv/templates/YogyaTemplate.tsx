@@ -19,8 +19,8 @@ export function YogyaTemplate({ data, sectionOrder, language = "id" }: Props) {
               src={data.personal.photoUrl}
               alt="Profile"
               style={{
-                width: 45,
-                height: 45,
+                width: 80,
+                height: 80,
                 borderRadius: "50%",
                 objectFit: "cover",
               }}
@@ -43,7 +43,7 @@ export function YogyaTemplate({ data, sectionOrder, language = "id" }: Props) {
             )}
           </div>
         </div>
-        <p style={{ fontSize: "9.5pt", color: "#444", margin: 0 }}>
+        <p style={{ fontSize: "9.5pt", color: "#444", margin: "12px 0 0" }}>
           {[
             data.personal.email,
             data.personal.phone,

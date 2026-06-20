@@ -11,9 +11,18 @@ const APIFY_ACTOR_ID = "2SyF0bVxmgGr8IVCZ";
 const APIFY_BASE = "https://api.apify.com/v2";
 
 const MONTH_NAMES: Record<string, string> = {
-  "01": "Jan", "02": "Feb", "03": "Mar", "04": "Apr",
-  "05": "Mei", "06": "Jun", "07": "Jul", "08": "Agu",
-  "09": "Sep", "10": "Okt", "11": "Nov", "12": "Des",
+  "01": "Jan",
+  "02": "Feb",
+  "03": "Mar",
+  "04": "Apr",
+  "05": "Mei",
+  "06": "Jun",
+  "07": "Jul",
+  "08": "Agu",
+  "09": "Sep",
+  "10": "Okt",
+  "11": "Nov",
+  "12": "Des",
 };
 
 function formatDate(ym: string | null | undefined): string {
@@ -27,8 +36,10 @@ function formatDate(ym: string | null | undefined): string {
 }
 
 function mapProfileToCvData(profile: Record<string, unknown>) {
-  const p = (key: string, fallback?: string) => (profile[key] ?? (fallback ? profile[fallback] : undefined)) as string | undefined;
-  const a = (key: string, fallback?: string) => ((profile[key] ?? (fallback ? profile[fallback] : undefined)) as unknown[]) || [];
+  const p = (key: string, fallback?: string) =>
+    (profile[key] ?? (fallback ? profile[fallback] : undefined)) as string | undefined;
+  const a = (key: string, fallback?: string) =>
+    ((profile[key] ?? (fallback ? profile[fallback] : undefined)) as unknown[]) || [];
 
   const personal: Record<string, string> = {};
   const name = p("fullName", "name") || p("firstName") + " " + p("lastName") || "";
@@ -46,7 +57,8 @@ function mapProfileToCvData(profile: Record<string, unknown>) {
     company: e.companyName || e.company || "",
     position: e.title || e.position || "",
     startDate: formatDate(e.jobStartedOn || e.startDate || e.startedOn),
-    endDate: e.jobStillWorking || e.current ? "" : formatDate(e.jobEndedOn || e.endDate || e.endedOn),
+    endDate:
+      e.jobStillWorking || e.current ? "" : formatDate(e.jobEndedOn || e.endDate || e.endedOn),
     current: !!(e.jobStillWorking || e.current),
     location: e.jobLocation || e.location || "",
     description: e.jobDescription || e.description || "",
@@ -146,7 +158,9 @@ async function runApifyActor(linkedinUrl: string): Promise<Record<string, unknow
   }
 
   if (!succeeded) {
-    throw new Error("Scraping LinkedIn timeout. Profil mungkin private atau terlalu lama diproses. Coba lagi nanti.");
+    throw new Error(
+      "Scraping LinkedIn timeout. Profil mungkin private atau terlalu lama diproses. Coba lagi nanti.",
+    );
   }
 
   // Step 3: Fetch dataset items using defaultDatasetId if available
@@ -164,16 +178,19 @@ async function runApifyActor(linkedinUrl: string): Promise<Record<string, unknow
     throw new Error("Gagal mengambil hasil scraping.");
   }
 
-  const items = await datasetRes.json() as unknown[];
+  const items = (await datasetRes.json()) as unknown[];
   if (!items || !items.length) throw new Error("Profil LinkedIn tidak ditemukan atau kosong.");
 
   // Debug: log raw dataset structure
   console.log("Apify dataset items count:", items.length);
-  console.log("Apify first item keys:", JSON.stringify(Object.keys(items[0] as Record<string, unknown> ?? {})));
+  console.log(
+    "Apify first item keys:",
+    JSON.stringify(Object.keys((items[0] as Record<string, unknown>) ?? {})),
+  );
 
   // Apify actors sometimes wrap profile data under "profile", "result", or first array item
   let profile = items[0] as Record<string, unknown>;
-  
+
   // Unwrap nested structures
   if (profile.profile && typeof profile.profile === "object") {
     profile = profile.profile as Record<string, unknown>;
@@ -184,7 +201,7 @@ async function runApifyActor(linkedinUrl: string): Promise<Record<string, unknow
   // If first item looks like metadata (has no personal fields), try finding the real profile
   const PROFILE_KEYS = ["fullName", "headline", "experiences", "educations", "skills"];
   const hasProfileData = PROFILE_KEYS.some((k) => k in profile);
-  
+
   if (!hasProfileData && items.length > 1) {
     for (const item of items) {
       const candidate = item as Record<string, unknown>;

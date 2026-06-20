@@ -11,23 +11,23 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogTrigger 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { 
-  Sparkles, 
-  Star, 
-  CheckCircle2, 
-  AlertTriangle, 
+import {
+  Sparkles,
+  Star,
+  CheckCircle2,
+  AlertTriangle,
   TrendingUp,
   UserCircle,
   Briefcase,
@@ -120,7 +120,7 @@ export function CVReviewPanel({ cvData, cvId, onReviewComplete, className }: CVR
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${user.session?.access_token}`,
+          Authorization: `Bearer ${user.session?.access_token}`,
         },
         body: JSON.stringify({
           cvData,
@@ -166,22 +166,49 @@ export function CVReviewPanel({ cvData, cvId, onReviewComplete, className }: CVR
 
   const getVerdictConfig = (verdict: string) => {
     if (verdict?.includes("Lolos Tahap Awal") || verdict?.includes("Tahap Akhir")) {
-      return { bg: "bg-green-100 dark:bg-green-900/30", border: "border-green-500", text: "text-green-700 dark:text-green-400", icon: CheckCircle2 };
+      return {
+        bg: "bg-green-100 dark:bg-green-900/30",
+        border: "border-green-500",
+        text: "text-green-700 dark:text-green-400",
+        icon: CheckCircle2,
+      };
     }
     if (verdict?.includes("Tahap Menengah")) {
-      return { bg: "bg-yellow-100 dark:bg-yellow-900/30", border: "border-yellow-500", text: "text-yellow-700 dark:text-yellow-400", icon: Clock };
+      return {
+        bg: "bg-yellow-100 dark:bg-yellow-900/30",
+        border: "border-yellow-500",
+        text: "text-yellow-700 dark:text-yellow-400",
+        icon: Clock,
+      };
     }
-    return { bg: "bg-red-100 dark:bg-red-900/30", border: "border-red-500", text: "text-red-700 dark:text-red-400", icon: AlertCircle };
+    return {
+      bg: "bg-red-100 dark:bg-red-900/30",
+      border: "border-red-500",
+      text: "text-red-700 dark:text-red-400",
+      icon: AlertCircle,
+    };
   };
 
   const getPriorityBadge = (priority: string) => {
     if (priority === "high") {
-      return <Badge variant="destructive" className="text-xs">Tinggi</Badge>;
+      return (
+        <Badge variant="destructive" className="text-xs">
+          Tinggi
+        </Badge>
+      );
     }
     if (priority === "medium") {
-      return <Badge variant="secondary" className="text-xs">Sedang</Badge>;
+      return (
+        <Badge variant="secondary" className="text-xs">
+          Sedang
+        </Badge>
+      );
     }
-    return <Badge variant="outline" className="text-xs">Rendah</Badge>;
+    return (
+      <Badge variant="outline" className="text-xs">
+        Rendah
+      </Badge>
+    );
   };
 
   // Upgrade prompt for non-eligible users
@@ -243,8 +270,12 @@ export function CVReviewPanel({ cvData, cvId, onReviewComplete, className }: CVR
                   </div>
                   <div>
                     <h4 className="font-semibold text-amber-900 dark:text-amber-400">Hira AI</h4>
-                    <p className="text-sm text-amber-700 dark:text-amber-500">Senior HR Recruitment Consultant</p>
-                    <p className="text-xs text-amber-600 dark:text-amber-600">20+ tahun pengalaman • Fortune 500 Hiring Expert</p>
+                    <p className="text-sm text-amber-700 dark:text-amber-500">
+                      Senior HR Recruitment Consultant
+                    </p>
+                    <p className="text-xs text-amber-600 dark:text-amber-600">
+                      20+ tahun pengalaman • Fortune 500 Hiring Expert
+                    </p>
                   </div>
                 </div>
               </CardContent>
@@ -254,7 +285,7 @@ export function CVReviewPanel({ cvData, cvId, onReviewComplete, className }: CVR
             <div className="space-y-4">
               <div>
                 <label className="text-sm font-medium">Posisi yang ditarget (opsional)</label>
-                <Input 
+                <Input
                   placeholder="Contoh: Software Engineer, Marketing Manager"
                   value={targetRole}
                   onChange={(e) => setTargetRole(e.target.value)}
@@ -263,7 +294,7 @@ export function CVReviewPanel({ cvData, cvId, onReviewComplete, className }: CVR
               </div>
               <div>
                 <label className="text-sm font-medium">Job Description / Lowongan (opsional)</label>
-                <Textarea 
+                <Textarea
                   placeholder="Tempelkan deskripsi lowongan untuk analisis yang lebih akurat..."
                   value={jobDescription}
                   onChange={(e) => setJobDescription(e.target.value)}
@@ -281,12 +312,7 @@ export function CVReviewPanel({ cvData, cvId, onReviewComplete, className }: CVR
               </div>
             )}
 
-            <Button 
-              onClick={handleReview} 
-              disabled={isLoading}
-              className="w-full"
-              size="lg"
-            >
+            <Button onClick={handleReview} disabled={isLoading} className="w-full" size="lg">
               {isLoading ? (
                 <>
                   <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
@@ -313,7 +339,9 @@ export function CVReviewPanel({ cvData, cvId, onReviewComplete, className }: CVR
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium text-muted-foreground">Skor Keseluruhan</p>
-                      <p className={`text-5xl font-bold ${getScoreColor(reviewResult.scores.overall)}`}>
+                      <p
+                        className={`text-5xl font-bold ${getScoreColor(reviewResult.scores.overall)}`}
+                      >
                         {reviewResult.scores.overall}
                         <span className="text-2xl">/100</span>
                       </p>
@@ -331,7 +359,11 @@ export function CVReviewPanel({ cvData, cvId, onReviewComplete, className }: CVR
               {/* Score Breakdown */}
               <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                 {[
-                  { label: "First Impression", score: reviewResult.scores.firstImpression, icon: Star },
+                  {
+                    label: "First Impression",
+                    score: reviewResult.scores.firstImpression,
+                    icon: Star,
+                  },
                   { label: "Format & ATS", score: reviewResult.scores.format, icon: FileText },
                   { label: "Konten", score: reviewResult.scores.content, icon: MessageSquare },
                   { label: "Pencapaian", score: reviewResult.scores.achievement, icon: Trophy },
@@ -339,7 +371,9 @@ export function CVReviewPanel({ cvData, cvId, onReviewComplete, className }: CVR
                 ].map((item) => (
                   <div key={item.label} className="rounded-lg border p-3 text-center">
                     <item.icon className="h-5 w-5 mx-auto mb-2 text-muted-foreground" />
-                    <p className={`text-2xl font-bold ${getScoreColor(item.score)}`}>{item.score}</p>
+                    <p className={`text-2xl font-bold ${getScoreColor(item.score)}`}>
+                      {item.score}
+                    </p>
                     <p className="text-xs text-muted-foreground">{item.label}</p>
                   </div>
                 ))}
@@ -434,13 +468,16 @@ export function CVReviewPanel({ cvData, cvId, onReviewComplete, className }: CVR
                 <TabsContent value="suggestions" className="mt-4">
                   <div className="space-y-4">
                     {reviewResult.suggestions.map((suggestion, i) => (
-                      <Card key={i} className={
-                        suggestion.priority === "high" 
-                          ? "border-l-4 border-l-red-500" 
-                          : suggestion.priority === "medium"
-                            ? "border-l-4 border-l-yellow-500"
-                            : "border-l-4 border-l-green-500"
-                      }>
+                      <Card
+                        key={i}
+                        className={
+                          suggestion.priority === "high"
+                            ? "border-l-4 border-l-red-500"
+                            : suggestion.priority === "medium"
+                              ? "border-l-4 border-l-yellow-500"
+                              : "border-l-4 border-l-green-500"
+                        }
+                      >
                         <CardContent className="p-4">
                           <div className="flex items-start justify-between gap-3 mb-3">
                             <div className="flex items-center gap-2">
@@ -450,7 +487,7 @@ export function CVReviewPanel({ cvData, cvId, onReviewComplete, className }: CVR
                               {getPriorityBadge(suggestion.priority)}
                             </div>
                           </div>
-                          
+
                           <div className="space-y-2">
                             <div className="text-sm">
                               <p className="font-medium text-red-600 dark:text-red-400 line-through opacity-60">
@@ -481,7 +518,9 @@ export function CVReviewPanel({ cvData, cvId, onReviewComplete, className }: CVR
                   </CardHeader>
                   <CardContent className="text-sm">
                     <div className="flex items-center gap-2 mb-2">
-                      <Badge>{reviewResult.industryBenchmark.level?.replace("_", " ").toUpperCase()}</Badge>
+                      <Badge>
+                        {reviewResult.industryBenchmark.level?.replace("_", " ").toUpperCase()}
+                      </Badge>
                       <span className="text-muted-foreground">
                         {reviewResult.industryBenchmark.percentile}
                       </span>

@@ -7,13 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { HCaptchaWidget } from "@/components/ui/hcaptcha";
@@ -156,7 +150,9 @@ function LoginPage() {
     e.preventDefault();
 
     if (lockout.locked) {
-      toast.error(`Akun dikunci sementara. Coba lagi dalam ${formatCountdown(lockout.remainingMs)}.`);
+      toast.error(
+        `Akun dikunci sementara. Coba lagi dalam ${formatCountdown(lockout.remainingMs)}.`,
+      );
       return;
     }
 
@@ -214,9 +210,7 @@ function LoginPage() {
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="font-display text-2xl">Masuk</CardTitle>
-          <CardDescription>
-            Lanjutkan ke akun CV Pintar.
-          </CardDescription>
+          <CardDescription>Lanjutkan ke akun CV Pintar.</CardDescription>
         </CardHeader>
         <CardContent>
           {/* Lockout Warning */}
@@ -268,9 +262,7 @@ function LoginPage() {
               <span className="w-full border-t" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card px-2 text-muted-foreground">
-                atau
-              </span>
+              <span className="bg-card px-2 text-muted-foreground">atau</span>
             </div>
           </div>
 

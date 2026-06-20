@@ -3,13 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { buildSeo } from "@/lib/seo";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { Mail, Loader2, CheckCircle2, ArrowRight } from "lucide-react";
 
@@ -55,7 +49,9 @@ function VerifyEmailPage() {
     if (cooldown > 0) return;
     setLoading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user?.email) {
         toast.error("Tidak dapat mengirim ulang. Silakan daftar ulang.");
         return;
@@ -89,9 +85,7 @@ function VerifyEmailPage() {
             <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-primary/10 text-primary">
               <CheckCircle2 className="h-7 w-7" />
             </div>
-            <CardTitle className="mt-4 font-display text-2xl">
-              Email Terverifikasi!
-            </CardTitle>
+            <CardTitle className="mt-4 font-display text-2xl">Email Terverifikasi!</CardTitle>
             <CardDescription>
               Akun kamu sudah aktif. Yuk mulai bikin CV ATS friendly pertamamu.
             </CardDescription>
@@ -122,12 +116,10 @@ function VerifyEmailPage() {
           <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-primary/10 text-primary">
             <Mail className="h-7 w-7" />
           </div>
-          <CardTitle className="mt-4 font-display text-2xl">
-            Cek Email Kamu
-          </CardTitle>
+          <CardTitle className="mt-4 font-display text-2xl">Cek Email Kamu</CardTitle>
           <CardDescription>
-            Kami sudah mengirim link verifikasi ke email yang kamu daftarkan.
-            Klik link tersebut untuk mengaktifkan akun.
+            Kami sudah mengirim link verifikasi ke email yang kamu daftarkan. Klik link tersebut
+            untuk mengaktifkan akun.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -147,16 +139,16 @@ function VerifyEmailPage() {
             onClick={handleResendEmail}
             disabled={loading || cooldown > 0}
           >
-            {loading ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : null}
-            {cooldown > 0
-              ? `Kirim ulang dalam ${cooldown} detik`
-              : "Kirim Ulang Email Verifikasi"}
+            {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+            {cooldown > 0 ? `Kirim ulang dalam ${cooldown} detik` : "Kirim Ulang Email Verifikasi"}
           </Button>
 
           <p className="text-sm text-muted-foreground">
-            <Link to="/login" search={{ redirect: "/dashboard" }} className="font-medium text-primary hover:underline">
+            <Link
+              to="/login"
+              search={{ redirect: "/dashboard" }}
+              className="font-medium text-primary hover:underline"
+            >
               Kembali ke Masuk
             </Link>
           </p>

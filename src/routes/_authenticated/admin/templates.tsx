@@ -9,17 +9,37 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { isAdmin } from "@/lib/admin";
 import { TEMPLATES } from "@/lib/cv-types";
 import {
-  ArrowLeft, Plus, Pencil, Trash2, Shield, Palette, Loader2, AlertCircle,
+  ArrowLeft,
+  Plus,
+  Pencil,
+  Trash2,
+  Shield,
+  Palette,
+  Loader2,
+  AlertCircle,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/templates")({
-  head: () => buildSeo({ title: "Admin Templates — CV Pintar", description: "Kelola template.", path: "/admin", noindex: true }),
+  head: () =>
+    buildSeo({
+      title: "Admin Templates — CV Pintar",
+      description: "Kelola template.",
+      path: "/admin",
+      noindex: true,
+    }),
   component: AdminTemplatesPage,
 });
 
@@ -113,14 +133,9 @@ function AdminTemplatesPage() {
 
     let error;
     if (editing) {
-      ({ error } = await supabase
-        .from("templates")
-        .update(payload)
-        .eq("id", editing.id));
+      ({ error } = await supabase.from("templates").update(payload).eq("id", editing.id));
     } else {
-      ({ error } = await supabase
-        .from("templates")
-        .insert(payload));
+      ({ error } = await supabase.from("templates").insert(payload));
     }
 
     setSaving(false);
@@ -147,7 +162,10 @@ function AdminTemplatesPage() {
     loadTemplates();
   };
 
-  if (checking) return <div className="container-page py-10 text-sm text-muted-foreground">Memeriksa akses...</div>;
+  if (checking)
+    return (
+      <div className="container-page py-10 text-sm text-muted-foreground">Memeriksa akses...</div>
+    );
 
   if (!admin) {
     return (
@@ -167,7 +185,9 @@ function AdminTemplatesPage() {
       <div className="flex items-center justify-between mb-8">
         <div>
           <Button asChild variant="ghost" size="sm" className="mb-2">
-            <Link to="/dashboard"><ArrowLeft className="h-4 w-4" /> Dashboard</Link>
+            <Link to="/dashboard">
+              <ArrowLeft className="h-4 w-4" /> Dashboard
+            </Link>
           </Button>
           <h1 className="font-display text-3xl font-bold text-foreground flex items-center gap-2">
             <Shield className="h-6 w-6 text-primary" /> Admin: Template
@@ -197,7 +217,9 @@ function AdminTemplatesPage() {
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="font-semibold">{t.name}</span>
                   <code className="text-xs bg-muted px-1.5 py-0.5 rounded">{t.slug}</code>
-                  {t.is_premium && <Badge className="bg-warning text-warning-foreground text-xs">Premium</Badge>}
+                  {t.is_premium && (
+                    <Badge className="bg-warning text-warning-foreground text-xs">Premium</Badge>
+                  )}
                 </div>
                 <p className="text-sm text-muted-foreground mt-0.5 line-clamp-1">{t.description}</p>
                 <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
@@ -216,7 +238,12 @@ function AdminTemplatesPage() {
                 <Button size="sm" variant="ghost" onClick={() => openEdit(t)} aria-label="Edit">
                   <Pencil className="h-4 w-4" />
                 </Button>
-                <Button size="sm" variant="ghost" onClick={() => handleDelete(t)} aria-label="Hapus">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => handleDelete(t)}
+                  aria-label="Hapus"
+                >
                   <Trash2 className="h-4 w-4 text-destructive" />
                 </Button>
               </div>
@@ -237,28 +264,58 @@ function AdminTemplatesPage() {
           <div className="space-y-4 mt-2">
             <div className="space-y-1.5">
               <Label>Slug *</Label>
-              <Input value={formSlug} onChange={(e) => setFormSlug(e.target.value)} placeholder="modern-pro" disabled={!!editing} />
-              <p className="text-xs text-muted-foreground">ID unik, tidak bisa diubah setelah dibuat.</p>
+              <Input
+                value={formSlug}
+                onChange={(e) => setFormSlug(e.target.value)}
+                placeholder="modern-pro"
+                disabled={!!editing}
+              />
+              <p className="text-xs text-muted-foreground">
+                ID unik, tidak bisa diubah setelah dibuat.
+              </p>
             </div>
             <div className="space-y-1.5">
               <Label>Nama Template *</Label>
-              <Input value={formName} onChange={(e) => setFormName(e.target.value)} placeholder="Modern Pro" />
+              <Input
+                value={formName}
+                onChange={(e) => setFormName(e.target.value)}
+                placeholder="Modern Pro"
+              />
             </div>
             <div className="space-y-1.5">
               <Label>Deskripsi</Label>
-              <Textarea value={formDesc} onChange={(e) => setFormDesc(e.target.value)} placeholder="Template modern dengan..." rows={3} />
+              <Textarea
+                value={formDesc}
+                onChange={(e) => setFormDesc(e.target.value)}
+                placeholder="Template modern dengan..."
+                rows={3}
+              />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label>Warna Aksen</Label>
                 <div className="flex gap-2">
-                  <Input value={formColor} onChange={(e) => setFormColor(e.target.value)} type="color" className="w-12 h-9 p-1 cursor-pointer" />
-                  <Input value={formColor} onChange={(e) => setFormColor(e.target.value)} className="flex-1" />
+                  <Input
+                    value={formColor}
+                    onChange={(e) => setFormColor(e.target.value)}
+                    type="color"
+                    className="w-12 h-9 p-1 cursor-pointer"
+                  />
+                  <Input
+                    value={formColor}
+                    onChange={(e) => setFormColor(e.target.value)}
+                    className="flex-1"
+                  />
                 </div>
               </div>
               <div className="space-y-1.5">
                 <Label>Urutan</Label>
-                <Input value={formSort} onChange={(e) => setFormSort(Number(e.target.value))} type="number" min={0} />
+                <Input
+                  value={formSort}
+                  onChange={(e) => setFormSort(Number(e.target.value))}
+                  type="number"
+                  min={0}
+                />
               </div>
             </div>
             <div className="flex items-center justify-between">
@@ -266,7 +323,9 @@ function AdminTemplatesPage() {
               <Switch checked={formPremium} onCheckedChange={setFormPremium} />
             </div>
             <div className="flex gap-2 justify-end pt-2">
-              <Button variant="outline" onClick={() => setDialogOpen(false)}>Batal</Button>
+              <Button variant="outline" onClick={() => setDialogOpen(false)}>
+                Batal
+              </Button>
               <Button onClick={handleSave} disabled={saving}>
                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
                 {editing ? "Simpan" : "Buat Template"}

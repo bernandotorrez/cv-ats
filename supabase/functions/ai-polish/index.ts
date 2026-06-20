@@ -34,11 +34,15 @@ Deno.serve(async (req: Request) => {
       .single();
 
     if (userSub && (userSub as any).subscription_tiers?.enable_text_polish === false) {
-      return corsResponse({
-        error: "Fitur Perbaiki Teks tidak tersedia di paket kamu. Silakan upgrade.",
-        requiresUpgrade: true,
-        upgradeUrl: "/harga",
-      }, 403, req);
+      return corsResponse(
+        {
+          error: "Fitur Perbaiki Teks tidak tersedia di paket kamu. Silakan upgrade.",
+          requiresUpgrade: true,
+          upgradeUrl: "/harga",
+        },
+        403,
+        req,
+      );
     }
 
     const { text, context, language } = await req.json();
@@ -81,16 +85,20 @@ TEKS PERBAIKAN:`;
       .replace(/^["']|["']$/g, "")
       .replace(/^```[\s\S]*?\n?/, "")
       .replace(/\n?```$/, "")
-      .replace(/^\* /gm, "- ")   // normalize markdown bullet * → -
+      .replace(/^\* /gm, "- ") // normalize markdown bullet * → -
       .trim();
 
     // Track quota usage
     await checkAndTrackQuota(admin, userId, "polish", 300);
 
-    return corsResponse({
-      original: text,
-      polished,
-    }, 200, req);
+    return corsResponse(
+      {
+        original: text,
+        polished,
+      },
+      200,
+      req,
+    );
   } catch (e) {
     return errorResponse(e, req);
   }

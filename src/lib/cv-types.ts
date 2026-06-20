@@ -86,7 +86,17 @@ export interface CvData {
 }
 
 export const emptyCv: CvData = {
-  personal: { fullName: "", headline: "", email: "", phone: "", location: "", website: "", linkedin: "", summary: "", summaryAlign: "left" },
+  personal: {
+    fullName: "",
+    headline: "",
+    email: "",
+    phone: "",
+    location: "",
+    website: "",
+    linkedin: "",
+    summary: "",
+    summaryAlign: "left",
+  },
   experiences: [],
   educations: [],
   skills: [],

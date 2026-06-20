@@ -29,7 +29,9 @@ export function buildSeo({
   articleModifiedTime,
 }: SeoInput) {
   const url = `${SITE_URL}${path}`;
-  const ogImage = image ?? "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/44765322-b45b-44f5-a6ac-752e6e50e35e";
+  const ogImage =
+    image ??
+    "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/44765322-b45b-44f5-a6ac-752e6e50e35e";
   const meta = [
     { title },
     { name: "description", content: description },
@@ -48,8 +50,12 @@ export function buildSeo({
     { name: "twitter:description", content: description },
     { name: "twitter:image", content: ogImage },
     { name: "twitter:image:alt", content: OG_IMAGE_ALT },
-    ...(articlePublishedTime ? [{ property: "article:published_time", content: articlePublishedTime }] : []),
-    ...(articleModifiedTime ? [{ property: "article:modified_time", content: articleModifiedTime }] : []),
+    ...(articlePublishedTime
+      ? [{ property: "article:published_time", content: articlePublishedTime }]
+      : []),
+    ...(articleModifiedTime
+      ? [{ property: "article:modified_time", content: articleModifiedTime }]
+      : []),
     ...(noindex ? [{ name: "robots", content: "noindex, nofollow" }] : []),
   ];
   const links = [

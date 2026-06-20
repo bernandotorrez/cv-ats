@@ -2,7 +2,16 @@
  * AI Score — analisis skor ATS untuk CV
  * POST /ai-score
  */
-import { aiComplete, checkAndTrackQuota, corsResponse, errorResponse, getAdminClient, getUserId, getLanguageInstruction, type CvUiLang } from "../_shared/ai-common.ts";
+import {
+  aiComplete,
+  checkAndTrackQuota,
+  corsResponse,
+  errorResponse,
+  getAdminClient,
+  getUserId,
+  getLanguageInstruction,
+  type CvUiLang,
+} from "../_shared/ai-common.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 
 Deno.serve(async (req: Request) => {
@@ -69,14 +78,18 @@ Output HARUS JSON valid (tanpa markdown wrapper):
 
     await checkAndTrackQuota(admin, userId, "score", 500);
 
-    return corsResponse({
-      overallScore: parsed.overall_score,
-      breakdown: parsed.breakdown,
-      summary: parsed.summary,
-      strengths: parsed.strengths,
-      weaknesses: parsed.weaknesses,
-      suggestions: parsed.suggestions,
-    }, 200, req);
+    return corsResponse(
+      {
+        overallScore: parsed.overall_score,
+        breakdown: parsed.breakdown,
+        summary: parsed.summary,
+        strengths: parsed.strengths,
+        weaknesses: parsed.weaknesses,
+        suggestions: parsed.suggestions,
+      },
+      200,
+      req,
+    );
   } catch (e) {
     return errorResponse(e, req);
   }

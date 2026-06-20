@@ -1,11 +1,11 @@
 /**
  * Rate Limiter — In-memory rate limiting for Edge Functions
  * SECURITY: Prevents abuse by limiting requests per user per time window
- * 
+ *
  * NOTE: This is an in-memory store, suitable for single-instance deployments.
  * For multi-region/multi-instance deployments, consider using Supabase's
  * pg_limiter extension or an external rate limiting service like Upstash.
- * 
+ *
  * Last Updated: 2026-05-12
  */
 
@@ -35,7 +35,7 @@ export interface RateLimitHeaders {
 
 /**
  * Check if a request is allowed under the rate limit
- * 
+ *
  * @param key - Unique identifier (e.g., "userId:endpoint")
  * @param maxRequests - Maximum requests allowed in the window
  * @param windowMs - Time window in milliseconds
@@ -92,11 +92,11 @@ export function getRateLimitHeaders(result: RateLimitResult): RateLimitHeaders {
     "X-RateLimit-Remaining": String(result.remaining),
     "X-RateLimit-Reset": String(result.resetAt),
   };
-  
+
   if (!result.allowed && result.retryAfter) {
     headers["Retry-After"] = String(result.retryAfter);
   }
-  
+
   return headers;
 }
 
@@ -121,7 +121,7 @@ export function createRateLimitedResponse(
 
 /**
  * Get current rate limit status without incrementing
- * 
+ *
  * @param key - Unique identifier
  * @param windowMs - Time window in milliseconds
  * @returns Object with count and remaining requests
@@ -167,13 +167,13 @@ export const RATE_LIMITS = {
   AI_CHAT: { maxRequests: 30, windowMs: 60 * 1000 },
   AI_KEYWORDS: { maxRequests: 30, windowMs: 60 * 1000 },
   AI_COVER_LETTER: { maxRequests: 30, windowMs: 60 * 1000 },
-  
+
   // PDF generation: 20 requests per minute per user
   GENERATE_PDF: { maxRequests: 20, windowMs: 60 * 1000 },
-  
+
   // LinkedIn import: 10 requests per hour per user
   LINKEDIN_IMPORT: { maxRequests: 10, windowMs: 60 * 60 * 1000 },
-  
+
   // Email: 10 requests per hour per user
   SEND_EMAIL: { maxRequests: 10, windowMs: 60 * 60 * 1000 },
 } as const;

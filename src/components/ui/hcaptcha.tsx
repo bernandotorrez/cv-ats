@@ -53,9 +53,7 @@ export function HCaptchaWidget({
     <div className="space-y-2">
       <div
         className={`flex items-center justify-center rounded-lg border p-3 ${
-          error
-            ? "border-destructive/50 bg-destructive/5"
-            : "border-input bg-background"
+          error ? "border-destructive/50 bg-destructive/5" : "border-input bg-background"
         } ${disabled ? "pointer-events-none opacity-50" : ""}`}
       >
         <HCaptcha

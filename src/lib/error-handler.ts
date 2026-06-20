@@ -1,9 +1,9 @@
 /**
  * Security: Centralized Error Handling
- * 
+ *
  * Provides consistent error responses across the application.
  * Prevents information disclosure through error messages.
- * 
+ *
  * Last Updated: 2026-05-12
  */
 
@@ -16,7 +16,7 @@ export class AppError extends Error {
     message: string,
     public code: string,
     public statusCode: number = 500,
-    public isOperational: boolean = true
+    public isOperational: boolean = true,
   ) {
     super(message);
     this.name = "AppError";
@@ -82,14 +82,11 @@ export interface ErrorResponse {
  * Generate a secure error response
  * Never expose internal details like stack traces to clients
  */
-export function createErrorResponse(
-  error: Error | AppError,
-  requestId?: string
-): ErrorResponse {
+export function createErrorResponse(error: Error | AppError, requestId?: string): ErrorResponse {
   // For operational errors, show the message
   // For programming errors, show a generic message
   const isOperational = error instanceof AppError ? error.isOperational : false;
-  
+
   const response: ErrorResponse = {
     error: {
       code: error instanceof AppError ? error.code : "INTERNAL_ERROR",
@@ -110,7 +107,7 @@ export function createErrorResponse(
  */
 export function logError(error: Error, context?: Record<string, unknown>): void {
   const isOperational = error instanceof AppError ? error.isOperational : false;
-  
+
   // Always log to console
   console.error("[Error]", {
     name: error.name,
@@ -130,7 +127,10 @@ export function logError(error: Error, context?: Record<string, unknown>): void 
 /**
  * Handle error and return appropriate response
  */
-export function handleError(error: unknown, context?: Record<string, unknown>): {
+export function handleError(
+  error: unknown,
+  context?: Record<string, unknown>,
+): {
   response: ErrorResponse;
   statusCode: number;
 } {
@@ -149,7 +149,7 @@ export function handleError(error: unknown, context?: Record<string, unknown>): 
     return {
       response: createErrorResponse(
         new ServerError("An unexpected error occurred"),
-        context?.requestId as string | undefined
+        context?.requestId as string | undefined,
       ),
       statusCode: 500,
     };
@@ -192,7 +192,7 @@ export function getUserFriendlyError(error: unknown): string {
   if (error instanceof AppError) {
     return error.message;
   }
-  
+
   if (error instanceof Error) {
     // Map common errors to user-friendly messages
     if (error.message.includes("fetch")) {
@@ -203,7 +203,7 @@ export function getUserFriendlyError(error: unknown): string {
     }
     return "Terjadi kesalahan. Silakan coba lagi.";
   }
-  
+
   return "Terjadi kesalahan. Silakan coba lagi.";
 }
 
@@ -225,9 +225,11 @@ export function isAuthError(error: unknown): boolean {
     return error instanceof AuthenticationError;
   }
   if (error instanceof Error) {
-    return error.message.includes("Unauthorized") || 
-           error.message.includes("auth") ||
-           error.message.includes("token");
+    return (
+      error.message.includes("Unauthorized") ||
+      error.message.includes("auth") ||
+      error.message.includes("token")
+    );
   }
   return false;
 }

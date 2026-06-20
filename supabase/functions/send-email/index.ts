@@ -3,7 +3,7 @@
  * Sends transactional emails via Resend.
  * Used for: welcome, payment confirmation, subscription reminders.
  * POST /send-email
- * 
+ *
  * SECURITY:
  * - Requires authentication (getUserId)
  * - Rate limited: 10 emails per hour per user
@@ -27,18 +27,39 @@ interface EmailPayload {
 // Constants for input validation
 const MAX_SUBJECT_LENGTH = 200;
 const MAX_HTML_LENGTH = 50000; // 50KB
-const ALLOWED_HTML_TAGS = ['p', 'br', 'strong', 'b', 'em', 'i', 'u', 'a', 'h1', 'h2', 'h3', 'ul', 'ol', 'li', 'table', 'tr', 'td', 'th', 'thead', 'tbody'];
+const ALLOWED_HTML_TAGS = [
+  "p",
+  "br",
+  "strong",
+  "b",
+  "em",
+  "i",
+  "u",
+  "a",
+  "h1",
+  "h2",
+  "h3",
+  "ul",
+  "ol",
+  "li",
+  "table",
+  "tr",
+  "td",
+  "th",
+  "thead",
+  "tbody",
+];
 
 // Sanitize HTML to prevent XSS
 function sanitizeHtml(html: string): string {
   // Remove script tags
-  let clean = html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+  let clean = html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "");
   // Remove event handlers (onclick, onerror, etc.)
-  clean = clean.replace(/\s*on\w+\s*=\s*["'][^"']*["']/gi, '');
+  clean = clean.replace(/\s*on\w+\s*=\s*["'][^"']*["']/gi, "");
   // Remove javascript: URLs
-  clean = clean.replace(/javascript:/gi, '');
+  clean = clean.replace(/javascript:/gi, "");
   // Remove data: URLs (except for images)
-  clean = clean.replace(/data:(?!image\/)/gi, '');
+  clean = clean.replace(/data:(?!image\/)/gi, "");
   return clean;
 }
 
@@ -48,11 +69,7 @@ async function getUserEmail(userId: string): Promise<string | null> {
   const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const supabase = createClient(supabaseUrl, supabaseKey);
 
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("email")
-    .eq("id", userId)
-    .single();
+  const { data, error } = await supabase.from("profiles").select("email").eq("id", userId).single();
 
   if (error || !data) {
     console.error("Failed to get user email:", error);
@@ -72,7 +89,10 @@ async function getUserId(req: Request): Promise<string> {
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const supabase = createClient(supabaseUrl, supabaseKey);
-  const { data: { user }, error } = await supabase.auth.getUser(token);
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser(token);
   if (error || !user) {
     throw new Error("Unauthorized: Invalid auth token");
   }
@@ -114,26 +134,28 @@ Deno.serve(async (req: Request) => {
     // SECURITY: Get user's email from database
     const userEmail = await getUserEmail(userId);
     if (!userEmail) {
-      return new Response(
-        JSON.stringify({ error: "Tidak dapat menemukan email user" }),
-        { status: 400, headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
-      );
+      return new Response(JSON.stringify({ error: "Tidak dapat menemukan email user" }), {
+        status: 400,
+        headers: { ...corsHeaders(req), "Content-Type": "application/json" },
+      });
     }
 
-    const body = await req.json() as EmailPayload;
+    const body = (await req.json()) as EmailPayload;
 
     // SECURITY: Validate required fields
     if (!body.subject && !body.type) {
-      return new Response(
-        JSON.stringify({ error: "subject atau type diperlukan" }),
-        { status: 400, headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
-      );
+      return new Response(JSON.stringify({ error: "subject atau type diperlukan" }), {
+        status: 400,
+        headers: { ...corsHeaders(req), "Content-Type": "application/json" },
+      });
     }
 
     // SECURITY: Length limits
     if (body.subject && body.subject.length > MAX_SUBJECT_LENGTH) {
       return new Response(
-        JSON.stringify({ error: `Subject terlalu panjang (maksimal ${MAX_SUBJECT_LENGTH} karakter)` }),
+        JSON.stringify({
+          error: `Subject terlalu panjang (maksimal ${MAX_SUBJECT_LENGTH} karakter)`,
+        }),
         { status: 400, headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
       );
     }
@@ -163,11 +185,11 @@ Deno.serve(async (req: Request) => {
     if (!RESEND_API_KEY) {
       console.error("RESEND_API_KEY not configured");
       // In dev, just log the email
-      console.log("Would send email:", { 
-        from: FROM_EMAIL, 
-        to: userEmail, 
+      console.log("Would send email:", {
+        from: FROM_EMAIL,
+        to: userEmail,
         subject: finalSubject,
-        userId 
+        userId,
       });
       return new Response(
         JSON.stringify({ status: "ok", dev: true, message: "Email logged (dev mode)" }),
@@ -198,17 +220,21 @@ Deno.serve(async (req: Request) => {
     }
 
     const data = await res.json();
-    return new Response(
-      JSON.stringify({ status: "ok", id: (data as any).id }),
-      { status: 200, headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
-    );
+    return new Response(JSON.stringify({ status: "ok", id: (data as any).id }), {
+      status: 200,
+      headers: { ...corsHeaders(req), "Content-Type": "application/json" },
+    });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Internal server error";
-    const status = message.startsWith("Unauthorized") ? 401 : message.includes("Terlalu banyak") ? 429 : 500;
+    const status = message.startsWith("Unauthorized")
+      ? 401
+      : message.includes("Terlalu banyak")
+        ? 429
+        : 500;
     console.error("Email error:", message);
-    return new Response(
-      JSON.stringify({ error: message }),
-      { status, headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
-    );
+    return new Response(JSON.stringify({ error: message }), {
+      status,
+      headers: { ...corsHeaders(req), "Content-Type": "application/json" },
+    });
   }
 });

@@ -9,6 +9,7 @@
 ## Ringkasan Perubahan
 
 ### Update 2026-05-12 (Final - All Changes Applied)
+
 1. ✅ Migration: `20260512000003_update_pro_quotas.sql`
 2. ✅ TIER_LIMITS - Semua tier quotas diupdate
 3. ✅ Interface TierLimits - Field baru ditambahkan
@@ -25,60 +26,63 @@
 ## Struktur Tier Final (3 Tiers)
 
 ### FREE TIER (Rp 0/bulan)
-| Fitur | Quota |
-|-------|-------|
-| CV aktif | 1 |
-| Template | 2 basic |
-| AI Saran/bulan | 5x |
-| ATS Scoring/bulan | 1x |
-| Perbaiki Teks AI/bulan | 5x |
-| Guided Mode/bulan | 10x |
-| AI Chat/bulan | 5x |
-| Cover Letter AI | ❌ |
-| Keyword Extractor | ❌ |
-| CV Review HR | ❌ |
-| Simulasi Wawancara | ❌ |
-| CV Comparison | ❌ |
-| Analitik CV | ❌ |
-| Download DOCX | ❌ |
-| Export PDF | Watermark only |
+
+| Fitur                  | Quota          |
+| ---------------------- | -------------- |
+| CV aktif               | 1              |
+| Template               | 2 basic        |
+| AI Saran/bulan         | 5x             |
+| ATS Scoring/bulan      | 1x             |
+| Perbaiki Teks AI/bulan | 5x             |
+| Guided Mode/bulan      | 10x            |
+| AI Chat/bulan          | 5x             |
+| Cover Letter AI        | ❌             |
+| Keyword Extractor      | ❌             |
+| CV Review HR           | ❌             |
+| Simulasi Wawancara     | ❌             |
+| CV Comparison          | ❌             |
+| Analitik CV            | ❌             |
+| Download DOCX          | ❌             |
+| Export PDF             | Watermark only |
 
 ### STARTER TIER (Rp 14.900/bulan)
-| Fitur | Quota |
-|-------|-------|
-| CV aktif | 3 |
-| Template | Semua |
-| AI Saran/bulan | 50x |
-| ATS Scoring/bulan | 10x |
-| Perbaiki Teks AI/bulan | 50x |
-| Guided Mode/bulan | 30x |
-| Cover Letter AI/bulan | 10x |
-| Keyword Extractor/bulan | 20x |
-| AI Chat/bulan | 50x |
-| CV Review HR/bulan | 10x |
-| Simulasi Wawancara | ❌ |
-| CV Comparison | ❌ |
-| Analitik CV | ❌ |
-| Download DOCX | ✅ |
+
+| Fitur                   | Quota |
+| ----------------------- | ----- |
+| CV aktif                | 3     |
+| Template                | Semua |
+| AI Saran/bulan          | 50x   |
+| ATS Scoring/bulan       | 10x   |
+| Perbaiki Teks AI/bulan  | 50x   |
+| Guided Mode/bulan       | 30x   |
+| Cover Letter AI/bulan   | 10x   |
+| Keyword Extractor/bulan | 20x   |
+| AI Chat/bulan           | 50x   |
+| CV Review HR/bulan      | 10x   |
+| Simulasi Wawancara      | ❌    |
+| CV Comparison           | ❌    |
+| Analitik CV             | ❌    |
+| Download DOCX           | ✅    |
 
 ### PRO TIER (Rp 39.000/bulan)
-| Fitur | Quota |
-|-------|-------|
-| CV aktif | 10 |
-| Template | Semua |
-| AI Saran/bulan | 200x |
-| ATS Scoring/bulan | 50x |
-| Perbaiki Teks AI/bulan | 200x |
-| Guided Mode/bulan | 100x |
-| Cover Letter AI/bulan | 50x |
-| Keyword Extractor/bulan | 100x |
-| AI Chat/bulan | 200x |
-| CV Review HR/bulan | 50x |
-| Simulasi Wawancara/bulan | 50x |
-| CV Comparison | ✅ |
-| Analitik CV | ✅ |
-| Download DOCX | ✅ |
-| Priority Support | ✅ |
+
+| Fitur                    | Quota |
+| ------------------------ | ----- |
+| CV aktif                 | 10    |
+| Template                 | Semua |
+| AI Saran/bulan           | 200x  |
+| ATS Scoring/bulan        | 50x   |
+| Perbaiki Teks AI/bulan   | 200x  |
+| Guided Mode/bulan        | 100x  |
+| Cover Letter AI/bulan    | 50x   |
+| Keyword Extractor/bulan  | 100x  |
+| AI Chat/bulan            | 200x  |
+| CV Review HR/bulan       | 50x   |
+| Simulasi Wawancara/bulan | 50x   |
+| CV Comparison            | ✅    |
+| Analitik CV              | ✅    |
+| Download DOCX            | ✅    |
+| Priority Support         | ✅    |
 
 ---
 
@@ -94,58 +98,64 @@
 ## File yang Diubah (Complete)
 
 ### Database
-| File | Perubahan |
-|------|-----------|
+
+| File                                                       | Perubahan                                                                   |
+| ---------------------------------------------------------- | --------------------------------------------------------------------------- |
 | `supabase/migrations/20260512000003_update_pro_quotas.sql` | Migration update semua tier quota, hapus Pro+, hapus LinkedIn, update harga |
 
 ### Source Code - Subscription & Config
-| File | Perubahan |
-|------|-----------|
+
+| File                      | Perubahan                                                          |
+| ------------------------- | ------------------------------------------------------------------ |
 | `src/lib/subscription.ts` | Update semua tier quotas, remove canLinkedInOptimize, update harga |
 
 ### Source Code - Pages (Marketing)
-| File | Perubahan |
-|------|-----------|
-| `src/routes/index.tsx` | Badge "Pro+" → "Pro", update harga di text |
-| `src/routes/fitur.tsx` | Badge consistency (already correct) |
-| `src/routes/harga.tsx` | Update tier features, comparison table, harga, SEO description |
-| `src/routes/blog.$slug.tsx` | Update harga di blog post |
+
+| File                        | Perubahan                                                      |
+| --------------------------- | -------------------------------------------------------------- |
+| `src/routes/index.tsx`      | Badge "Pro+" → "Pro", update harga di text                     |
+| `src/routes/fitur.tsx`      | Badge consistency (already correct)                            |
+| `src/routes/harga.tsx`      | Update tier features, comparison table, harga, SEO description |
+| `src/routes/blog.$slug.tsx` | Update harga di blog post                                      |
 
 ### Source Code - Authenticated Routes
-| File | Perubahan |
-|------|-----------|
-| `src/components/cv/cv-review-panel.tsx` | Remove pro_plus reference |
-| `src/components/subscription/feature-gate.tsx` | Remove pro_plus dari TIER_LEVEL |
-| `src/routes/_authenticated/akun.tsx` | Remove pro_plus, update semua harga |
-| `src/routes/_authenticated/admin/users.tsx` | Update harga di dropdown |
-| `src/routes/_authenticated/analitik.tsx` | Remove pro_plus reference |
-| `src/routes/_authenticated/cv.$id.tsx` | Comment update |
-| `src/routes/_authenticated/cv.index.tsx` | Remove pro_plus |
-| `src/routes/_authenticated/cv-review.$cvId.tsx` | Update harga upgrade |
-| `src/routes/_authenticated/cv-review.index.tsx` | Update harga upgrade |
-| `src/routes/_authenticated/dashboard.tsx` | Remove pro_plus, update harga |
-| `src/routes/_authenticated/simulasi-wawancara.tsx` | Remove pro_plus |
+
+| File                                               | Perubahan                           |
+| -------------------------------------------------- | ----------------------------------- |
+| `src/components/cv/cv-review-panel.tsx`            | Remove pro_plus reference           |
+| `src/components/subscription/feature-gate.tsx`     | Remove pro_plus dari TIER_LEVEL     |
+| `src/routes/_authenticated/akun.tsx`               | Remove pro_plus, update semua harga |
+| `src/routes/_authenticated/admin/users.tsx`        | Update harga di dropdown            |
+| `src/routes/_authenticated/analitik.tsx`           | Remove pro_plus reference           |
+| `src/routes/_authenticated/cv.$id.tsx`             | Comment update                      |
+| `src/routes/_authenticated/cv.index.tsx`           | Remove pro_plus                     |
+| `src/routes/_authenticated/cv-review.$cvId.tsx`    | Update harga upgrade                |
+| `src/routes/_authenticated/cv-review.index.tsx`    | Update harga upgrade                |
+| `src/routes/_authenticated/dashboard.tsx`          | Remove pro_plus, update harga       |
+| `src/routes/_authenticated/simulasi-wawancara.tsx` | Remove pro_plus                     |
 
 ---
 
 ## Harga Summary
 
-| Tier | Harga Lama | Harga Baru |
-|------|------------|------------|
-| Free | Rp 0 | Rp 0 |
-| Starter | Rp 19.000 | **Rp 14.900** |
-| Pro | Rp 49.000 | **Rp 39.000** |
+| Tier    | Harga Lama | Harga Baru    |
+| ------- | ---------- | ------------- |
+| Free    | Rp 0       | Rp 0          |
+| Starter | Rp 19.000  | **Rp 14.900** |
+| Pro     | Rp 49.000  | **Rp 39.000** |
 
 ---
 
 ## Checklist Status - All Complete
 
 ### Issue #1: Fitur Pro (Feature Gating)
+
 - [x] ✅ FIXED - `canInterviewSimulator` untuk Pro = true
 - [x] ✅ FIXED - `canAnalytics` untuk Pro = true
 - [x] ✅ FIXED - `canLinkedInOptimize` dihapus (fitur dihapus)
 
 ### Issue #2: Quota Pro Tier
+
 - [x] ✅ UPDATED - maxCvs: null → 10
 - [x] ✅ UPDATED - maxAiSuggestions: null → 200
 - [x] ✅ UPDATED - maxAtsScores: null → 50
@@ -158,14 +168,17 @@
 - [x] ✅ UPDATED - maxGuidedSessions: null → 100
 
 ### Issue #3: Badge Consistency
+
 - [x] ✅ FIXED - Landing page "Pro+" → "Pro" untuk Simulasi Wawancara
 
 ### Issue #4: Pro+ Tier Removal
+
 - [x] ✅ REMOVED - Pro+ tier dihapus dari semua file
 - [x] ✅ REMOVED - Type `Tier` sekarang hanya: "free" | "starter" | "pro"
 - [x] ✅ DELETED - Pro+ dari database migration
 
 ### Issue #5: LinkedIn Optimizer Removal
+
 - [x] ✅ REMOVED - canLinkedInOptimize dari TierLimits interface
 - [x] ✅ REMOVED - dari TIER_LIMITS semua tier
 - [x] ✅ REMOVED - dari getUserTierConfig function
@@ -173,6 +186,7 @@
 - [x] ✅ REMOVED - dari harga.tsx features & comparison table
 
 ### Issue #6: Harga Update
+
 - [x] ✅ UPDATED - Starter: Rp 19.000 → Rp 14.900
 - [x] ✅ UPDATED - Pro: Rp 49.000 → Rp 39.000
 - [x] ✅ UPDATED - priceMonthly di TIER_LIMITS
@@ -187,6 +201,7 @@
 - [x] ✅ UPDATED - dashboard.tsx upgrade card
 
 ### Issue #7: Free Tier Quotas Update
+
 - [x] ✅ UPDATED - maxAiSuggestions: 5 (unchanged)
 - [x] ✅ UPDATED - maxAtsScores: 1 (unchanged)
 - [x] ✅ UPDATED - maxTextPolish: 10 → 5
@@ -208,6 +223,7 @@
 ## Interfaces dan Types
 
 ### TierLimits Interface
+
 ```typescript
 export interface TierLimits {
   tier: Tier;
@@ -242,10 +258,11 @@ export interface TierLimits {
 ```
 
 ### Tier Type
+
 ```typescript
 export type Tier = "free" | "starter" | "pro";
 ```
 
 ---
 
-*Laporan ini dibuat berdasarkan analisis kode sumber dan database migrations.*
+_Laporan ini dibuat berdasarkan analisis kode sumber dan database migrations._

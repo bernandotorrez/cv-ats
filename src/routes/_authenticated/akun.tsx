@@ -45,7 +45,13 @@ export const Route = createFileRoute("/_authenticated/akun")({
 
 const TIER_INFO: Record<
   string,
-  { name: string; price: string; bg: string; text: string; icon: React.ComponentType<{ className?: string }> }
+  {
+    name: string;
+    price: string;
+    bg: string;
+    text: string;
+    icon: React.ComponentType<{ className?: string }>;
+  }
 > = {
   free: {
     name: "Free",
@@ -169,9 +175,7 @@ export function AkunPage() {
       usage.forEach((u: any) => {
         counts[u.feature] = (counts[u.feature] || 0) + 1;
       });
-      setAiUsage(
-        Object.entries(counts).map(([feature, count]) => ({ feature, count })),
-      );
+      setAiUsage(Object.entries(counts).map(([feature, count]) => ({ feature, count })));
     }
 
     setLoading(false);
@@ -214,8 +218,7 @@ export function AkunPage() {
     },
   ];
 
-  const displayName =
-    user?.user_metadata?.full_name || user?.email?.split("@")[0] || "Pengguna";
+  const displayName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "Pengguna";
   const initials = displayName
     .split(" ")
     .map((n: string) => n[0])
@@ -280,20 +283,10 @@ export function AkunPage() {
                   </div>
                   <div>
                     <CardTitle className="text-base">Subscription</CardTitle>
-                    <CardDescription>
-                      Paket kamu saat ini
-                    </CardDescription>
+                    <CardDescription>Paket kamu saat ini</CardDescription>
                   </div>
                 </div>
-                <Badge
-                  className={cn(
-                    "text-xs",
-                    tierInfo.bg,
-                    tierInfo.text,
-                  )}
-                >
-                  {tierInfo.name}
-                </Badge>
+                <Badge className={cn("text-xs", tierInfo.bg, tierInfo.text)}>{tierInfo.name}</Badge>
               </div>
             </CardHeader>
             <CardContent className="space-y-5">
@@ -330,9 +323,7 @@ export function AkunPage() {
                           {item.label}
                         </span>
                         <span className="text-xs font-medium">
-                          {item.max === null
-                            ? `${item.used}`
-                            : `${item.used}/${item.max}`}
+                          {item.max === null ? `${item.used}` : `${item.used}/${item.max}`}
                         </span>
                       </div>
                       <Progress
@@ -383,17 +374,26 @@ export function AkunPage() {
                 {[
                   {
                     label: "CV",
-                    value: subscription?.max_cvs === null ? "Unlimited" : `Maks ${subscription?.max_cvs}`,
+                    value:
+                      subscription?.max_cvs === null
+                        ? "Unlimited"
+                        : `Maks ${subscription?.max_cvs}`,
                     included: true,
                   },
                   {
                     label: "AI Saran",
-                    value: subscription?.quota_ai_suggest === null ? "Unlimited" : `${subscription?.quota_ai_suggest}/bln`,
+                    value:
+                      subscription?.quota_ai_suggest === null
+                        ? "Unlimited"
+                        : `${subscription?.quota_ai_suggest}/bln`,
                     included: true,
                   },
                   {
                     label: "AI Scoring",
-                    value: subscription?.quota_ai_score === null ? "Unlimited" : `${subscription?.quota_ai_score}/bln`,
+                    value:
+                      subscription?.quota_ai_score === null
+                        ? "Unlimited"
+                        : `${subscription?.quota_ai_score}/bln`,
                     included: true,
                   },
                   {
@@ -445,7 +445,12 @@ export function AkunPage() {
                     )}
                   >
                     <span>{f.label}</span>
-                    <span className={cn("text-xs font-medium", f.included ? "text-primary" : "text-muted-foreground")}>
+                    <span
+                      className={cn(
+                        "text-xs font-medium",
+                        f.included ? "text-primary" : "text-muted-foreground",
+                      )}
+                    >
                       {f.value}
                     </span>
                   </div>

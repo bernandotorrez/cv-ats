@@ -139,6 +139,7 @@ AI_API_KEY="sk-7n1yRLsYTpv79wVZpXL_tQ"
 **Dampak**: API key adalah secret yang tidak boleh di-commit ke source control. Jika file ini masuk git repo, key sudah compromised.
 
 **Rekomendasi**:
+
 - Rotate API key segera
 - Pastikan `.env` di `.gitignore`
 - Gunakan Vercel/Cloudflare env variables untuk deployment
@@ -149,13 +150,13 @@ AI_API_KEY="sk-7n1yRLsYTpv79wVZpXL_tQ"
 
 Ada **dua konfigurasi CSP yang bertentangan**:
 
-| Sumber | `security-headers.ts` | `vercel.json` |
-|--------|----------------------|---------------|
-| Midtrans scripts | ✅ `app.midtrans.com` | ❌ Tidak ada |
-| AI Gateway | ✅ `ai.sumopod.com` | ❌ `ai.gateway.lovable.dev` |
-| `unsafe-eval` | ✅ | ❌ |
-| WebSocket Supabase | ❌ | ✅ `wss://*.supabase.co` |
-| `frame-src` | ✅ | ❌ |
+| Sumber             | `security-headers.ts` | `vercel.json`               |
+| ------------------ | --------------------- | --------------------------- |
+| Midtrans scripts   | ✅ `app.midtrans.com` | ❌ Tidak ada                |
+| AI Gateway         | ✅ `ai.sumopod.com`   | ❌ `ai.gateway.lovable.dev` |
+| `unsafe-eval`      | ✅                    | ❌                          |
+| WebSocket Supabase | ❌                    | ✅ `wss://*.supabase.co`    |
+| `frame-src`        | ✅                    | ❌                          |
 
 **Dampak**: Midtrans payment, AI calls, dan Supabase realtime akan gagal tergantung header mana yang dipakai.
 
@@ -178,8 +179,9 @@ Kedua CSP mengizinkan `'unsafe-eval'` dan `'unsafe-inline'` yang melemahkan prot
 Tidak ada runtime check untuk mencegah import di browser:
 
 **Rekomendasi**: Tambah:
+
 ```ts
-if (typeof window !== 'undefined') throw new Error('supabaseAdmin cannot be used in browser');
+if (typeof window !== "undefined") throw new Error("supabaseAdmin cannot be used in browser");
 ```
 
 ---
@@ -255,37 +257,31 @@ Semua 11 tabel punya RLS enabled. Policies scoped dengan benar.
 
 ## 4. Summary — Semua Temuan
 
-| # | Severity | Isu | File |
-|---|----------|-----|------|
-| 1 | 🔴 CRITICAL | CORS `*` wildcard di semua edge functions | `_shared/cors.ts` |
-| 2 | 🔴 CRITICAL | `linkedin-import` tanpa otentikasi | `linkedin-import/index.ts` |
-| 3 | 🔴 CRITICAL | `send-email` tanpa otentikasi | `send-email/index.ts` |
-| 4 | 🔴 CRITICAL | `AI_API_KEY` di `.env` file | `.env` |
-| 5 | 🔴 CRITICAL | CSP headers bertabrakan | `vercel.json` vs `security-headers.ts` |
-| 6 | 🔴 CRITICAL | Tabel `payments` tidak ada | migration missing |
-| 7 | 🟡 HIGH | Tidak ada per-minute rate limiting | semua edge functions |
-| 8 | 🟡 HIGH | CSP pakai `unsafe-eval` + `unsafe-inline` | `vercel.json`, `security-headers.ts` |
-| 9 | 🟡 MEDIUM | AI Gateway error bocor ke client | `_shared/ai-common.ts:99` |
-| 10 | 🟡 MEDIUM | `supabaseAdmin` tanpa browser guard | `client.server.ts` |
-| 11 | 🟡 MEDIUM | `user_subscriptions` tanpa RLS INSERT/UPDATE | migration phase7 |
-| 12 | 🟡 LOW | `update_updated_at_column` pakai SECURITY DEFINER | migration #1 |
+| #   | Severity    | Isu                                               | File                                   |
+| --- | ----------- | ------------------------------------------------- | -------------------------------------- |
+| 1   | 🔴 CRITICAL | CORS `*` wildcard di semua edge functions         | `_shared/cors.ts`                      |
+| 2   | 🔴 CRITICAL | `linkedin-import` tanpa otentikasi                | `linkedin-import/index.ts`             |
+| 3   | 🔴 CRITICAL | `send-email` tanpa otentikasi                     | `send-email/index.ts`                  |
+| 4   | 🔴 CRITICAL | `AI_API_KEY` di `.env` file                       | `.env`                                 |
+| 5   | 🔴 CRITICAL | CSP headers bertabrakan                           | `vercel.json` vs `security-headers.ts` |
+| 6   | 🔴 CRITICAL | Tabel `payments` tidak ada                        | migration missing                      |
+| 7   | 🟡 HIGH     | Tidak ada per-minute rate limiting                | semua edge functions                   |
+| 8   | 🟡 HIGH     | CSP pakai `unsafe-eval` + `unsafe-inline`         | `vercel.json`, `security-headers.ts`   |
+| 9   | 🟡 MEDIUM   | AI Gateway error bocor ke client                  | `_shared/ai-common.ts:99`              |
+| 10  | 🟡 MEDIUM   | `supabaseAdmin` tanpa browser guard               | `client.server.ts`                     |
+| 11  | 🟡 MEDIUM   | `user_subscriptions` tanpa RLS INSERT/UPDATE      | migration phase7                       |
+| 12  | 🟡 LOW      | `update_updated_at_column` pakai SECURITY DEFINER | migration #1                           |
 
 ---
 
 ## 5. Prioritas Mitigasi
 
 **SEGERA (hari ini)**:
+
 1. Rotate `AI_API_KEY` & hapus dari `.env`
 2. Fix CORS ke domain spesifik
 3. Tambah otentikasi ke `linkedin-import` dan `send-email`
 
-**MINGGU INI**:
-4. Consolidate CSP headers
-5. Buat tabel `payments` dengan RLS
-6. Tambah per-minute rate limiting
+**MINGGU INI**: 4. Consolidate CSP headers 5. Buat tabel `payments` dengan RLS 6. Tambah per-minute rate limiting
 
-**SPRINT INI**:
-7. Sembunyikan AI Gateway error details
-8. Tambah browser guard ke `supabaseAdmin`
-9. Dokumentasikan RLS gap pada `user_subscriptions`
-10. Hapus `SECURITY DEFINER` dari trigger function
+**SPRINT INI**: 7. Sembunyikan AI Gateway error details 8. Tambah browser guard ke `supabaseAdmin` 9. Dokumentasikan RLS gap pada `user_subscriptions` 10. Hapus `SECURITY DEFINER` dari trigger function

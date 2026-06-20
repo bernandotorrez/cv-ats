@@ -2,7 +2,16 @@
  * AI Cover Letter — generate surat lamaran profesional
  * POST /ai-cover-letter
  */
-import { aiComplete, checkAndTrackQuota, corsResponse, errorResponse, getAdminClient, getUserId, getLanguageInstruction, type CvUiLang } from "../_shared/ai-common.ts";
+import {
+  aiComplete,
+  checkAndTrackQuota,
+  corsResponse,
+  errorResponse,
+  getAdminClient,
+  getUserId,
+  getLanguageInstruction,
+  type CvUiLang,
+} from "../_shared/ai-common.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 
 Deno.serve(async (req: Request) => {
@@ -14,7 +23,8 @@ Deno.serve(async (req: Request) => {
     const { cvId, cvData, jobDescription, companyName, positionName, language } = await req.json();
     const lang: CvUiLang = language === "en" ? "en" : "id";
 
-    if (!cvId || !cvData || !jobDescription) throw new Error("cvId, cvData, dan jobDescription diperlukan");
+    if (!cvId || !cvData || !jobDescription)
+      throw new Error("cvId, cvData, dan jobDescription diperlukan");
 
     const cvText = JSON.stringify(cvData, null, 2);
 

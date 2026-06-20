@@ -47,7 +47,12 @@ export function SuggestionPanel({
   };
 
   return (
-    <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
+    <Dialog
+      open={open}
+      onOpenChange={(o) => {
+        if (!o) onClose();
+      }}
+    >
       <DialogContent
         className="max-h-[85vh] overflow-y-auto sm:max-w-xl"
         onPointerDownOutside={(e) => e.preventDefault()}

@@ -101,54 +101,57 @@ function AdminUsersPage() {
   });
 
   // Load users with pagination
-  const loadUsers = useCallback(async (page: number = 1, query = "", tier = "all", sort = "desc") => {
-    setLoading(true);
+  const loadUsers = useCallback(
+    async (page: number = 1, query = "", tier = "all", sort = "desc") => {
+      setLoading(true);
 
-    const { data: sessionData } = await supabase.auth.getSession();
-    const token = sessionData.session?.access_token;
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 
-    if (!token || !supabaseUrl) {
-      toast.error("Session admin tidak valid. Silakan login ulang.");
+      if (!token || !supabaseUrl) {
+        toast.error("Session admin tidak valid. Silakan login ulang.");
+        setLoading(false);
+        return;
+      }
+
+      const params = new URLSearchParams({
+        page: String(page),
+        perPage: String(PAGE_SIZE),
+      });
+
+      if (query) params.set("search", query);
+      if (tier !== "all") params.set("tier", tier);
+      params.set("sort", sort);
+
+      const response = await fetch(`${supabaseUrl}/functions/v1/admin-users?${params}`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = (await response.json()) as AdminUsersResponse;
+
+      if (!response.ok || data.error) {
+        toast.error(data.error || "Gagal memuat semua user terdaftar");
+        setUsers([]);
+        setLoading(false);
+        return;
+      }
+
+      const rows = data?.users || [];
+      setUsers(rows);
+      setPagination({
+        page: data?.page || page,
+        pageSize: data?.perPage || PAGE_SIZE,
+        total: data?.total || rows.length,
+        totalPages: data?.totalPages || Math.ceil(rows.length / PAGE_SIZE),
+      });
       setLoading(false);
-      return;
-    }
-
-    const params = new URLSearchParams({
-      page: String(page),
-      perPage: String(PAGE_SIZE),
-    });
-
-    if (query) params.set("search", query);
-    if (tier !== "all") params.set("tier", tier);
-    params.set("sort", sort);
-
-    const response = await fetch(`${supabaseUrl}/functions/v1/admin-users?${params}`, {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    const data = (await response.json()) as AdminUsersResponse;
-
-    if (!response.ok || data.error) {
-      toast.error(data.error || "Gagal memuat semua user terdaftar");
-      setUsers([]);
-      setLoading(false);
-      return;
-    }
-
-    const rows = data?.users || [];
-    setUsers(rows);
-    setPagination({
-      page: data?.page || page,
-      pageSize: data?.perPage || PAGE_SIZE,
-      total: data?.total || rows.length,
-      totalPages: data?.totalPages || Math.ceil(rows.length / PAGE_SIZE),
-    });
-    setLoading(false);
-  }, []);
+    },
+    [],
+  );
 
   useEffect(() => {
     const timer = window.setTimeout(() => {

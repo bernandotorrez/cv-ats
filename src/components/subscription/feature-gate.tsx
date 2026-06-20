@@ -63,8 +63,7 @@ export function UpgradePrompt({
   return (
     <div className="rounded-lg border border-warning/30 bg-warning/5 p-3">
       <p className="text-sm text-muted-foreground">
-        Fitur <span className="font-medium text-foreground">{feature}</span>{" "}
-        tersedia untuk paket{" "}
+        Fitur <span className="font-medium text-foreground">{feature}</span> tersedia untuk paket{" "}
         <span className="font-semibold capitalize">{targetTier}</span> ke atas.
       </p>
       <a

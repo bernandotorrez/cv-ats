@@ -35,9 +35,10 @@ Deno.serve(async (req: Request) => {
     for (let i = 0; i < images.length; i++) {
       const imageBase64 = images[i];
 
-      const prompt = i === 0
-        ? `Ekstrak SEMUA teks dari gambar CV ini (halaman ${i + 1} dari ${images.length}). Ini adalah CV profesional. Ekstrak teks apa adanya — nama, kontak, pengalaman kerja, pendidikan, skill, dll. JANGAN tambahkan komentar atau analisis. HANYA teks yang ada di CV. Jika halaman kosong atau tidak ada teks, jawab "[KOSONG]".`
-        : `Ekstrak SEMUA teks dari gambar CV halaman ${i + 1} dari ${images.length}. JANGAN tambahkan komentar. HANYA teks yang ada di halaman ini. Jika kosong, jawab "[KOSONG]".`;
+      const prompt =
+        i === 0
+          ? `Ekstrak SEMUA teks dari gambar CV ini (halaman ${i + 1} dari ${images.length}). Ini adalah CV profesional. Ekstrak teks apa adanya — nama, kontak, pengalaman kerja, pendidikan, skill, dll. JANGAN tambahkan komentar atau analisis. HANYA teks yang ada di CV. Jika halaman kosong atau tidak ada teks, jawab "[KOSONG]".`
+          : `Ekstrak SEMUA teks dari gambar CV halaman ${i + 1} dari ${images.length}. JANGAN tambahkan komentar. HANYA teks yang ada di halaman ini. Jika kosong, jawab "[KOSONG]".`;
 
       const res = await fetch(AI_GATEWAY_URL, {
         method: "POST",
@@ -80,7 +81,9 @@ Deno.serve(async (req: Request) => {
     const fullText = extractedPages.join("\n\n");
 
     if (!fullText.trim()) {
-      throw new Error("Tidak ada teks yang bisa diekstrak dari CV. Pastikan CV berisi teks yang terbaca.");
+      throw new Error(
+        "Tidak ada teks yang bisa diekstrak dari CV. Pastikan CV berisi teks yang terbaca.",
+      );
     }
 
     return corsResponse({ text: fullText }, 200, req);

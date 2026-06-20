@@ -51,10 +51,7 @@ export function AiChatPanel({ cvId, cvData, language = "id" }: Props) {
       // Build context about the CV
       const cvContext = `KONTEKS CV SEDANG DIEDIT:\n- Nama: ${cvData.personal.fullName || "(belum diisi)"}\n- Posisi: ${cvData.personal.headline || "(belum diisi)"}\n- Ringkasan: ${cvData.personal.summary || "(belum diisi)"}\n- Pengalaman: ${cvData.experiences.length} entri\n- Pendidikan: ${cvData.educations.length} entri\n- Skill: ${cvData.skills.map((s) => s.name).join(", ") || "(belum diisi)"}`;
 
-      const allMessages = [
-        ...messages,
-        userMsg,
-      ];
+      const allMessages = [...messages, userMsg];
 
       // Add cv context to the last user message
       const msgsForApi = allMessages.map((m, i) => {
@@ -96,10 +93,7 @@ export function AiChatPanel({ cvId, cvData, language = "id" }: Props) {
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto py-2 space-y-3 text-sm">
         {messages.map((msg, i) => (
-          <div
-            key={i}
-            className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
-          >
+          <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
             <div
               className={`max-w-[85%] rounded-lg px-3 py-2 whitespace-pre-wrap ${
                 msg.role === "user"

@@ -1,13 +1,14 @@
 # DESIGN.md — CVKarir.id: Design System & SEO Strategy
 
 > **Version**: 1.0.0  
-> **Prinsip**: Clean · Accessible · Indonesian-First · WCAG 2.1 AA  
+> **Prinsip**: Clean · Accessible · Indonesian-First · WCAG 2.1 AA
 
 ---
 
 ## 1. Design Philosophy
 
 ### 1.1 Core Principles
+
 1. **Clarity First** — Pengguna harus tahu apa yang harus dilakukan dalam 3 detik pertama
 2. **Progressive Disclosure** — Tampilkan informasi penting dulu, detail saat dibutuhkan
 3. **Locally Resonant** — Terasa familiar untuk pengguna Indonesia, tidak terasa "bule"
@@ -15,6 +16,7 @@
 5. **Mobile-First** — >70% pengguna Indonesia akses via mobile
 
 ### 1.2 Aesthetic Direction
+
 **"Organic Professionalism"** — Perpaduan antara kehangatan hijau alam Indonesia dengan ketepatan desain professional modern. Terinspirasi dari kepercayaan diri, pertumbuhan, dan kesempatan karier.
 
 Bukan corporate yang kaku, bukan startup yang terlalu kasual. **Seimbang, hangat, dipercaya.**
@@ -24,79 +26,82 @@ Bukan corporate yang kaku, bukan startup yang terlalu kasual. **Seimbang, hangat
 ## 2. Color System
 
 ### 2.1 Brand Colors
+
 ```css
 :root {
   /* Primary Palette */
-  --color-primary: #468432;        /* Hijau utama — kepercayaan, pertumbuhan */
-  --color-primary-light: #5CA340;  /* Hover state primary */
-  --color-primary-dark: #335F24;   /* Active state, text on light bg */
-  --color-primary-50: #F0F7EC;     /* Background tint sangat tipis */
-  --color-primary-100: #D4EACA;    /* Background tint light */
-  --color-primary-200: #A9D595;    /* Border, subtle accents */
+  --color-primary: #468432; /* Hijau utama — kepercayaan, pertumbuhan */
+  --color-primary-light: #5ca340; /* Hover state primary */
+  --color-primary-dark: #335f24; /* Active state, text on light bg */
+  --color-primary-50: #f0f7ec; /* Background tint sangat tipis */
+  --color-primary-100: #d4eaca; /* Background tint light */
+  --color-primary-200: #a9d595; /* Border, subtle accents */
 
   /* Secondary Palette */
-  --color-secondary: #9AD872;      /* Hijau muda — energi, segar */
-  --color-secondary-light: #B2E48F;
-  --color-secondary-dark: #77C14E;
+  --color-secondary: #9ad872; /* Hijau muda — energi, segar */
+  --color-secondary-light: #b2e48f;
+  --color-secondary-dark: #77c14e;
 
   /* Accent Palette */
-  --color-accent-yellow: #FFEF91;  /* Kuning — highlight, perhatian positif */
-  --color-accent-yellow-dark: #F5DC3A; /* Badge, tooltip */
-  --color-accent-orange: #FFA02E;  /* Orange — CTA sekunder, warning */
-  --color-accent-orange-dark: #E8891A; /* Hover orange */
+  --color-accent-yellow: #ffef91; /* Kuning — highlight, perhatian positif */
+  --color-accent-yellow-dark: #f5dc3a; /* Badge, tooltip */
+  --color-accent-orange: #ffa02e; /* Orange — CTA sekunder, warning */
+  --color-accent-orange-dark: #e8891a; /* Hover orange */
 
   /* Neutral Palette */
-  --color-neutral-50: #F9FAFB;
-  --color-neutral-100: #F3F4F6;
-  --color-neutral-200: #E5E7EB;
-  --color-neutral-300: #D1D5DB;
-  --color-neutral-400: #9CA3AF;
-  --color-neutral-500: #6B7280;
-  --color-neutral-600: #4B5563;
+  --color-neutral-50: #f9fafb;
+  --color-neutral-100: #f3f4f6;
+  --color-neutral-200: #e5e7eb;
+  --color-neutral-300: #d1d5db;
+  --color-neutral-400: #9ca3af;
+  --color-neutral-500: #6b7280;
+  --color-neutral-600: #4b5563;
   --color-neutral-700: #374151;
-  --color-neutral-800: #1F2937;
+  --color-neutral-800: #1f2937;
   --color-neutral-900: #111827;
 
   /* Semantic Colors */
-  --color-success: #468432;        /* Sama dengan primary */
-  --color-warning: #FFA02E;        /* Orange */
-  --color-error: #DC2626;          /* Red */
-  --color-error-light: #FEF2F2;
-  --color-info: #2563EB;           /* Blue */
-  --color-info-light: #EFF6FF;
+  --color-success: #468432; /* Sama dengan primary */
+  --color-warning: #ffa02e; /* Orange */
+  --color-error: #dc2626; /* Red */
+  --color-error-light: #fef2f2;
+  --color-info: #2563eb; /* Blue */
+  --color-info-light: #eff6ff;
 
   /* Surface Colors */
-  --color-bg: #FFFFFF;
-  --color-bg-secondary: #F9FAFB;
-  --color-bg-tertiary: #F3F4F6;
-  --color-surface: #FFFFFF;
-  --color-surface-elevated: #FFFFFF; /* box-shadow untuk elevasi */
-  --color-border: #E5E7EB;
+  --color-bg: #ffffff;
+  --color-bg-secondary: #f9fafb;
+  --color-bg-tertiary: #f3f4f6;
+  --color-surface: #ffffff;
+  --color-surface-elevated: #ffffff; /* box-shadow untuk elevasi */
+  --color-border: #e5e7eb;
   --color-border-focus: #468432;
 
   /* Text Colors */
-  --color-text-primary: #111827;   /* Contrast 15.3:1 on white ✓ WCAG AAA */
+  --color-text-primary: #111827; /* Contrast 15.3:1 on white ✓ WCAG AAA */
   --color-text-secondary: #374151; /* Contrast 10.7:1 on white ✓ WCAG AAA */
-  --color-text-muted: #6B7280;     /* Contrast 4.6:1 on white ✓ WCAG AA */
-  --color-text-disabled: #9CA3AF;  /* Only for non-interactive elements */
-  --color-text-inverse: #FFFFFF;
-  --color-text-on-primary: #FFFFFF;/* White on #468432: 4.56:1 ✓ WCAG AA */
+  --color-text-muted: #6b7280; /* Contrast 4.6:1 on white ✓ WCAG AA */
+  --color-text-disabled: #9ca3af; /* Only for non-interactive elements */
+  --color-text-inverse: #ffffff;
+  --color-text-on-primary: #ffffff; /* White on #468432: 4.56:1 ✓ WCAG AA */
 }
 ```
 
 ### 2.2 Color Usage Rules
-| Context | Color | Rule |
-|---------|-------|------|
-| Primary CTA button | `--color-primary` | Selalu pakai teks putih |
-| Secondary CTA | `--color-accent-orange` | Untuk "Upgrade", "Coba Pro" |
-| Success state | `--color-primary` | CV score tinggi, success toast |
-| Warning | `--color-accent-orange` | Skor rendah, hampir habis limit |
-| Error | `--color-error` | Form error, destructive actions |
-| Highlight/Badge | `--color-accent-yellow` | "Populer", "Rekomendasi", label baru |
-| Background page | `--color-bg-secondary` | Authenticated pages |
-| Background cards | `--color-surface` | Dengan subtle shadow |
+
+| Context            | Color                   | Rule                                 |
+| ------------------ | ----------------------- | ------------------------------------ |
+| Primary CTA button | `--color-primary`       | Selalu pakai teks putih              |
+| Secondary CTA      | `--color-accent-orange` | Untuk "Upgrade", "Coba Pro"          |
+| Success state      | `--color-primary`       | CV score tinggi, success toast       |
+| Warning            | `--color-accent-orange` | Skor rendah, hampir habis limit      |
+| Error              | `--color-error`         | Form error, destructive actions      |
+| Highlight/Badge    | `--color-accent-yellow` | "Populer", "Rekomendasi", label baru |
+| Background page    | `--color-bg-secondary`  | Authenticated pages                  |
+| Background cards   | `--color-surface`       | Dengan subtle shadow                 |
 
 ### 2.3 Contrast Ratios (WCAG 2.1 AA Compliance)
+
 ```
 #468432 on #FFFFFF = 4.56:1  ✅ AA (large text + UI)
 #335F24 on #FFFFFF = 7.23:1  ✅ AAA
@@ -115,41 +120,44 @@ RULE: Jangan pernah pakai teks putih di atas #9AD872 atau #FFEF91 (kontras tidak
 ## 3. Typography
 
 ### 3.1 Font Families
+
 ```css
 :root {
   /* Display / Headings — Karakter kuat, mudah dibaca */
-  --font-display: 'Plus Jakarta Sans', 'DM Sans', sans-serif;
-  
+  --font-display: "Plus Jakarta Sans", "DM Sans", sans-serif;
+
   /* Body — Legibility di semua ukuran */
-  --font-body: 'Inter', 'Plus Jakarta Sans', sans-serif;
-  
+  --font-body: "Inter", "Plus Jakarta Sans", sans-serif;
+
   /* Monospace — untuk code, CV preview detail */
-  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --font-mono: "JetBrains Mono", "Fira Code", monospace;
 }
 
 /* Google Fonts import */
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap");
 ```
 
 **Mengapa Plus Jakarta Sans?**
+
 - Dirancang untuk readability di layar digital modern
 - Character yang unik tapi tidak mengganggu profesionalisme
 - Dukungan karakter Latin yang sempurna (termasuk é, ñ, dll)
 - Bukan Inter/Roboto yang terlalu generic
 
 ### 3.2 Type Scale
+
 ```css
 :root {
   /* Type Scale (Major Third — 1.25 ratio) */
-  --text-xs: 0.75rem;       /* 12px — captions, helper text */
-  --text-sm: 0.875rem;      /* 14px — secondary info, labels */
-  --text-base: 1rem;        /* 16px — body text (minimum untuk WCAG) */
-  --text-lg: 1.125rem;      /* 18px — emphasized body */
-  --text-xl: 1.25rem;       /* 20px — subtitle, card title */
-  --text-2xl: 1.5rem;       /* 24px — section heading */
-  --text-3xl: 1.875rem;     /* 30px — page heading */
-  --text-4xl: 2.25rem;      /* 36px — hero heading desktop */
-  --text-5xl: 3rem;         /* 48px — hero display */
+  --text-xs: 0.75rem; /* 12px — captions, helper text */
+  --text-sm: 0.875rem; /* 14px — secondary info, labels */
+  --text-base: 1rem; /* 16px — body text (minimum untuk WCAG) */
+  --text-lg: 1.125rem; /* 18px — emphasized body */
+  --text-xl: 1.25rem; /* 20px — subtitle, card title */
+  --text-2xl: 1.5rem; /* 24px — section heading */
+  --text-3xl: 1.875rem; /* 30px — page heading */
+  --text-4xl: 2.25rem; /* 36px — hero heading desktop */
+  --text-5xl: 3rem; /* 48px — hero display */
 
   /* Line Heights */
   --leading-tight: 1.25;
@@ -168,6 +176,7 @@ RULE: Jangan pernah pakai teks putih di atas #9AD872 atau #FFEF91 (kontras tidak
 ```
 
 ### 3.3 Typography Rules
+
 - **Body text minimum**: 16px (WCAG 1.4.4)
 - **Line height body**: 1.5 minimum
 - **Paragraph max-width**: 65-75 karakter (45ch-65ch) untuk readability
@@ -179,24 +188,26 @@ RULE: Jangan pernah pakai teks putih di atas #9AD872 atau #FFEF91 (kontras tidak
 ## 4. Spacing & Layout
 
 ### 4.1 Spacing Scale (4px base)
+
 ```css
 :root {
-  --space-1: 0.25rem;  /* 4px */
-  --space-2: 0.5rem;   /* 8px */
-  --space-3: 0.75rem;  /* 12px */
-  --space-4: 1rem;     /* 16px */
-  --space-5: 1.25rem;  /* 20px */
-  --space-6: 1.5rem;   /* 24px */
-  --space-8: 2rem;     /* 32px */
-  --space-10: 2.5rem;  /* 40px */
-  --space-12: 3rem;    /* 48px */
-  --space-16: 4rem;    /* 64px */
-  --space-20: 5rem;    /* 80px */
-  --space-24: 6rem;    /* 96px */
+  --space-1: 0.25rem; /* 4px */
+  --space-2: 0.5rem; /* 8px */
+  --space-3: 0.75rem; /* 12px */
+  --space-4: 1rem; /* 16px */
+  --space-5: 1.25rem; /* 20px */
+  --space-6: 1.5rem; /* 24px */
+  --space-8: 2rem; /* 32px */
+  --space-10: 2.5rem; /* 40px */
+  --space-12: 3rem; /* 48px */
+  --space-16: 4rem; /* 64px */
+  --space-20: 5rem; /* 80px */
+  --space-24: 6rem; /* 96px */
 }
 ```
 
 ### 4.2 Grid System
+
 ```css
 /* Container widths */
 --container-sm: 640px;
@@ -211,16 +222,18 @@ RULE: Jangan pernah pakai teks putih di atas #9AD872 atau #FFEF91 (kontras tidak
 ```
 
 ### 4.3 Border Radius
+
 ```css
---radius-sm: 0.25rem;   /* 4px — small elements */
---radius-md: 0.5rem;    /* 8px — inputs, small cards */
---radius-lg: 0.75rem;   /* 12px — cards, modals */
---radius-xl: 1rem;      /* 16px — larger cards */
---radius-2xl: 1.5rem;   /* 24px — hero elements */
---radius-full: 9999px;  /* Pills, badges, avatars */
+--radius-sm: 0.25rem; /* 4px — small elements */
+--radius-md: 0.5rem; /* 8px — inputs, small cards */
+--radius-lg: 0.75rem; /* 12px — cards, modals */
+--radius-xl: 1rem; /* 16px — larger cards */
+--radius-2xl: 1.5rem; /* 24px — hero elements */
+--radius-full: 9999px; /* Pills, badges, avatars */
 ```
 
 ### 4.4 Shadows
+
 ```css
 --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
 --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
@@ -236,11 +249,12 @@ RULE: Jangan pernah pakai teks putih di atas #9AD872 atau #FFEF91 (kontras tidak
 ## 5. Component Design Specifications
 
 ### 5.1 Buttons
+
 ```css
 /* Primary Button */
 .btn-primary {
   background: var(--color-primary);
-  color: #FFFFFF;
+  color: #ffffff;
   padding: 10px 20px; /* min 44x44px touch target */
   border-radius: var(--radius-md);
   font-weight: var(--font-semibold);
@@ -248,10 +262,20 @@ RULE: Jangan pernah pakai teks putih di atas #9AD872 atau #FFEF91 (kontras tidak
   transition: all 150ms ease;
   min-height: 44px; /* WCAG 2.5.5 */
 }
-.btn-primary:hover { background: var(--color-primary-light); }
-.btn-primary:active { background: var(--color-primary-dark); }
-.btn-primary:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
-.btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-primary:hover {
+  background: var(--color-primary-light);
+}
+.btn-primary:active {
+  background: var(--color-primary-dark);
+}
+.btn-primary:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+.btn-primary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
 
 /* CTA Button (Upgrade) */
 .btn-cta {
@@ -278,6 +302,7 @@ RULE: Jangan pernah pakai teks putih di atas #9AD872 atau #FFEF91 (kontras tidak
 | xl | 14px 32px | 56px | 18px |
 
 ### 5.2 Form Inputs
+
 ```css
 .input {
   height: 44px; /* WCAG touch target */
@@ -287,27 +312,32 @@ RULE: Jangan pernah pakai teks putih di atas #9AD872 atau #FFEF91 (kontras tidak
   font-size: var(--text-base); /* 16px — prevent iOS zoom */
   color: var(--color-text-primary);
   background: var(--color-surface);
-  transition: border-color 150ms, box-shadow 150ms;
+  transition:
+    border-color 150ms,
+    box-shadow 150ms;
 }
 .input:focus {
   border-color: var(--color-primary);
   box-shadow: var(--shadow-focus);
   outline: none;
 }
-.input:invalid, .input[aria-invalid="true"] {
+.input:invalid,
+.input[aria-invalid="true"] {
   border-color: var(--color-error);
   box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15);
 }
 ```
 
 **Input Rules**:
+
 - Font size MINIMUM 16px (mencegah auto-zoom di iOS)
 - Semua input WAJIB punya `<label>` yang terhubung via `htmlFor`/`id`
 - Error message: merah + ikon + teks deskriptif (bukan hanya "Input salah")
 - Placeholder BUKAN pengganti label
-- Required field: tanda asterisk (*) dengan tooltip penjelasan
+- Required field: tanda asterisk (\*) dengan tooltip penjelasan
 
 ### 5.3 Cards
+
 ```css
 .card {
   background: var(--color-surface);
@@ -331,6 +361,7 @@ RULE: Jangan pernah pakai teks putih di atas #9AD872 atau #FFEF91 (kontras tidak
 ```
 
 ### 5.4 ATS Score Widget
+
 ```
 ┌─────────────────────────────────────┐
 │  Skor ATS CV Anda                   │
@@ -356,6 +387,7 @@ RULE: Jangan pernah pakai teks putih di atas #9AD872 atau #FFEF91 (kontras tidak
 ```
 
 ### 5.5 Subscription Badge
+
 ```
 Free:    [ Free ]          — neutral grey, outlined
 Starter: [ Starter ⭐ ]    — primary green
@@ -368,6 +400,7 @@ Pro+:    [ Pro+ 💎 ]       — purple/premium gradient
 ## 6. Page Layouts
 
 ### 6.1 Landing Page Structure
+
 ```
 SECTION 1: Hero
 ├── Headline: "Buat CV ATS Friendly, Lolos Seleksi Lebih Mudah"
@@ -418,6 +451,7 @@ FOOTER
 ```
 
 ### 6.2 CV Editor Layout
+
 ```
 ┌──────────────────────────────────────────────────────┐
 │ HEADER: Logo | CV Title (editable inline) | [Save ✓] │
@@ -452,58 +486,80 @@ MOBILE: Tab bar "Form | Preview | Skor" di bawah
 ## 7. Motion & Animation
 
 ### 7.1 Animation Principles
+
 - **Purposeful**: Animasi harus membantu, bukan menghambat
 - **Fast**: Max 300ms untuk microinteractions, 500ms untuk page transitions
 - **Subtle**: Subtlety > showiness untuk aplikasi profesional
 - **Reducible**: Hormati `prefers-reduced-motion`
 
 ### 7.2 Timing Functions
+
 ```css
 --ease-in: cubic-bezier(0.4, 0, 1, 1);
---ease-out: cubic-bezier(0, 0, 0.2, 1);    /* Untuk elemen masuk */
+--ease-out: cubic-bezier(0, 0, 0.2, 1); /* Untuk elemen masuk */
 --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
 --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1); /* Untuk pop-in effects */
 ```
 
 ### 7.3 Transition Durations
+
 ```css
---duration-75: 75ms;    /* Hover state changes */
---duration-150: 150ms;  /* Button clicks, input focus */
---duration-200: 200ms;  /* Card hover, tooltip */
---duration-300: 300ms;  /* Modal open, drawer slide */
---duration-500: 500ms;  /* Page transitions */
+--duration-75: 75ms; /* Hover state changes */
+--duration-150: 150ms; /* Button clicks, input focus */
+--duration-200: 200ms; /* Card hover, tooltip */
+--duration-300: 300ms; /* Modal open, drawer slide */
+--duration-500: 500ms; /* Page transitions */
 ```
 
 ### 7.4 Key Animations
+
 ```css
 /* ATS Score progress bar — draw animation */
 @keyframes score-fill {
-  from { width: 0%; }
-  to { width: var(--score-percent); }
+  from {
+    width: 0%;
+  }
+  to {
+    width: var(--score-percent);
+  }
 }
 
 /* Toast notification entrance */
 @keyframes toast-in {
-  from { transform: translateY(100%); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 /* Loading skeleton pulse */
 @keyframes skeleton-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
 }
 
 /* Feature card hover lift */
 .feature-card:hover {
   transform: translateY(-4px);
-  transition: transform var(--duration-200) var(--ease-out),
-              box-shadow var(--duration-200) var(--ease-out);
+  transition:
+    transform var(--duration-200) var(--ease-out),
+    box-shadow var(--duration-200) var(--ease-out);
 }
 
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
@@ -515,6 +571,7 @@ MOBILE: Tab bar "Form | Preview | Skor" di bawah
 ## 8. Accessibility (WCAG 2.1 AA)
 
 ### 8.1 Keyboard Navigation
+
 - Tab order: logis mengikuti visual flow
 - Skip to main content link (tersembunyi, muncul saat focus)
 - Modal trap focus saat terbuka
@@ -523,12 +580,16 @@ MOBILE: Tab bar "Form | Preview | Skor" di bawah
 
 ```html
 <!-- Skip to main content -->
-<a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-white focus:rounded">
+<a
+  href="#main-content"
+  class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-white focus:rounded"
+>
   Langsung ke konten utama
 </a>
 ```
 
 ### 8.2 Screen Reader Support
+
 ```tsx
 // ARIA patterns yang wajib diimplementasikan:
 
@@ -562,6 +623,7 @@ MOBILE: Tab bar "Form | Preview | Skor" di bawah
 ```
 
 ### 8.3 Focus Management
+
 ```css
 /* Visible focus indicator — WAJIB */
 :focus-visible {
@@ -574,6 +636,7 @@ MOBILE: Tab bar "Form | Preview | Skor" di bawah
 ```
 
 ### 8.4 Color Accessibility
+
 - Jangan bergantung hanya pada warna untuk menyampaikan informasi
 - Error: merah + ikon ⚠️ + teks
 - Success: hijau + ikon ✓ + teks
@@ -584,6 +647,7 @@ MOBILE: Tab bar "Form | Preview | Skor" di bawah
 ## 9. Responsive Design
 
 ### 9.1 Breakpoints (Mobile-First)
+
 ```css
 /* Tailwind breakpoints */
 sm:  640px   /* Landscape phone */
@@ -594,6 +658,7 @@ xl:  1280px  /* Desktop */
 ```
 
 ### 9.2 CV Editor Responsive Behavior
+
 ```
 Mobile (<768px):
   - Single column
@@ -611,6 +676,7 @@ Desktop (>1024px):
 ```
 
 ### 9.3 Touch Targets
+
 - Minimum 44×44px untuk semua interactive elements (WCAG 2.5.5)
 - Spacing antar touch targets: minimum 8px
 - Mobile bottom navigation: safe area insets untuk iPhone notch
@@ -622,42 +688,47 @@ Desktop (>1024px):
 ### 10.1 Target Keyword Map
 
 #### Cluster 1: CV Builder (Awareness + Intent)
-| Keyword | Volume/bln | Difficulty | Page Target |
-|---------|-----------|------------|-------------|
-| buat CV ATS | 8.100 | Medium | Homepage |
-| template CV ATS friendly | 5.400 | Medium | /templates |
-| CV builder Indonesia | 3.600 | Low | Homepage |
-| cara buat CV ATS | 6.200 | Low | /blog/cara-buat-cv-ats |
-| contoh CV ATS friendly | 4.400 | Low | /blog/contoh-cv-ats |
+
+| Keyword                  | Volume/bln | Difficulty | Page Target            |
+| ------------------------ | ---------- | ---------- | ---------------------- |
+| buat CV ATS              | 8.100      | Medium     | Homepage               |
+| template CV ATS friendly | 5.400      | Medium     | /templates             |
+| CV builder Indonesia     | 3.600      | Low        | Homepage               |
+| cara buat CV ATS         | 6.200      | Low        | /blog/cara-buat-cv-ats |
+| contoh CV ATS friendly   | 4.400      | Low        | /blog/contoh-cv-ats    |
 
 #### Cluster 2: Template CV (Informational)
-| Keyword | Volume/bln | Page Target |
-|---------|-----------|------------|
-| template CV gratis Indonesia | 9.900 | /templates |
-| template CV fresh graduate | 8.100 | /templates/fresh-graduate |
-| template CV bahasa inggris | 6.600 | /templates/english |
-| template CV HRD approved | 3.300 | /templates |
-| download template CV word | 12.100 | /templates (DOCX focus) |
+
+| Keyword                      | Volume/bln | Page Target               |
+| ---------------------------- | ---------- | ------------------------- |
+| template CV gratis Indonesia | 9.900      | /templates                |
+| template CV fresh graduate   | 8.100      | /templates/fresh-graduate |
+| template CV bahasa inggris   | 6.600      | /templates/english        |
+| template CV HRD approved     | 3.300      | /templates                |
+| download template CV word    | 12.100     | /templates (DOCX focus)   |
 
 #### Cluster 3: Tips Karier (Top of Funnel)
-| Keyword | Volume/bln | Page Target |
-|---------|-----------|------------|
-| cara lolos seleksi ATS | 4.800 | /tips/lolos-ats |
-| tips interview kerja | 14.800 | /tips/interview |
-| cara negosiasi gaji | 8.100 | /tips/negosiasi-gaji |
-| tips diterima kerja fresh graduate | 6.600 | /tips/fresh-graduate |
-| cara menulis pengalaman kerja di CV | 5.400 | /blog/pengalaman-kerja-cv |
+
+| Keyword                             | Volume/bln | Page Target               |
+| ----------------------------------- | ---------- | ------------------------- |
+| cara lolos seleksi ATS              | 4.800      | /tips/lolos-ats           |
+| tips interview kerja                | 14.800     | /tips/interview           |
+| cara negosiasi gaji                 | 8.100      | /tips/negosiasi-gaji      |
+| tips diterima kerja fresh graduate  | 6.600      | /tips/fresh-graduate      |
+| cara menulis pengalaman kerja di CV | 5.400      | /blog/pengalaman-kerja-cv |
 
 #### Cluster 4: Competitor & Alternative (High Intent)
-| Keyword | Volume/bln | Page Target |
-|---------|-----------|------------|
-| alternatif resume.io Indonesia | 1.200 | Landing (comparison) |
-| buat CV gratis tanpa daftar | 3.300 | Landing (guest preview) |
-| CV online gratis download PDF | 6.600 | Homepage |
+
+| Keyword                        | Volume/bln | Page Target             |
+| ------------------------------ | ---------- | ----------------------- |
+| alternatif resume.io Indonesia | 1.200      | Landing (comparison)    |
+| buat CV gratis tanpa daftar    | 3.300      | Landing (guest preview) |
+| CV online gratis download PDF  | 6.600      | Homepage                |
 
 ### 10.2 On-Page SEO Rules
 
 #### Title Tag Formula
+
 ```
 [Primary Keyword] — [Brand] | [Benefit]
 
@@ -671,11 +742,12 @@ Panjang: max 60 karakter (dipotong Google setelah 600px)
 ```
 
 #### Meta Description Formula
+
 ```
 [Manfaat utama] + [Social Proof / Differentiator] + [CTA]
 
 Contoh Homepage:
-"Buat CV yang lolos sistem ATS dengan panduan AI. Template profesional, 
+"Buat CV yang lolos sistem ATS dengan panduan AI. Template profesional,
 scoring otomatis, tips karier. Dipercaya 10.000+ pencari kerja Indonesia. Coba gratis!"
 
 Panjang: 150-160 karakter
@@ -683,6 +755,7 @@ Wajib ada: target keyword, CTA, uniqueness
 ```
 
 #### Heading Structure (H1-H6)
+
 ```
 HOMEPAGE:
 H1: "Buat CV ATS Friendly, Raih Karier Impian" (1x halaman)
@@ -695,6 +768,7 @@ H2: "Pertanyaan yang Sering Ditanyakan" (FAQ)
 ```
 
 #### URL Structure
+
 ```
 /                           → Homepage
 /templates                  → Template gallery
@@ -717,6 +791,7 @@ RULES:
 ```
 
 ### 10.3 Technical SEO Checklist
+
 ```
 ✅ Server-Side Rendering (Next.js App Router) — semua halaman public
 ✅ Canonical tag pada SEMUA halaman
@@ -738,6 +813,7 @@ RULES:
 ```
 
 ### 10.4 Content SEO Strategy
+
 ```
 BLOG: 2 artikel/minggu
 - Topik: ATS tips, CV guide, interview tips, karier Indonesia
@@ -758,6 +834,7 @@ EVERGREEN CONTENT:
 ```
 
 ### 10.5 Link Building Strategy
+
 - Guest post di: Glints Blog, Kalibrr Magazine, Kompas Karir, Detik Finance
 - PR: startup Indonesia media (Techinasia, DailySocial)
 - Forum: Kaskus Loker, Reddit r/indonesia, LinkedIn groups
@@ -768,6 +845,7 @@ EVERGREEN CONTENT:
 ## 11. Icon System
 
 Menggunakan **Lucide React** sebagai primary icon library:
+
 ```
 Consistent size: 20px (sm), 24px (md default), 32px (lg)
 Stroke width: 1.5px
@@ -790,6 +868,7 @@ ARIA: aria-hidden="true" + hidden dari screen reader
 ## 13. Loading States & Empty States
 
 ### Loading States
+
 ```
 Page load: Skeleton screen (bukan spinner)
 Button: Disable + spinner icon inline + teks "Memproses..."
@@ -798,6 +877,7 @@ PDF Generate: Progress bar dengan tahapan ("Memformat... Mengompres... Selesai!"
 ```
 
 ### Empty States
+
 ```
 No CVs yet:
   Ilustrasi: kosong/blank paper dengan pensil
@@ -814,6 +894,7 @@ No tips found:
 ## 14. Error States
 
 ### Form Errors
+
 ```
 ❌ Inline, di bawah field yang error
 ❌ Merah (#DC2626) + ikon ⚠️ + teks deskriptif
@@ -826,13 +907,14 @@ Contoh messages (Bahasa Indonesia):
 ```
 
 ### API/Network Errors
+
 ```
 Toast notification:
   - Error: merah, ikon X, teks singkat + tombol "Coba Lagi"
   - Success: hijau, ikon ✓
   - Warning: oranye, ikon ⚠️
   - Info: biru, ikon ℹ️
-  
+
 Position: pojok kanan bawah
 Duration: 5 detik (error), 3 detik (success)
 Stack: max 3 toast bersamaan
@@ -843,6 +925,7 @@ Stack: max 3 toast bersamaan
 ## 15. CV Template Design Specifications
 
 ### Aturan ATS-Safe Design
+
 ```
 ❌ JANGAN:
 - Text box / frame di luar main body
@@ -865,6 +948,7 @@ Stack: max 3 toast bersamaan
 ```
 
 ### Template T01 — Profesional Bersih
+
 ```
 Layout: Single column
 Font: Calibri 11pt

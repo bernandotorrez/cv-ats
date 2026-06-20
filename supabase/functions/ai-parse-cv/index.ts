@@ -6,7 +6,16 @@
  * Body: { rawText: string }
  */
 
-import { aiComplete, checkAndTrackQuota, corsResponse, errorResponse, getAdminClient, getUserId, getLanguageInstruction, type CvUiLang } from "../_shared/ai-common.ts";
+import {
+  aiComplete,
+  checkAndTrackQuota,
+  corsResponse,
+  errorResponse,
+  getAdminClient,
+  getUserId,
+  getLanguageInstruction,
+  type CvUiLang,
+} from "../_shared/ai-common.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 
 Deno.serve(async (req: Request) => {
@@ -76,7 +85,10 @@ PENTING:
     const result = await aiComplete(
       [
         { role: "system", content: parsePrompt },
-        { role: "user", content: `CV TEXT:\n\n${cvText}\n\nParse CV ini menjadi JSON terstruktur sesuai format yang dijelaskan.` },
+        {
+          role: "user",
+          content: `CV TEXT:\n\n${cvText}\n\nParse CV ini menjadi JSON terstruktur sesuai format yang dijelaskan.`,
+        },
       ],
       { temperature: 0.2, maxTokens: 4000, jsonMode: true },
       lang,

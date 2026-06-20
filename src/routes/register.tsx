@@ -7,13 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { PasswordStrength } from "@/components/ui/password-strength";
@@ -26,7 +20,8 @@ import { FcGoogle } from "react-icons/fc";
 // Format: alphanumeric, 6-20 characters, may contain hyphens/underscores
 const REFERRAL_CODE_REGEX = /^[a-zA-Z0-9_-]{6,20}$/;
 
-const referralCodeSchema = z.string()
+const referralCodeSchema = z
+  .string()
   .regex(REFERRAL_CODE_REGEX, "Format kode referral tidak valid")
   .max(20);
 
@@ -34,7 +29,10 @@ const referralCodeSchema = z.string()
  * Safely track referral signup with validation and rate limiting
  * SECURITY: Validates referral code format before sending to server
  */
-async function trackReferralSafely(code: string, userId: string): Promise<{ success: boolean; error?: string }> {
+async function trackReferralSafely(
+  code: string,
+  userId: string,
+): Promise<{ success: boolean; error?: string }> {
   // Step 1: Validate referral code format (client-side validation)
   const validation = referralCodeSchema.safeParse(code);
   if (!validation.success) {
@@ -215,9 +213,7 @@ function RegisterPage() {
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="font-display text-2xl">Daftar Gratis</CardTitle>
-          <CardDescription>
-            Mulai bikin CV ATS friendly dalam 1 menit.
-          </CardDescription>
+          <CardDescription>Mulai bikin CV ATS friendly dalam 1 menit.</CardDescription>
         </CardHeader>
         <CardContent>
           {/* Google Sign-Up */}
@@ -253,9 +249,7 @@ function RegisterPage() {
               <span className="w-full border-t" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card px-2 text-muted-foreground">
-                atau
-              </span>
+              <span className="bg-card px-2 text-muted-foreground">atau</span>
             </div>
           </div>
 
@@ -308,11 +302,7 @@ function RegisterPage() {
                   className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                   aria-label={showPassword ? "Sembunyikan password" : "Tampilkan password"}
                 >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
               <PasswordStrength password={password} />
@@ -343,17 +333,11 @@ function RegisterPage() {
               />
               <Label htmlFor="agreeTerms" className="text-xs leading-relaxed text-muted-foreground">
                 Dengan mendaftar, kamu setuju dengan{" "}
-                <Link
-                  to="/syarat-ketentuan"
-                  className="underline hover:text-foreground"
-                >
+                <Link to="/syarat-ketentuan" className="underline hover:text-foreground">
                   Syarat &amp; Ketentuan
                 </Link>{" "}
                 dan{" "}
-                <Link
-                  to="/kebijakan-privasi"
-                  className="underline hover:text-foreground"
-                >
+                <Link to="/kebijakan-privasi" className="underline hover:text-foreground">
                   Kebijakan Privasi
                 </Link>
                 . *
@@ -367,7 +351,11 @@ function RegisterPage() {
 
             <p className="text-center text-sm text-muted-foreground">
               Sudah punya akun?{" "}
-              <Link to="/login" search={{ redirect: "/dashboard" }} className="font-medium text-primary hover:underline">
+              <Link
+                to="/login"
+                search={{ redirect: "/dashboard" }}
+                className="font-medium text-primary hover:underline"
+              >
                 Masuk
               </Link>
             </p>

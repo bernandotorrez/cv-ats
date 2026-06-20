@@ -11,7 +11,9 @@ function extractDocxText(arrayBuffer: ArrayBuffer): Promise<string> {
   );
 }
 
-async function extractPdfText(arrayBuffer: ArrayBuffer): Promise<{ text: string; pageCount: number }> {
+async function extractPdfText(
+  arrayBuffer: ArrayBuffer,
+): Promise<{ text: string; pageCount: number }> {
   const pdfjs = await import("pdfjs-dist");
   pdfjs.GlobalWorkerOptions.workerSrc = new URL(
     "pdfjs-dist/build/pdf.worker.min.mjs",

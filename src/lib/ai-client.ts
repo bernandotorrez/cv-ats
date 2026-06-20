@@ -7,9 +7,7 @@
 import type { CvUiLang } from "./cv-translations";
 import { getSystemPrompt } from "./cv-prompts";
 
-const AI_GATEWAY_URL =
-  process.env.AI_GATEWAY_URL ||
-  "https://ai.sumopod.com/v1/chat/completions";
+const AI_GATEWAY_URL = process.env.AI_GATEWAY_URL || "https://ai.sumopod.com/v1/chat/completions";
 const AI_API_KEY = process.env.AI_API_KEY || "";
 
 export interface AiMessage {
@@ -38,9 +36,7 @@ export async function aiComplete(
   } = options;
 
   if (!AI_API_KEY) {
-    throw new Error(
-      "AI_API_KEY tidak dikonfigurasi. Tambahkan di environment variables.",
-    );
+    throw new Error("AI_API_KEY tidak dikonfigurasi. Tambahkan di environment variables.");
   }
 
   const allMessages: AiMessage[] = [
@@ -70,9 +66,7 @@ export async function aiComplete(
 
   if (!res.ok) {
     const errText = await res.text();
-    throw new Error(
-      `AI Gateway error (${res.status}): ${errText.slice(0, 300)}`,
-    );
+    throw new Error(`AI Gateway error (${res.status}): ${errText.slice(0, 300)}`);
   }
 
   const data = (await res.json()) as {
@@ -96,9 +90,7 @@ export async function aiCompleteStream(
   } = options;
 
   if (!AI_API_KEY) {
-    throw new Error(
-      "AI_API_KEY tidak dikonfigurasi. Tambahkan di environment variables.",
-    );
+    throw new Error("AI_API_KEY tidak dikonfigurasi. Tambahkan di environment variables.");
   }
 
   const allMessages: AiMessage[] = [
@@ -123,9 +115,7 @@ export async function aiCompleteStream(
 
   if (!res.ok) {
     const errText = await res.text();
-    throw new Error(
-      `AI Gateway stream error (${res.status}): ${errText.slice(0, 300)}`,
-    );
+    throw new Error(`AI Gateway stream error (${res.status}): ${errText.slice(0, 300)}`);
   }
 
   return res.body!;

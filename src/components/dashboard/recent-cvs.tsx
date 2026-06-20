@@ -57,9 +57,7 @@ export function RecentCvs({ cvs, onCreateCv }: RecentCvsProps) {
         <div>
           <h2 className="font-display text-base font-bold text-foreground">CV Kamu</h2>
           <p className="text-xs text-muted-foreground mt-0.5">
-            {cvs.length > 0
-              ? `${cvs.length} CV tersimpan — klik untuk edit`
-              : "Belum ada CV"}
+            {cvs.length > 0 ? `${cvs.length} CV tersimpan — klik untuk edit` : "Belum ada CV"}
           </p>
         </div>
         <Button asChild variant="ghost" size="sm" className="gap-1 text-xs h-8">
@@ -182,8 +180,7 @@ export function RecentCvs({ cvs, onCreateCv }: RecentCvsProps) {
                 onClick={onCreateCv}
                 className="flex items-center gap-1 text-xs font-semibold text-primary hover:text-primary/80 transition-colors"
               >
-                <Sparkles className="h-3.5 w-3.5" />
-                + Buat baru
+                <Sparkles className="h-3.5 w-3.5" />+ Buat baru
               </button>
             )}
           </div>

@@ -12,7 +12,13 @@ Deno.serve(async (req: Request) => {
   try {
     const userId = await getUserId(req);
     const admin = getAdminClient();
-    const { cvId, format = "pdf", withWatermark = false, html: directHtml, filename: directFilename } = await req.json();
+    const {
+      cvId,
+      format = "pdf",
+      withWatermark = false,
+      html: directHtml,
+      filename: directFilename,
+    } = await req.json();
 
     // Support direct HTML input for cover letter PDFs (no cvId required)
     if (directHtml) {
@@ -29,14 +35,12 @@ Deno.serve(async (req: Request) => {
 
       if (uploadError) throw new Error("Gagal mengunggah file");
 
-      const { data: urlData } = admin.storage
-        .from(bucketName)
-        .getPublicUrl(fileName);
+      const { data: urlData } = admin.storage.from(bucketName).getPublicUrl(fileName);
 
-      return new Response(
-        JSON.stringify({ url: urlData.publicUrl, fileName, format: "html" }),
-        { status: 200, headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
-      );
+      return new Response(JSON.stringify({ url: urlData.publicUrl, fileName, format: "html" }), {
+        status: 200,
+        headers: { ...corsHeaders(req), "Content-Type": "application/json" },
+      });
     }
 
     // CV PDF generation requires cvId
@@ -87,9 +91,7 @@ Deno.serve(async (req: Request) => {
     }
 
     // Get public URL
-    const { data: urlData } = admin.storage
-      .from(bucketName)
-      .getPublicUrl(fileName);
+    const { data: urlData } = admin.storage.from(bucketName).getPublicUrl(fileName);
 
     // Update CV with PDF URL and download count
     await admin
@@ -116,16 +118,17 @@ Deno.serve(async (req: Request) => {
     );
   } catch (e) {
     const message = e instanceof Error ? e.message : "Internal server error";
-    const status = message === "Unauthorized: No valid auth token"
-      ? 401
-      : message === "CV tidak ditemukan"
-        ? 404
-        : 500;
+    const status =
+      message === "Unauthorized: No valid auth token"
+        ? 401
+        : message === "CV tidak ditemukan"
+          ? 404
+          : 500;
     console.error("PDF generation error:", message);
-    return new Response(
-      JSON.stringify({ error: message }),
-      { status, headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
-    );
+    return new Response(JSON.stringify({ error: message }), {
+      status,
+      headers: { ...corsHeaders(req), "Content-Type": "application/json" },
+    });
   }
 });
 
@@ -172,11 +175,7 @@ function generateSurabayaHtml(
   const languages = (data.languages as Array<Record<string, string>>) || [];
   const certificates = (data.certificates as Array<Record<string, string>>) || [];
 
-  const contactParts = [
-    personal.email,
-    personal.phone,
-    personal.location,
-  ].filter(Boolean);
+  const contactParts = [personal.email, personal.phone, personal.location].filter(Boolean);
 
   return `<!DOCTYPE html>
 <html lang="id">
@@ -295,78 +294,118 @@ function generateSurabayaHtml(
   </div>
   
   <div class="content">
-    ${personal.summary ? `
+    ${
+      personal.summary
+        ? `
       <div class="section">
         <div class="section-title">Ringkasan Profesional</div>
         <div class="item-desc">${escapeHtml(personal.summary)}</div>
       </div>
-    ` : ""}
+    `
+        : ""
+    }
     
-    ${experiences.length > 0 ? `
+    ${
+      experiences.length > 0
+        ? `
       <div class="section">
         <div class="section-title">Pengalaman Kerja</div>
-        ${experiences.map((e: Record<string, unknown>) => `
+        ${experiences
+          .map(
+            (e: Record<string, unknown>) => `
           <div class="item">
             <div class="item-header">
               <div>
-                <div class="item-title">${escapeHtml(e.position as string || "")}</div>
-                <div class="item-subtitle">${escapeHtml(e.company as string || "")}${e.location ? ` • ${escapeHtml(e.location as string)}` : ""}</div>
+                <div class="item-title">${escapeHtml((e.position as string) || "")}</div>
+                <div class="item-subtitle">${escapeHtml((e.company as string) || "")}${e.location ? ` • ${escapeHtml(e.location as string)}` : ""}</div>
               </div>
-              <div class="item-date">${escapeHtml(e.startDate as string || "")} – ${e.current ? "Sekarang" : escapeHtml(e.endDate as string || "")}</div>
+              <div class="item-date">${escapeHtml((e.startDate as string) || "")} – ${e.current ? "Sekarang" : escapeHtml((e.endDate as string) || "")}</div>
             </div>
             ${e.description ? `<div class="item-desc">${escapeHtml(e.description as string).replace(/\n/g, "<br>")}</div>` : ""}
           </div>
-        `).join("")}
+        `,
+          )
+          .join("")}
       </div>
-    ` : ""}
+    `
+        : ""
+    }
     
-    ${educations.length > 0 ? `
+    ${
+      educations.length > 0
+        ? `
       <div class="section">
         <div class="section-title">Pendidikan</div>
-        ${educations.map((ed: Record<string, unknown>) => `
+        ${educations
+          .map(
+            (ed: Record<string, unknown>) => `
           <div class="item">
             <div class="item-header">
               <div>
-                <div class="item-title">${escapeHtml(ed.degree as string || "")}${ed.field ? `, ${escapeHtml(ed.field as string)}` : ""}</div>
-                <div class="item-subtitle">${escapeHtml(ed.school as string || "")}</div>
+                <div class="item-title">${escapeHtml((ed.degree as string) || "")}${ed.field ? `, ${escapeHtml(ed.field as string)}` : ""}</div>
+                <div class="item-subtitle">${escapeHtml((ed.school as string) || "")}</div>
               </div>
-              <div class="item-date">${escapeHtml(ed.startDate as string || "")} – ${escapeHtml(ed.endDate as string || "")}</div>
+              <div class="item-date">${escapeHtml((ed.startDate as string) || "")} – ${escapeHtml((ed.endDate as string) || "")}</div>
             </div>
             ${ed.description ? `<div class="item-desc">${escapeHtml(ed.description as string)}</div>` : ""}
           </div>
-        `).join("")}
+        `,
+          )
+          .join("")}
       </div>
-    ` : ""}
+    `
+        : ""
+    }
     
-    ${skills.length > 0 ? `
+    ${
+      skills.length > 0
+        ? `
       <div class="section">
         <div class="section-title">Keahlian</div>
         <div class="skills-grid">
-          ${skills.map((s: { name: string; level?: string }) => `
+          ${skills
+            .map(
+              (s: { name: string; level?: string }) => `
             <div class="skill-item">${escapeHtml(s.name)}${s.level ? ` <span style="color: #6b7280;">(${s.level})</span>` : ""}</div>
-          `).join("")}
+          `,
+            )
+            .join("")}
         </div>
       </div>
-    ` : ""}
+    `
+        : ""
+    }
     
-    ${languages.length > 0 ? `
+    ${
+      languages.length > 0
+        ? `
       <div class="section">
         <div class="section-title">Bahasa</div>
         <div>${languages.map((l: Record<string, string>) => `${escapeHtml(l.name)} (${escapeHtml(l.level)})`).join(" • ")}</div>
       </div>
-    ` : ""}
+    `
+        : ""
+    }
     
-    ${certificates.length > 0 ? `
+    ${
+      certificates.length > 0
+        ? `
       <div class="section">
         <div class="section-title">Sertifikat</div>
-        ${certificates.map((c: Record<string, string>) => `
+        ${certificates
+          .map(
+            (c: Record<string, string>) => `
           <div class="item">
             <div class="item-title">${escapeHtml(c.name)}</div>
             <div class="item-subtitle">${escapeHtml(c.issuer)} • ${escapeHtml(c.date)}</div>
           </div>
-        `).join("")}
+        `,
+          )
+          .join("")}
       </div>
-    ` : ""}
+    `
+        : ""
+    }
   </div>
   
   ${watermark ? '<div class="watermark">Dibuat dengan CV Pintar — cvpintar.web.id</div>' : ""}
@@ -396,26 +435,37 @@ function generateJakartaHtml(
   const languages = (data.languages as Array<Record<string, string>>) || [];
   const certificates = (data.certificates as Array<Record<string, string>>) || [];
 
-  const experiencesHtml = experiences.length > 0 ? `
+  const experiencesHtml =
+    experiences.length > 0
+      ? `
     <div class="section">
       <h2>PENGALAMAN KERJA</h2>
-      ${experiences.map((e: Record<string, unknown>) => `
+      ${experiences
+        .map(
+          (e: Record<string, unknown>) => `
         <div class="item">
           <div class="item-header">
             <strong>${e.position || ""} — ${e.company || ""}</strong>
-            <span class="date">${e.startDate || ""} – ${e.current ? "Sekarang" : (e.endDate || "")}</span>
+            <span class="date">${e.startDate || ""} – ${e.current ? "Sekarang" : e.endDate || ""}</span>
           </div>
           ${e.location ? `<div class="location">${e.location}</div>` : ""}
-          <p class="desc">${(e.description as string || "").replace(/\n/g, "<br>")}</p>
+          <p class="desc">${((e.description as string) || "").replace(/\n/g, "<br>")}</p>
         </div>
-      `).join("")}
+      `,
+        )
+        .join("")}
     </div>
-  ` : "";
+  `
+      : "";
 
-  const educationHtml = educations.length > 0 ? `
+  const educationHtml =
+    educations.length > 0
+      ? `
     <div class="section">
       <h2>PENDIDIKAN</h2>
-      ${educations.map((ed: Record<string, unknown>) => `
+      ${educations
+        .map(
+          (ed: Record<string, unknown>) => `
         <div class="item">
           <div class="item-header">
             <strong>${ed.degree || ""}${ed.field ? `, ${ed.field}` : ""}</strong>
@@ -424,34 +474,50 @@ function generateJakartaHtml(
           <div>${ed.school || ""}</div>
           ${ed.description ? `<p class="desc">${ed.description}</p>` : ""}
         </div>
-      `).join("")}
+      `,
+        )
+        .join("")}
     </div>
-  ` : "";
+  `
+      : "";
 
-  const skillsHtml = skills.length > 0 ? `
+  const skillsHtml =
+    skills.length > 0
+      ? `
     <div class="section">
       <h2>KEAHLIAN</h2>
       <p>${skills.map((s: { name: string }) => s.name).join(" • ")}</p>
     </div>
-  ` : "";
+  `
+      : "";
 
-  const langsHtml = languages.length > 0 ? `
+  const langsHtml =
+    languages.length > 0
+      ? `
     <div class="section">
       <h2>BAHASA</h2>
       <p>${languages.map((l: Record<string, string>) => `${l.name} (${l.level})`).join(" • ")}</p>
     </div>
-  ` : "";
+  `
+      : "";
 
-  const certHtml = certificates.length > 0 ? `
+  const certHtml =
+    certificates.length > 0
+      ? `
     <div class="section">
       <h2>SERTIFIKAT</h2>
-      ${certificates.map((c: Record<string, string>) => `
+      ${certificates
+        .map(
+          (c: Record<string, string>) => `
         <div class="item">
           <strong>${c.name}</strong> — ${c.issuer} <span class="date">(${c.date})</span>
         </div>
-      `).join("")}
+      `,
+        )
+        .join("")}
     </div>
-  ` : "";
+  `
+      : "";
 
   const contactParts = [
     personal.email,
@@ -459,9 +525,8 @@ function generateJakartaHtml(
     personal.location,
     personal.linkedin ? `linkedin.com/in/${personal.linkedin}` : "",
   ].filter(Boolean);
-  const contactHtml = contactParts.length > 0
-    ? `<p class="contact">${contactParts.join(" • ")}</p>`
-    : "";
+  const contactHtml =
+    contactParts.length > 0 ? `<p class="contact">${contactParts.join(" • ")}</p>` : "";
 
   return `<!DOCTYPE html>
 <html lang="id">
@@ -535,29 +600,52 @@ function escapeHtml(text: string): string {
     .replace(/'/g, "&#039;");
 }
 
-
 // ─── Other Templates (Using Jakarta as base for now) ───────────────
 
-function generateBandungHtml(title: string, data: Record<string, unknown>, watermark: boolean): string {
+function generateBandungHtml(
+  title: string,
+  data: Record<string, unknown>,
+  watermark: boolean,
+): string {
   return generateJakartaHtml(title, data, watermark);
 }
 
-function generateYogyaHtml(title: string, data: Record<string, unknown>, watermark: boolean): string {
+function generateYogyaHtml(
+  title: string,
+  data: Record<string, unknown>,
+  watermark: boolean,
+): string {
   return generateJakartaHtml(title, data, watermark);
 }
 
-function generateMedanHtml(title: string, data: Record<string, unknown>, watermark: boolean): string {
+function generateMedanHtml(
+  title: string,
+  data: Record<string, unknown>,
+  watermark: boolean,
+): string {
   return generateJakartaHtml(title, data, watermark);
 }
 
-function generateMakassarHtml(title: string, data: Record<string, unknown>, watermark: boolean): string {
+function generateMakassarHtml(
+  title: string,
+  data: Record<string, unknown>,
+  watermark: boolean,
+): string {
   return generateJakartaHtml(title, data, watermark);
 }
 
-function generateSemarangHtml(title: string, data: Record<string, unknown>, watermark: boolean): string {
+function generateSemarangHtml(
+  title: string,
+  data: Record<string, unknown>,
+  watermark: boolean,
+): string {
   return generateJakartaHtml(title, data, watermark);
 }
 
-function generateBaliHtml(title: string, data: Record<string, unknown>, watermark: boolean): string {
+function generateBaliHtml(
+  title: string,
+  data: Record<string, unknown>,
+  watermark: boolean,
+): string {
   return generateJakartaHtml(title, data, watermark);
 }

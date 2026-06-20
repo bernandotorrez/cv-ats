@@ -14,9 +14,7 @@ function AuthCallbackPage() {
     const handleCallback = async () => {
       try {
         // Exchange the auth code for a session (PKCE flow)
-        const { error } = await supabase.auth.exchangeCodeForSession(
-          window.location.href,
-        );
+        const { error } = await supabase.auth.exchangeCodeForSession(window.location.href);
 
         if (error) {
           console.error("[OAuth] Callback error:", error.message);

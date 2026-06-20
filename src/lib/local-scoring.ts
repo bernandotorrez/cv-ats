@@ -20,21 +20,69 @@ export interface ScoreResult {
 }
 
 const ACTION_VERBS = [
-  "memimpin", "mengembangkan", "meningkatkan", "mengelola", "merancang",
-  "mengoptimalkan", "membangun", "mengimplementasikan", "mengkoordinasi",
-  "menganalisis", "menyusun", "menginisiasi", "menyelesaikan", "mencapai",
-  "mengurangi", "menghasilkan", "mendapatkan", "memperoleh", "mendesain",
-  "lead", "led", "develop", "developed", "improve", "improved", "manage",
-  "managed", "design", "designed", "build", "built", "implement", "implemented",
-  "optimize", "optimized", "coordinate", "coordinated", "analyze", "analyzed",
-  "achieve", "achieved", "reduce", "reduced", "generate", "generated",
+  "memimpin",
+  "mengembangkan",
+  "meningkatkan",
+  "mengelola",
+  "merancang",
+  "mengoptimalkan",
+  "membangun",
+  "mengimplementasikan",
+  "mengkoordinasi",
+  "menganalisis",
+  "menyusun",
+  "menginisiasi",
+  "menyelesaikan",
+  "mencapai",
+  "mengurangi",
+  "menghasilkan",
+  "mendapatkan",
+  "memperoleh",
+  "mendesain",
+  "lead",
+  "led",
+  "develop",
+  "developed",
+  "improve",
+  "improved",
+  "manage",
+  "managed",
+  "design",
+  "designed",
+  "build",
+  "built",
+  "implement",
+  "implemented",
+  "optimize",
+  "optimized",
+  "coordinate",
+  "coordinated",
+  "analyze",
+  "analyzed",
+  "achieve",
+  "achieved",
+  "reduce",
+  "reduced",
+  "generate",
+  "generated",
 ];
 
 const METRIC_PATTERNS = [
-  /\d+%/, /\d+\s*orang/, /\d+\s*orang tim/, /\d+\s*klien/,
-  /\d+\s*juta/, /\d+\s*miliar/, /\d+\s*Rp/, /Rp\s*\d+/,
-  /\d+\s*proyek/, /\d+\s*pengguna/, /\d+\s*user/,
-  /\d+x/, /\d+\s*kali/, /meningkat.*\d+/, /menurun.*\d+/,
+  /\d+%/,
+  /\d+\s*orang/,
+  /\d+\s*orang tim/,
+  /\d+\s*klien/,
+  /\d+\s*juta/,
+  /\d+\s*miliar/,
+  /\d+\s*Rp/,
+  /Rp\s*\d+/,
+  /\d+\s*proyek/,
+  /\d+\s*pengguna/,
+  /\d+\s*user/,
+  /\d+x/,
+  /\d+\s*kali/,
+  /meningkat.*\d+/,
+  /menurun.*\d+/,
 ];
 
 /** Validasi email — support subdomain (contoh: user+tag@domain.co.id) */
@@ -56,13 +104,32 @@ export function scoreCvLocally(data: CvData, targetRole?: string): ScoreResult {
   const hasLanguages = data.languages.length > 0;
   const hasCertificates = data.certificates.length > 0;
 
-  if (!hasPersonal) { formatScore -= 25; weaknesses.push("Informasi kontak tidak lengkap"); }
-  if (!hasSummary) { formatScore -= 15; weaknesses.push("Ringkasan profil minimal 100 karakter"); }
-  if (!hasExperience) { formatScore -= 15; weaknesses.push("Belum ada pengalaman kerja"); }
-  if (!hasEducation) { formatScore -= 10; weaknesses.push("Belum ada data pendidikan"); }
-  if (!hasSkills) { formatScore -= 10; weaknesses.push("Belum ada daftar keahlian"); }
-  if (hasLanguages) { formatScore += 5; }
-  if (hasCertificates) { formatScore += 5; }
+  if (!hasPersonal) {
+    formatScore -= 25;
+    weaknesses.push("Informasi kontak tidak lengkap");
+  }
+  if (!hasSummary) {
+    formatScore -= 15;
+    weaknesses.push("Ringkasan profil minimal 100 karakter");
+  }
+  if (!hasExperience) {
+    formatScore -= 15;
+    weaknesses.push("Belum ada pengalaman kerja");
+  }
+  if (!hasEducation) {
+    formatScore -= 10;
+    weaknesses.push("Belum ada data pendidikan");
+  }
+  if (!hasSkills) {
+    formatScore -= 10;
+    weaknesses.push("Belum ada daftar keahlian");
+  }
+  if (hasLanguages) {
+    formatScore += 5;
+  }
+  if (hasCertificates) {
+    formatScore += 5;
+  }
 
   // Contact completeness (bagian dari format)
   if (!data.personal.fullName) formatScore -= 5;
@@ -91,7 +158,8 @@ export function scoreCvLocally(data: CvData, targetRole?: string): ScoreResult {
   let experienceScore = 0;
   const allDescriptions: string[] = [];
 
-  if (data.personal.summary && typeof data.personal.summary === "string") allDescriptions.push(data.personal.summary);
+  if (data.personal.summary && typeof data.personal.summary === "string")
+    allDescriptions.push(data.personal.summary);
   for (const exp of data.experiences) {
     if (exp.description) {
       if (typeof exp.description === "string") allDescriptions.push(exp.description);
@@ -137,7 +205,9 @@ export function scoreCvLocally(data: CvData, targetRole?: string): ScoreResult {
     strengths.push("Menggunakan kata kerja aksi yang kuat");
   } else if (totalActionVerbs > 0) {
     experienceScore += 15;
-    suggestions.push("Gunakan lebih banyak kata kerja aksi (memimpin, mengembangkan, meningkatkan)");
+    suggestions.push(
+      "Gunakan lebih banyak kata kerja aksi (memimpin, mengembangkan, meningkatkan)",
+    );
   } else if (data.experiences.length > 0) {
     weaknesses.push("Deskripsi pengalaman tidak menggunakan kata kerja aksi");
   }
@@ -169,9 +239,13 @@ export function scoreCvLocally(data: CvData, targetRole?: string): ScoreResult {
     data.personal.summary || "",
     data.personal.headline || "",
     ...data.experiences.map((e) => `${e.position} ${e.company} ${e.description || ""}`),
-    ...data.educations.map((e) => `${e.degree} ${e.school} ${e.field || ""} ${e.description || ""}`),
+    ...data.educations.map(
+      (e) => `${e.degree} ${e.school} ${e.field || ""} ${e.description || ""}`,
+    ),
     ...data.skills.map((s) => s.name),
-  ].join(" ").toLowerCase();
+  ]
+    .join(" ")
+    .toLowerCase();
 
   if (targetRole && targetRole.trim().length > 0) {
     const positionWords = targetRole.toLowerCase().split(/\s+/);
@@ -266,10 +340,10 @@ export function scoreCvLocally(data: CvData, targetRole?: string): ScoreResult {
   // format: 25%, experience: 25%, relevance: 15%, skills_match: 15%, keywords: 20%
   const overallScore = Math.round(
     formatScore * 0.25 +
-    experienceScore * 0.25 +
-    relevanceScore * 0.15 +
-    skillsMatchScore * 0.15 +
-    keywordScore * 0.20
+      experienceScore * 0.25 +
+      relevanceScore * 0.15 +
+      skillsMatchScore * 0.15 +
+      keywordScore * 0.2,
   );
 
   // Pastikan strength/weakness/suggestions tidak terlalu banyak

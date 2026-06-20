@@ -1,9 +1,9 @@
 /**
  * Security: Input Sanitization Utilities
- * 
+ *
  * Provides XSS protection for user-generated content.
  * All CV data and user inputs should be sanitized before rendering.
- * 
+ *
  * Last Updated: 2026-05-12
  */
 
@@ -24,7 +24,7 @@ export function sanitizeText(text: string): string {
 /**
  * Sanitize rich text - allows basic formatting
  * Use for: summary, description fields in CV
- * 
+ *
  * Allowed: p, br, strong, em, b, i, ul, ol, li, a (with href)
  */
 export function sanitizeRichText(html: string): string {
@@ -43,19 +43,19 @@ export function sanitizeRichText(html: string): string {
  */
 export function sanitizeUrl(url: string | null | undefined): string {
   if (!url) return "";
-  
+
   try {
     const sanitized = DOMPurify.sanitize(url, {
       ALLOWED_TAGS: [],
       ALLOWED_ATTR: [],
     });
-    
+
     // Validate URL format
     const urlPattern = /^https?:\/\/.+/i;
     if (!urlPattern.test(sanitized)) {
       return "";
     }
-    
+
     return sanitized.trim();
   } catch {
     return "";
@@ -67,18 +67,18 @@ export function sanitizeUrl(url: string | null | undefined): string {
  */
 export function sanitizeEmail(email: string): string {
   if (!email) return "";
-  
+
   const sanitized = DOMPurify.sanitize(email, {
     ALLOWED_TAGS: [],
     ALLOWED_ATTR: [],
   }).trim();
-  
+
   // Basic email validation
   const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailPattern.test(sanitized)) {
     return "";
   }
-  
+
   return sanitized;
 }
 
@@ -88,7 +88,7 @@ export function sanitizeEmail(email: string): string {
  */
 export function sanitizePhone(phone: string): string {
   if (!phone) return "";
-  
+
   return DOMPurify.sanitize(phone, {
     ALLOWED_TAGS: [],
     ALLOWED_ATTR: [],
@@ -103,31 +103,31 @@ export function sanitizePhone(phone: string): string {
  */
 export function sanitizeUuid(id: string): string | null {
   if (!id) return null;
-  
+
   const sanitized = DOMPurify.sanitize(id, {
     ALLOWED_TAGS: [],
     ALLOWED_ATTR: [],
   }).trim();
-  
+
   // UUID v4 format validation
   const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   if (!uuidPattern.test(sanitized)) {
     return null;
   }
-  
+
   return sanitized;
 }
 
 /**
  * Sanitize CV data object
  * Recursively sanitizes all string fields in a CV object
- * 
+ *
  * @param cvData - Raw CV data object
  * @returns Sanitized CV data object
  */
 export function sanitizeCVData<T extends Record<string, unknown>>(cvData: T): T {
   const sanitized = { ...cvData };
-  
+
   for (const [key, value] of Object.entries(sanitized)) {
     if (typeof value === "string") {
       // Apply appropriate sanitization based on field type
@@ -137,7 +137,11 @@ export function sanitizeCVData<T extends Record<string, unknown>>(cvData: T): T 
         (sanitized as Record<string, unknown>)[key] = sanitizePhone(value);
       } else if (key.includes("url") || key.includes("website") || key.includes("link")) {
         (sanitized as Record<string, unknown>)[key] = sanitizeUrl(value);
-      } else if (key.includes("summary") || key.includes("description") || key.includes("content")) {
+      } else if (
+        key.includes("summary") ||
+        key.includes("description") ||
+        key.includes("content")
+      ) {
         (sanitized as Record<string, unknown>)[key] = sanitizeRichText(value);
       } else {
         (sanitized as Record<string, unknown>)[key] = sanitizeText(value);
@@ -152,10 +156,12 @@ export function sanitizeCVData<T extends Record<string, unknown>>(cvData: T): T 
       });
     } else if (typeof value === "object" && value !== null) {
       // Recursively sanitize nested objects
-      (sanitized as Record<string, unknown>)[key] = sanitizeCVData(value as Record<string, unknown>);
+      (sanitized as Record<string, unknown>)[key] = sanitizeCVData(
+        value as Record<string, unknown>,
+      );
     }
   }
-  
+
   return sanitized;
 }
 
@@ -165,7 +171,7 @@ export function sanitizeCVData<T extends Record<string, unknown>>(cvData: T): T 
  */
 export function sanitizeFilename(filename: string): string {
   if (!filename) return "";
-  
+
   // Remove path traversal and dangerous characters
   return DOMPurify.sanitize(filename, {
     ALLOWED_TAGS: [],
@@ -206,6 +212,6 @@ export function containsXSS(content: string): boolean {
     /expression\s*\(/i, // CSS expressions
     /url\s*\(/i, // CSS url()
   ];
-  
+
   return xssPatterns.some((pattern) => pattern.test(content));
 }

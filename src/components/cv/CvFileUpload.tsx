@@ -72,9 +72,7 @@ export function CvFileUpload({
         <Loader2 className="h-10 w-10 animate-spin text-primary" />
         <div>
           <p className="font-medium text-sm">Mengekstrak teks dari CV...</p>
-          <p className="text-xs text-muted-foreground mt-1">
-            {currentFile?.name}
-          </p>
+          <p className="text-xs text-muted-foreground mt-1">{currentFile?.name}</p>
         </div>
       </div>
     );
@@ -127,16 +125,10 @@ export function CvFileUpload({
           <Upload className="h-7 w-7 text-primary" />
         </div>
         <div>
-          <p className="font-medium text-sm">
-            Seret & lepas CV kamu di sini
-          </p>
-          <p className="text-xs text-muted-foreground mt-1">
-            PDF atau DOCX · Maks 10MB
-          </p>
+          <p className="font-medium text-sm">Seret & lepas CV kamu di sini</p>
+          <p className="text-xs text-muted-foreground mt-1">PDF atau DOCX · Maks 10MB</p>
         </div>
-        <span className="text-xs text-primary font-medium">
-          atau klik untuk pilih file
-        </span>
+        <span className="text-xs text-primary font-medium">atau klik untuk pilih file</span>
       </div>
 
       {displayError && (

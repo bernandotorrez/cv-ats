@@ -22,7 +22,7 @@ let cachedAdminStatus: CachedAdminStatus | null = null;
  */
 export async function isAdmin(userId: string): Promise<boolean> {
   const now = Date.now();
-  
+
   // Check cache with TTL expiration
   if (
     cachedAdminStatus?.userId === userId &&
@@ -30,22 +30,22 @@ export async function isAdmin(userId: string): Promise<boolean> {
   ) {
     return cachedAdminStatus.isAdmin;
   }
-  
+
   // Fetch fresh from database
   const { data } = await supabase.rpc("has_role", {
     _user_id: userId,
     _role: "admin",
   });
-  
+
   const result = !!data;
-  
+
   // Update cache with timestamp
   cachedAdminStatus = {
     userId,
     isAdmin: result,
     cachedAt: now,
   };
-  
+
   return result;
 }
 

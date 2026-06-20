@@ -5,9 +5,11 @@
 ## Perubahan yang Dilakukan
 
 ### 1. Struktur Baru AI Tools
+
 Memisahkan halaman tools yang sebelumnya menggabungkan Cover Letter Generator dan Keyword Extractor menjadi 3 halaman terpisah:
 
 #### a. Tools Index Page (`/tools`)
+
 - **File**: `src/routes/_authenticated/tools.index.tsx`
 - **Fungsi**: Halaman pemilihan tool dengan CV picker
 - **Fitur**:
@@ -18,6 +20,7 @@ Memisahkan halaman tools yang sebelumnya menggabungkan Cover Letter Generator da
   - Validasi: redirect ke /cv jika belum punya CV
 
 #### b. Cover Letter Generator Page (`/tools/cover-letter/$cvId`)
+
 - **File**: `src/routes/_authenticated/tools.cover-letter.$cvId.tsx`
 - **Fungsi**: Generate cover letter dari CV + job description
 - **Fitur**:
@@ -28,11 +31,12 @@ Memisahkan halaman tools yang sebelumnya menggabungkan Cover Letter Generator da
   - Back button ke tools index
 
 #### c. Keyword Extractor Page (`/tools/keyword/$cvId`)
+
 - **File**: `src/routes/_authenticated/tools.keyword.$cvId.tsx` ✨ BARU
 - **Fungsi**: Ekstrak keyword dari job description untuk optimasi ATS
 - **Fitur**:
   - Input: Target posisi, job description
-  - Output: 
+  - Output:
     - Summary keyword
     - Hard Skills (badges)
     - Soft Skills (badges)
@@ -44,22 +48,27 @@ Memisahkan halaman tools yang sebelumnya menggabungkan Cover Letter Generator da
   - Back button ke tools index
 
 ### 2. Update Navigasi
+
 Updated links di berbagai halaman untuk mengarah ke struktur baru:
 
 #### a. CV Editor (`src/routes/_authenticated/cv.$id.tsx`)
+
 - Wrench icon button: `/tools/$cvId` → `/tools?cvId={id}`
 
 #### b. CV List (`src/routes/_authenticated/cv.index.tsx`)
+
 - "AI Tools" button: `/tools/$cvId` → `/tools?cvId={id}`
 - "Cover Letter" button: `/tools/$cvId` → `/tools/cover-letter/$cvId`
 
 #### c. Tool Pages
+
 - Cover Letter: Back button ke `/tools?cvId={cvId}`
 - Keyword Extractor: Back button ke `/tools?cvId={cvId}`
 
 ### 3. Improvements dari Versi Lama
 
 #### UX Improvements:
+
 - ✅ Fokus per tool - tidak ada distraksi dari tool lain
 - ✅ Layout lebih luas dan nyaman (2 kolom penuh)
 - ✅ Empty state yang jelas di result panel
@@ -69,6 +78,7 @@ Updated links di berbagai halaman untuk mengarah ke struktur baru:
 - ✅ Badge dengan warna berbeda untuk kategori keyword
 
 #### Technical Improvements:
+
 - ✅ Separation of concerns - setiap tool punya file sendiri
 - ✅ Reusable CV picker modal di index page
 - ✅ Better routing dengan search params untuk cvId
@@ -76,6 +86,7 @@ Updated links di berbagai halaman untuk mengarah ke struktur baru:
 - ✅ Type-safe dengan TypeScript
 
 ### 4. File yang Diubah
+
 ```
 CREATED:
 - src/routes/_authenticated/tools.index.tsx
@@ -93,12 +104,14 @@ DEPRECATED (masih ada, bisa dihapus nanti):
 ## Testing Checklist
 
 ### Tools Index Page
+
 - [ ] Buka `/tools` - tampil halaman pemilihan tool
 - [ ] Klik tool tanpa CV - redirect ke `/cv` dengan toast error
 - [ ] Klik tool dengan CV - muncul modal CV picker
 - [ ] Pilih CV dari modal - navigate ke tool page dengan cvId
 
 ### Cover Letter Generator
+
 - [ ] Buka `/tools/cover-letter/{cvId}` - load CV data
 - [ ] Input job description - enable button "Buat Cover Letter"
 - [ ] Klik generate - tampil hasil cover letter
@@ -108,6 +121,7 @@ DEPRECATED (masih ada, bisa dihapus nanti):
 - [ ] Klik back button - kembali ke tools index dengan cvId
 
 ### Keyword Extractor
+
 - [ ] Buka `/tools/keyword/{cvId}` - load CV data
 - [ ] Target posisi auto-fill dari CV headline
 - [ ] Input job description - enable button "Ekstrak Keyword"
@@ -120,6 +134,7 @@ DEPRECATED (masih ada, bisa dihapus nanti):
 - [ ] Klik back button - kembali ke tools index dengan cvId
 
 ### Navigation
+
 - [ ] Dari CV editor - klik wrench icon → tools index
 - [ ] Dari CV list - klik "AI Tools" → tools index
 - [ ] Dari CV list - klik "Cover Letter" → cover letter page

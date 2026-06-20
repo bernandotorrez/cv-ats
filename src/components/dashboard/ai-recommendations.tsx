@@ -64,12 +64,7 @@ export function AiRecommendations({ recommendations, onAction }: AiRecommendatio
 
       {/* Card content */}
       <div className="px-5 pb-4">
-        <div
-          className={cn(
-            "rounded-xl p-4 text-white",
-            current.gradient,
-          )}
-        >
+        <div className={cn("rounded-xl p-4 text-white", current.gradient)}>
           <div className="flex items-center gap-3 mb-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/20">
               <Icon className="h-5 w-5" />
@@ -228,7 +223,8 @@ export function getRecommendations(data: {
       id: "interview-sim",
       icon: Mic,
       title: "Latihan interview dengan AI",
-      description: "Simulasi wawancara realistis dengan feedback langsung untuk persiapan interview.",
+      description:
+        "Simulasi wawancara realistis dengan feedback langsung untuk persiapan interview.",
       cta: "Mulai Simulasi",
       action: "simulasi",
       gradient: "bg-gradient-to-br from-rose-500 to-pink-600",
@@ -242,7 +238,8 @@ export function getRecommendations(data: {
       id: "upgrade",
       icon: Sparkles,
       title: "Buka semua tools AI",
-      description: "Upgrade untuk CV Review AI, Auto Tailor, simulasi interview, dan tools lainnya.",
+      description:
+        "Upgrade untuk CV Review AI, Auto Tailor, simulasi interview, dan tools lainnya.",
       cta: "Lihat Paket",
       action: "upgrade",
       gradient: "bg-gradient-to-br from-amber-500 to-amber-700",

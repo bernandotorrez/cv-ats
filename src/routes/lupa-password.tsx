@@ -6,13 +6,7 @@ import { buildSeo } from "@/lib/seo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { HCaptchaWidget } from "@/components/ui/hcaptcha";
@@ -57,13 +51,10 @@ function ForgotPage() {
     setCaptchaError(null);
 
     setLoading(true);
-    const { error } = await supabase.auth.resetPasswordForEmail(
-      parsed.data.email,
-      {
-        redirectTo: `${window.location.origin}/reset-password`,
-        captchaToken,
-      },
-    );
+    const { error } = await supabase.auth.resetPasswordForEmail(parsed.data.email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+      captchaToken,
+    });
     setLoading(false);
 
     setCaptchaToken(null);
@@ -85,12 +76,9 @@ function ForgotPage() {
     <div className="container-page flex min-h-[80vh] items-center justify-center py-12">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle className="font-display text-2xl">
-            Lupa Password
-          </CardTitle>
+          <CardTitle className="font-display text-2xl">Lupa Password</CardTitle>
           <CardDescription>
-            Masukkan email akun untuk menerima link reset password. Link
-            berlaku selama 1 jam.
+            Masukkan email akun untuk menerima link reset password. Link berlaku selama 1 jam.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -120,11 +108,7 @@ function ForgotPage() {
               error={captchaError}
               resetKey={captchaResetKey}
             />
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={loading}
-            >
+            <Button type="submit" className="w-full" disabled={loading}>
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Kirim Link Reset
             </Button>

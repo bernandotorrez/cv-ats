@@ -1,16 +1,16 @@
 /**
  * Security: Subresource Integrity (SRI) Utilities
- * 
+ *
  * SRI is a security feature that allows you to verify that resources
  * (JavaScript, CSS) are delivered without unexpected manipulation.
- * 
+ *
  * HOW SRI WORKS:
  * 1. You include a hash (SHA-256, SHA-384, or SHA-512) with the resource
  * 2. Browser computes hash of fetched resource
  * 3. If hashes don't match, resource is blocked
- * 
+ *
  * Last Updated: 2026-05-12
- * 
+ *
  * @see https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity
  */
 
@@ -21,7 +21,7 @@
 /**
  * hCaptcha Script
  * URL: https://js.hcaptcha.com/1/api.js
- * 
+ *
  * Note: Hashes for CDN scripts change frequently with updates.
  * For @hcaptcha/react-hcaptcha, the package manages the script loading.
  * Add SRI to package.json if needed:
@@ -34,7 +34,7 @@ export const HCAPTCHA_SRI = {
 /**
  * Vercel Analytics
  * URL: https://va.vercel-scripts.com/v1/script.js
- * 
+ *
  * Managed by @vercel/analytics package - SRI handled by the package.
  */
 export const VERCEL_SRI = {
@@ -46,34 +46,34 @@ export const VERCEL_SRI = {
 /**
  * Generate SRI hash for a given string
  * Use this to generate hashes for CDN scripts
- * 
+ *
  * @param content - The script content or URL
  * @param algorithm - Hash algorithm (sha256, sha384, sha512)
  * @returns Base64-encoded hash with algorithm prefix
  */
 export async function generateSRI(
   content: string,
-  algorithm: "sha256" | "sha384" | "sha512" = "sha384"
+  algorithm: "sha256" | "sha384" | "sha512" = "sha384",
 ): Promise<string> {
   const encoder = new TextEncoder();
   const data = encoder.encode(content);
   const hashBuffer = await crypto.subtle.digest(algorithm, data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   const hashBase64 = btoa(String.fromCharCode(...hashArray));
-  
+
   return `${algorithm}-${hashBase64}`;
 }
 
 /**
  * Fetch a URL and generate its SRI hash
- * 
+ *
  * @param url - The URL to fetch and hash
  * @param algorithm - Hash algorithm
  * @returns SRI hash string
  */
 export async function generateSRIFromURL(
   url: string,
-  algorithm: "sha256" | "sha384" | "sha512" = "sha384"
+  algorithm: "sha256" | "sha384" | "sha512" = "sha384",
 ): Promise<string> {
   const response = await fetch(url);
   const content = await response.text();
@@ -93,33 +93,33 @@ interface ScriptTagOptions {
 
 /**
  * Create an HTML script tag with SRI
- * 
+ *
  * @param options - Script tag options
  * @returns HTML string for the script tag
  */
 export function createScriptTag(options: ScriptTagOptions): string {
   const attrs: string[] = [`src="${options.src}"`];
-  
+
   if (options.integrity) {
     attrs.push(`integrity="${options.integrity}"`);
   }
-  
+
   if (options.crossOrigin) {
     attrs.push(`crossorigin="${options.crossOrigin}"`);
   }
-  
+
   if (options.async) {
     attrs.push("async");
   }
-  
+
   if (options.defer) {
     attrs.push("defer");
   }
-  
+
   if (options.type) {
     attrs.push(`type="${options.type}"`);
   }
-  
+
   return `<script ${attrs.join(" ")}></script>`;
 }
 
@@ -131,7 +131,7 @@ export function validateSRIRequired(scriptUrl: string, allowedDomains?: string[]
   // For now, just log a warning. In production, this could be enforced.
   console.warn(
     `[SRI] Consider adding integrity hash for external script: ${scriptUrl}`,
-    "See src/lib/sri.ts for SRI utilities"
+    "See src/lib/sri.ts for SRI utilities",
   );
 }
 
@@ -140,7 +140,7 @@ export function validateSRIRequired(scriptUrl: string, allowedDomains?: string[]
 /**
  * Generate a CSP nonce for inline scripts
  * Use with Content-Security-Policy: script-src 'nonce-{value}'
- * 
+ *
  * @param length - Length of the nonce (default: 16 bytes)
  * @returns Base64-encoded nonce
  */

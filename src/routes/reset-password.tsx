@@ -6,13 +6,7 @@ import { buildSeo } from "@/lib/seo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { PasswordStrength } from "@/components/ui/password-strength";
 import { Loader2, Eye, EyeOff } from "lucide-react";
@@ -76,12 +70,8 @@ function ResetPage() {
     <div className="container-page flex min-h-[80vh] items-center justify-center py-12">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle className="font-display text-2xl">
-            Atur Password Baru
-          </CardTitle>
-          <CardDescription>
-            Masukkan password baru untuk akun kamu.
-          </CardDescription>
+          <CardTitle className="font-display text-2xl">Atur Password Baru</CardTitle>
+          <CardDescription>Masukkan password baru untuk akun kamu.</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4" noValidate>
@@ -124,15 +114,9 @@ function ResetPage() {
                   onChange={(e) => setConfirm(e.target.value)}
                   placeholder="Ulangi password"
                   className="pr-10"
-                  aria-invalid={
-                    confirm.length > 0 && password !== confirm
-                      ? "true"
-                      : undefined
-                  }
+                  aria-invalid={confirm.length > 0 && password !== confirm ? "true" : undefined}
                   aria-describedby={
-                    confirm.length > 0 && password !== confirm
-                      ? "confirm-error"
-                      : undefined
+                    confirm.length > 0 && password !== confirm ? "confirm-error" : undefined
                   }
                 />
                 <button
@@ -157,7 +141,11 @@ function ResetPage() {
             </Button>
 
             <p className="text-center text-sm text-muted-foreground">
-              <Link to="/login" search={{ redirect: "/dashboard" }} className="font-medium text-primary hover:underline">
+              <Link
+                to="/login"
+                search={{ redirect: "/dashboard" }}
+                className="font-medium text-primary hover:underline"
+              >
                 Kembali ke Masuk
               </Link>
             </p>

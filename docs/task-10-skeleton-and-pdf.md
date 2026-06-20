@@ -5,10 +5,13 @@
 ## 1. Dashboard Skeleton Loading
 
 ### Implementasi
+
 Membuat skeleton loading component yang match dengan struktur dashboard untuk memberikan feedback visual saat data loading.
 
 ### File yang Dibuat
+
 **`src/components/ui/dashboard-skeleton.tsx`**
+
 - Component skeleton loading yang reusable
 - Match dengan struktur dashboard:
   - Welcome header dengan nama user
@@ -22,7 +25,9 @@ Membuat skeleton loading component yang match dengan struktur dashboard untuk me
   - Tips card (3 items)
 
 ### File yang Diubah
+
 **`src/routes/_authenticated/dashboard.tsx`**
+
 - Import `DashboardSkeleton` component
 - Tambah conditional rendering:
   ```typescript
@@ -34,25 +39,31 @@ Membuat skeleton loading component yang match dengan struktur dashboard untuk me
 ### Struktur Skeleton
 
 #### Welcome Header
+
 - Skeleton untuk nama user (h-8 w-64)
 - Skeleton untuk subtitle (h-4 w-96)
 - 2 button skeletons (Buat CV Baru & Akun)
 
 #### Tier Banner
+
 - Icon skeleton (h-9 w-9 rounded-full)
 - Badge skeleton (h-5 w-20)
 - Text skeleton (h-3 w-40)
 - Button skeleton untuk upgrade (h-9 w-36)
 
 #### Usage Progress Cards (8 cards)
+
 Setiap card berisi:
+
 - Icon skeleton (h-7 w-7 rounded-md)
 - Label skeleton (h-4 w-20)
 - Usage text skeleton (h-3 w-12)
 - Progress bar skeleton (h-1.5 w-full)
 
 #### Power Features (4 cards)
+
 Setiap card berisi:
+
 - Icon skeleton (h-9 w-9 rounded-xl)
 - Badge skeleton (h-5 w-20)
 - Title skeleton (h-5 w-32)
@@ -60,12 +71,16 @@ Setiap card berisi:
 - Action link skeleton (h-4 w-24)
 
 #### Quick Actions (8 buttons)
+
 Setiap button berisi:
+
 - Icon skeleton (h-8 w-8 rounded-lg)
 - Label skeleton (h-3 w-16)
 
 #### Recent CVs (3 items)
+
 Setiap item berisi:
+
 - Icon skeleton (h-9 w-9 rounded-lg)
 - Title skeleton (h-4 w-32)
 - Subtitle skeleton (h-3 w-48)
@@ -73,12 +88,15 @@ Setiap item berisi:
 - Edit icon skeleton (h-4 w-4)
 
 #### Activity Feed (5 items)
+
 Setiap item berisi:
+
 - Dot skeleton (h-2 w-2 rounded-full)
 - Label skeleton (h-4 w-full)
 - Time skeleton (h-3 w-16)
 
 #### Upgrade Card
+
 - Icon skeleton (h-8 w-8 rounded-full)
 - Title skeleton (h-4 w-40)
 - 4 feature list skeletons
@@ -86,11 +104,14 @@ Setiap item berisi:
 - Price & button skeletons
 
 #### Tips Card (3 items)
+
 Setiap item berisi:
+
 - Bullet skeleton (h-4 w-4)
 - Text skeleton (h-4 w-full)
 
 ### Benefits
+
 - ✅ Better UX - user tahu halaman sedang loading
 - ✅ Prevent layout shift - skeleton match dengan content
 - ✅ Professional look - smooth transition dari skeleton ke content
@@ -101,52 +122,58 @@ Setiap item berisi:
 ## 2. Cover Letter PDF Download
 
 ### Implementasi
+
 Menambahkan fungsi download cover letter dalam format PDF dengan layout profesional.
 
 ### File yang Diubah
+
 **`src/routes/_authenticated/tools.cover-letter.$cvId.tsx`**
 
 #### Fungsi Baru: `handleDownloadPdf()`
+
 ```typescript
 const handleDownloadPdf = async () => {
   // 1. Create HTML content dengan format surat formal
   // 2. Call edge function generate-pdf
   // 3. Download PDF file
-}
+};
 ```
 
 #### HTML Template untuk PDF
+
 Format surat lamaran profesional:
+
 - **Header Section**:
   - Sender info (nama, email, phone, location dari CV)
   - Tanggal (format Indonesia)
   - Recipient info (HRD perusahaan, posisi)
-  
 - **Body Section**:
   - Content cover letter dengan paragraf terformat
   - Text alignment: justify
   - Line height: 1.6
-  
 - **Closing Section**:
   - "Hormat saya,"
   - Signature space (3em margin)
   - Nama lengkap
 
 #### Styling PDF
+
 ```css
 @page {
   size: A4;
   margin: 2.5cm;
 }
 body {
-  font-family: 'Times New Roman', Times, serif;
+  font-family: "Times New Roman", Times, serif;
   font-size: 12pt;
   line-height: 1.6;
 }
 ```
 
 #### UI Changes
+
 Button download sekarang split menjadi 2:
+
 - **TXT Button**: Download sebagai plain text (existing)
 - **PDF Button**: Download sebagai PDF (new)
 
@@ -160,6 +187,7 @@ Button download sekarang split menjadi 2:
 ```
 
 ### Flow Download PDF
+
 1. User klik button "PDF"
 2. Show loading toast: "Membuat PDF..."
 3. Generate HTML content dengan data:
@@ -174,13 +202,16 @@ Button download sekarang split menjadi 2:
 8. Show success toast
 
 ### Error Handling
+
 - Try-catch untuk handle errors
 - Dismiss loading toast on error
 - Show error toast dengan message
 - Fallback ke download TXT jika PDF gagal
 
 ### Dependencies
+
 Menggunakan:
+
 - Supabase Edge Function: `generate-pdf`
 - Browser APIs: `Blob`, `URL.createObjectURL`, `atob`
 - Toast notifications untuk feedback
@@ -190,6 +221,7 @@ Menggunakan:
 ## Testing Checklist
 
 ### Dashboard Skeleton
+
 - [ ] Buka `/dashboard` saat pertama kali login
 - [ ] Skeleton loading tampil sebelum data load
 - [ ] Skeleton match dengan layout dashboard
@@ -198,6 +230,7 @@ Menggunakan:
 - [ ] Responsive di mobile, tablet, desktop
 
 ### Cover Letter PDF
+
 - [ ] Generate cover letter di `/tools/cover-letter/{cvId}`
 - [ ] Klik button "PDF" setelah cover letter generated
 - [ ] Loading toast muncul: "Membuat PDF..."
@@ -222,6 +255,7 @@ Menggunakan:
   - [ ] Loading toast dismissed on error
 
 ### Regression Testing
+
 - [ ] Button "TXT" masih berfungsi (download .txt)
 - [ ] Button "Salin" masih berfungsi (copy to clipboard)
 - [ ] Button "Reset" masih berfungsi
@@ -233,9 +267,11 @@ Menggunakan:
 ## File Summary
 
 ### CREATED
+
 - `src/components/ui/dashboard-skeleton.tsx` - Skeleton loading component
 
 ### MODIFIED
+
 - `src/routes/_authenticated/dashboard.tsx` - Add skeleton loading
 - `src/routes/_authenticated/tools.cover-letter.$cvId.tsx` - Add PDF download
 
@@ -244,12 +280,14 @@ Menggunakan:
 ## Notes
 
 ### Dashboard Skeleton
+
 - Skeleton menggunakan `Skeleton` component dari shadcn/ui
 - Animation: `animate-pulse` (default dari Skeleton component)
 - Warna: `bg-muted` (match dengan theme)
 - Responsive: menggunakan grid yang sama dengan dashboard
 
 ### Cover Letter PDF
+
 - PDF generation menggunakan edge function (server-side)
 - HTML to PDF conversion di server untuk hasil yang konsisten
 - Format surat mengikuti standar surat lamaran Indonesia
@@ -257,10 +295,10 @@ Menggunakan:
 - Base64 encoding untuk transfer PDF data
 
 ### Future Improvements
+
 1. **Dashboard Skeleton**:
    - Add shimmer effect untuk animation yang lebih smooth
    - Customize skeleton berdasarkan tier (free vs paid)
-   
 2. **Cover Letter PDF**:
    - Add option untuk customize font (Arial, Calibri, etc)
    - Add option untuk customize margin

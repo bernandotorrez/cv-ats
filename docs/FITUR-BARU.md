@@ -9,18 +9,20 @@
 ## 1. Analisis Pasar & Gap
 
 ### Kondisi Saat Ini
+
 CV Pintar sudah memiliki fondasi kuat: CV builder, AI scoring, templates, subscription tiers. Namun ada beberapa gap besar yang membatasi pertumbuhan:
 
-| Gap | Dampak | Opportunity |
-|-----|--------|-------------|
-| User bikin CV lalu... apa? | Drop-off setelah download | **Job Board + Matching** |
-| Tidak ada alasan kembali | Retensi rendah | **Application Tracker** |
-| Tidak tahu nilai CV mereka | Conversion rendah ke paid | **CV Analytics** |
-| Growth hanya dari SEO/ads | CAC tinggi | **Referral Program** |
-| Pro janji fitur yang belum ada | Churn Pro user | **Interview Simulator** |
-| Share hanya via link | Kurang viral di Indonesia | **WhatsApp Share** |
+| Gap                            | Dampak                    | Opportunity              |
+| ------------------------------ | ------------------------- | ------------------------ |
+| User bikin CV lalu... apa?     | Drop-off setelah download | **Job Board + Matching** |
+| Tidak ada alasan kembali       | Retensi rendah            | **Application Tracker**  |
+| Tidak tahu nilai CV mereka     | Conversion rendah ke paid | **CV Analytics**         |
+| Growth hanya dari SEO/ads      | CAC tinggi                | **Referral Program**     |
+| Pro janji fitur yang belum ada | Churn Pro user            | **Interview Simulator**  |
+| Share hanya via link           | Kurang viral di Indonesia | **WhatsApp Share**       |
 
 ### Persona & Pain Points
+
 - **Fresh Graduate**: "Udah punya CV bagus, tapi lowongan di mana? Dan gimana cara tracking lamaran?"
 - **Profesional**: "Gue apply 20+ perusahaan, susah tracking status lamaran satu-satu."
 - **Power User**: "Gue bayar Pro tapi fitur Interview Simulator belum ada."
@@ -30,12 +32,14 @@ CV Pintar sudah memiliki fondasi kuat: CV builder, AI scoring, templates, subscr
 ## 2. Fitur yang Diusulkan
 
 ### F-11: WhatsApp Share (Quick Win)
+
 **Priority**: P0 | **Effort**: Low | **Target**: Viral growth
 
 CV bisa langsung dibagikan via WhatsApp dengan teks terformat + pratinjau link.
 Karena WhatsApp adalah platform komunikasi #1 di Indonesia, fitur ini akan mendorong pertumbuhan organik.
 
 **Acceptance Criteria**:
+
 - Tombol "Bagikan via WhatsApp" di halaman CV & share
 - Teks template menarik: "✨ Lihat CV ATS-friendly aku! Dibuat dalam 10 menit pakai cvpintar.web.id"
 - Link preview dengan OG image CV
@@ -44,11 +48,13 @@ Karena WhatsApp adalah platform komunikasi #1 di Indonesia, fitur ini akan mendo
 ---
 
 ### F-12: CV Analytics (Pro Feature)
+
 **Priority**: P0 | **Effort**: Medium | **Target**: Monetisasi
 
 Dashboard analitik CV: berapa kali CV dilihat, didownload, dibagikan. Memberikan nilai tambah untuk user Pro+.
 
 **Acceptance Criteria**:
+
 - Halaman `/analitik` (authenticated, Pro only)
 - Metrics: Total views, unique viewers, downloads, shares
 - Timeline: views/downloads per hari (chart)
@@ -58,11 +64,13 @@ Dashboard analitik CV: berapa kali CV dilihat, didownload, dibagikan. Memberikan
 ---
 
 ### F-13: Referral Program
+
 **Priority**: P0 | **Effort**: Medium | **Target**: Viral growth + akuisisi murah
 
 Program referral dengan kode unik. User dapat 1 bulan Starter gratis per referral yang berhasil upgrade.
 
 **Acceptance Criteria**:
+
 - Setiap user punya kode referral unik
 - Halaman `/referral` menampilkan kode, statistik, dan reward
 - Promo banner di dashboard: "Ajak teman, dapat gratis!"
@@ -72,11 +80,13 @@ Program referral dengan kode unik. User dapat 1 bulan Starter gratis per referra
 ---
 
 ### F-14: Application Tracker / Pelacak Lamaran
+
 **Priority**: P0 | **Effort**: Medium-High | **Target**: Retensi
 
 User bisa mencatat dan melacak status lamaran kerja mereka. Ini adalah retention loop — user kembali untuk update status.
 
 **Acceptance Criteria**:
+
 - Halaman `/lamaran` (authenticated)
 - CRUD: Tambah lamaran (posisi, perusahaan, tanggal apply, status)
 - Status: Applied, Viewed, Interview, Technical Test, Offering, Accepted, Rejected
@@ -88,11 +98,13 @@ User bisa mencatat dan melacak status lamaran kerja mereka. Ini adalah retention
 ---
 
 ### F-15: Job Board / Lowongan Pekerjaan
+
 **Priority**: P1 | **Effort**: Medium | **Target**: Traffic + engagement
 
 Halaman lowongan kerja yang relevan dengan user. Bisa berupa curated listings manual atau integrasi API.
 
 **Acceptance Criteria**:
+
 - Halaman `/lowongan` (public)
 - List lowongan dengan filter: posisi, lokasi, industri, level
 - Setiap lowongan: judul, perusahaan, lokasi, deskripsi singkat
@@ -104,11 +116,13 @@ Halaman lowongan kerja yang relevan dengan user. Bisa berupa curated listings ma
 ---
 
 ### F-16: Interview Simulator / Simulasi Wawancara
+
 **Priority**: P1 | **Effort**: High | **Target**: Monetisasi Pro
 
 Fitur yang sudah dijanjikan di tier Pro. AI-powered mock interview dengan feedback real-time.
 
 **Acceptance Criteria**:
+
 - Halaman `/simulasi-wawancara` (authenticated, Pro only)
 - Pilih: posisi, level, industri
 - AI generate 5-10 pertanyaan interview
@@ -136,6 +150,7 @@ Fitur yang sudah dijanjikan di tier Pro. AI-powered mock interview dengan feedba
 ```
 
 **Prioritas Implementasi**:
+
 1. WhatsApp Share (quick win, viral)
 2. CV Analytics (monetisasi, sudah dijanjikan)
 3. Referral Program (growth engine)
@@ -260,15 +275,15 @@ CREATE POLICY "Users can manage own interview sessions" ON public.interview_sess
 
 ## 5. Route Plan
 
-| Route | Page | Auth | Tier |
-|-------|------|------|------|
-| `/lowongan` | Job listings (public) | No | All |
-| `/lowongan/$slug` | Job detail (public) | No | All |
-| `/lamaran` | Application tracker | Yes | All |
-| `/analitik` | CV analytics | Yes | Pro |
-| `/referral` | Referral dashboard | Yes | All |
-| `/simulasi-wawancara` | Interview simulator | Yes | Pro |
-| `/simulasi-wawancara/$id` | Interview session result | Yes | Pro |
+| Route                     | Page                     | Auth | Tier |
+| ------------------------- | ------------------------ | ---- | ---- |
+| `/lowongan`               | Job listings (public)    | No   | All  |
+| `/lowongan/$slug`         | Job detail (public)      | No   | All  |
+| `/lamaran`                | Application tracker      | Yes  | All  |
+| `/analitik`               | CV analytics             | Yes  | Pro  |
+| `/referral`               | Referral dashboard       | Yes  | All  |
+| `/simulasi-wawancara`     | Interview simulator      | Yes  | Pro  |
+| `/simulasi-wawancara/$id` | Interview session result | Yes  | Pro  |
 
 ---
 

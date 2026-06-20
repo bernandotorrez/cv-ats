@@ -91,7 +91,12 @@ export const Route = createFileRoute("/blog/$slug")({
           "@type": "BreadcrumbList",
           itemListElement: [
             { "@type": "ListItem", position: 1, name: "Beranda", item: "https://cvpintar.web.id" },
-            { "@type": "ListItem", position: 2, name: "Blog", item: "https://cvpintar.web.id/blog" },
+            {
+              "@type": "ListItem",
+              position: 2,
+              name: "Blog",
+              item: "https://cvpintar.web.id/blog",
+            },
             { "@type": "ListItem", position: 3, name: post.title },
           ],
         },

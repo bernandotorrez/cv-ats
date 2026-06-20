@@ -167,11 +167,7 @@ const tipsContent: Record<string, TipContent> = {
         ],
       },
     ],
-    relatedTips: [
-      "pertanyaan-hr-umum",
-      "behavioral-star-method",
-      "pertanyaan-balik-ke-hr",
-    ],
+    relatedTips: ["pertanyaan-hr-umum", "behavioral-star-method", "pertanyaan-balik-ke-hr"],
   },
   "pertanyaan-hr-umum": {
     title: "10 Pertanyaan HR Paling Sering Ditanyakan & Cara Jawabnya",
@@ -265,8 +261,7 @@ const tipsContent: Record<string, TipContent> = {
   "interview-technical-tech": {
     title: "Tips Interview Technical untuk Posisi Software Engineer",
     category: "Technical",
-    excerpt:
-      "Live coding, system design, dan behavioral di perusahaan tech Indonesia & global.",
+    excerpt: "Live coding, system design, dan behavioral di perusahaan tech Indonesia & global.",
     icon: "Laptop",
     readTime: "10 menit",
     level: "Menengah",
@@ -323,17 +318,12 @@ const tipsContent: Record<string, TipContent> = {
         ],
       },
     ],
-    relatedTips: [
-      "pertanyaan-hr-umum",
-      "behavioral-star-method",
-      "negosiasi-gaji",
-    ],
+    relatedTips: ["pertanyaan-hr-umum", "behavioral-star-method", "negosiasi-gaji"],
   },
   "negosiasi-gaji": {
     title: "Cara Negosiasi Gaji Tanpa Bikin Awkward",
     category: "Karier",
-    excerpt:
-      "Riset salary range, framing pertanyaan, dan kapan waktu yang tepat membahas gaji.",
+    excerpt: "Riset salary range, framing pertanyaan, dan kapan waktu yang tepat membahas gaji.",
     icon: "CircleDollarSign",
     readTime: "6 menit",
     level: "Semua Level",
@@ -388,17 +378,12 @@ const tipsContent: Record<string, TipContent> = {
         ],
       },
     ],
-    relatedTips: [
-      "pertanyaan-hr-umum",
-      "interview-technical-tech",
-      "pertanyaan-balik-ke-hr",
-    ],
+    relatedTips: ["pertanyaan-hr-umum", "interview-technical-tech", "pertanyaan-balik-ke-hr"],
   },
   "pertanyaan-balik-ke-hr": {
     title: "5 Pertanyaan Cerdas yang Bikin HR Terkesan",
     category: "HR Interview",
-    excerpt:
-      "Pertanyaan yang menunjukkan kamu serius dan sudah riset perusahaan.",
+    excerpt: "Pertanyaan yang menunjukkan kamu serius dan sudah riset perusahaan.",
     icon: "Sparkles",
     readTime: "4 menit",
     level: "Pemula",
@@ -446,17 +431,12 @@ const tipsContent: Record<string, TipContent> = {
         ],
       },
     ],
-    relatedTips: [
-      "pertanyaan-hr-umum",
-      "persiapan-interview-pertama",
-      "behavioral-star-method",
-    ],
+    relatedTips: ["pertanyaan-hr-umum", "persiapan-interview-pertama", "behavioral-star-method"],
   },
   "behavioral-star-method": {
     title: "Metode STAR untuk Jawab Pertanyaan Behavioral",
     category: "Behavioral",
-    excerpt:
-      "Situation, Task, Action, Result — framework jawaban yang terstruktur dan meyakinkan.",
+    excerpt: "Situation, Task, Action, Result — framework jawaban yang terstruktur dan meyakinkan.",
     icon: "Target",
     readTime: "7 menit",
     level: "Menengah",
@@ -512,11 +492,7 @@ const tipsContent: Record<string, TipContent> = {
         ],
       },
     ],
-    relatedTips: [
-      "pertanyaan-hr-umum",
-      "persiapan-interview-pertama",
-      "negosiasi-gaji",
-    ],
+    relatedTips: ["pertanyaan-hr-umum", "persiapan-interview-pertama", "negosiasi-gaji"],
   },
 };
 
@@ -544,7 +520,12 @@ export const Route = createFileRoute("/tips-interview/$slug")({
           "@type": "BreadcrumbList",
           itemListElement: [
             { "@type": "ListItem", position: 1, name: "Beranda", item: "https://cvpintar.web.id" },
-            { "@type": "ListItem", position: 2, name: "Tips Interview", item: "https://cvpintar.web.id/tips-interview" },
+            {
+              "@type": "ListItem",
+              position: 2,
+              name: "Tips Interview",
+              item: "https://cvpintar.web.id/tips-interview",
+            },
             { "@type": "ListItem", position: 3, name: tip.title },
           ],
         },
@@ -566,12 +547,8 @@ export const Route = createFileRoute("/tips-interview/$slug")({
   component: TipDetailPage,
   notFoundComponent: () => (
     <div className="container-page py-20 text-center">
-      <h1 className="font-display text-3xl font-bold">
-        Tips tidak ditemukan
-      </h1>
-      <p className="text-muted-foreground mt-2">
-        Artikel yang kamu cari tidak tersedia.
-      </p>
+      <h1 className="font-display text-3xl font-bold">Tips tidak ditemukan</h1>
+      <p className="text-muted-foreground mt-2">Artikel yang kamu cari tidak tersedia.</p>
       <Button asChild className="mt-6">
         <Link to="/tips-interview">Kembali ke Tips Interview</Link>
       </Button>
@@ -646,9 +623,7 @@ function TipDetailPage() {
               <h1 className="font-display text-3xl md:text-4xl font-bold leading-tight">
                 {tip.title}
               </h1>
-              <p className="mt-3 text-lg text-muted-foreground">
-                {tip.excerpt}
-              </p>
+              <p className="mt-3 text-lg text-muted-foreground">{tip.excerpt}</p>
             </div>
           </div>
 
@@ -697,9 +672,7 @@ function TipDetailPage() {
                 <div className="p-4 rounded-xl bg-primary/5 border border-primary/20 flex items-start gap-3">
                   <Lightbulb className="w-6 h-6 text-primary shrink-0" />
                   <div>
-                    <h3 className="font-semibold text-primary">
-                      Wajib Dibaca
-                    </h3>
+                    <h3 className="font-semibold text-primary">Wajib Dibaca</h3>
                     <p className="text-sm text-muted-foreground mt-1">
                       Ini adalah poin paling penting dari tips ini.
                     </p>
@@ -767,12 +740,9 @@ function TipDetailPage() {
         <Card className="mt-8 bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
           <CardContent className="p-6 md:p-8 text-center">
             <Heart className="w-10 h-10 text-primary mx-auto mb-4" />
-            <h3 className="font-display text-xl font-bold mb-2">
-              Siap Praktikkan Sekarang?
-            </h3>
+            <h3 className="font-display text-xl font-bold mb-2">Siap Praktikkan Sekarang?</h3>
             <p className="text-muted-foreground mb-6">
-              Setelah baca tips ini, cobain buat CV ATS-friendly yang bikin
-              rekruter tertarik!
+              Setelah baca tips ini, cobain buat CV ATS-friendly yang bikin rekruter tertarik!
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Button asChild size="lg">
@@ -804,4 +774,3 @@ function TipDetailPage() {
     </article>
   );
 }
-

@@ -11,13 +11,29 @@ import { Skeleton } from "@/components/ui/skeleton-loading";
 import { BackButton } from "@/components/ui/back-button";
 import { TEMPLATES } from "@/lib/cv-types";
 import {
-  BarChart3, Eye, Download, Share2, TrendingUp,
-  FileText, Users, MousePointer, Globe, Smartphone,
-  Monitor, ArrowLeft, MessageCircle,
+  BarChart3,
+  Eye,
+  Download,
+  Share2,
+  TrendingUp,
+  FileText,
+  Users,
+  MousePointer,
+  Globe,
+  Smartphone,
+  Monitor,
+  ArrowLeft,
+  MessageCircle,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/analitik")({
-  head: () => buildSeo({ title: "Analitik CV — CV Pintar", description: "Analitik CV kamu.", path: "/analitik", noindex: true }),
+  head: () =>
+    buildSeo({
+      title: "Analitik CV — CV Pintar",
+      description: "Analitik CV kamu.",
+      path: "/analitik",
+      noindex: true,
+    }),
   component: AnalitikPage,
 });
 
@@ -41,7 +57,13 @@ function AnalitikPage() {
   const [tier, setTier] = useState("free");
   const [cvs, setCvs] = useState<CvSummary[]>([]);
   const [stats, setStats] = useState<Record<string, CvStats>>({});
-  const [totalStats, setTotalStats] = useState<CvStats>({ views: 0, downloads: 0, whatsapp_shares: 0, link_shares: 0, unique_viewers: 0 });
+  const [totalStats, setTotalStats] = useState<CvStats>({
+    views: 0,
+    downloads: 0,
+    whatsapp_shares: 0,
+    link_shares: 0,
+    unique_viewers: 0,
+  });
   const [selectedCvId, setSelectedCvId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -73,13 +95,13 @@ function AnalitikPage() {
         .eq("cv_id", cv.id);
 
       const events = (analytics ?? []) as Array<{ event_type: string; viewer_ip: string }>;
-      const uniqueIps = new Set(events.map(e => e.viewer_ip).filter(Boolean));
+      const uniqueIps = new Set(events.map((e) => e.viewer_ip).filter(Boolean));
 
       statsMap[cv.id] = {
-        views: events.filter(e => e.event_type === "view").length,
-        downloads: events.filter(e => e.event_type === "download").length,
-        whatsapp_shares: events.filter(e => e.event_type === "share_whatsapp").length,
-        link_shares: events.filter(e => e.event_type === "share_link").length,
+        views: events.filter((e) => e.event_type === "view").length,
+        downloads: events.filter((e) => e.event_type === "download").length,
+        whatsapp_shares: events.filter((e) => e.event_type === "share_whatsapp").length,
+        link_shares: events.filter((e) => e.event_type === "share_link").length,
         unique_viewers: uniqueIps.size,
       };
 
@@ -100,7 +122,9 @@ function AnalitikPage() {
       <div className="container-page py-10">
         <Skeleton className="h-8 w-64 mb-4" />
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-32" />)}
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-32" />
+          ))}
         </div>
       </div>
     );
@@ -127,7 +151,9 @@ function AnalitikPage() {
         <BackButton />
         <div>
           <h1 className="font-display text-2xl font-bold">Analitik CV</h1>
-          <p className="text-sm text-muted-foreground">Statistik views, downloads, dan shares CV kamu.</p>
+          <p className="text-sm text-muted-foreground">
+            Statistik views, downloads, dan shares CV kamu.
+          </p>
         </div>
       </div>
 
@@ -135,10 +161,30 @@ function AnalitikPage() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5 mb-8">
         {[
           { icon: Eye, label: "Total Views", value: totalStats.views, color: "text-blue-500" },
-          { icon: Users, label: "Unique Viewers", value: totalStats.unique_viewers, color: "text-primary" },
-          { icon: Download, label: "Downloads", value: totalStats.downloads, color: "text-green-500" },
-          { icon: MessageCircle, label: "WhatsApp Shares", value: totalStats.whatsapp_shares, color: "text-emerald-500" },
-          { icon: Share2, label: "Link Shares", value: totalStats.link_shares, color: "text-purple-500" },
+          {
+            icon: Users,
+            label: "Unique Viewers",
+            value: totalStats.unique_viewers,
+            color: "text-primary",
+          },
+          {
+            icon: Download,
+            label: "Downloads",
+            value: totalStats.downloads,
+            color: "text-green-500",
+          },
+          {
+            icon: MessageCircle,
+            label: "WhatsApp Shares",
+            value: totalStats.whatsapp_shares,
+            color: "text-emerald-500",
+          },
+          {
+            icon: Share2,
+            label: "Link Shares",
+            value: totalStats.link_shares,
+            color: "text-purple-500",
+          },
         ].map((s) => (
           <Card key={s.label}>
             <CardContent className="pt-6">
@@ -169,8 +215,14 @@ function AnalitikPage() {
           ) : (
             <div className="space-y-2">
               {cvs.map((cv) => {
-                const s = stats[cv.id] ?? { views: 0, downloads: 0, whatsapp_shares: 0, link_shares: 0, unique_viewers: 0 };
-                const tpl = TEMPLATES.find(t => t.id === cv.template_id);
+                const s = stats[cv.id] ?? {
+                  views: 0,
+                  downloads: 0,
+                  whatsapp_shares: 0,
+                  link_shares: 0,
+                  unique_viewers: 0,
+                };
+                const tpl = TEMPLATES.find((t) => t.id === cv.template_id);
                 const total = s.views + s.downloads + s.whatsapp_shares + s.link_shares;
                 return (
                   <div
@@ -182,10 +234,18 @@ function AnalitikPage() {
                       <p className="text-xs text-muted-foreground">{tpl?.name ?? cv.template_id}</p>
                     </div>
                     <div className="flex items-center gap-4 text-xs">
-                      <span className="flex items-center gap-1 text-blue-500"><Eye className="h-3 w-3" /> {s.views}</span>
-                      <span className="flex items-center gap-1 text-green-500"><Download className="h-3 w-3" /> {s.downloads}</span>
-                      <span className="flex items-center gap-1 text-emerald-500"><MessageCircle className="h-3 w-3" /> {s.whatsapp_shares}</span>
-                      <Badge variant="secondary" className="text-xs">{total} events</Badge>
+                      <span className="flex items-center gap-1 text-blue-500">
+                        <Eye className="h-3 w-3" /> {s.views}
+                      </span>
+                      <span className="flex items-center gap-1 text-green-500">
+                        <Download className="h-3 w-3" /> {s.downloads}
+                      </span>
+                      <span className="flex items-center gap-1 text-emerald-500">
+                        <MessageCircle className="h-3 w-3" /> {s.whatsapp_shares}
+                      </span>
+                      <Badge variant="secondary" className="text-xs">
+                        {total} events
+                      </Badge>
                     </div>
                   </div>
                 );
@@ -203,7 +263,8 @@ function AnalitikPage() {
             <div>
               <p className="text-sm font-medium">Tips Meningkatkan Views</p>
               <p className="text-xs text-muted-foreground mt-1">
-                Bagikan CV via WhatsApp untuk jangkauan lebih luas. Aktifkan link share dan sebarkan di LinkedIn, grup Telegram karir, atau kirim langsung ke recruiter.
+                Bagikan CV via WhatsApp untuk jangkauan lebih luas. Aktifkan link share dan sebarkan
+                di LinkedIn, grup Telegram karir, atau kirim langsung ke recruiter.
               </p>
             </div>
           </div>

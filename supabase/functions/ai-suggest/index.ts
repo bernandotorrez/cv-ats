@@ -2,7 +2,16 @@
  * AI Suggest — saran pengisian section CV (3 opsi)
  * POST /ai-suggest
  */
-import { aiComplete, checkAndTrackQuota, corsResponse, errorResponse, getAdminClient, getUserId, getLanguageInstruction, type CvUiLang } from "../_shared/ai-common.ts";
+import {
+  aiComplete,
+  checkAndTrackQuota,
+  corsResponse,
+  errorResponse,
+  getAdminClient,
+  getUserId,
+  getLanguageInstruction,
+  type CvUiLang,
+} from "../_shared/ai-common.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 
 Deno.serve(async (req: Request) => {
@@ -11,7 +20,15 @@ Deno.serve(async (req: Request) => {
   try {
     const userId = await getUserId(req);
     const admin = getAdminClient();
-    const { cvId, section, targetRole, currentContent, additionalContext, regenerateIndex, language } = await req.json();
+    const {
+      cvId,
+      section,
+      targetRole,
+      currentContent,
+      additionalContext,
+      regenerateIndex,
+      language,
+    } = await req.json();
     const lang: CvUiLang = language === "en" ? "en" : "id";
 
     if (!cvId || !section) throw new Error("cvId dan section diperlukan");

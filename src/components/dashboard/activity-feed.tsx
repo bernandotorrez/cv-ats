@@ -54,7 +54,9 @@ export function ActivityFeed({ activities }: { activities: ActivityItem[] }) {
         <div className="px-5 py-8 text-center">
           <Clock className="h-8 w-8 text-muted-foreground/40 mx-auto mb-3" />
           <p className="text-sm text-muted-foreground">Belum ada aktivitas.</p>
-          <p className="text-xs text-muted-foreground/70 mt-1">Mulai edit CV untuk melihat riwayat.</p>
+          <p className="text-xs text-muted-foreground/70 mt-1">
+            Mulai edit CV untuk melihat riwayat.
+          </p>
         </div>
       ) : (
         /* Timeline list */

@@ -2,29 +2,33 @@
 
 ## 📋 Task Overview
 
-| Priority | Tasks | Estimated Time |
-|----------|-------|----------------|
-| 🔴 CRITICAL | 1 task | 30 minutes |
-| 🔴 HIGH | 2 tasks | 2-3 hours |
-| 🟡 MEDIUM | 5 tasks | 4-6 hours |
-| 🟢 LOW | 5 tasks | 3-4 hours |
+| Priority    | Tasks   | Estimated Time |
+| ----------- | ------- | -------------- |
+| 🔴 CRITICAL | 1 task  | 30 minutes     |
+| 🔴 HIGH     | 2 tasks | 2-3 hours      |
+| 🟡 MEDIUM   | 5 tasks | 4-6 hours      |
+| 🟢 LOW      | 5 tasks | 3-4 hours      |
 
 ---
 
 ## 🔴 CRITICAL PRIORITY
 
 ### TASK-001: Remove Publishable Keys from .env
+
 **Priority:** CRITICAL  
 **Estimated Time:** 30 minutes
 
 #### Current State
+
 File `.env` mengandung:
+
 ```env
 SUPABASE_PUBLISHABLE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."  # ❌ WRONG
 VITE_SUPABASE_PUBLISHABLE_KEY="eyJ..."  # ✅ OK - ini untuk client
 ```
 
 #### Problem
+
 - Publishable key tanpa prefix `VITE_` bisa exposure ke server-side
 - Key sudah commit ke repository
 
@@ -43,6 +47,7 @@ VITE_SUPABASE_PUBLISHABLE_KEY="eyJ..."  # ✅ OK - ini untuk client
 ```
 
 #### New .env file structure
+
 ```env
 # Client-side (OK to expose)
 VITE_SUPABASE_URL="https://nfdrkuvyowaydjkhfvrr.supabase.co"
@@ -58,6 +63,7 @@ VITE_HCAPTCHA_SITE_KEY="0ddc116e-..."
 ```
 
 #### Verification
+
 ```bash
 # Check .git history untuk key exposure
 git log --all --full-history --source --remotes -- .env
@@ -71,35 +77,39 @@ git log --all --full-history --source --remotes -- .env
 ## 🔴 HIGH PRIORITY
 
 ### TASK-002: Secure Referral Code Handling
+
 **Priority:** HIGH  
 **Estimated Time:** 1.5 hours
 
 #### Current Code (src/routes/register.tsx)
+
 ```typescript
 // ❌ VULNERABLE - tidak ada validasi
 const refCode = new URLSearchParams(window.location.search).get("ref");
 if (refCode && data?.user?.id) {
   await (supabase as any).rpc("track_referral_signup", {
-    p_code: refCode,  // ← bisa inject apapun!
+    p_code: refCode, // ← bisa inject apapun!
     p_user_id: data.user.id,
   });
 }
 ```
 
 #### Fixed Code
+
 ```typescript
 import { z } from "zod";
 
 // ✅ Validasi referral code format
 const REFERRAL_CODE_REGEX = /^[a-zA-Z0-9_-]{6,20}$/;
 
-const referralSchema = z.string()
+const referralSchema = z
+  .string()
   .regex(REFERRAL_CODE_REGEX, "Invalid referral code format")
   .max(20);
 
 const handleSubmit = async (e: FormEvent) => {
   // ... existing code ...
-  
+
   // ✅ Validasi referral code dengan aman
   const refCodeParam = new URLSearchParams(window.location.search).get("ref");
   if (refCodeParam) {
@@ -114,7 +124,7 @@ const handleSubmit = async (e: FormEvent) => {
       }
     }
   }
-  
+
   // ... rest of code ...
 };
 
@@ -126,17 +136,17 @@ async function trackReferralWithRateLimit(code: string, userId: string) {
     .select("*")
     .eq("user_id", userId)
     .gte("created_at", new Date(Date.now() - 3600000).toISOString());
-  
+
   if ((rateLimit?.length || 0) >= 5) {
     throw new Error("Rate limit exceeded");
   }
-  
+
   // Track with validation
   const { error } = await supabase.rpc("track_referral_signup", {
     p_code: code,
     p_user_id: userId,
   });
-  
+
   if (!error) {
     // Increment rate limit counter
     await supabase.from("referral_rate_limits").insert({
@@ -147,6 +157,7 @@ async function trackReferralWithRateLimit(code: string, userId: string) {
 ```
 
 #### Additional Database Changes (Supabase)
+
 ```sql
 -- Add rate limiting table
 CREATE TABLE referral_rate_limits (
@@ -156,7 +167,7 @@ CREATE TABLE referral_rate_limits (
 );
 
 -- Add index
-CREATE INDEX idx_referral_rate_limits_user_created 
+CREATE INDEX idx_referral_rate_limits_user_created
 ON referral_rate_limits(user_id, created_at DESC);
 
 -- Secure the RPC function
@@ -173,22 +184,22 @@ BEGIN
   IF NOT (p_code ~ '^[a-zA-Z0-9_-]{6,20}$') THEN
     RAISE EXCEPTION 'Invalid referral code format';
   END IF;
-  
+
   -- Validate user_id format
   IF NOT (p_user_id::text ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$') THEN
     RAISE EXCEPTION 'Invalid user ID';
   END IF;
-  
+
   -- Check if code exists and is valid
   IF NOT EXISTS (
-    SELECT 1 FROM referral_codes 
-    WHERE code = p_code 
-    AND used = false 
+    SELECT 1 FROM referral_codes
+    WHERE code = p_code
+    AND used = false
     AND expires_at > NOW()
   ) THEN
     RAISE EXCEPTION 'Invalid or expired referral code';
   END IF;
-  
+
   -- Perform the tracking
   INSERT INTO referral_signups (referrer_id, referred_id, code)
   VALUES (
@@ -197,7 +208,7 @@ BEGIN
     p_code
   )
   ON CONFLICT DO NOTHING;
-  
+
   -- Mark code as used
   UPDATE referral_codes SET used = true WHERE code = p_code;
 END;
@@ -207,10 +218,12 @@ $$;
 ---
 
 ### TASK-003: Fix Payment Webhook User ID Extraction
+
 **Priority:** HIGH  
 **Estimated Time:** 1-2 hours
 
 #### Current Vulnerable Code
+
 ```typescript
 // ❌ VULNERABLE - metadata bisa inject arbitrary user_id
 const orderIdMatch = orderId.match(/^cvkarir-([0-9a-f]{8}-...)$/i);
@@ -220,18 +233,19 @@ if (orderIdMatch && orderIdMatch[1]) {
   // ❌ REMOVE THIS FALLBACK
   const metadataUserId = (payload as any).metadata?.user_id;
   if (metadataUserId && /^[0-9a-f]{8}-...$/i.test(metadataUserId)) {
-    userId = metadataUserId;  // ← ATTACKER CAN CONTROL THIS!
+    userId = metadataUserId; // ← ATTACKER CAN CONTROL THIS!
   }
 }
 ```
 
 #### Fixed Code
+
 ```typescript
 Deno.serve(async (req: Request) => {
   // ... existing validation code ...
-  
+
   const orderId = payload.order_id;
-  
+
   // ✅ SECURE: User ID HARUS dari database, bukan payload
   // First, verify the order exists and get associated user_id
   const { data: paymentRecord, error: paymentError } = await admin
@@ -239,76 +253,73 @@ Deno.serve(async (req: Request) => {
     .select("id, user_id, status, gateway_order_id")
     .eq("gateway_order_id", orderId)
     .single();
-  
+
   if (paymentError || !paymentRecord) {
     // Order doesn't exist - might be a new order
     // Validate order_id format strictly
     const uuidMatch = orderId.match(
-      /^cvkarir-([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})-(\d+)$/i
+      /^cvkarir-([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})-(\d+)$/i,
     );
-    
+
     if (!uuidMatch) {
       console.error("Invalid order_id format:", orderId);
-      return new Response(
-        JSON.stringify({ error: "Invalid order_id format" }),
-        { status: 400, headers: corsHeaders(req) }
-      );
+      return new Response(JSON.stringify({ error: "Invalid order_id format" }), {
+        status: 400,
+        headers: corsHeaders(req),
+      });
     }
-    
+
     // Extract user_id from validated UUID portion only
     const userIdFromOrder = uuidMatch[1]; // UUID part only
-    
+
     // ✅ Validate UUID is properly formatted
     if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userIdFromOrder)) {
-      return new Response(
-        JSON.stringify({ error: "Invalid user ID in order" }),
-        { status: 400, headers: corsHeaders(req) }
-      );
+      return new Response(JSON.stringify({ error: "Invalid user ID in order" }), {
+        status: 400,
+        headers: corsHeaders(req),
+      });
     }
-    
+
     userId = userIdFromOrder;
-    
+
     // Verify user exists
-    const { data: user } = await admin
-      .from("profiles")
-      .select("id")
-      .eq("id", userId)
-      .single();
-    
+    const { data: user } = await admin.from("profiles").select("id").eq("id", userId).single();
+
     if (!user) {
       console.error("User not found for order:", orderId);
-      return new Response(
-        JSON.stringify({ error: "User not found" }),
-        { status: 404, headers: corsHeaders(req) }
-      );
+      return new Response(JSON.stringify({ error: "User not found" }), {
+        status: 404,
+        headers: corsHeaders(req),
+      });
     }
   } else {
     // Existing payment record - use stored user_id
     userId = paymentRecord.user_id;
-    
+
     // ✅ Double-check order_id ownership
     if (paymentRecord.gateway_order_id !== orderId) {
       console.error("Order ID mismatch!");
-      return new Response(
-        JSON.stringify({ error: "Order ID mismatch" }),
-        { status: 400, headers: corsHeaders(req) }
-      );
+      return new Response(JSON.stringify({ error: "Order ID mismatch" }), {
+        status: 400,
+        headers: corsHeaders(req),
+      });
     }
   }
-  
+
   // ... rest of processing with verified userId ...
 });
 ```
 
 #### Database: Create payments lookup table
+
 ```sql
 -- Add gateway_order_id index if not exists
-CREATE INDEX IF NOT EXISTS idx_payments_gateway_order_id 
+CREATE INDEX IF NOT EXISTS idx_payments_gateway_order_id
 ON public.payments(gateway_order_id);
 
 -- Add unique constraint
-ALTER TABLE public.payments 
-ADD CONSTRAINT unique_gateway_order_id 
+ALTER TABLE public.payments
+ADD CONSTRAINT unique_gateway_order_id
 UNIQUE (gateway_order_id);
 ```
 
@@ -317,10 +328,12 @@ UNIQUE (gateway_order_id);
 ## 🟡 MEDIUM PRIORITY
 
 ### TASK-004: Improve CSP Configuration
+
 **Priority:** MEDIUM  
 **Estimated Time:** 2-3 hours
 
 #### Current CSP (src/lib/security-headers.ts)
+
 ```typescript
 const CSP_DIRECTIVES = [
   "script-src 'self' 'unsafe-inline' 'unsafe-eval' ...",
@@ -329,6 +342,7 @@ const CSP_DIRECTIVES = [
 ```
 
 #### Improved CSP with Nonce
+
 ```typescript
 import { randomBytes } from "crypto";
 
@@ -357,29 +371,30 @@ export function createCSPWithNonce(nonce: string): string {
 export function applySecurityHeaders(response: Response): Response {
   const headers = new Headers(response.headers);
   const nonce = generateNonce();
-  
+
   // Apply CSP with nonce
   if (!headers.has("Content-Security-Policy")) {
     headers.set("Content-Security-Policy", createCSPWithNonce(nonce));
   }
-  
+
   // Store nonce for use in rendered HTML
   // This is typically done by passing nonce to the rendering context
   headers.set("X-Nonce", nonce);
-  
+
   // ... rest of headers ...
-  
+
   return new Response(response.body, { headers });
 }
 ```
 
 #### Update React to use nonce
+
 ```typescript
 // src/router.tsx or root component
 function App() {
   // Get nonce from headers (Cloudflare Workers / Vercel Edge)
   const nonce = headers?.get("X-Nonce") || "";
-  
+
   return (
     <script nonce={nonce}>
       {`window.__CSP_NONCE__ = "${nonce}";`}
@@ -391,10 +406,12 @@ function App() {
 ---
 
 ### TASK-005: Add TTL to Admin Cache
+
 **Priority:** MEDIUM  
 **Estimated Time:** 1 hour
 
 #### Current Code (src/lib/admin.ts)
+
 ```typescript
 // ❌ VULNERABLE - cached forever
 let cachedAdminStatus: { userId: string; isAdmin: boolean } | null = null;
@@ -408,6 +425,7 @@ export async function isAdmin(userId: string): Promise<boolean> {
 ```
 
 #### Fixed Code
+
 ```typescript
 interface CachedAdminStatus {
   userId: string;
@@ -420,30 +438,30 @@ let cachedAdminStatus: CachedAdminStatus | null = null;
 
 export async function isAdmin(userId: string): Promise<boolean> {
   const now = Date.now();
-  
+
   // Check cache with TTL
   if (
-    cachedAdminStatus?.userId === userId && 
+    cachedAdminStatus?.userId === userId &&
     now - cachedAdminStatus.cachedAt < ADMIN_CACHE_TTL_MS
   ) {
     return cachedAdminStatus.isAdmin;
   }
-  
+
   // Fetch fresh from database
   const { data } = await supabase.rpc("has_role", {
     _user_id: userId,
     _role: "admin",
   });
-  
+
   const result = !!data;
-  
+
   // Update cache
   cachedAdminStatus = {
     userId,
     isAdmin: result,
     cachedAt: now,
   };
-  
+
   return result;
 }
 
@@ -463,10 +481,10 @@ export function invalidateAdminCache(userId: string): void {
 // In users.tsx:
 const handleSaveEdit = async () => {
   // ... existing role update code ...
-  
+
   // Invalidate cache
   invalidateAdminCache(editUser.id);
-  
+
   // ... rest of code ...
 };
 ```
@@ -474,10 +492,12 @@ const handleSaveEdit = async () => {
 ---
 
 ### TASK-006: Add Pagination to Admin Users
+
 **Priority:** MEDIUM  
 **Estimated Time:** 1-2 hours
 
 #### Fixed Admin Users Component
+
 ```typescript
 // src/routes/_authenticated/admin/users.tsx
 
@@ -497,27 +517,27 @@ function AdminUsersPage() {
     pageSize: 50,  // ✅ Reasonable default
     total: 0,
   });
-  
+
   // ... existing state ...
-  
+
   const loadUsers = async () => {
     setLoading(true);
-    
+
     const offset = (pagination.page - 1) * pagination.pageSize;
-    
+
     // ✅ Paginated query with count
     const { data: profiles, count } = await supabase
       .from("profiles")
       .select("id, full_name, created_at", { count: "exact" })
       .range(offset, offset + pagination.pageSize - 1)
       .order("created_at", { ascending: false });
-    
+
     // ✅ Update total count
     setPagination(prev => ({ ...prev, total: count || 0 }));
-    
+
     // ... rest of aggregation logic ...
   };
-  
+
   // ✅ Pagination handlers
   const goToPage = (page: number) => {
     const maxPage = Math.ceil(pagination.total / pagination.pageSize);
@@ -525,35 +545,35 @@ function AdminUsersPage() {
       setPagination(prev => ({ ...prev, page }));
     }
   };
-  
+
   const totalPages = Math.ceil(pagination.total / pagination.pageSize);
-  
+
   return (
     <div className="space-y-6">
       {/* ... existing UI ... */}
-      
+
       {/* ✅ Pagination Controls */}
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
           Menampilkan {((pagination.page - 1) * pagination.pageSize) + 1} - {Math.min(pagination.page * pagination.pageSize, pagination.total)} dari {pagination.total}
         </p>
-        
+
         <div className="flex items-center gap-2">
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             size="sm"
             onClick={() => goToPage(pagination.page - 1)}
             disabled={pagination.page === 1}
           >
             Previous
           </Button>
-          
+
           <span className="text-sm">
             Halaman {pagination.page} dari {totalPages}
           </span>
-          
-          <Button 
-            variant="outline" 
+
+          <Button
+            variant="outline"
             size="sm"
             onClick={() => goToPage(pagination.page + 1)}
             disabled={pagination.page === totalPages}
@@ -570,6 +590,7 @@ function AdminUsersPage() {
 ---
 
 ### TASK-007: Implement Rate Limit Headers
+
 **Priority:** LOW  
 **Estimated Time:** 1 hour
 
@@ -591,10 +612,10 @@ export function checkRateLimitWithHeaders(
 ): RateLimitResult {
   const now = Date.now();
   const bucket = buckets.get(key);
-  
+
   let allowed: boolean;
   let count: number;
-  
+
   if (!bucket || now > bucket.resetAt) {
     allowed = true;
     count = 1;
@@ -606,10 +627,10 @@ export function checkRateLimitWithHeaders(
     allowed = true;
     count = ++bucket.count;
   }
-  
+
   const remaining = Math.max(0, maxRequests - count);
   const resetAt = bucket?.resetAt || now + windowMs;
-  
+
   return {
     allowed,
     remaining,
@@ -628,6 +649,7 @@ export function checkRateLimitWithHeaders(
 ---
 
 ### TASK-008: Restrict CORS Origins
+
 **Priority:** LOW  
 **Estimated Time:** 1 hour
 
@@ -642,15 +664,15 @@ const ALLOWED_ORIGINS = [
 
 export function corsHeaders(req: Request): Record<string, string> {
   const origin = req.headers.get("Origin");
-  
+
   // Validate origin
   const isAllowed = origin && ALLOWED_ORIGINS.includes(origin);
-  
+
   return {
     "Access-Control-Allow-Origin": isAllowed ? origin : ALLOWED_ORIGINS[0],
     "Access-Control-Allow-Methods": "POST, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, Authorization",
-    "Vary": "Origin",  // Important for caching
+    Vary: "Origin", // Important for caching
   };
 }
 ```
@@ -658,6 +680,7 @@ export function corsHeaders(req: Request): Record<string, string> {
 ---
 
 ### TASK-009: Sanitize CV Data
+
 **Priority:** MEDIUM  
 **Estimated Time:** 1-2 hours
 
@@ -694,14 +717,15 @@ export function sanitizeCVRichText(content: string): string {
 import { sanitizeCVContent } from "@/lib/sanitize";
 
 // In template components:
-<span dangerouslySetInnerHTML={{ 
-  __html: sanitizeCVRichText(cvData.summary) 
+<span dangerouslySetInnerHTML={{
+  __html: sanitizeCVRichText(cvData.summary)
 }} />
 ```
 
 ---
 
 ### TASK-010: Secure RPC Functions
+
 **Priority:** MEDIUM  
 **Estimated Time:** 2-3 hours
 
@@ -725,22 +749,22 @@ BEGIN
   IF _user_id IS NULL OR _role IS NULL THEN
     RETURN FALSE;
   END IF;
-  
+
   IF NOT (_user_id::text ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$') THEN
     RETURN FALSE;
   END IF;
-  
+
   IF NOT (_role ~ '^[a-z_]+$') THEN
     RETURN FALSE;
   END IF;
-  
+
   -- Check role
   SELECT EXISTS(
-    SELECT 1 FROM user_roles 
-    WHERE user_id = _user_id 
+    SELECT 1 FROM user_roles
+    WHERE user_id = _user_id
     AND role = _role
   ) INTO has_role;
-  
+
   RETURN COALESCE(has_role, FALSE);
 END;
 $$;
@@ -751,6 +775,7 @@ $$;
 ## 🟢 LOW PRIORITY
 
 ### TASK-011: Error Handling Audit
+
 **Priority:** LOW  
 **Estimated Time:** 2 hours
 
@@ -760,10 +785,12 @@ $$;
 - Consider Sentry integration
 
 ### TASK-012: Add Security.txt
+
 **Priority:** LOW  
 **Estimated Time:** 30 minutes
 
 Create `public/.well-known/security.txt`:
+
 ```
 Contact: https://cvpintar.web.id/kontak
 Expires: 2027-01-01T00:00:00.000Z
@@ -773,14 +800,15 @@ Policy: https://cvpintar.web.id/security-policy
 ```
 
 ### TASK-013: Implement SRI
+
 **Priority:** LOW  
 **Estimated Time:** 1 hour
 
 ```html
 <!-- Example for hCaptcha -->
-<script 
-  src="https://js.hcaptcha.com/1/api.js" 
-  async 
+<script
+  src="https://js.hcaptcha.com/1/api.js"
+  async
   defer
   integrity="sha256-/example-hash-here"
   crossorigin="anonymous"

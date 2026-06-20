@@ -84,7 +84,10 @@ function BlogHubPage() {
           <Button
             variant={filter === null ? "default" : "outline"}
             size="sm"
-            onClick={() => { setFilter(null); setPage(0); }}
+            onClick={() => {
+              setFilter(null);
+              setPage(0);
+            }}
           >
             Semua
           </Button>
@@ -93,7 +96,10 @@ function BlogHubPage() {
               key={cat}
               variant={filter === cat ? "default" : "outline"}
               size="sm"
-              onClick={() => { setFilter(cat); setPage(0); }}
+              onClick={() => {
+                setFilter(cat);
+                setPage(0);
+              }}
             >
               {cat}
             </Button>
@@ -103,12 +109,7 @@ function BlogHubPage() {
         {/* Grid */}
         <div className="grid gap-6 sm:grid-cols-2">
           {pageItems.map((p) => (
-            <Link
-              key={p.slug}
-              to="/blog/$slug"
-              params={{ slug: p.slug }}
-              className="group block"
-            >
+            <Link key={p.slug} to="/blog/$slug" params={{ slug: p.slug }} className="group block">
               <Card className="h-full transition-all group-hover:-translate-y-0.5 group-hover:shadow-md">
                 <CardContent className="flex h-full flex-col p-6">
                   <div className="flex items-center gap-2">
@@ -125,12 +126,9 @@ function BlogHubPage() {
                   <h2 className="mt-3 font-display text-lg font-semibold leading-snug group-hover:text-primary">
                     {p.title}
                   </h2>
-                  <p className="mt-2 flex-1 text-sm text-muted-foreground">
-                    {p.excerpt}
-                  </p>
+                  <p className="mt-2 flex-1 text-sm text-muted-foreground">{p.excerpt}</p>
                   <span className="mt-4 inline-flex items-center text-sm font-medium text-primary">
-                    Baca selengkapnya{" "}
-                    <ArrowRight className="ml-1 h-3.5 w-3.5" />
+                    Baca selengkapnya <ArrowRight className="ml-1 h-3.5 w-3.5" />
                   </span>
                 </CardContent>
               </Card>

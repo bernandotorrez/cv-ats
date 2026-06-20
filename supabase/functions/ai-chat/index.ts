@@ -2,7 +2,15 @@
  * AI Chat — panduan AI interaktif untuk CV
  * POST /ai-chat
  */
-import { aiComplete, checkAndTrackQuota, corsResponse, errorResponse, getAdminClient, getUserId, type CvUiLang } from "../_shared/ai-common.ts";
+import {
+  aiComplete,
+  checkAndTrackQuota,
+  corsResponse,
+  errorResponse,
+  getAdminClient,
+  getUserId,
+  type CvUiLang,
+} from "../_shared/ai-common.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 import type { AiMessage } from "../_shared/ai-common.ts";
 
@@ -41,7 +49,7 @@ function detectJailbreakAttempt(text: string): boolean {
       return true;
     }
   }
-  
+
   // Check for off-topic requests
   for (const pattern of OFF_TOPIC_PATTERNS) {
     if (pattern.test(text)) {
@@ -49,7 +57,7 @@ function detectJailbreakAttempt(text: string): boolean {
       return true;
     }
   }
-  
+
   return false;
 }
 
@@ -89,9 +97,14 @@ Deno.serve(async (req: Request) => {
 
       const tier = (userSub as any)?.subscription_tiers;
       if (tier && tier.enable_guided_mode === false) {
-        return corsResponse({
-          reply: "Maaf, fitur Panduan AI tidak tersedia di paket kamu. Silakan upgrade untuk mengakses fitur ini."
-        }, 200, req);
+        return corsResponse(
+          {
+            reply:
+              "Maaf, fitur Panduan AI tidak tersedia di paket kamu. Silakan upgrade untuk mengakses fitur ini.",
+          },
+          200,
+          req,
+        );
       }
     }
 
@@ -99,20 +112,25 @@ Deno.serve(async (req: Request) => {
     const sanitizedMessages: AiMessage[] = [];
     for (const msg of messages) {
       if (!msg.content || typeof msg.content !== "string") continue;
-      
+
       // Detect jailbreak attempts
       if (detectJailbreakAttempt(msg.content)) {
-        return corsResponse({ 
-          reply: "Maaf, saya hanya bisa membantu dengan pertanyaan seputar CV dan karir profesional. Mari fokus pada pengisian CV kamu." 
-        }, 200, req);
+        return corsResponse(
+          {
+            reply:
+              "Maaf, saya hanya bisa membantu dengan pertanyaan seputar CV dan karir profesional. Mari fokus pada pengisian CV kamu.",
+          },
+          200,
+          req,
+        );
       }
-      
+
       // Sanitize content
       const sanitized = sanitizeMessage(msg.content);
-      
+
       // Skip empty messages
       if (!sanitized) continue;
-      
+
       sanitizedMessages.push({
         role: msg.role === "system" ? "user" : msg.role, // Force system to user
         content: sanitized,
@@ -123,12 +141,16 @@ Deno.serve(async (req: Request) => {
       throw new Error("Tidak ada pesan yang valid");
     }
 
-    const result = await aiComplete(sanitizedMessages, {
-      temperature: 0.7,
-      maxTokens: 2000,
-      jsonMode: jsonMode || false,
-      useGuidedPrompt: true, // Use specialized CV chat prompt with stronger guardrails
-    }, lang);
+    const result = await aiComplete(
+      sanitizedMessages,
+      {
+        temperature: 0.7,
+        maxTokens: 2000,
+        jsonMode: jsonMode || false,
+        useGuidedPrompt: true, // Use specialized CV chat prompt with stronger guardrails
+      },
+      lang,
+    );
 
     await checkAndTrackQuota(admin, userId, feature, result.length);
 

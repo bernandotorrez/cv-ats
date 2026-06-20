@@ -9,6 +9,7 @@
 ## 🔴 PRIORITAS SEGERA (Hari Ini)
 
 ### SEC-001: Rotate AI_API_KEY & Amankan Environment Variables
+
 **File**: `.env`, Vercel/Cloudflare dashboard  
 **Severity**: 🔴 CRITICAL
 
@@ -22,10 +23,12 @@
 ---
 
 ### SEC-002: Restrict CORS ke Domain Spesifik
+
 **File**: `supabase/functions/_shared/cors.ts`  
 **Severity**: 🔴 CRITICAL
 
 - [x] Ubah `"Access-Control-Allow-Origin": "*"` menjadi origin spesifik
+
   ```ts
   const ALLOWED_ORIGINS = [
     "https://cvpintar.web.id",
@@ -33,7 +36,7 @@
     "http://localhost:8000",  // development only
     "http://localhost:5173",  // vite dev
   ];
-  
+
   export function corsHeaders(req: Request) {
     const origin = req.headers.get("origin") || "";
     const allowed = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
@@ -43,6 +46,7 @@
     };
   }
   ```
+
 - [x] Update semua edge function untuk menggunakan `corsHeaders(req)` bukan `corsHeaders` statis
 - [ ] Test CORS dari production domain
 - [ ] Deploy semua edge functions
@@ -50,6 +54,7 @@
 ---
 
 ### SEC-003: Tambah Otentikasi ke `linkedin-import`
+
 **File**: `supabase/functions/linkedin-import/index.ts`  
 **Severity**: 🔴 CRITICAL
 
@@ -62,6 +67,7 @@
 ---
 
 ### SEC-004: Tambah Otentikasi ke `send-email`
+
 **File**: `supabase/functions/send-email/index.ts`  
 **Severity**: 🔴 CRITICAL
 
@@ -77,6 +83,7 @@
 ---
 
 ### SEC-005: Consolidate CSP Headers
+
 **File**: `vercel.json`, `src/lib/security-headers.ts`  
 **Severity**: 🔴 CRITICAL
 
@@ -95,10 +102,12 @@
 ---
 
 ### SEC-006: Buat Tabel `payments` + RLS
+
 **File**: `supabase/migrations/YYYYMMDDHHMMSS_security_payments.sql` (baru)  
 **Severity**: 🔴 CRITICAL
 
 - [x] Buat migration:
+
   ```sql
   CREATE TABLE IF NOT EXISTS public.payments (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -124,6 +133,7 @@
   CREATE INDEX idx_payments_user_id ON public.payments(user_id);
   CREATE INDEX idx_payments_gateway_order ON public.payments(gateway_order_id);
   ```
+
 - [ ] Jalankan `npx supabase db push`
 - [ ] Test: payment webhook bisa insert & query payments
 - [ ] Generate TypeScript types ulang: `npx supabase gen types typescript`
@@ -133,10 +143,12 @@
 ## 🟡 PRIORITAS MINGGU INI
 
 ### SEC-007: Tambah Per-Minute Rate Limiting ke Semua Edge Functions
+
 **File**: `supabase/functions/_shared/rate-limit.ts`, semua edge functions  
 **Severity**: 🟡 HIGH
 
 - [x] Buat `_shared/rate-limit.ts` dengan in-memory rate limiter:
+
   ```ts
   const buckets = new Map<string, { count: number; resetAt: number }>();
 
@@ -152,6 +164,7 @@
     return true;
   }
   ```
+
 - [x] Terapkan ke semua edge function:
   - AI functions: 30 req/menit per user (via checkAndTrackQuota existing)
   - `send-email`: 10 req/jam per user
@@ -163,6 +176,7 @@
 ---
 
 ### SEC-008: Sembunyikan AI Gateway Error Details
+
 **File**: `supabase/functions/_shared/ai-common.ts` (line 99)  
 **Severity**: 🟡 MEDIUM
 
@@ -171,7 +185,7 @@
   if (!res.ok) {
     const errText = await res.text().catch(() => "");
     console.error(`AI Gateway error (${res.status}):`, errText); // log full
-    throw new Error("AI service temporarily unavailable");      // generic to client
+    throw new Error("AI service temporarily unavailable"); // generic to client
   }
   ```
 - [ ] Pastikan log disimpan di Supabase logs
@@ -180,15 +194,16 @@
 ---
 
 ### SEC-009: Tambah Runtime Browser Guard ke `supabaseAdmin`
+
 **File**: `src/integrations/supabase/client.server.ts`  
 **Severity**: 🟡 MEDIUM
 
 - [x] Tambah guard di awal file:
   ```ts
-  if (typeof window !== 'undefined') {
+  if (typeof window !== "undefined") {
     throw new Error(
-      'SUPABASE_SERVICE_ROLE_KEY: supabaseAdmin cannot be used in browser. ' +
-      'This is a server-only module.'
+      "SUPABASE_SERVICE_ROLE_KEY: supabaseAdmin cannot be used in browser. " +
+        "This is a server-only module.",
     );
   }
   ```
@@ -200,6 +215,7 @@
 ## 🟢 PRIORITAS SPRINT INI
 
 ### SEC-010: Document `user_subscriptions` RLS Gap
+
 **File**: `supabase/migrations/20260507055000_phase7_normalize_subscriptions.sql`  
 **Severity**: 🟡 MEDIUM
 
@@ -216,6 +232,7 @@
 ---
 
 ### SEC-011: Remove `SECURITY DEFINER` dari Trigger Function
+
 **File**: `supabase/migrations/20260507040753_...sql` (migration #1)  
 **Severity**: 🟡 LOW
 
@@ -239,6 +256,7 @@
 ---
 
 ### SEC-012: Review `unsafe-eval` & `unsafe-inline` di CSP
+
 **File**: `src/lib/security-headers.ts`  
 **Severity**: 🟡 MEDIUM
 
@@ -254,6 +272,7 @@
 ---
 
 ### SEC-013: Payment Webhook Order ID Parsing Hardening
+
 **File**: `supabase/functions/payment-webhook/index.ts`  
 **Severity**: 🟡 MEDIUM
 

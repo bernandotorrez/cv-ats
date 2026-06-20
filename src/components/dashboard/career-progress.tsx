@@ -34,7 +34,11 @@ interface CareerProgressProps {
 }
 
 /** Returns motivational copy based on progress */
-function getMotivation(pct: number, stepPct: number, nextStepLabel?: string): {
+function getMotivation(
+  pct: number,
+  stepPct: number,
+  nextStepLabel?: string,
+): {
   emoji: string;
   headline: string;
   sub: string;
@@ -142,9 +146,7 @@ export function CareerProgress({ user, steps, onCreateCv, onStepClick }: CareerP
           {/* Left: avatar + name */}
           <div className="flex items-start gap-3 min-w-0">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary font-bold text-sm">
-              {(user?.user_metadata?.full_name || user?.email || "U")
-                .charAt(0)
-                .toUpperCase()}
+              {(user?.user_metadata?.full_name || user?.email || "U").charAt(0).toUpperCase()}
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
@@ -182,31 +184,31 @@ export function CareerProgress({ user, steps, onCreateCv, onStepClick }: CareerP
             </div>
             <div className="w-28 sm:w-40 space-y-1">
               <Progress value={progressPct} className="h-2" />
-              <p className="text-[10px] text-muted-foreground text-right">
-                target: 100%
-              </p>
+              <p className="text-[10px] text-muted-foreground text-right">target: 100%</p>
             </div>
           </div>
         </div>
 
         {/* ── Row 2: Motivational inline banner ── */}
-        <div className={cn(
-          "mt-4 flex items-start gap-3 rounded-xl px-4 py-3 text-sm",
-          progressPct === 100
-            ? "bg-amber-50 border border-amber-200"
-            : "bg-primary/5 border border-primary/10",
-        )}>
+        <div
+          className={cn(
+            "mt-4 flex items-start gap-3 rounded-xl px-4 py-3 text-sm",
+            progressPct === 100
+              ? "bg-amber-50 border border-amber-200"
+              : "bg-primary/5 border border-primary/10",
+          )}
+        >
           <span className="text-base leading-none mt-0.5 shrink-0">{motivation.emoji}</span>
           <div className="min-w-0">
-            <p className={cn(
-              "font-semibold text-sm",
-              progressPct === 100 ? "text-amber-700" : "text-foreground",
-            )}>
+            <p
+              className={cn(
+                "font-semibold text-sm",
+                progressPct === 100 ? "text-amber-700" : "text-foreground",
+              )}
+            >
               {motivation.headline}
             </p>
-            <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
-              {motivation.sub}
-            </p>
+            <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{motivation.sub}</p>
           </div>
         </div>
 
@@ -315,7 +317,8 @@ export function CareerProgress({ user, steps, onCreateCv, onStepClick }: CareerP
           <div className="mt-3 flex items-center gap-3 rounded-xl bg-amber-50 border border-amber-200 px-4 py-3">
             <Trophy className="h-5 w-5 text-amber-500 shrink-0" />
             <p className="text-sm text-amber-700 font-medium">
-              Luar biasa! Profil kariermu sudah lengkap. Perbarui CV secara rutin agar tetap relevan.
+              Luar biasa! Profil kariermu sudah lengkap. Perbarui CV secara rutin agar tetap
+              relevan.
             </p>
           </div>
         )}

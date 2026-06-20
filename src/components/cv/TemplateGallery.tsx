@@ -51,28 +51,40 @@ const STARTER_TEMPLATES = ["medan", "makassar", "surabaya", "yogya"];
 // Pro templates: semarang, bali (badge "Pro")
 const PRO_TEMPLATES = ["semarang", "bali"];
 
-export function TemplateGallery({ selected, onSelect, tier = "free", templates, allowedTemplates }: Props) {
+export function TemplateGallery({
+  selected,
+  onSelect,
+  tier = "free",
+  templates,
+  allowedTemplates,
+}: Props) {
   const displayTemplates = templates?.length
     ? templates.map((t) => {
         const isPro = PRO_TEMPLATES.includes(t.slug);
         const isStarter = STARTER_TEMPLATES.includes(t.slug);
         // Check if template is allowed based on allowedTemplates array
-        const isAllowed = allowedTemplates === null || allowedTemplates === undefined || allowedTemplates.includes(t.slug);
+        const isAllowed =
+          allowedTemplates === null ||
+          allowedTemplates === undefined ||
+          allowedTemplates.includes(t.slug);
         const isLocked = !isAllowed;
-        return { 
-          id: t.slug as TemplateId, 
-          name: t.name, 
-          description: t.description, 
+        return {
+          id: t.slug as TemplateId,
+          name: t.name,
+          description: t.description,
           isLocked,
           isPro,
-          isStarter
+          isStarter,
         };
       })
     : TEMPLATES.map((t) => {
         const isPro = PRO_TEMPLATES.includes(t.id);
         const isStarter = STARTER_TEMPLATES.includes(t.id);
         // Check if template is allowed based on allowedTemplates array
-        const isAllowed = allowedTemplates === null || allowedTemplates === undefined || allowedTemplates.includes(t.id);
+        const isAllowed =
+          allowedTemplates === null ||
+          allowedTemplates === undefined ||
+          allowedTemplates.includes(t.id);
         const isLocked = !isAllowed;
         return {
           id: t.id,
@@ -80,7 +92,7 @@ export function TemplateGallery({ selected, onSelect, tier = "free", templates, 
           description: t.description,
           isLocked,
           isPro,
-          isStarter
+          isStarter,
         };
       });
 
@@ -109,9 +121,14 @@ export function TemplateGallery({ selected, onSelect, tier = "free", templates, 
             {/* Preview Thumbnail - Actual Template */}
             <div className="h-40 rounded-t-[10px] overflow-hidden bg-white p-2">
               {TemplateComponent && data ? (
-                <div 
-                  className="h-full w-full overflow-hidden rounded bg-white shadow-sm" 
-                  style={{ transform: "scale(0.45)", transformOrigin: "top left", width: "222%", height: "222%" }}
+                <div
+                  className="h-full w-full overflow-hidden rounded bg-white shadow-sm"
+                  style={{
+                    transform: "scale(0.45)",
+                    transformOrigin: "top left",
+                    width: "222%",
+                    height: "222%",
+                  }}
                 >
                   <div style={{ padding: "8px", fontSize: "8px", lineHeight: 1.3 }}>
                     <TemplateComponent data={data} showHeader={true} />

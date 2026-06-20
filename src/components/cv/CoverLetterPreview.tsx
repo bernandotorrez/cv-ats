@@ -13,13 +13,7 @@ const A4_HEIGHT_MM = 297;
 const PADDING_MM = 25;
 const MARGIN_MM = 20;
 
-export function CoverLetterPreview({
-  coverLetter,
-  cvData,
-  company,
-  position,
-  scale = 0.7,
-}: Props) {
+export function CoverLetterPreview({ coverLetter, cvData, company, position, scale = 0.7 }: Props) {
   // Parse cover letter into structured sections
   const parsed = parseCoverLetter(coverLetter);
 
@@ -66,9 +60,15 @@ export function CoverLetterPreview({
             {cvData.personal.fullName || "Nama Lengkap"}
           </h1>
           <div style={{ fontSize: "10pt", color: "#444", lineHeight: 1.4 }}>
-            {cvData.personal.email && <span style={{ display: "block", margin: 0 }}>{cvData.personal.email}</span>}
-            {cvData.personal.phone && <span style={{ display: "block", margin: 0 }}>{cvData.personal.phone}</span>}
-            {cvData.personal.location && <span style={{ display: "block", margin: 0 }}>{cvData.personal.location}</span>}
+            {cvData.personal.email && (
+              <span style={{ display: "block", margin: 0 }}>{cvData.personal.email}</span>
+            )}
+            {cvData.personal.phone && (
+              <span style={{ display: "block", margin: 0 }}>{cvData.personal.phone}</span>
+            )}
+            {cvData.personal.location && (
+              <span style={{ display: "block", margin: 0 }}>{cvData.personal.location}</span>
+            )}
           </div>
         </div>
 
@@ -84,9 +84,7 @@ export function CoverLetterPreview({
             <span style={{ display: "block", fontWeight: "bold" }}>
               HRD {company || "Perusahaan"}
             </span>
-            {position && (
-              <span style={{ display: "block" }}>Posisi: {position}</span>
-            )}
+            {position && <span style={{ display: "block" }}>Posisi: {position}</span>}
           </div>
         )}
 
@@ -149,7 +147,10 @@ function parseCoverLetter(text: string) {
   if (!text) return { salutation: "", paragraphs: [] as string[], closing: "" };
 
   // Split by double newlines or single newlines for better parsing
-  const lines = text.split(/\n/).map((l) => l.trim()).filter(Boolean);
+  const lines = text
+    .split(/\n/)
+    .map((l) => l.trim())
+    .filter(Boolean);
 
   let salutation = "";
   let closing = "";

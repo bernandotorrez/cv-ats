@@ -638,7 +638,12 @@ function DashboardPage() {
             suffix: limits.maxCvs ? `/ ${limits.maxCvs}` : "",
             icon: FileText,
             color: "text-primary bg-primary/10",
-            note: cvCount === 0 ? "Belum ada CV" : cvCount === 1 ? "1 CV tersimpan" : `${cvCount} CV tersimpan`,
+            note:
+              cvCount === 0
+                ? "Belum ada CV"
+                : cvCount === 1
+                  ? "1 CV tersimpan"
+                  : `${cvCount} CV tersimpan`,
           },
           {
             label: "AI digunakan",
@@ -661,18 +666,33 @@ function DashboardPage() {
             value: tierName,
             suffix: "",
             icon: Crown,
-            color: tier === "pro" ? "text-amber-700 bg-amber-500/10" : tier === "starter" ? "text-blue-700 bg-blue-500/10" : "text-muted-foreground bg-muted",
+            color:
+              tier === "pro"
+                ? "text-amber-700 bg-amber-500/10"
+                : tier === "starter"
+                  ? "text-blue-700 bg-blue-500/10"
+                  : "text-muted-foreground bg-muted",
             note: tier === "free" ? "Upgrade tersedia" : "Aktif",
           },
         ].map((stat) => (
-          <div key={stat.label} className="rounded-xl border bg-card px-4 py-3 shadow-sm flex items-center gap-3">
-            <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${stat.color}`}>
+          <div
+            key={stat.label}
+            className="rounded-xl border bg-card px-4 py-3 shadow-sm flex items-center gap-3"
+          >
+            <div
+              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${stat.color}`}
+            >
               <stat.icon className="h-4 w-4" />
             </div>
             <div className="min-w-0">
               <p className="text-xs text-muted-foreground">{stat.label}</p>
               <p className="font-bold text-sm text-foreground truncate">
-                {stat.value}{stat.suffix && <span className="text-xs font-normal text-muted-foreground ml-1">{stat.suffix}</span>}
+                {stat.value}
+                {stat.suffix && (
+                  <span className="text-xs font-normal text-muted-foreground ml-1">
+                    {stat.suffix}
+                  </span>
+                )}
               </p>
               <p className="text-[10px] text-muted-foreground/70 truncate">{stat.note}</p>
             </div>
@@ -681,62 +701,88 @@ function DashboardPage() {
       </div>
 
       {/* ── Tier Status + Usage Accordion ── */}
-      <details className={cn(
-        "rounded-xl border shadow-sm",
-        tier === "pro" ? "bg-amber-50 border-amber-200" :
-        tier === "starter" ? "bg-blue-50 border-blue-200" :
-        "bg-card border-border",
-      )}>
+      <details
+        className={cn(
+          "rounded-xl border shadow-sm",
+          tier === "pro"
+            ? "bg-amber-50 border-amber-200"
+            : tier === "starter"
+              ? "bg-blue-50 border-blue-200"
+              : "bg-card border-border",
+        )}
+      >
         <summary className="flex cursor-pointer items-center gap-3.5 px-4 py-3 select-none">
           {/* Crown icon circle */}
-          <div className={cn(
-            "flex h-9 w-9 shrink-0 items-center justify-center rounded-full",
-            tier === "pro" ? "bg-amber-500" :
-            tier === "starter" ? "bg-blue-500" :
-            "bg-muted-foreground/20",
-          )}>
+          <div
+            className={cn(
+              "flex h-9 w-9 shrink-0 items-center justify-center rounded-full",
+              tier === "pro"
+                ? "bg-amber-500"
+                : tier === "starter"
+                  ? "bg-blue-500"
+                  : "bg-muted-foreground/20",
+            )}
+          >
             <Crown className="h-4 w-4 text-white" />
           </div>
 
           {/* Info */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className={cn(
-                "rounded-full px-2.5 py-0.5 text-[11px] font-bold text-white",
-                tier === "pro" ? "bg-emerald-500" :
-                tier === "starter" ? "bg-blue-500" :
-                "bg-muted-foreground/60",
-              )}>
+              <span
+                className={cn(
+                  "rounded-full px-2.5 py-0.5 text-[11px] font-bold text-white",
+                  tier === "pro"
+                    ? "bg-emerald-500"
+                    : tier === "starter"
+                      ? "bg-blue-500"
+                      : "bg-muted-foreground/60",
+                )}
+              >
                 {tierName}
               </span>
-              <span className={cn(
-                "flex items-center gap-1 text-xs font-medium",
-                tier === "pro" ? "text-emerald-600" :
-                tier === "starter" ? "text-blue-600" :
-                "text-muted-foreground",
-              )}>
+              <span
+                className={cn(
+                  "flex items-center gap-1 text-xs font-medium",
+                  tier === "pro"
+                    ? "text-emerald-600"
+                    : tier === "starter"
+                      ? "text-blue-600"
+                      : "text-muted-foreground",
+                )}
+              >
                 <Star className="h-3 w-3" />
                 Aktif
               </span>
             </div>
-            <p className={cn(
-              "mt-0.5 text-xs truncate",
-              tier === "pro" ? "text-amber-800/70" :
-              tier === "starter" ? "text-blue-800/70" :
-              "text-muted-foreground",
-            )}>
+            <p
+              className={cn(
+                "mt-0.5 text-xs truncate",
+                tier === "pro"
+                  ? "text-amber-800/70"
+                  : tier === "starter"
+                    ? "text-blue-800/70"
+                    : "text-muted-foreground",
+              )}
+            >
               {tier === "pro"
                 ? "Siap untuk banyak role, banyak versi CV, dan interview practice."
                 : tier === "starter"
-                ? "Tools dasar untuk membuat CV profesional dan cek skor ATS."
-                : "Mulai buat CV pertama kamu dan cek kesiapan ATS."}
+                  ? "Tools dasar untuk membuat CV profesional dan cek skor ATS."
+                  : "Mulai buat CV pertama kamu dan cek kesiapan ATS."}
             </p>
           </div>
 
           {/* Right side actions */}
           <div className="flex items-center gap-2 shrink-0">
             {tier === "free" && (
-              <Button asChild size="sm" variant="default" className="h-7 text-xs gap-1.5" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
+              <Button
+                asChild
+                size="sm"
+                variant="default"
+                className="h-7 text-xs gap-1.5"
+                onClick={(e: React.MouseEvent) => e.stopPropagation()}
+              >
                 <Link to="/harga">
                   <Crown className="h-3.5 w-3.5" /> Upgrade
                 </Link>

@@ -1,7 +1,17 @@
 import { Button } from "@/components/ui/button";
 import { Loader2, Sparkles, Wand2 } from "lucide-react";
 
-export function AiSuggestBtn({ loading, onClick, label = "Sarankan AI", variant = "ghost" }: { loading: boolean; onClick: () => void; label?: string; variant?: "ghost" | "outline" }) {
+export function AiSuggestBtn({
+  loading,
+  onClick,
+  label = "Sarankan AI",
+  variant = "ghost",
+}: {
+  loading: boolean;
+  onClick: () => void;
+  label?: string;
+  variant?: "ghost" | "outline";
+}) {
   return (
     <Button
       variant={variant}

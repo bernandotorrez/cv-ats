@@ -1,17 +1,17 @@
 /**
  * AI CV Review Upload — Review CV dari file PDF/DOCX yang diupload user
  * Menerima teks hasil ekstraksi client-side, lalu mereview dengan AI HR persona.
- * 
+ *
  * POST /ai-cv-review-upload
  * Body: { rawText: string, targetRole?: string, jobDescription?: string }
  */
 
-import { 
-  aiComplete, 
-  checkAndTrackQuota, 
-  corsResponse, 
-  errorResponse, 
-  getAdminClient, 
+import {
+  aiComplete,
+  checkAndTrackQuota,
+  corsResponse,
+  errorResponse,
+  getAdminClient,
   getUserId,
   getLanguageInstruction,
   type CvUiLang,
@@ -34,18 +34,25 @@ Deno.serve(async (req: Request) => {
 
     const tier = (userSub as any)?.subscription_tiers;
     if (!tier?.enable_cv_review) {
-      return corsResponse({
-        error: "Fitur Review CV by HR hanya tersedia untuk paket Starter ke atas. Silakan upgrade untuk mengakses fitur ini.",
-        requiresUpgrade: true,
-        upgradeUrl: "/harga"
-      }, 403, req);
+      return corsResponse(
+        {
+          error:
+            "Fitur Review CV by HR hanya tersedia untuk paket Starter ke atas. Silakan upgrade untuk mengakses fitur ini.",
+          requiresUpgrade: true,
+          upgradeUrl: "/harga",
+        },
+        403,
+        req,
+      );
     }
 
     const { rawText, targetRole, jobDescription, language } = await req.json();
     const lang: CvUiLang = language === "en" ? "en" : "id";
 
     if (!rawText || typeof rawText !== "string" || rawText.trim().length === 0) {
-      throw new Error("Teks CV tidak ditemukan. Pastikan file CV berhasil diupload dan teks terekstrak.");
+      throw new Error(
+        "Teks CV tidak ditemukan. Pastikan file CV berhasil diupload dan teks terekstrak.",
+      );
     }
 
     const tierSlug = (tier as any)?.slug || "free";
@@ -188,33 +195,36 @@ ${hrPersonaPrompt}`;
       console.error("Failed to save CV review:", insertError);
     }
 
-    return corsResponse({
-      success: true,
-      review: {
-        reviewer: parsed.reviewer || {
-          name: "Hira AI",
-          title: "Senior HR Recruitment Consultant",
-          experience: "20+ tahun"
+    return corsResponse(
+      {
+        success: true,
+        review: {
+          reviewer: parsed.reviewer || {
+            name: "Hira AI",
+            title: "Senior HR Recruitment Consultant",
+            experience: "20+ tahun",
+          },
+          scores: {
+            overall: parsed.overallScore || 0,
+            firstImpression: parsed.firstImpression || 0,
+            format: parsed.formatScore || 0,
+            content: parsed.contentScore || 0,
+            achievement: parsed.achievementScore || 0,
+            presentation: parsed.presentationScore || 0,
+          },
+          strengths: parsed.strengths || [],
+          weaknesses: parsed.weaknesses || [],
+          suggestions: parsed.suggestions || [],
+          industryBenchmark: parsed.industryBenchmark || {},
+          hrVerdict: parsed.hrVerdict || {},
+          quickWins: parsed.quickWins || [],
         },
-        scores: {
-          overall: parsed.overallScore || 0,
-          firstImpression: parsed.firstImpression || 0,
-          format: parsed.formatScore || 0,
-          content: parsed.contentScore || 0,
-          achievement: parsed.achievementScore || 0,
-          presentation: parsed.presentationScore || 0,
-        },
-        strengths: parsed.strengths || [],
-        weaknesses: parsed.weaknesses || [],
-        suggestions: parsed.suggestions || [],
-        industryBenchmark: parsed.industryBenchmark || {},
-        hrVerdict: parsed.hrVerdict || {},
-        quickWins: parsed.quickWins || [],
+        tier: tierSlug,
+        isHrPersona: true,
       },
-      tier: tierSlug,
-      isHrPersona: true,
-    }, 200, req);
-
+      200,
+      req,
+    );
   } catch (e) {
     return errorResponse(e, req);
   }

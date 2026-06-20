@@ -20,9 +20,9 @@ export function PhotoUpload({ photoUrl, userId, cvId, onPhotoChange }: PhotoUplo
   const getPathFromUrl = (url: string) => {
     try {
       const decodedUrl = decodeURIComponent(url);
-      const parts = decodedUrl.split('/cv-photos/');
+      const parts = decodedUrl.split("/cv-photos/");
       if (parts.length > 1) {
-        return parts[1].split('?')[0];
+        return parts[1].split("?")[0];
       }
     } catch (e) {
       console.error("Gagal parse URL foto:", e);
@@ -47,7 +47,7 @@ export function PhotoUpload({ photoUrl, userId, cvId, onPhotoChange }: PhotoUplo
 
     setUploading(true);
     try {
-      const fileExt = file.name.split('.').pop();
+      const fileExt = file.name.split(".").pop();
       const filePath = `${userId}/${cvId}.${fileExt}`;
 
       // Upload/replace ke storage
@@ -90,7 +90,7 @@ export function PhotoUpload({ photoUrl, userId, cvId, onPhotoChange }: PhotoUplo
   const handleDrop = async (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
-    
+
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       const file = e.dataTransfer.files[0];
       await handleFile(file);
@@ -106,7 +106,7 @@ export function PhotoUpload({ photoUrl, userId, cvId, onPhotoChange }: PhotoUplo
 
   const handleRemovePhoto = async () => {
     if (!photoUrl) return;
-    
+
     const confirmDelete = window.confirm("Apakah Anda yakin ingin menghapus foto profil ini?");
     if (!confirmDelete) return;
 

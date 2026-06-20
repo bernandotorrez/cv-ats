@@ -25,10 +25,18 @@ export function JakartaTemplate({ data, showHeader = true, sectionOrder, languag
   const organizations = data.organizations || [];
 
   // Use provided section order or default
-  const orderedSections = sectionOrder?.filter(s => s.id !== "ats") || DEFAULT_SECTION_ORDER;
+  const orderedSections = sectionOrder?.filter((s) => s.id !== "ats") || DEFAULT_SECTION_ORDER;
 
   // Check if personal section has content to show
-  const hasPersonalContent = personal.fullName || personal.headline || personal.email || personal.phone || personal.location || personal.linkedin || personal.website || personal.summary;
+  const hasPersonalContent =
+    personal.fullName ||
+    personal.headline ||
+    personal.email ||
+    personal.phone ||
+    personal.location ||
+    personal.linkedin ||
+    personal.website ||
+    personal.summary;
 
   // Render section based on id
   const renderSection = (sectionId: string) => {
@@ -37,8 +45,10 @@ export function JakartaTemplate({ data, showHeader = true, sectionOrder, languag
         // Personal section renders the summary (header is handled separately)
         if (personal.summary) {
           return (
-            <Section key="personal-summary" title={t(language, 'profileSummary')}>
-              <p style={{ whiteSpace: "pre-wrap", textAlign: personal.summaryAlign || "left" }}>{personal.summary}</p>
+            <Section key="personal-summary" title={t(language, "profileSummary")}>
+              <p style={{ whiteSpace: "pre-wrap", textAlign: personal.summaryAlign || "left" }}>
+                {personal.summary}
+              </p>
             </Section>
           );
         }
@@ -47,21 +57,31 @@ export function JakartaTemplate({ data, showHeader = true, sectionOrder, languag
       case "experience":
         if (experiences.length > 0) {
           return (
-            <Section key="experience" title={t(language, 'workExperience')}>
+            <Section key="experience" title={t(language, "workExperience")}>
               {experiences.map((e) => (
                 <div key={e.id} style={{ marginBottom: 10 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 700 }}>
+                  <div
+                    style={{ display: "flex", justifyContent: "space-between", fontWeight: 700 }}
+                  >
                     <span>
                       {e.position} — {e.company}
                     </span>
                     <span style={{ fontWeight: 500, fontSize: "9.5pt" }}>
-                      {e.startDate} – {e.current ? t(language, 'current') : e.endDate}
+                      {e.startDate} – {e.current ? t(language, "current") : e.endDate}
                     </span>
                   </div>
                   {e.location && (
                     <div style={{ fontSize: "9.5pt", color: "#555" }}>{e.location}</div>
                   )}
-                  <p style={{ whiteSpace: "pre-wrap", marginTop: 4, textAlign: e.descriptionAlign || "left" }}>{e.description}</p>
+                  <p
+                    style={{
+                      whiteSpace: "pre-wrap",
+                      marginTop: 4,
+                      textAlign: e.descriptionAlign || "left",
+                    }}
+                  >
+                    {e.description}
+                  </p>
                 </div>
               ))}
             </Section>
@@ -72,10 +92,12 @@ export function JakartaTemplate({ data, showHeader = true, sectionOrder, languag
       case "education":
         if (educations.length > 0) {
           return (
-            <Section key="education" title={t(language, 'education')}>
+            <Section key="education" title={t(language, "education")}>
               {educations.map((ed) => (
                 <div key={ed.id} style={{ marginBottom: 8 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 700 }}>
+                  <div
+                    style={{ display: "flex", justifyContent: "space-between", fontWeight: 700 }}
+                  >
                     <span>
                       {ed.degree}
                       {ed.field ? `, ${ed.field}` : ""}
@@ -85,7 +107,11 @@ export function JakartaTemplate({ data, showHeader = true, sectionOrder, languag
                     </span>
                   </div>
                   <div style={{ fontSize: "10pt" }}>{ed.school}</div>
-                  {ed.description && <p style={{ marginTop: 2, textAlign: ed.descriptionAlign || "left" }}>{ed.description}</p>}
+                  {ed.description && (
+                    <p style={{ marginTop: 2, textAlign: ed.descriptionAlign || "left" }}>
+                      {ed.description}
+                    </p>
+                  )}
                 </div>
               ))}
             </Section>
@@ -96,7 +122,7 @@ export function JakartaTemplate({ data, showHeader = true, sectionOrder, languag
       case "skills":
         if (skills.length > 0) {
           return (
-            <Section key="skills" title={t(language, 'skills')}>
+            <Section key="skills" title={t(language, "skills")}>
               <p>{skills.map((s) => s.name).join(" • ")}</p>
             </Section>
           );
@@ -106,10 +132,8 @@ export function JakartaTemplate({ data, showHeader = true, sectionOrder, languag
       case "languages":
         if (languages.length > 0) {
           return (
-            <Section key="languages" title={t(language, 'languages')}>
-              <p>
-                {languages.map((l) => `${l.name} (${l.level})`).join(" • ")}
-              </p>
+            <Section key="languages" title={t(language, "languages")}>
+              <p>{languages.map((l) => `${l.name} (${l.level})`).join(" • ")}</p>
             </Section>
           );
         }
@@ -118,7 +142,7 @@ export function JakartaTemplate({ data, showHeader = true, sectionOrder, languag
       case "certificate":
         if (certificates.length > 0) {
           return (
-            <Section key="certificate" title={t(language, 'certificates')}>
+            <Section key="certificate" title={t(language, "certificates")}>
               {certificates.map((c) => (
                 <div key={c.id} style={{ marginBottom: 4 }}>
                   {c.name} — {c.issuer} <span style={{ color: "#555" }}>({c.date})</span>
@@ -132,10 +156,12 @@ export function JakartaTemplate({ data, showHeader = true, sectionOrder, languag
       case "internship":
         if (internships.length > 0) {
           return (
-            <Section key="internship" title={t(language, 'internship')}>
+            <Section key="internship" title={t(language, "internship")}>
               {internships.map((item) => (
                 <div key={item.id} style={{ marginBottom: 10 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 700 }}>
+                  <div
+                    style={{ display: "flex", justifyContent: "space-between", fontWeight: 700 }}
+                  >
                     <span>
                       {item.position} — {item.company}
                     </span>
@@ -144,7 +170,15 @@ export function JakartaTemplate({ data, showHeader = true, sectionOrder, languag
                     </span>
                   </div>
                   {item.description && (
-                    <p style={{ whiteSpace: "pre-wrap", marginTop: 4, textAlign: item.descriptionAlign || "left" }}>{item.description}</p>
+                    <p
+                      style={{
+                        whiteSpace: "pre-wrap",
+                        marginTop: 4,
+                        textAlign: item.descriptionAlign || "left",
+                      }}
+                    >
+                      {item.description}
+                    </p>
                   )}
                 </div>
               ))}
@@ -156,10 +190,12 @@ export function JakartaTemplate({ data, showHeader = true, sectionOrder, languag
       case "organization":
         if (organizations.length > 0) {
           return (
-            <Section key="organization" title={t(language, 'organization')}>
+            <Section key="organization" title={t(language, "organization")}>
               {organizations.map((item) => (
                 <div key={item.id} style={{ marginBottom: 10 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 700 }}>
+                  <div
+                    style={{ display: "flex", justifyContent: "space-between", fontWeight: 700 }}
+                  >
                     <span>
                       {item.role} — {item.name}
                     </span>
@@ -168,7 +204,15 @@ export function JakartaTemplate({ data, showHeader = true, sectionOrder, languag
                     </span>
                   </div>
                   {item.description && (
-                    <p style={{ whiteSpace: "pre-wrap", marginTop: 4, textAlign: item.descriptionAlign || "left" }}>{item.description}</p>
+                    <p
+                      style={{
+                        whiteSpace: "pre-wrap",
+                        marginTop: 4,
+                        textAlign: item.descriptionAlign || "left",
+                      }}
+                    >
+                      {item.description}
+                    </p>
                   )}
                 </div>
               ))}
@@ -186,14 +230,22 @@ export function JakartaTemplate({ data, showHeader = true, sectionOrder, languag
     <>
       {showHeader && hasPersonalContent && (
         <header style={{ textAlign: "center", marginBottom: 10 }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 15, marginBottom: 4 }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 15,
+              marginBottom: 4,
+            }}
+          >
             {personal.photoUrl && (
               <img
                 src={personal.photoUrl}
                 alt="Profile"
                 style={{
-                  width: 45,
-                  height: 45,
+                  width: 80,
+                  height: 80,
                   borderRadius: "50%",
                   objectFit: "cover",
                 }}
@@ -210,10 +262,10 @@ export function JakartaTemplate({ data, showHeader = true, sectionOrder, languag
               )}
             </div>
           </div>
-          <p style={{ fontSize: "9.5pt", color: "#444", margin: "4px 0" }}>
+          <p style={{ fontSize: "9.5pt", color: "#444", margin: "12px 0 4px" }}>
             {[personal.email, personal.phone, personal.location].filter(Boolean).join(" • ")}
           </p>
-          <p style={{ fontSize: "9.5pt", color: "#444", margin: "2px 0" }}>
+          <p style={{ fontSize: "9.5pt", color: "#444", margin: "4px 0" }}>
             {[personal.linkedin, personal.website].filter(Boolean).join(" • ")}
           </p>
         </header>

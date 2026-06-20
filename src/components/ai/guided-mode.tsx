@@ -40,22 +40,26 @@ interface Step {
 const GUIDED_STEPS: Step[] = [
   {
     key: "greeting",
-    question: "Halo! Saya akan bantu kamu mengisi CV step by step. Siap? Yuk mulai! Pertama, posisi apa yang sedang kamu lamar?",
+    question:
+      "Halo! Saya akan bantu kamu mengisi CV step by step. Siap? Yuk mulai! Pertama, posisi apa yang sedang kamu lamar?",
     field: "personal.headline",
   },
   {
     key: "summary",
-    question: "Ceritakan tentang dirimu secara singkat. Apa keahlian utamamu dan kenapa kamu cocok untuk posisi ini?",
+    question:
+      "Ceritakan tentang dirimu secara singkat. Apa keahlian utamamu dan kenapa kamu cocok untuk posisi ini?",
     field: "personal.summary",
   },
   {
     key: "experience_count",
-    question: "Bagus! Sekarang, berapa pengalaman kerja yang ingin kamu cantumkan? (contoh: 2 atau 3)",
+    question:
+      "Bagus! Sekarang, berapa pengalaman kerja yang ingin kamu cantumkan? (contoh: 2 atau 3)",
     field: "experience_count",
   },
   {
     key: "experience_detail",
-    question: "Ceritakan pengalaman kerjamu yang paling relevan. Sebutkan: nama perusahaan, posisi, dan apa pencapaian terbesarmu di sana.",
+    question:
+      "Ceritakan pengalaman kerjamu yang paling relevan. Sebutkan: nama perusahaan, posisi, dan apa pencapaian terbesarmu di sana.",
     field: "experiences",
   },
   {
@@ -65,7 +69,8 @@ const GUIDED_STEPS: Step[] = [
   },
   {
     key: "skills",
-    question: "Skill apa yang paling ingin kamu tonjolkan? Sebutkan hard skills dan soft skills yang relevan dengan posisi target.",
+    question:
+      "Skill apa yang paling ingin kamu tonjolkan? Sebutkan hard skills dan soft skills yang relevan dengan posisi target.",
     field: "skills",
   },
   {
@@ -112,7 +117,10 @@ export function GuidedMode({ cvId, cvData, onComplete, onCancel }: Props) {
     setSaving(true);
     try {
       const { data: existing } = await (supabase as any)
-        .from("cvs").select("data").eq("id", cvId).single();
+        .from("cvs")
+        .select("data")
+        .eq("id", cvId)
+        .single();
       const currentData = existing?.data ?? {};
       await (supabase as any)
         .from("cvs")
@@ -144,7 +152,10 @@ export function GuidedMode({ cvId, cvData, onComplete, onCancel }: Props) {
   const handleClearAndCancel = async () => {
     // Clear saved state
     const { data: existing } = await (supabase as any)
-      .from("cvs").select("data").eq("id", cvId).single();
+      .from("cvs")
+      .select("data")
+      .eq("id", cvId)
+      .single();
     const currentData = existing?.data ?? {};
     const { _guided, ...rest } = currentData;
     await (supabase as any).from("cvs").update({ data: rest }).eq("id", cvId);
@@ -157,7 +168,9 @@ export function GuidedMode({ cvId, cvData, onComplete, onCancel }: Props) {
       // Parse user's response with AI
       const context = `Sedang dalam mode panduan step-by-step CV. Step: ${step.key}. Data CV yang sudah terkumpul: ${JSON.stringify(draftData)}.`;
       const msgs = [
-        { role: "user" as const, content: `${context}\n\nJawaban pengguna untuk step "${step.key}": ${userInput}\n\nEkstrak informasi relevan dalam format JSON dan berikan respons dalam Bahasa Indonesia yang mendorong dan natural. 
+        {
+          role: "user" as const,
+          content: `${context}\n\nJawaban pengguna untuk step "${step.key}": ${userInput}\n\nEkstrak informasi relevan dalam format JSON dan berikan respons dalam Bahasa Indonesia yang mendorong dan natural. 
 
 Format respons JSON:
 {
@@ -190,7 +203,8 @@ PENTING - POLES KONTEN:
 
 JANGAN hanya copy-paste jawaban user. POLES dan PROFESIONALKAN kontennya!
 
-Jika ini step terakhir, beri rangkuman dan katakan CV sudah siap.` },
+Jika ini step terakhir, beri rangkuman dan katakan CV sudah siap.`,
+        },
       ];
 
       const result = await chatWithAi({
@@ -200,7 +214,7 @@ Jika ini step terakhir, beri rangkuman dan katakan CV sudah siap.` },
       // Parse JSON response
       let reply = result.reply;
       let extracted: any = {};
-      
+
       try {
         const parsed = JSON.parse(result.reply);
         reply = parsed.reply || result.reply;
@@ -243,7 +257,10 @@ Jika ini step terakhir, beri rangkuman dan katakan CV sudah siap.` },
     if (step.key === "complete") {
       // Clear saved state
       const { data: existing } = await (supabase as any)
-        .from("cvs").select("data").eq("id", cvId).single();
+        .from("cvs")
+        .select("data")
+        .eq("id", cvId)
+        .single();
       const currentData = existing?.data ?? {};
       const { _guided, ...rest } = currentData;
       await (supabase as any).from("cvs").update({ data: rest }).eq("id", cvId);
@@ -261,22 +278,22 @@ Jika ini step terakhir, beri rangkuman dan katakan CV sudah siap.` },
       if (extracted && Object.keys(extracted).length > 0) {
         setDraftData((prev) => {
           const updated: any = { ...prev };
-          
+
           // Merge extracted data
           Object.keys(extracted).forEach((key) => {
-            if (key === 'personal') {
+            if (key === "personal") {
               updated.personal = { ...updated.personal, ...extracted[key] };
-            } else if (key === 'experiences' && Array.isArray(extracted[key])) {
+            } else if (key === "experiences" && Array.isArray(extracted[key])) {
               updated.experiences = [...(updated.experiences || []), ...extracted[key]];
-            } else if (key === 'educations' && Array.isArray(extracted[key])) {
+            } else if (key === "educations" && Array.isArray(extracted[key])) {
               updated.educations = [...(updated.educations || []), ...extracted[key]];
-            } else if (key === 'skills' && Array.isArray(extracted[key])) {
+            } else if (key === "skills" && Array.isArray(extracted[key])) {
               updated.skills = [...(updated.skills || []), ...extracted[key]];
             } else {
               updated[key] = extracted[key];
             }
           });
-          
+
           return updated;
         });
       }
@@ -311,7 +328,10 @@ Jika ini step terakhir, beri rangkuman dan katakan CV sudah siap.` },
     setCurrentStep(prevStep);
     setMessages((prev) => [
       ...prev,
-      { role: "ai", content: `Kita kembali ke step sebelumnya. ${GUIDED_STEPS[prevStep].question}` },
+      {
+        role: "ai",
+        content: `Kita kembali ke step sebelumnya. ${GUIDED_STEPS[prevStep].question}`,
+      },
     ]);
   };
 
@@ -346,10 +366,7 @@ Jika ini step terakhir, beri rangkuman dan katakan CV sudah siap.` },
 
       <CardContent className="flex-1 flex flex-col min-h-0 p-0">
         {/* Messages */}
-        <div
-          ref={scrollRef}
-          className="flex-1 overflow-y-auto px-6 py-4 space-y-4 min-h-[200px]"
-        >
+        <div ref={scrollRef} className="flex-1 overflow-y-auto px-6 py-4 space-y-4 min-h-[200px]">
           {messages.map((msg, i) => (
             <div
               key={i}
@@ -400,12 +417,7 @@ Jika ini step terakhir, beri rangkuman dan katakan CV sudah siap.` },
               >
                 <ArrowLeft className="h-4 w-4" />
               </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleSkip}
-                disabled={loading}
-              >
+              <Button variant="ghost" size="sm" onClick={handleSkip} disabled={loading}>
                 Lewati
               </Button>
               <div className="flex-1 min-w-[20px]" />
@@ -424,12 +436,7 @@ Jika ini step terakhir, beri rangkuman dan katakan CV sudah siap.` },
                 <span className="hidden sm:inline">Simpan & Lanjut Nanti</span>
                 <span className="sm:hidden">Simpan</span>
               </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleClearAndCancel}
-                disabled={loading}
-              >
+              <Button variant="outline" size="sm" onClick={handleClearAndCancel} disabled={loading}>
                 Keluar
               </Button>
               <Button
