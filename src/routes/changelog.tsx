@@ -36,6 +36,30 @@ export const Route = createFileRoute("/changelog")({
 const changelog = [
   {
     version: APP_VERSION,
+    date: "20 Juni 2026",
+    title: "Fitur Upload Foto Profil (Opsional)",
+    summary:
+      "Kini Anda dapat mengunggah foto profil ke CV secara opsional dengan sistem penyimpanan aman (private bucket) berbasis Supabase Storage.",
+    highlights: [
+      {
+        icon: Sparkles,
+        type: "Fitur baru",
+        text: "Menambahkan input upload foto profil di bagian Data Pribadi dengan validasi ukuran maks 2MB (JPG, PNG, WebP).",
+      },
+      {
+        icon: ShieldCheck,
+        type: "Keamanan",
+        text: "Penyimpanan foto privat di Supabase Storage ('cv-photos' bucket) menggunakan signed URL yang aman dan kebijakan RLS (Row Level Security).",
+      },
+      {
+        icon: FileText,
+        type: "Peningkatan",
+        text: "Mengintegrasikan tampilan foto profil secara opsional dengan posisi layout yang ATS-friendly pada seluruh template CV.",
+      },
+    ],
+  },
+  {
+    version: "v1.5.0-live",
     date: "15 Juni 2026",
     title: "Sign in & Sign Up dengan Google",
     summary:
