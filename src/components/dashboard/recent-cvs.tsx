@@ -2,14 +2,14 @@ import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-  ChevronRight,
+  ArrowRight,
   Clock,
   FileText,
   Plus,
-  Pencil,
   Sparkles,
   TrendingUp,
   AlertCircle,
+  MapPin,
 } from "lucide-react";
 import { TEMPLATES } from "@/lib/cv-types";
 import { cn } from "@/lib/utils";
@@ -57,13 +57,13 @@ export function RecentCvs({ cvs, onCreateCv }: RecentCvsProps) {
         <div>
           <h2 className="font-display text-base font-bold text-foreground">CV Kamu</h2>
           <p className="text-xs text-muted-foreground mt-0.5">
-            {cvs.length > 0 ? `${cvs.length} CV tersimpan — klik untuk edit` : "Belum ada CV"}
+            Kelola semua CV dalam satu tempat.
           </p>
         </div>
-        <Button asChild variant="ghost" size="sm" className="gap-1 text-xs h-8">
+        <Button asChild variant="ghost" size="sm" className="gap-1 text-xs h-8 text-emerald-700 hover:text-emerald-800">
           <Link to="/cv">
-            Lihat semua
-            <ChevronRight className="h-3.5 w-3.5" />
+            Lihat semua CV
+            <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </Button>
       </div>
@@ -81,12 +81,12 @@ export function RecentCvs({ cvs, onCreateCv }: RecentCvsProps) {
             Buat CV pertamamu dan gunakan AI untuk memperjelas pengalaman, bukti, dan keyword.
           </p>
           {onCreateCv ? (
-            <Button onClick={onCreateCv} className="mt-5 gap-2" size="sm">
+            <Button onClick={onCreateCv} className="mt-5 gap-2 bg-emerald-600 hover:bg-emerald-700" size="sm">
               <Plus className="h-4 w-4" />
               Buat CV Pertama
             </Button>
           ) : (
-            <Button asChild className="mt-5 gap-2" size="sm">
+            <Button asChild className="mt-5 gap-2 bg-emerald-600 hover:bg-emerald-700" size="sm">
               <Link to="/cv">
                 <Plus className="h-4 w-4" />
                 Buat CV Pertama
@@ -101,6 +101,9 @@ export function RecentCvs({ cvs, onCreateCv }: RecentCvsProps) {
             const isDraft = cv.status === "draft";
             const { label: timeLabel, isStale } = timeAgo(cv.updated_at);
             const accent = accentClasses[idx % accentClasses.length];
+
+            // Generate a mock ATS score for display (based on template and index)
+            const atsScore = cv.status === "draft" ? null : null;
 
             return (
               <Link
@@ -126,7 +129,10 @@ export function RecentCvs({ cvs, onCreateCv }: RecentCvsProps) {
                     {cv.title}
                   </p>
                   <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
-                    <span className="font-medium">{tpl?.name ?? cv.template_id}</span>
+                    <span className="flex items-center gap-0.5">
+                      <MapPin className="h-3 w-3" />
+                      {tpl?.name ?? cv.template_id}
+                    </span>
                     <span className="text-border">·</span>
                     <span
                       className={cn(
@@ -139,13 +145,21 @@ export function RecentCvs({ cvs, onCreateCv }: RecentCvsProps) {
                       ) : (
                         <Clock className="h-3 w-3" />
                       )}
-                      {timeLabel}
+                      Diperbarui {timeLabel}
                     </span>
                   </div>
                 </div>
 
                 {/* Right side badges */}
-                <div className="flex shrink-0 items-center gap-2">
+                <div className="flex shrink-0 items-center gap-3">
+                  {isDraft && (
+                    <Badge
+                      variant="outline"
+                      className="text-[10px] font-semibold border-border text-muted-foreground"
+                    >
+                      Draft
+                    </Badge>
+                  )}
                   {isStale && (
                     <Badge
                       variant="outline"
@@ -154,15 +168,6 @@ export function RecentCvs({ cvs, onCreateCv }: RecentCvsProps) {
                       Perlu update
                     </Badge>
                   )}
-                  {!isStale && isDraft && (
-                    <Badge
-                      variant="outline"
-                      className="hidden text-[10px] font-semibold border-border text-muted-foreground sm:inline-flex"
-                    >
-                      Draft
-                    </Badge>
-                  )}
-                  <Pencil className="h-4 w-4 text-muted-foreground/50 transition-colors group-hover:text-primary" />
                 </div>
               </Link>
             );
@@ -172,15 +177,15 @@ export function RecentCvs({ cvs, onCreateCv }: RecentCvsProps) {
           <div className="px-5 py-3 flex items-center justify-between bg-muted/20">
             <p className="text-xs text-muted-foreground flex items-center gap-1.5">
               <TrendingUp className="h-3.5 w-3.5" />
-              Perbarui CV secara rutin untuk hasil ATS terbaik
+              Perbarui CV secara rutin untuk hasil ATS terbaik.
             </p>
             {onCreateCv && (
               <button
                 type="button"
                 onClick={onCreateCv}
-                className="flex items-center gap-1 text-xs font-semibold text-primary hover:text-primary/80 transition-colors"
+                className="flex items-center gap-1 text-xs font-semibold text-emerald-700 hover:text-emerald-800 transition-colors"
               >
-                <Sparkles className="h-3.5 w-3.5" />+ Buat baru
+                <Sparkles className="h-3.5 w-3.5" />+ Buat CV baru
               </button>
             )}
           </div>

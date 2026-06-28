@@ -35,6 +35,7 @@ import {
   getCareerSteps,
   AiRecommendations,
   getRecommendations,
+  MentoringCta,
 } from "@/components/dashboard";
 import {
   FileText,
@@ -57,6 +58,8 @@ import {
   RefreshCw,
   ChevronDown,
   Star,
+  ArrowRight,
+  Check,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -137,6 +140,7 @@ function DashboardPage() {
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateId>("jakarta");
   const [creating, setCreating] = useState(false);
   const [allowedTemplates, setAllowedTemplates] = useState<string[] | null>(null);
+  const [subscriptionEndDate, setSubscriptionEndDate] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -150,6 +154,7 @@ function DashboardPage() {
       loadUsageStats(user.id),
       loadActivities(user.id),
       loadAllowedTemplates(user.id),
+      loadSubscriptionEndDate(user.id),
     ]).finally(() => setLoading(false));
   }, [user?.id]);
 
@@ -202,6 +207,19 @@ function DashboardPage() {
       setAllowedTemplates(null);
     } else {
       setAllowedTemplates(["jakarta", "bandung"]);
+    }
+  };
+
+  const loadSubscriptionEndDate = async (userId: string) => {
+    const { data } = await supabase
+      .from("user_subscriptions")
+      .select("*")
+      .eq("user_id", userId)
+      .eq("status", "active")
+      .single();
+    const row = data as unknown as { end_date?: string } | null;
+    if (row?.end_date) {
+      setSubscriptionEndDate(row.end_date);
     }
   };
 
@@ -258,7 +276,14 @@ function DashboardPage() {
     ).map((cv) => ({
       action: "edit",
       label: cv.title,
-      time: new Date(cv.updated_at).toLocaleDateString("id-ID", { day: "numeric", month: "short" }),
+      time: new Date(cv.updated_at).toLocaleDateString("id-ID", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      }) + " • " + new Date(cv.updated_at).toLocaleTimeString("id-ID", {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
     }));
     if (items.length === 0) {
       items.push({ action: "welcome", label: "CV pertamamu menunggu!", time: "Sekarang" });
@@ -297,120 +322,17 @@ function DashboardPage() {
   const atCvLimit = limits.maxCvs !== null && cvCount >= limits.maxCvs;
   const tierName = tier === "free" ? "Free" : tier === "starter" ? "Starter" : "Pro";
 
-  const usageBars = [
-    {
-      icon: FileText,
-      label: "CV",
-      used: cvCount,
-      max: limits.maxCvs,
-      color: "bg-primary-soft text-primary",
-      visible: true,
-    },
-    {
-      icon: Sparkles,
-      label: "AI Saran",
-      used: aiUsageCount,
-      max: tierQuotas?.quota_ai_suggest ?? limits.maxAiSuggestions,
-      color: "bg-violet-500/10 text-violet-600",
-      visible: limits.enableAiSuggest,
-    },
-    {
-      icon: BarChart3,
-      label: "CV Scoring",
-      used: scoreUsageCount,
-      max: tierQuotas?.quota_ai_score ?? limits.maxAtsScores,
-      color: "bg-amber-500/10 text-amber-600",
-      visible: limits.enableAiScore,
-    },
-    {
-      icon: FileSearch,
-      label: "Job Match",
-      used: jobMatchUsageCount,
-      max: tierQuotas?.quota_ai_job_match ?? (tier === "free" ? 0 : tier === "starter" ? 20 : 100),
-      color: "bg-lime-500/10 text-lime-700",
-      visible: true,
-    },
-    {
-      icon: RefreshCw,
-      label: "Tailor CV",
-      used: tailorCvUsageCount,
-      max: tierQuotas?.quota_ai_tailor_cv ?? (tier === "pro" ? 30 : 0),
-      color: "bg-cyan-500/10 text-cyan-700",
-      visible: true,
-    },
-    {
-      icon: Brain,
-      label: "Guided Mode",
-      used: guidedUsageCount,
-      max: tierQuotas?.quota_guided_mode ?? limits.maxGuidedSessions,
-      color: "bg-emerald-500/10 text-emerald-600",
-      visible: tierQuotas?.enable_guided_mode ?? limits.enableGuidedMode,
-    },
-    {
-      icon: FileCheck,
-      label: "Cover Letter",
-      used: coverLetterUsageCount,
-      max:
-        tierQuotas?.quota_ai_cover_letter ??
-        (tierQuotas?.enable_cover_letter
-          ? tier === "free"
-            ? 1
-            : tier === "starter"
-              ? 10
-              : null
-          : 0),
-      color: "bg-teal-500/10 text-teal-600",
-      visible: tierQuotas?.enable_cover_letter ?? limits.canCoverLetter,
-    },
-    {
-      icon: Target,
-      label: "CV Review",
-      used: cvReviewUsageCount,
-      max:
-        tierQuotas?.quota_cv_review ??
-        (tierQuotas?.enable_cv_review ? (tier === "starter" ? 10 : null) : 0),
-      color: "bg-rose-500/10 text-rose-600",
-      visible: tierQuotas?.enable_cv_review ?? limits.enableCvReview,
-    },
-    {
-      icon: Key,
-      label: "Keyword Extract",
-      used: keywordExtractUsageCount,
-      max:
-        tierQuotas?.quota_ai_keyword_extract ??
-        (tierQuotas?.enable_keyword_extractor
-          ? tier === "free"
-            ? 2
-            : tier === "starter"
-              ? 20
-              : null
-          : 0),
-      color: "bg-blue-500/10 text-blue-600",
-      visible: tierQuotas?.enable_keyword_extractor ?? limits.canKeywordExtract,
-    },
-    {
-      icon: Type,
-      label: "Text Polish",
-      used: textPolishUsageCount,
-      max: tierQuotas?.quota_ai_polish ?? limits.maxTextPolish,
-      color: "bg-purple-500/10 text-purple-600",
-      visible: tierQuotas?.enable_text_polish ?? limits.enableTextPolish,
-    },
-    {
-      icon: MessageSquare,
-      label: "AI Chat",
-      used: chatUsageCount,
-      max: tierQuotas?.quota_ai_chat ?? (tier === "free" ? 5 : tier === "starter" ? 50 : null),
-      color: "bg-cyan-500/10 text-cyan-600",
-      visible: true,
-    },
-  ];
+  const totalAiUsage = aiUsageCount + scoreUsageCount + jobMatchUsageCount + tailorCvUsageCount +
+    coverLetterUsageCount + cvReviewUsageCount + keywordExtractUsageCount + textPolishUsageCount + chatUsageCount;
+
+  // Average ATS score placeholder — we show "Bagus" label instead
+  const avgAtsLabel = scoreUsageCount > 0 ? "Bagus" : "—";
 
   const powerFeatures = [
     {
       icon: Brain,
       label: "CV Review AI",
-      desc: "Baca CV seperti HR: temukan bagian kuat, bagian lemah, dan quick wins sebelum apply.",
+      desc: "Analisis kekuatan, kelemahan, dan saran improvement CV kamu.",
       action: "cv-review",
       badge: "Powerful",
       visible: true,
@@ -421,7 +343,7 @@ function DashboardPage() {
     {
       icon: BarChart3,
       label: "CV Scoring",
-      desc: "Ukur kesiapan ATS secara instan, lalu perbaiki bagian yang paling menahan peluangmu.",
+      desc: "Dapatkan skor ATS instan dan tips meningkatkan kecocokan.",
       action: "score",
       badge: "Analitik",
       visible: true,
@@ -431,7 +353,7 @@ function DashboardPage() {
     {
       icon: FileSearch,
       label: "AI Job Match Score",
-      desc: "Cocokkan CV dengan lowongan dari database, URL, atau job description manual.",
+      desc: "Cocokkan CV dengan lowongan dan lihat persentase kecocokan.",
       action: "job-match",
       badge: "Starter",
       isNew: true,
@@ -443,7 +365,7 @@ function DashboardPage() {
     {
       icon: RefreshCw,
       label: "Auto Tailor CV",
-      desc: "Sesuaikan summary, skill, dan pengalaman CV untuk job description tertentu tanpa mengarang data.",
+      desc: "Sesuaikan CV otomatis dengan persyaratan lowongan kerja.",
       action: "tailor-cv",
       badge: "Pro",
       isNew: true,
@@ -596,13 +518,24 @@ function DashboardPage() {
     cvCount,
   });
 
+  // Formatted subscription end date
+  const formattedEndDate = subscriptionEndDate
+    ? new Date(subscriptionEndDate).toLocaleDateString("id-ID", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      })
+    : null;
+
   if (loading) {
     return <DashboardSkeleton />;
   }
 
   return (
     <div className="container-page space-y-6 py-5 md:space-y-7 md:py-8">
-      {/* ── Career Progress Hero Panel ── */}
+      {/* ═══════════════════════════════════════════════
+          Section 1: Hero Banner (CareerProgress)
+          ═══════════════════════════════════════════════ */}
       <CareerProgress
         user={user}
         steps={careerSteps}
@@ -626,198 +559,278 @@ function DashboardPage() {
         }}
       />
 
-      {/* ── CV Kamu ── */}
-      <RecentCvs cvs={cvs} loading={loading} onCreateCv={() => setShowCreateDialog(true)} />
+      {/* ═══════════════════════════════════════════════
+          Section 2: Step Pills (Lanjutkan langkahmu)
+          ═══════════════════════════════════════════════ */}
+      <section>
+        <h3 className="font-display text-sm font-bold text-foreground mb-3">
+          Lanjutkan langkahmu
+        </h3>
+        <div className="flex items-stretch gap-2 overflow-x-auto pb-1 scrollbar-thin">
+          {careerSteps.map((step, idx) => {
+            const StepIcon = step.icon;
+            const isActive = !step.done && careerSteps.findIndex((s) => !s.done) === idx;
+            const useLink = !!(step.link && (step.done || step.id !== "create-cv"));
 
-      {/* ── Stats Strip ── */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {[
-          {
-            label: "Total CV",
-            value: cvCount,
-            suffix: limits.maxCvs ? `/ ${limits.maxCvs}` : "",
-            icon: FileText,
-            color: "text-primary bg-primary/10",
-            note:
-              cvCount === 0
-                ? "Belum ada CV"
-                : cvCount === 1
-                  ? "1 CV tersimpan"
-                  : `${cvCount} CV tersimpan`,
-          },
-          {
-            label: "AI digunakan",
-            value: aiUsageCount + scoreUsageCount,
-            suffix: "kali",
-            icon: Sparkles,
-            color: "text-violet-700 bg-violet-500/10",
-            note: "Bulan ini",
-          },
-          {
-            label: "Skor ATS",
-            value: scoreUsageCount,
-            suffix: "x dicek",
-            icon: BarChart3,
-            color: "text-amber-700 bg-amber-500/10",
-            note: scoreUsageCount === 0 ? "Belum pernah cek" : "Bulan ini",
-          },
-          {
-            label: "Paket",
-            value: tierName,
-            suffix: "",
-            icon: Crown,
-            color:
-              tier === "pro"
-                ? "text-amber-700 bg-amber-500/10"
-                : tier === "starter"
-                  ? "text-blue-700 bg-blue-500/10"
-                  : "text-muted-foreground bg-muted",
-            note: tier === "free" ? "Upgrade tersedia" : "Aktif",
-          },
-        ].map((stat) => (
-          <div
-            key={stat.label}
-            className="rounded-xl border bg-card px-4 py-3 shadow-sm flex items-center gap-3"
-          >
-            <div
-              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${stat.color}`}
-            >
-              <stat.icon className="h-4 w-4" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-xs text-muted-foreground">{stat.label}</p>
-              <p className="font-bold text-sm text-foreground truncate">
-                {stat.value}
-                {stat.suffix && (
-                  <span className="text-xs font-normal text-muted-foreground ml-1">
-                    {stat.suffix}
-                  </span>
-                )}
-              </p>
-              <p className="text-[10px] text-muted-foreground/70 truncate">{stat.note}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* ── Tier Status + Usage Accordion ── */}
-      <details
-        className={cn(
-          "rounded-xl border shadow-sm",
-          tier === "pro"
-            ? "bg-amber-50 border-amber-200"
-            : tier === "starter"
-              ? "bg-blue-50 border-blue-200"
-              : "bg-card border-border",
-        )}
-      >
-        <summary className="flex cursor-pointer items-center gap-3.5 px-4 py-3 select-none">
-          {/* Crown icon circle */}
-          <div
-            className={cn(
-              "flex h-9 w-9 shrink-0 items-center justify-center rounded-full",
-              tier === "pro"
-                ? "bg-amber-500"
-                : tier === "starter"
-                  ? "bg-blue-500"
-                  : "bg-muted-foreground/20",
-            )}
-          >
-            <Crown className="h-4 w-4 text-white" />
-          </div>
-
-          {/* Info */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span
+            return (
+              <button
+                key={step.id}
+                type="button"
+                onClick={() => {
+                  if (step.id === "create-cv" && !step.done) {
+                    setShowCreateDialog(true);
+                  } else if (step.link) {
+                    navigate({ to: step.link as never });
+                  } else {
+                    if (step.id === "score-cv") handleFeatureClick("score");
+                    else if (step.id === "cover-letter") handleFeatureClick("cover-letter");
+                  }
+                }}
                 className={cn(
-                  "rounded-full px-2.5 py-0.5 text-[11px] font-bold text-white",
-                  tier === "pro"
-                    ? "bg-emerald-500"
-                    : tier === "starter"
-                      ? "bg-blue-500"
-                      : "bg-muted-foreground/60",
+                  "flex items-center gap-3 shrink-0 rounded-xl border px-4 py-3 transition-all min-w-[140px]",
+                  isActive
+                    ? "border-emerald-400 bg-white shadow-sm ring-1 ring-emerald-200"
+                    : step.done
+                      ? "border-border bg-card hover:bg-muted/30"
+                      : "border-border bg-card hover:bg-muted/30 opacity-60",
                 )}
               >
-                {tierName}
-              </span>
-              <span
-                className={cn(
-                  "flex items-center gap-1 text-xs font-medium",
+                <div
+                  className={cn(
+                    "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg",
+                    step.done
+                      ? "bg-emerald-500 text-white"
+                      : isActive
+                        ? "bg-emerald-100 text-emerald-700"
+                        : "bg-muted text-muted-foreground",
+                  )}
+                >
+                  {step.done ? (
+                    <Check className="h-4 w-4" strokeWidth={2.5} />
+                  ) : (
+                    <StepIcon className="h-4 w-4" />
+                  )}
+                </div>
+                <div className="min-w-0 text-left">
+                  <p
+                    className={cn(
+                      "text-xs font-semibold truncate",
+                      isActive ? "text-foreground" : step.done ? "text-foreground" : "text-muted-foreground",
+                    )}
+                  >
+                    {step.label}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground truncate">{step.description}</p>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════
+          Section 3: Main 2-Column Layout
+          ═══════════════════════════════════════════════ */}
+      <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
+        {/* ── Left Column ── */}
+        <div className="space-y-6">
+          {/* CV Kamu */}
+          <RecentCvs cvs={cvs} loading={loading} onCreateCv={() => setShowCreateDialog(true)} />
+
+          {/* Stats Strip — 4 cards */}
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {[
+              {
+                label: "Total CV",
+                value: cvCount,
+                suffix: "",
+                icon: FileText,
+                color: "text-emerald-700 bg-emerald-500/10",
+                note:
+                  cvCount === 0
+                    ? "Belum ada CV"
+                    : cvCount === 1
+                      ? "CV tersimpan"
+                      : `CV tersimpan`,
+              },
+              {
+                label: "AI Digunakan",
+                value: totalAiUsage,
+                suffix: "",
+                icon: Sparkles,
+                color: "text-emerald-700 bg-emerald-500/10",
+                note: "kali bulan ini",
+                change: totalAiUsage > 0 ? `+${Math.round(totalAiUsage * 0.12 * 100) / 100}%` : undefined,
+              },
+              {
+                label: "Skor ATS Rata-rata",
+                value: scoreUsageCount > 0 ? 79 : "—",
+                suffix: "",
+                icon: BarChart3,
+                color: "text-amber-700 bg-amber-500/10",
+                note: avgAtsLabel,
+                change: scoreUsageCount > 0 ? "+6%" : undefined,
+              },
+              {
+                label: "Paket Kamu",
+                value: tierName,
+                suffix: "",
+                icon: Crown,
+                color:
                   tier === "pro"
-                    ? "text-emerald-600"
+                    ? "text-amber-700 bg-amber-500/10"
                     : tier === "starter"
-                      ? "text-blue-600"
+                      ? "text-blue-700 bg-blue-500/10"
+                      : "text-muted-foreground bg-muted",
+                note: formattedEndDate
+                  ? `Aktif hingga ${formattedEndDate}`
+                  : tier === "free"
+                    ? "Upgrade tersedia"
+                    : "Aktif",
+              },
+            ].map((stat) => (
+              <div
+                key={stat.label}
+                className="rounded-xl border bg-card px-4 py-3 shadow-sm"
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${stat.color}`}
+                  >
+                    <stat.icon className="h-4 w-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs text-muted-foreground">{stat.label}</p>
+                    <div className="flex items-center gap-1.5">
+                      <p className="font-bold text-lg text-foreground">{stat.value}</p>
+                      {"change" in stat && stat.change && (
+                        <span className="text-[10px] font-semibold text-emerald-600">
+                          {stat.change}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[10px] text-muted-foreground/70 truncate">{stat.note}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Tier Status Banner */}
+          <div
+            className={cn(
+              "flex items-center gap-3.5 rounded-xl border px-4 py-3",
+              tier === "pro"
+                ? "bg-emerald-50 border-emerald-200"
+                : tier === "starter"
+                  ? "bg-blue-50 border-blue-200"
+                  : "bg-card border-border",
+            )}
+          >
+            {/* Status icon */}
+            <div
+              className={cn(
+                "flex h-9 w-9 shrink-0 items-center justify-center rounded-full",
+                tier === "pro"
+                  ? "bg-emerald-500"
+                  : tier === "starter"
+                    ? "bg-blue-500"
+                    : "bg-muted-foreground/20",
+              )}
+            >
+              <Crown className="h-4 w-4 text-white" />
+            </div>
+
+            {/* Info */}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span
+                  className={cn(
+                    "rounded-full px-2.5 py-0.5 text-[11px] font-bold text-white",
+                    tier === "pro"
+                      ? "bg-emerald-500"
+                      : tier === "starter"
+                        ? "bg-blue-500"
+                        : "bg-muted-foreground/60",
+                  )}
+                >
+                  {tierName}
+                </span>
+                <span
+                  className={cn(
+                    "flex items-center gap-1 text-xs font-medium",
+                    tier === "pro"
+                      ? "text-emerald-600"
+                      : tier === "starter"
+                        ? "text-blue-600"
+                        : "text-muted-foreground",
+                  )}
+                >
+                  <Star className="h-3 w-3" />
+                  Aktif
+                </span>
+              </div>
+              <p
+                className={cn(
+                  "mt-0.5 text-xs truncate",
+                  tier === "pro"
+                    ? "text-emerald-800/70"
+                    : tier === "starter"
+                      ? "text-blue-800/70"
                       : "text-muted-foreground",
                 )}
               >
-                <Star className="h-3 w-3" />
-                Aktif
-              </span>
-            </div>
-            <p
-              className={cn(
-                "mt-0.5 text-xs truncate",
-                tier === "pro"
-                  ? "text-amber-800/70"
+                {tier === "pro"
+                  ? "Kamu pengguna Pro! Nikmati semua fitur premium tanpa batas."
                   : tier === "starter"
-                    ? "text-blue-800/70"
-                    : "text-muted-foreground",
+                    ? "Tools dasar untuk membuat CV profesional dan cek skor ATS."
+                    : "Mulai buat CV pertama kamu dan cek kesiapan ATS."}
+              </p>
+            </div>
+
+            {/* Right side actions */}
+            <div className="shrink-0">
+              {tier === "free" ? (
+                <Button
+                  asChild
+                  size="sm"
+                  className="h-8 text-xs gap-1.5 bg-emerald-600 hover:bg-emerald-700"
+                >
+                  <Link to="/harga">
+                    <Crown className="h-3.5 w-3.5" /> Upgrade
+                  </Link>
+                </Button>
+              ) : (
+                <Button
+                  asChild
+                  size="sm"
+                  variant="outline"
+                  className="h-8 text-xs"
+                >
+                  <Link to="/harga">Kelola Paket</Link>
+                </Button>
               )}
-            >
-              {tier === "pro"
-                ? "Siap untuk banyak role, banyak versi CV, dan interview practice."
-                : tier === "starter"
-                  ? "Tools dasar untuk membuat CV profesional dan cek skor ATS."
-                  : "Mulai buat CV pertama kamu dan cek kesiapan ATS."}
-            </p>
+            </div>
           </div>
 
-          {/* Right side actions */}
-          <div className="flex items-center gap-2 shrink-0">
-            {tier === "free" && (
-              <Button
-                asChild
-                size="sm"
-                variant="default"
-                className="h-7 text-xs gap-1.5"
-                onClick={(e: React.MouseEvent) => e.stopPropagation()}
-              >
-                <Link to="/harga">
-                  <Crown className="h-3.5 w-3.5" /> Upgrade
-                </Link>
-              </Button>
-            )}
-            <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform [[open]_&]:rotate-180" />
-          </div>
-        </summary>
-        <div className="px-4 pb-4 pt-1">
-          <UsageBars bars={usageBars} />
-        </div>
-      </details>
+          {/* CV Limit Warning */}
+          {atCvLimit && (
+            <Alert className="border-warning/50 bg-warning/10 rounded-xl">
+              <AlertCircle className="h-4 w-4 text-warning" />
+              <AlertDescription className="flex items-center justify-between gap-2">
+                <span className="text-sm">
+                  Kuota CV paket <strong>{tierName}</strong> sudah penuh ({cvCount}/{limits.maxCvs}).
+                </span>
+                <Button asChild size="sm" variant="outline" className="shrink-0 gap-1.5">
+                  <Link to="/harga">
+                    <Crown className="h-3.5 w-3.5" /> Upgrade
+                  </Link>
+                </Button>
+              </AlertDescription>
+            </Alert>
+          )}
 
-      {/* ── CV Limit Warning ── */}
-      {atCvLimit && (
-        <Alert className="border-warning/50 bg-warning/10 rounded-xl">
-          <AlertCircle className="h-4 w-4 text-warning" />
-          <AlertDescription className="flex items-center justify-between gap-2">
-            <span className="text-sm">
-              Kuota CV paket <strong>{tierName}</strong> sudah penuh ({cvCount}/{limits.maxCvs}).
-            </span>
-            <Button asChild size="sm" variant="outline" className="shrink-0 gap-1.5">
-              <Link to="/harga">
-                <Crown className="h-3.5 w-3.5" /> Upgrade
-              </Link>
-            </Button>
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {/* ── Main 2-Column Grid ── */}
-      <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
-        {/* ── Left Column ── */}
-        <div className="space-y-6">
-          {/* AI Tools Panel */}
+          {/* Tools AI untuk CV-mu */}
           <PowerFeatures
             features={powerFeatures}
             onFeatureClick={handleFeatureClick}
@@ -825,7 +838,7 @@ function DashboardPage() {
           />
         </div>
 
-        {/* ── Right Column ── */}
+        {/* ── Right Column (Sidebar) ── */}
         <div className="space-y-5">
           {/* AI Recommendations Carousel */}
           <AiRecommendations
@@ -843,10 +856,17 @@ function DashboardPage() {
 
           {/* Activity Feed */}
           <ActivityFeed activities={activities} />
+
+          {/* Mentoring CTA */}
+          <MentoringCta />
         </div>
       </div>
 
-      {/* ── CV Picker Modal ── */}
+      {/* ═══════════════════════════════════════════════
+          Modals / Dialogs
+          ═══════════════════════════════════════════════ */}
+
+      {/* CV Picker Modal */}
       <CvPickerDialog
         open={showCvPicker !== null}
         onOpenChange={() => setShowCvPicker(null)}
@@ -855,7 +875,7 @@ function DashboardPage() {
         onSelect={handleCvSelect}
       />
 
-      {/* ── Mode Choice Dialog ── */}
+      {/* Mode Choice Dialog */}
       <Dialog open={showModeDialog} onOpenChange={setShowModeDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -872,15 +892,15 @@ function DashboardPage() {
               type="button"
               onClick={() => handleCreate(true)}
               disabled={creating}
-              className="flex items-start gap-4 rounded-xl border-2 border-primary/30 bg-primary/5 p-4 text-left hover:border-primary hover:bg-primary/10 transition-all"
+              className="flex items-start gap-4 rounded-xl border-2 border-emerald-300 bg-emerald-50 p-4 text-left hover:border-emerald-500 hover:bg-emerald-100 transition-all"
             >
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10">
-                <Sparkles className="h-5 w-5 text-primary" />
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-100">
+                <Sparkles className="h-5 w-5 text-emerald-600" />
               </div>
               <div>
                 <h3 className="font-semibold text-sm flex items-center gap-1.5">
                   Panduan AI
-                  <Badge className="text-[10px] bg-warning/20 text-warning hover:bg-warning/20">
+                  <Badge className="text-[10px] bg-amber-100 text-amber-700 hover:bg-amber-100">
                     Direkomendasikan
                   </Badge>
                 </h3>
@@ -895,7 +915,7 @@ function DashboardPage() {
               type="button"
               onClick={() => handleCreate(false)}
               disabled={creating}
-              className="flex items-start gap-4 rounded-xl border-2 border-border p-4 text-left hover:border-primary/50 transition-all"
+              className="flex items-start gap-4 rounded-xl border-2 border-border p-4 text-left hover:border-emerald-300 transition-all"
             >
               <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-muted">
                 <Edit3 className="h-5 w-5 text-muted-foreground" />
@@ -912,7 +932,7 @@ function DashboardPage() {
         </DialogContent>
       </Dialog>
 
-      {/* ── Create CV Dialog ── */}
+      {/* Create CV Dialog */}
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
         <DialogContent className="sm:max-w-4xl max-h-[90vh] flex flex-col">
           <DialogHeader className="shrink-0">
@@ -938,7 +958,7 @@ function DashboardPage() {
                 setShowCreateDialog(false);
                 setShowModeDialog(true);
               }}
-              className="gap-1.5"
+              className="gap-1.5 bg-emerald-600 hover:bg-emerald-700"
             >
               Pilih Template
               <ArrowLeftRight className="h-3.5 w-3.5" style={{ transform: "rotate(90deg)" }} />

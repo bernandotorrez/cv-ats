@@ -10,3 +10,4 @@ export { TipsCard } from "./tips-card";
 export { CvPickerDialog } from "./cv-picker-dialog";
 export { CareerProgress, getCareerSteps } from "./career-progress";
 export { AiRecommendations, getRecommendations } from "./ai-recommendations";
+export { MentoringCta } from "./mentoring-cta";

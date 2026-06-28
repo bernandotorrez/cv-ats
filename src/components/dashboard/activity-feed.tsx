@@ -1,10 +1,23 @@
+import { Link } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
-import { Activity, Clock, FileEdit, FilePlus2, Sparkles, Rocket } from "lucide-react";
+import {
+  Activity,
+  Clock,
+  FileEdit,
+  FilePlus2,
+  Sparkles,
+  Rocket,
+  BarChart3,
+  Key,
+  ArrowRight,
+} from "lucide-react";
 
 interface ActivityItem {
   action: string;
   label: string;
   time: string;
+  location?: string;
+  detail?: string;
 }
 
 const actionConfig: Record<
@@ -13,8 +26,8 @@ const actionConfig: Record<
 > = {
   edit: {
     icon: FileEdit,
-    color: "text-primary",
-    bg: "bg-primary/10",
+    color: "text-emerald-700",
+    bg: "bg-emerald-500/10",
     verb: "Diedit",
   },
   create: {
@@ -22,6 +35,18 @@ const actionConfig: Record<
     color: "text-emerald-700",
     bg: "bg-emerald-500/10",
     verb: "Dibuat",
+  },
+  score: {
+    icon: BarChart3,
+    color: "text-amber-700",
+    bg: "bg-amber-500/10",
+    verb: "Cek Skor ATS",
+  },
+  keyword: {
+    icon: Key,
+    color: "text-blue-700",
+    bg: "bg-blue-500/10",
+    verb: "Ekstrak Keyword",
   },
   ai: {
     icon: Sparkles,
@@ -43,11 +68,13 @@ export function ActivityFeed({ activities }: { activities: ActivityItem[] }) {
   return (
     <aside className="rounded-2xl border bg-card shadow-sm overflow-hidden">
       {/* Header */}
-      <div className="flex items-center gap-2 px-5 py-4 border-b border-border/60">
-        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10">
-          <Activity className="h-3.5 w-3.5 text-primary" />
+      <div className="flex items-center justify-between px-5 py-4 border-b border-border/60">
+        <div className="flex items-center gap-2">
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-500/10">
+            <Activity className="h-3.5 w-3.5 text-emerald-700" />
+          </div>
+          <h3 className="font-display font-bold text-foreground text-sm">Aktivitas Terbaru</h3>
         </div>
-        <h3 className="font-display font-bold text-foreground text-sm">Aktivitas terbaru</h3>
       </div>
 
       {isEmpty ? (
@@ -83,7 +110,7 @@ export function ActivityFeed({ activities }: { activities: ActivityItem[] }) {
                   className={cn(
                     "relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ring-2 ring-background",
                     config.bg,
-                    isFirst && "ring-primary/10",
+                    isFirst && "ring-emerald-100",
                   )}
                 >
                   <Icon className={cn("h-3.5 w-3.5", config.color)} />
@@ -97,9 +124,12 @@ export function ActivityFeed({ activities }: { activities: ActivityItem[] }) {
                       <p className="truncate text-sm font-semibold text-foreground leading-tight mt-0.5">
                         {a.label}
                       </p>
+                      {a.location && (
+                        <p className="text-[10px] text-muted-foreground/70 mt-0.5">{a.location}</p>
+                      )}
                     </div>
-                    <span className="shrink-0 text-[10px] text-muted-foreground/70 mt-0.5 whitespace-nowrap">
-                      {a.time}
+                    <span className="shrink-0 text-[10px] text-muted-foreground/70 mt-0.5 whitespace-nowrap flex items-center gap-1">
+                      📅 {a.time}
                     </span>
                   </div>
                 </div>
@@ -109,12 +139,16 @@ export function ActivityFeed({ activities }: { activities: ActivityItem[] }) {
         </ul>
       )}
 
-      {/* Footer hint */}
+      {/* Footer link */}
       {!isEmpty && (
-        <div className="px-5 py-2.5 border-t border-border/50 bg-muted/20">
-          <p className="text-[10px] text-muted-foreground text-center">
-            Menampilkan {activities.length} aktivitas terbaru
-          </p>
+        <div className="px-5 py-3 border-t border-border/50 bg-muted/10">
+          <Link
+            to="/cv"
+            className="flex items-center justify-center gap-1 text-xs font-semibold text-emerald-700 hover:text-emerald-800 transition-colors"
+          >
+            Lihat semua aktivitas
+            <ArrowRight className="h-3 w-3" />
+          </Link>
         </div>
       )}
     </aside>
