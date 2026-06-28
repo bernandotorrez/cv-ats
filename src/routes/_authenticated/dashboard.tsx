@@ -19,7 +19,8 @@ import type { Json } from "@/integrations/supabase/types";
 import { getUserTier, getTierLimits, type Tier, type TierLimits } from "@/lib/subscription";
 import { Crown, AlertCircle } from "lucide-react";
 import { TemplateGallery } from "@/components/cv/TemplateGallery";
-import { emptyCv, TEMPLATES, type TemplateId } from "@/lib/cv-types";
+import { emptyCv, TEMPLATES, type TemplateId, type CvData } from "@/lib/cv-types";
+import { scoreCvLocally } from "@/lib/local-scoring";
 import { DashboardSkeleton } from "@/components/ui/dashboard-skeleton";
 import {
   WelcomeHeader,
@@ -80,6 +81,8 @@ interface CvRow {
   status: string;
   updated_at: string;
   created_at: string;
+  ats_score?: number | null;
+  data?: any;
 }
 
 interface ActivityItem {
@@ -226,11 +229,33 @@ function DashboardPage() {
   const loadCvs = async (userId: string) => {
     const { data, count } = await supabase
       .from("cvs")
-      .select("id, title, template_id, status, updated_at, created_at", { count: "exact" })
+      .select("id, title, template_id, status, updated_at, created_at, data", { count: "exact" })
       .eq("user_id", userId)
       .order("updated_at", { ascending: false })
       .limit(5);
-    setCvs(data ?? []);
+    
+    if (data && data.length > 0) {
+      const mappedCvs = data.map(cv => {
+        let computedScore = null;
+        try {
+          if (cv.data) {
+            const cvData = cv.data as unknown as CvData;
+            const targetRole = cvData.personal?.headline || undefined;
+            const scoreResult = scoreCvLocally(cvData, targetRole);
+            computedScore = scoreResult.overallScore;
+          }
+        } catch (e) {
+          console.error("Error scoring cv locally:", e);
+        }
+        return {
+          ...cv,
+          ats_score: computedScore
+        };
+      });
+      setCvs(mappedCvs);
+    } else {
+      setCvs([]);
+    }
     setCvCount(count ?? 0);
   };
 
