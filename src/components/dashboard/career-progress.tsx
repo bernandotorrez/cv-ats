@@ -96,9 +96,13 @@ export function CareerProgress({ user, steps, onCreateCv, onStepClick }: CareerP
           {/* ── Left: Greeting + CTAs ── */}
           <div className="min-w-0">
             {/* Green greeting badge */}
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1.5 text-xs font-semibold text-emerald-700">
-              <span className="flex h-2 w-2 rounded-full bg-emerald-500" />
-              Selamat datang kembali, {displayName}! 👋
+            <div className="mb-4 inline-flex max-w-full items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1.5 text-xs font-semibold text-emerald-700">
+              <span className="flex h-2 w-2 shrink-0 rounded-full bg-emerald-500" />
+              <span className="shrink-0">Selamat datang kembali,</span>
+              <span className="truncate max-w-[100px] xs:max-w-[140px] sm:max-w-xs inline-block align-bottom font-bold">
+                {displayName}
+              </span>
+              <span className="shrink-0">! 👋</span>
             </div>
 
             <h1 className="font-display text-2xl font-bold leading-tight tracking-tight text-foreground sm:text-3xl">

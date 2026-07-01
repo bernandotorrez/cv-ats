@@ -678,7 +678,7 @@ function DashboardPage() {
   }
 
   return (
-    <div className="container-page space-y-6 py-5 md:space-y-7 md:py-8">
+    <div className="container-page space-y-6 py-5 md:space-y-7 md:py-8 w-full max-w-full overflow-x-hidden">
       {/* ═══════════════════════════════════════════════
           Section 1: Hero Banner (CareerProgress)
           ═══════════════════════════════════════════════ */}
@@ -710,7 +710,7 @@ function DashboardPage() {
           ═══════════════════════════════════════════════ */}
       <section>
         <h3 className="font-display text-sm font-bold text-foreground mb-3">Lanjutkan langkahmu</h3>
-        <div className="flex items-stretch gap-2 overflow-x-auto pb-1 scrollbar-thin">
+        <div className="flex items-stretch gap-2 overflow-x-auto pb-1 scrollbar-thin w-full max-w-full">
           {careerSteps.map((step, idx) => {
             const StepIcon = step.icon;
             const isActive = !step.done && careerSteps.findIndex((s) => !s.done) === idx;
@@ -951,19 +951,19 @@ function DashboardPage() {
 
               {/* Right side actions */}
               <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto shrink-0">
-                <div onClick={(e) => e.stopPropagation()} className="w-full sm:w-auto shrink-0 flex justify-end">
+                <div onClick={(e) => e.stopPropagation()} className="flex-1 sm:flex-initial shrink-0 flex justify-end">
                   {tier === "free" ? (
                     <Button
                       asChild
                       size="sm"
-                      className="h-8 text-xs gap-1.5 bg-emerald-600 hover:bg-emerald-700 w-full sm:w-auto"
+                      className="h-8 text-xs gap-1.5 bg-emerald-600 hover:bg-emerald-700 w-full"
                     >
                       <Link to="/harga">
                         <Crown className="h-3.5 w-3.5" /> Upgrade
                       </Link>
                     </Button>
                   ) : (
-                    <Button asChild size="sm" variant="outline" className="h-8 text-xs w-full sm:w-auto">
+                    <Button asChild size="sm" variant="outline" className="h-8 text-xs w-full">
                       <Link to="/harga">Kelola Paket</Link>
                     </Button>
                   )}
