@@ -70,7 +70,7 @@ export function RecentCvs({ cvs, onCreateCv }: RecentCvsProps) {
   return (
     <section className="rounded-3xl border bg-card border-border/80 shadow-md overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-5 border-b border-border/60">
+      <div className="flex items-center justify-between px-4 py-4 sm:px-6 sm:py-5 border-b border-border/60">
         <div>
           <h2 className="font-display text-base font-bold text-foreground">CV Kamu</h2>
           <p className="text-xs text-muted-foreground mt-0.5">Kelola semua CV dalam satu tempat.</p>
@@ -154,7 +154,7 @@ export function RecentCvs({ cvs, onCreateCv }: RecentCvsProps) {
             return (
               <div
                 key={cv.id}
-                className="group flex items-center justify-between px-6 py-4 transition-colors hover:bg-muted/30"
+                className="group flex items-center justify-between px-4 py-3.5 sm:px-6 sm:py-4 transition-colors hover:bg-muted/30"
               >
                 {/* Clickable Info Area */}
                 <Link
@@ -197,7 +197,7 @@ export function RecentCvs({ cvs, onCreateCv }: RecentCvsProps) {
                 </Link>
 
                 {/* Score badge, status & action menu */}
-                <div className="flex shrink-0 items-center gap-4">
+                <div className="flex shrink-0 items-center gap-2 sm:gap-4">
                   {/* ATS Score Circle */}
                   {score !== null && (
                     <div
@@ -244,16 +244,16 @@ export function RecentCvs({ cvs, onCreateCv }: RecentCvsProps) {
           })}
 
           {/* Footer — quick actions */}
-          <div className="px-6 py-4 flex items-center justify-between bg-[#fafafa]">
+          <div className="px-4 py-3.5 sm:px-6 sm:py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#fafafa]">
             <p className="text-xs text-gray-500 flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-gray-400" />
-              Perbarui CV secara rutin untuk hasil ATS terbaik
+              <TrendingUp className="h-4 w-4 text-gray-400 shrink-0" />
+              <span>Perbarui CV secara rutin untuk hasil ATS terbaik</span>
             </p>
             {onCreateCv && (
               <button
                 type="button"
                 onClick={onCreateCv}
-                className="flex items-center gap-1 text-xs font-bold text-[#2e7d32] hover:text-[#235825] transition-colors"
+                className="flex items-center gap-1 text-xs font-bold text-[#2e7d32] hover:text-[#235825] transition-colors shrink-0 self-end sm:self-auto"
               >
                 + Buat CV baru
               </button>

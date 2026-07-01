@@ -51,7 +51,7 @@ export function PowerFeatures({ features, onFeatureClick, onUpgrade }: PowerFeat
             key={f.label}
             type="button"
             onClick={() => (f.locked ? onUpgrade() : onFeatureClick(f.action))}
-            className="group text-left"
+            className="group text-left w-full"
           >
             <article
               className={cn(

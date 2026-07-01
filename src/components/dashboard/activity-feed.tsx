@@ -118,7 +118,7 @@ export function ActivityFeed({ activities }: { activities: ActivityItem[] }) {
 
                 {/* Content */}
                 <div className="flex-1 min-w-0 pt-0.5">
-                  <div className="flex items-start justify-between gap-2">
+                  <div className="flex flex-col xs:flex-row xs:items-start justify-between gap-1 xs:gap-2">
                     <div className="min-w-0">
                       <p className="text-xs font-medium text-muted-foreground">{config.verb}</p>
                       <p className="truncate text-sm font-semibold text-foreground leading-tight mt-0.5">
@@ -128,7 +128,7 @@ export function ActivityFeed({ activities }: { activities: ActivityItem[] }) {
                         <p className="text-[10px] text-muted-foreground/70 mt-0.5">{a.location}</p>
                       )}
                     </div>
-                    <span className="shrink-0 text-[10px] text-muted-foreground/70 mt-0.5 whitespace-nowrap flex items-center gap-1">
+                    <span className="shrink-0 text-[10px] text-muted-foreground/70 xs:mt-0.5 whitespace-nowrap flex items-center gap-1">
                       📅 {a.time}
                     </span>
                   </div>

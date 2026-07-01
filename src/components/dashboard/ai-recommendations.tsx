@@ -44,7 +44,7 @@ export function AiRecommendations({ recommendations, onAction }: AiRecommendatio
     setCurrentIndex((i) => (i - 1 + recommendations.length) % recommendations.length);
 
   return (
-    <aside className="rounded-3xl bg-[#061d13] p-5 shadow-xl text-white flex flex-col justify-between min-h-[340px]">
+    <aside className="rounded-3xl bg-[#061d13] p-4 sm:p-5 shadow-xl text-white flex flex-col justify-between min-h-[340px]">
       <div>
         {/* Header row — "AI Rekomendasi" + badge */}
         <div className="flex items-center justify-between mb-5">
@@ -65,9 +65,9 @@ export function AiRecommendations({ recommendations, onAction }: AiRecommendatio
         </div>
 
         {/* Content Block: Robot on Left, Text on Right */}
-        <div className="flex items-start gap-4 mb-4">
+        <div className="flex items-start gap-3 xs:gap-4 mb-4">
           {/* Robot image container */}
-          <div className="shrink-0 w-24 h-24 rounded-2xl bg-[#0c2f20] p-1.5 flex items-center justify-center border border-[#143d2a]">
+          <div className="shrink-0 w-20 h-20 xs:w-24 xs:h-24 rounded-2xl bg-[#0c2f20] p-1.5 flex items-center justify-center border border-[#143d2a]">
             <img
               src="/green-robot-ats.png"
               alt="AI Robot"
@@ -77,7 +77,7 @@ export function AiRecommendations({ recommendations, onAction }: AiRecommendatio
 
           {/* Heading Text */}
           <div className="flex-1 min-w-0 pt-1">
-            <h4 className="font-bold text-white text-base leading-snug tracking-tight">
+            <h4 className="font-bold text-white text-sm xs:text-base leading-snug tracking-tight">
               {current.title}
             </h4>
           </div>

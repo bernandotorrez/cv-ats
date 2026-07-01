@@ -147,7 +147,7 @@ export function CareerProgress({ user, steps, onCreateCv, onStepClick }: CareerP
           </div>
 
           {/* ── Center: Circular Progress + Checklist ── */}
-          <div className="rounded-2xl border bg-background p-5 sm:p-6 min-w-[280px]">
+          <div className="rounded-2xl border bg-background p-5 sm:p-6 w-full min-w-0">
             <div className="flex items-center gap-2 mb-4">
               <h3 className="font-display font-bold text-sm text-foreground">Progres CV-mu</h3>
               {isOnFire && !isComplete && (
@@ -157,36 +157,40 @@ export function CareerProgress({ user, steps, onCreateCv, onStepClick }: CareerP
               )}
             </div>
 
-            <div className="flex items-start gap-5">
+            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-5">
               {/* Circular progress */}
-              <CircularProgress percentage={progressPct} />
+              <div className="shrink-0 mx-auto sm:mx-0">
+                <CircularProgress percentage={progressPct} />
+              </div>
 
               {/* Checklist */}
-              <div className="flex-1 min-w-0 space-y-0.5">
-                <p className="text-xs font-semibold text-muted-foreground mb-2">
+              <div className="flex-1 min-w-0 w-full space-y-0.5">
+                <p className="text-xs font-semibold text-muted-foreground mb-2 text-center sm:text-left">
                   {completedSteps}/{totalSteps} langkah selesai
                 </p>
-                {steps.map((step) => (
-                  <div key={step.id} className="flex items-center gap-2 py-1">
-                    {step.done ? (
-                      <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-500">
-                        <Check className="h-2.5 w-2.5 text-white" strokeWidth={3} />
-                      </span>
-                    ) : (
-                      <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 border-muted-foreground/30" />
-                    )}
-                    <span
-                      className={cn(
-                        "text-xs",
-                        step.done
-                          ? "text-foreground font-medium line-through decoration-muted-foreground/40"
-                          : "text-muted-foreground",
+                <div className="max-w-[200px] mx-auto sm:mx-0 space-y-0.5">
+                  {steps.map((step) => (
+                    <div key={step.id} className="flex items-center gap-2 py-1">
+                      {step.done ? (
+                        <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-500">
+                          <Check className="h-2.5 w-2.5 text-white" strokeWidth={3} />
+                        </span>
+                      ) : (
+                        <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 border-muted-foreground/30" />
                       )}
-                    >
-                      {step.label}
-                    </span>
-                  </div>
-                ))}
+                      <span
+                        className={cn(
+                          "text-xs",
+                          step.done
+                            ? "text-foreground font-medium line-through decoration-muted-foreground/40"
+                            : "text-muted-foreground",
+                        )}
+                      >
+                        {step.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>

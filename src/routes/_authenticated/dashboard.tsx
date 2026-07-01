@@ -676,7 +676,7 @@ function DashboardPage() {
           <RecentCvs cvs={cvs} loading={loading} onCreateCv={() => setShowCreateDialog(true)} />
 
           {/* Stats Strip — 4 cards */}
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-2 sm:gap-3 sm:grid-cols-4">
             {[
               {
                 label: "Total CV",
@@ -724,24 +724,24 @@ function DashboardPage() {
                     : "Aktif",
               },
             ].map((stat) => (
-              <div key={stat.label} className="rounded-xl border bg-card px-4 py-3 shadow-sm">
-                <div className="flex items-center gap-3">
+              <div key={stat.label} className="rounded-xl border bg-card px-3 py-2.5 sm:px-4 sm:py-3 shadow-sm">
+                <div className="flex items-center gap-2 sm:gap-3">
                   <div
-                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${stat.color}`}
+                    className={`flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-lg ${stat.color}`}
                   >
-                    <stat.icon className="h-4 w-4" />
+                    <stat.icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   </div>
-                  <div className="min-w-0">
-                    <p className="text-xs text-muted-foreground">{stat.label}</p>
-                    <div className="flex items-center gap-1.5">
-                      <p className="font-bold text-lg text-foreground">{stat.value}</p>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[10px] sm:text-xs text-muted-foreground">{stat.label}</p>
+                    <div className="flex items-center gap-1 sm:gap-1.5">
+                      <p className="font-bold text-base sm:text-lg text-foreground">{stat.value}</p>
                       {"change" in stat && stat.change && (
-                        <span className="text-[10px] font-semibold text-emerald-600">
+                        <span className="text-[9px] sm:text-[10px] font-semibold text-emerald-600">
                           {stat.change}
                         </span>
                       )}
                     </div>
-                    <p className="text-[10px] text-muted-foreground/70 truncate">{stat.note}</p>
+                    <p className="text-[9px] sm:text-[10px] text-muted-foreground/70 truncate">{stat.note}</p>
                   </div>
                 </div>
               </div>
@@ -751,7 +751,7 @@ function DashboardPage() {
           {/* Tier Status Banner */}
           <div
             className={cn(
-              "flex items-center gap-3.5 rounded-xl border px-4 py-3",
+              "flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-4 rounded-xl border p-4",
               tier === "pro"
                 ? "bg-emerald-50 border-emerald-200"
                 : tier === "starter"
@@ -759,81 +759,83 @@ function DashboardPage() {
                   : "bg-card border-border",
             )}
           >
-            {/* Status icon */}
-            <div
-              className={cn(
-                "flex h-9 w-9 shrink-0 items-center justify-center rounded-full",
-                tier === "pro"
-                  ? "bg-emerald-500"
-                  : tier === "starter"
-                    ? "bg-blue-500"
-                    : "bg-muted-foreground/20",
-              )}
-            >
-              <Crown className="h-4 w-4 text-white" />
-            </div>
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              {/* Status icon */}
+              <div
+                className={cn(
+                  "flex h-9 w-9 shrink-0 items-center justify-center rounded-full",
+                  tier === "pro"
+                    ? "bg-emerald-500"
+                    : tier === "starter"
+                      ? "bg-blue-500"
+                      : "bg-muted-foreground/20",
+                )}
+              >
+                <Crown className="h-4 w-4 text-white" />
+              </div>
 
-            {/* Info */}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span
+              {/* Info */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span
+                    className={cn(
+                      "rounded-full px-2.5 py-0.5 text-[11px] font-bold text-white",
+                      tier === "pro"
+                        ? "bg-emerald-500"
+                        : tier === "starter"
+                          ? "bg-blue-500"
+                          : "bg-muted-foreground/60",
+                    )}
+                  >
+                    {tierName}
+                  </span>
+                  <span
+                    className={cn(
+                      "flex items-center gap-1 text-xs font-medium",
+                      tier === "pro"
+                        ? "text-emerald-600"
+                        : tier === "starter"
+                          ? "text-blue-600"
+                          : "text-muted-foreground",
+                    )}
+                  >
+                    <Star className="h-3 w-3" />
+                    Aktif
+                  </span>
+                </div>
+                <p
                   className={cn(
-                    "rounded-full px-2.5 py-0.5 text-[11px] font-bold text-white",
+                    "mt-0.5 text-xs truncate",
                     tier === "pro"
-                      ? "bg-emerald-500"
+                      ? "text-emerald-800/70"
                       : tier === "starter"
-                        ? "bg-blue-500"
-                        : "bg-muted-foreground/60",
-                  )}
-                >
-                  {tierName}
-                </span>
-                <span
-                  className={cn(
-                    "flex items-center gap-1 text-xs font-medium",
-                    tier === "pro"
-                      ? "text-emerald-600"
-                      : tier === "starter"
-                        ? "text-blue-600"
+                        ? "text-blue-800/70"
                         : "text-muted-foreground",
                   )}
                 >
-                  <Star className="h-3 w-3" />
-                  Aktif
-                </span>
-              </div>
-              <p
-                className={cn(
-                  "mt-0.5 text-xs truncate",
-                  tier === "pro"
-                    ? "text-emerald-800/70"
+                  {tier === "pro"
+                    ? "Kamu pengguna Pro! Nikmati semua fitur premium tanpa batas."
                     : tier === "starter"
-                      ? "text-blue-800/70"
-                      : "text-muted-foreground",
-                )}
-              >
-                {tier === "pro"
-                  ? "Kamu pengguna Pro! Nikmati semua fitur premium tanpa batas."
-                  : tier === "starter"
-                    ? "Tools dasar untuk membuat CV profesional dan cek skor ATS."
-                    : "Mulai buat CV pertama kamu dan cek kesiapan ATS."}
-              </p>
+                      ? "Tools dasar untuk membuat CV profesional dan cek skor ATS."
+                      : "Mulai buat CV pertama kamu dan cek kesiapan ATS."}
+                </p>
+              </div>
             </div>
 
             {/* Right side actions */}
-            <div className="shrink-0">
+            <div className="w-full sm:w-auto shrink-0 flex justify-end">
               {tier === "free" ? (
                 <Button
                   asChild
                   size="sm"
-                  className="h-8 text-xs gap-1.5 bg-emerald-600 hover:bg-emerald-700"
+                  className="h-8 text-xs gap-1.5 bg-emerald-600 hover:bg-emerald-700 w-full sm:w-auto"
                 >
                   <Link to="/harga">
                     <Crown className="h-3.5 w-3.5" /> Upgrade
                   </Link>
                 </Button>
               ) : (
-                <Button asChild size="sm" variant="outline" className="h-8 text-xs">
+                <Button asChild size="sm" variant="outline" className="h-8 text-xs w-full sm:w-auto">
                   <Link to="/harga">Kelola Paket</Link>
                 </Button>
               )}
@@ -844,12 +846,12 @@ function DashboardPage() {
           {atCvLimit && (
             <Alert className="border-warning/50 bg-warning/10 rounded-xl">
               <AlertCircle className="h-4 w-4 text-warning" />
-              <AlertDescription className="flex items-center justify-between gap-2">
+              <AlertDescription className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <span className="text-sm">
                   Kuota CV paket <strong>{tierName}</strong> sudah penuh ({cvCount}/{limits.maxCvs}
                   ).
                 </span>
-                <Button asChild size="sm" variant="outline" className="shrink-0 gap-1.5">
+                <Button asChild size="sm" variant="outline" className="w-full sm:w-auto shrink-0 gap-1.5">
                   <Link to="/harga">
                     <Crown className="h-3.5 w-3.5" /> Upgrade
                   </Link>
