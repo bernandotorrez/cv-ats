@@ -967,7 +967,10 @@ export function downloadPdf(_cv: CvData, fileName: string = "CV.pdf") {
 export function parseCoverLetter(text: string, cvData?: CvData) {
   if (!text) return { salutation: "", paragraphs: [] as string[], closing: "" };
 
-  const lines = text
+  // Strip markdown bold markers from the text
+  const cleanText = text.replace(/\*\*/g, "");
+
+  const lines = cleanText
     .split(/\n/)
     .map((l) => l.trim())
     .filter(Boolean);

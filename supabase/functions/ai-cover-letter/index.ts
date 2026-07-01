@@ -45,8 +45,9 @@ PEDOMAN:
 3. Mengapa Perusahaan Ini (Value Fit): Tunjukkan ketertarikan Anda pada misi/industri perusahaan, dan bagaimana Anda dapat membantu memecahkan masalah atau berkontribusi pada tujuan mereka.
 4. Penutup: Kalimat penutup yang percaya diri namun sopan, ajakan untuk berdiskusi/wawancara (call to action), serta sebutkan kontak Anda (email/telepon) untuk mempermudah rekruter.
 5. Gaya Bahasa & Nada: ${lang === "en" ? "Professional English, confident, warm and engaging, 250-400 words. Avoid generic boilerplate text." : "Bahasa Indonesia profesional formal, percaya diri, hangat, dan mengalir (tidak kaku/statis). JANGAN gunakan kalimat birokratis kuno seperti 'Saya yang bertanda tangan di bawah ini' atau 'Demikian surat lamaran ini saya buat'."}
+6. JANGAN gunakan format markdown seperti **tebal** atau *miring* di dalam teks surat. Tulis teks polos biasa.
 
-OUTPUT: HANYA teks surat, tanpa kata pembuka/penutup.`;
+OUTPUT: HANYA teks surat polos (plain text) tanpa format markdown seperti **, tanpa kata pembuka/penutup tambahan.`;
 
     const result = await aiComplete(
       [{ role: "user", content: prompt }],
