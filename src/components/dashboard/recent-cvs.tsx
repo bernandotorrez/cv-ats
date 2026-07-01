@@ -68,18 +68,20 @@ function timeAgo(dateStr: string): { label: string; isStale: boolean } {
 
 export function RecentCvs({ cvs, onCreateCv }: RecentCvsProps) {
   return (
-    <section className="rounded-3xl border bg-card border-border/80 shadow-md overflow-hidden">
+    <section className="w-full max-w-full rounded-3xl border bg-card border-border/80 shadow-md overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-4 sm:px-6 sm:py-5 border-b border-border/60">
-        <div>
+      <div className="flex items-center justify-between px-4 py-4 sm:px-6 sm:py-5 border-b border-border/60 gap-3">
+        <div className="min-w-0 flex-1">
           <h2 className="font-display text-base font-bold text-foreground">CV Kamu</h2>
-          <p className="text-xs text-muted-foreground mt-0.5">Kelola semua CV dalam satu tempat.</p>
+          <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+            Kelola semua CV dalam satu tempat.
+          </p>
         </div>
         <Button
           asChild
           variant="ghost"
           size="sm"
-          className="gap-1 text-xs text-gray-500 hover:text-gray-800 font-semibold"
+          className="gap-1 text-xs text-gray-500 hover:text-gray-800 font-semibold shrink-0"
         >
           <Link to="/cv">
             Lihat semua CV
@@ -202,17 +204,17 @@ export function RecentCvs({ cvs, onCreateCv }: RecentCvsProps) {
                   {score !== null && (
                     <div
                       className={cn(
-                        "flex flex-col items-center justify-center rounded-full w-[52px] h-[52px] border",
+                        "flex flex-col items-center justify-center rounded-full w-[44px] h-[44px] sm:w-[52px] sm:h-[52px] border shrink-0",
                         score >= 80
                           ? "bg-[#ecf7ed] border-[#d3ebd6] text-[#2e7d32]"
                           : "bg-[#fff8eb] border-[#fdf0d5] text-[#b76e00]",
                       )}
                     >
-                      <span className="text-[17px] font-extrabold leading-none tracking-tight">
+                      <span className="text-[14px] sm:text-[17px] font-extrabold leading-none tracking-tight">
                         {score}
                       </span>
-                      <span className="text-[7.5px] font-bold uppercase tracking-wider mt-0.5 opacity-80">
-                        Skor ATS
+                      <span className="text-[6.5px] sm:text-[7.5px] font-bold uppercase tracking-wider mt-0.5 opacity-80">
+                        Skor
                       </span>
                     </div>
                   )}
