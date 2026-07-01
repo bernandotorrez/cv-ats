@@ -143,7 +143,6 @@ export function CoverLetterPreview({ coverLetter, cvData, company, position, sca
   );
 }
 
-
 // Print styles for cover letter
 export const coverLetterPrintStyles = `
 @media print {

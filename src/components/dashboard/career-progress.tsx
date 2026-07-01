@@ -102,8 +102,7 @@ export function CareerProgress({ user, steps, onCreateCv, onStepClick }: CareerP
             </div>
 
             <h1 className="font-display text-2xl font-bold leading-tight tracking-tight text-foreground sm:text-3xl">
-              Saatnya wujudkan{" "}
-              <span className="text-emerald-600">karier impianmu!</span>
+              Saatnya wujudkan <span className="text-emerald-600">karier impianmu!</span>
             </h1>
 
             <p className="mt-3 max-w-md text-sm leading-6 text-muted-foreground">
@@ -111,9 +110,13 @@ export function CareerProgress({ user, steps, onCreateCv, onStepClick }: CareerP
             </p>
 
             <div className="mt-5 flex flex-wrap gap-3">
-              {nextStep && (
-                nextStep.id === "create-cv" && onCreateCv ? (
-                  <Button size="sm" onClick={onCreateCv} className="gap-2 bg-emerald-600 hover:bg-emerald-700">
+              {nextStep &&
+                (nextStep.id === "create-cv" && onCreateCv ? (
+                  <Button
+                    size="sm"
+                    onClick={onCreateCv}
+                    className="gap-2 bg-emerald-600 hover:bg-emerald-700"
+                  >
                     Lanjutkan Interview
                     <ArrowRight className="h-3.5 w-3.5" />
                   </Button>
@@ -133,8 +136,7 @@ export function CareerProgress({ user, steps, onCreateCv, onStepClick }: CareerP
                     Lanjutkan Interview
                     <ArrowRight className="h-3.5 w-3.5" />
                   </Button>
-                )
-              )}
+                ))}
               <Button asChild size="sm" variant="outline" className="gap-2">
                 <Link to="/panduan-cv-ats">
                   <BookOpen className="h-3.5 w-3.5" />
@@ -193,15 +195,9 @@ export function CareerProgress({ user, steps, onCreateCv, onStepClick }: CareerP
           <div className="hidden lg:block">
             <div className="rounded-2xl bg-amber-50 border border-amber-200 p-5">
               <div className="flex items-center gap-2 mb-2">
-                <span className="text-xl">
-                  {isComplete ? "🏆" : isOnFire ? "🔥" : "💪"}
-                </span>
+                <span className="text-xl">{isComplete ? "🏆" : isOnFire ? "🔥" : "💪"}</span>
                 <h3 className="font-display font-bold text-sm text-foreground">
-                  {isComplete
-                    ? "Lengkap!"
-                    : isOnFire
-                      ? "Keren!"
-                      : "Semangat!"}
+                  {isComplete ? "Lengkap!" : isOnFire ? "Keren!" : "Semangat!"}
                 </h3>
               </div>
               <p className="text-lg font-bold text-foreground leading-tight">

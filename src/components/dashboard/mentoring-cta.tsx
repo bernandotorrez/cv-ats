@@ -24,19 +24,19 @@ export function MentoringCta() {
         <div className="relative w-28 h-28 shrink-0 select-none">
           {/* Back Right Avatar (Male) */}
           <div className="absolute top-2 right-1 w-14 h-14 rounded-full border-2 border-white/20 overflow-hidden shadow-md">
-            <img 
-              src="/mentor-male.png" 
-              alt="Male Mentor HR" 
-              className="w-full h-full object-cover scale-105" 
+            <img
+              src="/mentor-male.png"
+              alt="Male Mentor HR"
+              className="w-full h-full object-cover scale-105"
             />
           </div>
 
           {/* Front Left Avatar (Female) */}
           <div className="absolute top-6 left-1 w-14 h-14 rounded-full border-2 border-white/40 overflow-hidden shadow-lg z-10">
-            <img 
-              src="/mentor-female.png" 
-              alt="Female Mentor HR" 
-              className="w-full h-full object-cover scale-105" 
+            <img
+              src="/mentor-female.png"
+              alt="Female Mentor HR"
+              className="w-full h-full object-cover scale-105"
             />
           </div>
         </div>

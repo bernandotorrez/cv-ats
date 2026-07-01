@@ -31,7 +31,13 @@ import { Label } from "@/components/ui/label";
 import { BackButton } from "@/components/ui/back-button";
 import { Skeleton } from "@/components/ui/skeleton-loading";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { generateCoverLetter } from "@/lib/ai-functions";
 import { useAuth } from "@/lib/auth-context";
@@ -326,7 +332,6 @@ function CoverLetterPage() {
         toast.success("PDF siap dicetak.");
       }, 250);
       setTimeout(cleanup, 60000);
-
     } catch (error) {
       const message = error instanceof Error ? error.message : "Gagal membuat PDF";
       toast.dismiss(toastId);
@@ -356,7 +361,6 @@ function CoverLetterPage() {
       setDownloadingDocx(false);
     }
   };
-
 
   const handleReset = () => {
     setJobDesc("");
@@ -816,7 +820,9 @@ function LockedCoverLetter() {
           </p>
           <div className="mt-7 flex flex-col gap-3 sm:flex-row">
             <Button variant="outline" asChild className="rounded-lg">
-              <Link to="/tools" search={{ cvId }}>Kembali ke Tools</Link>
+              <Link to="/tools" search={{ cvId }}>
+                Kembali ke Tools
+              </Link>
             </Button>
             <Button asChild className="rounded-lg">
               <Link to="/harga">Upgrade paket</Link>

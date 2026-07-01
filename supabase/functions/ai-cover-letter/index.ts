@@ -20,7 +20,8 @@ Deno.serve(async (req: Request) => {
   try {
     const userId = await getUserId(req);
     const admin = getAdminClient();
-    const { cvId, cvData, jobDescription, companyName, positionName, language, jobSource } = await req.json();
+    const { cvId, cvData, jobDescription, companyName, positionName, language, jobSource } =
+      await req.json();
     const lang: CvUiLang = language === "en" ? "en" : "id";
 
     if (!cvId || !cvData || !jobDescription)

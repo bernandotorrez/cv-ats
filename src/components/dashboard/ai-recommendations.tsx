@@ -53,7 +53,9 @@ export function AiRecommendations({ recommendations, onAction }: AiRecommendatio
             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#0e3020]">
               <Sparkles className="h-4 w-4 text-[#94d152]" />
             </div>
-            <span className="font-display font-bold text-[15px] tracking-tight">AI Rekomendasi</span>
+            <span className="font-display font-bold text-[15px] tracking-tight">
+              AI Rekomendasi
+            </span>
           </div>
           {current.badge && (
             <span className="inline-flex items-center rounded-full bg-[#143224] px-2.5 py-0.5 text-[10px] font-bold text-[#94d152] border border-[#214b37]">
@@ -82,9 +84,7 @@ export function AiRecommendations({ recommendations, onAction }: AiRecommendatio
         </div>
 
         {/* Description Text */}
-        <p className="text-[13px] leading-relaxed text-[#a3b8ad] mb-5">
-          {current.description}
-        </p>
+        <p className="text-[13px] leading-relaxed text-[#a3b8ad] mb-5">{current.description}</p>
 
         {/* Action Button */}
         <button
@@ -107,9 +107,7 @@ export function AiRecommendations({ recommendations, onAction }: AiRecommendatio
                 key={i}
                 className={cn(
                   "h-2 rounded-full transition-all duration-300",
-                  i === currentIndex
-                    ? "w-7 bg-[#94d152]"
-                    : "w-2 bg-[#214b37] hover:bg-[#346a51]",
+                  i === currentIndex ? "w-7 bg-[#94d152]" : "w-2 bg-[#214b37] hover:bg-[#346a51]",
                 )}
                 onClick={() => setCurrentIndex(i)}
                 aria-label={`Rekomendasi ${i + 1}`}

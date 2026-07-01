@@ -1254,4 +1254,3 @@ export async function generateCoverLetterDocx(
 
   return await Packer.toBlob(doc);
 }
-

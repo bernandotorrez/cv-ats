@@ -1,33 +1,33 @@
+import { useState, useEffect } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   ArrowRight,
-  Bot,
+  BookOpen,
   Briefcase,
   CalendarClock,
   CheckCircle2,
+  Cpu,
   Download,
+  FileEdit,
   FileSearch,
   FileText,
   Gauge,
+  Key,
   LockKeyhole,
   MessageCircle,
-  Mic,
   Quote,
+  RefreshCw,
   Search,
   ShieldCheck,
   Sparkles,
   Star,
-  RefreshCw,
   TrendingUp,
   UserRoundCheck,
-  Video,
+  XCircle,
+  AlertCircle,
 } from "lucide-react";
 
-import { BaliTemplate } from "@/components/cv/templates/BaliTemplate";
-import { BandungTemplate } from "@/components/cv/templates/BandungTemplate";
-import { JakartaTemplate } from "@/components/cv/templates/JakartaTemplate";
-import { MedanTemplate } from "@/components/cv/templates/MedanTemplate";
-import { previewData } from "@/components/site/TemplatePreview";
 import {
   Accordion,
   AccordionContent,
@@ -73,268 +73,405 @@ export const Route = createFileRoute("/")({
 });
 
 const proofPoints = [
-  ["5.000+", "pengguna aktif"],
-  ["10.000+", "CV dibuat"],
-  ["92%", "skor ATS rata-rata"],
-  ["4.9/5", "rating pengguna"],
+  { value: "5.000+", label: "User Aktif", icon: UserRoundCheck },
+  { value: "10.000+", label: "CV Dibuat", icon: FileText },
+  { value: "92%", label: "Lolos ATS", icon: Gauge },
+  { value: "4.9/5", label: "Rating Pengguna", icon: Star },
 ] as const;
-
-const heroChecks = ["Gratis mulai hari ini", "Tanpa kartu kredit", "PDF siap kirim"] as const;
 
 const features = [
   {
     icon: FileText,
-    title: "Template ATS-ready",
-    desc: "Struktur bersih, single-column, dan mudah dibaca sistem rekrutmen.",
+    title: "Template ATS Friendly",
+    desc: "Desain profesional yang mudah dibaca sistem ATS.",
   },
   {
-    icon: Bot,
-    title: "AI Bahasa Indonesia + Inggris",
-    desc: "Tulis ringkasan, pengalaman, dan skill dalam dua bahasa dengan kalimat yang tajam.",
+    icon: Sparkles,
+    title: "AI Assistant",
+    desc: "Bantu tulis ringkasan, pengalaman, dan skill lebih kuat.",
   },
   {
     icon: Gauge,
-    title: "Skor sebelum kirim",
-    desc: "Cek format, keyword, dan kekuatan isi sebelum CV masuk portal kerja.",
-  },
-  {
-    icon: Search,
-    title: "Keyword lowongan",
-    desc: "Ambil kata kunci penting dari job description agar CV lebih relevan.",
-  },
-  {
-    icon: FileSearch,
-    title: "AI Job Match Score",
-    desc: "Cocokkan CV dengan lowongan untuk melihat skor kecocokan, keyword gap, dan prioritas perbaikan.",
-  },
-  {
-    icon: RefreshCw,
-    title: "Tailor CV untuk lowongan",
-    desc: "Sesuaikan ringkasan, skill, dan bullet pengalaman ke job description tanpa mengarang data.",
+    title: "Analisis CV Instan",
+    desc: "Skor dan saran otomatis untuk meningkatkan peluang.",
   },
   {
     icon: Briefcase,
-    title: "Pelacak lamaran",
-    desc: "Simpan posisi, status, catatan interview, dan langkah berikutnya.",
+    title: "Tracker Lamaran",
+    desc: "Pantau setiap lamaran dan statusnya dalam satu tempat.",
   },
   {
-    icon: ShieldCheck,
-    title: "Privasi dijaga",
-    desc: "Data CV tetap milik kamu dan aksesnya dibatasi dengan aman.",
-  },
-  {
-    icon: Mic,
-    title: "Simulasi Wawancara AI",
-    desc: "Latihan interview dengan AI: dapatkan pertanyaan, jawab, dan terima feedback instan.",
-  },
-  {
-    icon: UserRoundCheck,
-    title: "Review CV by HR Expert AI",
-    desc: "Analisis mendalam dari HR profesional 20+ tahun: temukan kekuatan, kelemahan, dan quick wins.",
+    icon: Key,
+    title: "Keyword Optimizer",
+    desc: "Rekomendasi keyword agar CV lebih relevan dengan posisi.",
   },
   {
     icon: Download,
-    title: "Export PDF Berkualitas",
-    desc: "Hasil PDF rapi, ringan, dan terbaca sempurna oleh ATS maupun rekruter manusia.",
+    title: "Export PDF & Link",
+    desc: "Unduh PDF berkualitas atau bagikan link profesional.",
+  },
+  {
+    icon: BookOpen,
+    title: "Tips & Contoh CV",
+    desc: "Panduan & contoh CV sesuai industri dan level karier.",
+  },
+  {
+    icon: LockKeyhole,
+    title: "Privasi Terjamin",
+    desc: "Data kamu aman dan tidak akan dibagikan ke pihak lain.",
+  },
+  {
+    icon: RefreshCw,
+    title: "Update Berkala",
+    desc: "Fitur & template selalu diperbarui mengikuti tren rekrutmen.",
   },
 ] as const;
 
 const steps = [
   {
-    n: "01",
-    title: "Pilih arah",
-    desc: "Mulai dari template, CV lama, atau job description target.",
+    n: "1",
+    title: "Pilih Template",
+    desc: "Pilih desain profesional yang sesuai dengan posisi kamu.",
+    icon: FileText,
   },
   {
-    n: "02",
-    title: "Rapikan isi",
-    desc: "AI bantu membuat kalimat lebih konkret, ringkas, dan percaya diri.",
+    n: "2",
+    title: "Isi & Sesuaikan",
+    desc: "Tambahkan data dirimu dan sesuaikan dengan lowongan.",
+    icon: FileEdit,
   },
   {
-    n: "03",
-    title: "Cek skor",
-    desc: "Temukan bagian yang lemah sebelum rekruter melihatnya.",
+    n: "3",
+    title: "Analisis & Perbaiki",
+    desc: "Dapatkan skor & saran untuk meningkatkan peluang.",
+    icon: Search,
   },
   {
-    n: "04",
-    title: "Kirim",
-    desc: "Export PDF yang bersih, ringan, dan siap masuk ATS.",
+    n: "4",
+    title: "Kirim & Lacak",
+    desc: "Kirim lamaran dan pantau statusnya di satu dashboard.",
+    icon: CheckCircle2,
   },
 ] as const;
 
 const faqs = [
   {
-    q: "Apa itu CV ATS friendly?",
-    a: "CV ATS friendly adalah CV dengan struktur yang mudah dibaca Applicant Tracking System. Biasanya memakai layout single-column, heading jelas, font standar, dan tanpa tabel atau elemen visual rumit.",
-  },
-  {
     q: "Apakah CV Pintar gratis?",
-    a: "Ya. Kamu bisa mulai gratis tanpa kartu kredit. Upgrade hanya diperlukan jika membutuhkan kuota atau fitur lanjutan yang lebih besar.",
+    a: "Ya! Kamu bisa membuat dan mengunduh CV berkualitas tinggi secara gratis tanpa biaya tersembunyi.",
   },
   {
-    q: "Cocok untuk fresh graduate?",
-    a: "Cocok. CV Pintar membantu mengubah pengalaman magang, organisasi, proyek, dan skill menjadi cerita profesional yang lebih kuat.",
+    q: "Apakah data saya aman?",
+    a: "Privasi dan keamanan data kamu adalah prioritas kami. Data CV kamu disimpan dengan enkripsi aman dan tidak akan dibagikan ke pihak ketiga.",
   },
   {
-    q: "Apakah data CV saya aman?",
-    a: "Data CV disimpan dengan akses terbatas dan tidak dijual ke pihak ketiga. Kamu tetap memegang kendali atas data yang kamu masukkan.",
+    q: "Apakah CV ini bisa lolos ATS?",
+    a: "Semua template kami didesain khusus agar mudah dipindai oleh sistem ATS (Applicant Tracking System) modern, meningkatkan peluang lolos administrasi.",
+  },
+  {
+    q: "Berapa lama proses membuat CV?",
+    a: "Hanya butuh beberapa menit! Dengan bantuan AI dan antarmuka yang intuitif, kamu bisa menyelesaikan CV profesional dengan cepat.",
   },
 ] as const;
 
 const testimonials = [
   {
-    name: "Rina",
-    role: "Fresh Graduate",
-    text: "Awalnya bingung harus menulis apa. AI-nya bantu mengubah pengalaman organisasi jadi poin yang terlihat profesional. Dalam 2 minggu dapat 3 panggilan interview.",
-  },
-  {
-    name: "Andi",
+    name: "Rina A.",
     role: "Software Engineer",
-    text: "Fitur scoring paling terasa manfaatnya. Saya langsung tahu keyword yang kurang sebelum kirim lamaran ke portal kerja.",
+    text: "Dengan template & tips di sini, CV saya jauh lebih rapi dan lolos ke tahap interview.",
+    tag: "Lolos di Syahafaza",
+    img: "/mentor-female.png",
   },
   {
-    name: "Sari",
-    role: "Career Switcher",
-    text: "Template-nya rapi dan mudah dibaca. Review CV-nya membantu saya menjelaskan pengalaman lama agar relevan dengan role baru.",
+    name: "Devi L.",
+    role: "Marketing Specialist",
+    text: "Fitur analisis CV-nya ngebantu banget. Saya jadi tahu bagian mana yang harus diperbaiki.",
+    tag: "Match Score naik 40%",
+    img: "/mentor-female.png",
+  },
+  {
+    name: "Andi P.",
+    role: "Product Manager",
+    text: "Praktis, modern, dan ATS-friendly. Rekomendasi buat semua pencari kerja!",
+    tag: "Lolos di perusahaan impian",
+    img: "/mentor-male.png",
+  },
+  {
+    name: "Budi S.",
+    role: "Data Analyst",
+    text: "Fitur benchmarking-nya keren banget. Saya jadi tahu posisi saya dibandingkan pelamar lain dan cara naikin skor ATS.",
+    tag: "Lolos di Unicorn Tech",
+    img: "/mentor-male.png",
+  },
+  {
+    name: "Citra W.",
+    role: "UI/UX Designer",
+    text: "Tampilan visual template-nya bersih dan rapi. Sangat nyaman dibaca rekruter manusia dan aman untuk parser ATS.",
+    tag: "Lolos di Agensi Digital",
+    img: "/mentor-female.png",
+  },
+  {
+    name: "Doni K.",
+    role: "Finance Officer",
+    text: "Setelah menggunakan AI Keyword Optimizer, CV saya langsung dapet tanggapan positif dalam 3 hari saja.",
+    tag: "Lolos di BUMN Terkemuka",
+    img: "/mentor-male.png",
   },
 ] as const;
 
 function LandingPage() {
+  const isMobile = useIsMobile();
+  const [activeSlide, setActiveSlide] = useState(0);
+  const totalSlides = isMobile ? 6 : 2;
+
+  useEffect(() => {
+    setActiveSlide(0);
+  }, [isMobile]);
   return (
-    <>
-      <section className="relative isolate min-h-[calc(100svh-5rem)] overflow-hidden bg-foreground text-white">
-        <img
-          src="/hero-banner.webp"
-          alt="Orang-orang bergembira setelah diterima kerja di perusahaan impian"
-          className="absolute inset-0 -z-20 h-full w-full object-cover object-center"
-          fetchPriority="high"
-        />
-        <div className="absolute inset-0 -z-10 bg-gradient-to-r from-black/78 via-black/54 to-black/18" />
-        <div className="absolute inset-x-0 bottom-0 -z-10 h-40 bg-gradient-to-t from-background to-transparent" />
-
-        <div className="container-page flex min-h-[calc(100svh-5rem)] items-end pb-10 pt-20 md:pb-14 md:pt-24">
-          <div className="w-full max-w-4xl">
-            <Badge className="gap-1.5 border-white/20 bg-white/15 text-white hover:bg-white/15">
-              <Sparkles className="h-3.5 w-3.5" aria-hidden />
-              Dari CV kosong jadi ATS-friendly, sampai siap menyambut kabar diterima kerja
-            </Badge>
-
-            <h1 className="mt-5 max-w-4xl break-words font-display text-4xl font-extrabold leading-[1.04] tracking-tight text-white sm:text-5xl lg:text-7xl">
-              CV yang membuat rekruter paham{" "}
-              <span className="underline decoration-white/80 decoration-4 underline-offset-[0.16em]">
-                kenapa kamu layak dipanggil.
-              </span>
-            </h1>
-
-            <p className="mt-5 max-w-2xl break-words text-base leading-8 text-white/86 sm:text-lg">
-              Mulai dari template ATS, saran AI, skor CV, review ala HR, Job Match, Auto Tailor CV,
-              sampai cover letter dan export PDF/DOCX yang siap dikirim.
-            </p>
-
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Button asChild size="lg" className="h-12 w-full px-6 text-base sm:w-auto">
-                <Link to="/register">
-                  Buat CV gratis
-                  <ArrowRight className="h-4 w-4" aria-hidden />
-                </Link>
-              </Button>
-              <Button
-                asChild
-                size="lg"
-                variant="secondary"
-                className="h-12 w-full bg-white/92 px-6 text-base text-foreground hover:bg-white sm:w-auto"
-              >
-                <Link to="/template">Lihat template</Link>
-              </Button>
-            </div>
-
-            <ul className="mt-6 grid max-w-2xl gap-2 text-sm text-white/86 sm:grid-cols-3">
-              {heroChecks.map((item) => (
-                <li key={item} className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 shrink-0 text-white" aria-hidden />
-                  <span>{item}</span>
-                </li>
-              ))}
-            </ul>
-
-            <div className="mt-8 grid gap-3 rounded-lg border border-white/18 bg-black/28 p-3 backdrop-blur sm:max-w-2xl sm:grid-cols-3">
-              {[
-                ["92%", "skor ATS rata-rata"],
-                ["10.000+", "CV dibuat"],
-                ["4.9/5", "rating pengguna"],
-              ].map(([value, label]) => (
-                <div key={label} className="rounded-md bg-white/12 px-4 py-3">
-                  <div className="font-display text-2xl font-bold text-white">{value}</div>
-                  <div className="mt-1 text-xs font-medium text-white/78">{label}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section aria-label="Bukti sosial" className="border-y border-border bg-card">
-        <div className="container-page grid grid-cols-2 gap-px py-4 sm:grid-cols-4">
-          {proofPoints.map(([value, label]) => (
-            <div key={label} className="px-3 py-5 text-center">
-              <div className="font-display text-2xl font-bold text-primary md:text-3xl">
-                {value}
-              </div>
-              <div className="mt-1 text-xs font-medium text-muted-foreground md:text-sm">
-                {label}
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="container-page py-16 md:py-24">
-        <div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:items-end">
-          <div>
-            <Badge variant="secondary">Masalahnya sederhana</Badge>
-            <h2 className="mt-3 font-display text-3xl font-bold tracking-tight md:text-4xl">
-              CV yang bagus belum tentu terbaca.
-            </h2>
-          </div>
-          <p className="max-w-3xl text-base leading-8 text-muted-foreground">
-            Banyak CV gagal karena formatnya sulit dipindai, kata kuncinya kurang pas, atau
-            pencapaiannya terdengar biasa saja. CV Pintar mengubah proses itu menjadi alur yang
-            ringan: tulis, perbaiki, cek, lalu kirim.
-          </p>
-        </div>
-
-        <div className="mt-10 grid gap-4 md:grid-cols-3">
-          {[
-            ["Format aman", "Layout bersih yang ramah ATS dan nyaman dibaca HR."],
-            ["Isi bernilai", "Copywriting CV fokus pada dampak, angka, dan konteks."],
-            ["Aksi jelas", "Setiap saran punya langkah perbaikan yang mudah dilakukan."],
-          ].map(([title, desc]) => (
-            <div key={title} className="rounded-lg border border-border bg-card p-6">
-              <CheckCircle2 className="h-5 w-5 text-primary" aria-hidden />
-              <h3 className="mt-4 font-display text-lg font-semibold">{title}</h3>
-              <p className="mt-2 text-sm leading-6 text-muted-foreground">{desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section id="fitur" className="bg-muted/45 py-16 md:py-24">
+    <div className="bg-white overflow-hidden">
+      {/* Hero Section */}
+      <section className="relative pt-12 pb-24 lg:pt-16 lg:pb-32 bg-gradient-to-b from-green-50/30 to-white">
         <div className="container-page">
-          <SectionIntro
-            eyebrow="Fitur inti"
-            title="Semua alat penting, tanpa rasa ribet."
-            desc="Didesain minimalis agar kamu fokus pada satu hal: membuat CV yang jelas, kuat, dan siap bersaing."
-          />
+          <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
+            {/* Left Content */}
+            <div className="flex flex-col items-start text-left max-w-2xl">
+              <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-gray-900 leading-[1.1]">
+                CV yang membuat rekruter paham{" "}
+                <span className="text-green-700 block mt-2 sm:inline sm:mt-0">
+                  kenapa kamu layak dipanggil.
+                </span>
+              </h1>
 
-          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {features.map((feature) => (
-              <Card key={feature.title} className="rounded-lg border-border bg-card shadow-none">
-                <CardContent className="p-6">
-                  <div className="grid h-11 w-11 place-items-center rounded-lg bg-primary/10 text-primary">
-                    <feature.icon className="h-5 w-5" aria-hidden />
+              <p className="mt-6 text-base sm:text-lg text-gray-600 leading-relaxed">
+                Buat CV profesional, rasakan performanya, dan tingkatkan peluang lolos seleksi
+                dengan panduan yang terbukti berhasil.
+              </p>
+
+              <div className="mt-8 flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+                <Button
+                  asChild
+                  size="lg"
+                  className="h-12 px-8 bg-green-700 hover:bg-green-800 text-white font-semibold rounded-md shadow-md text-base"
+                >
+                  <Link to="/register">
+                    Buat CV Gratis
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+                <Button
+                  asChild
+                  size="lg"
+                  variant="outline"
+                  className="h-12 px-8 border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold rounded-md text-base"
+                >
+                  <Link to="/template">Lihat Template</Link>
+                </Button>
+              </div>
+
+              {/* Bullet checks */}
+              <div className="mt-8 flex flex-wrap gap-x-8 gap-y-3 text-sm text-gray-600 font-medium">
+                <div className="flex items-center gap-2">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-green-100 text-green-700">
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                  </span>
+                  100% Gratis
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-green-100 text-green-700">
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                  </span>
+                  Data Aman
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-green-100 text-green-700">
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                  </span>
+                  ATS Friendly
+                </div>
+              </div>
+            </div>
+
+            {/* Right Hero Image & Badges */}
+            <div className="relative flex justify-center lg:justify-end">
+              <div className="relative w-full max-w-[500px]">
+                <img
+                  src="/hero-professionals.png"
+                  alt="Tiga orang profesional muda yang sukses dan tersenyum"
+                  className="w-full h-auto rounded-3xl object-cover shadow-2xl border-4 border-white"
+                  fetchPriority="high"
+                />
+
+                {/* Badge 1: Peluang Dipanggil */}
+                <div className="absolute -top-6 -left-6 bg-white rounded-2xl p-4 shadow-xl border border-gray-100 flex items-center gap-4 animate-float max-w-[220px]">
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                      Peluang Dipanggil
+                    </span>
+                    <span className="text-2xl font-extrabold text-green-600">92%</span>
                   </div>
-                  <h3 className="mt-5 font-display text-lg font-semibold">{feature.title}</h3>
-                  <p className="mt-2 text-sm leading-6 text-muted-foreground">{feature.desc}</p>
+                  {/* SVG Trendline */}
+                  <div className="w-16 h-8 text-green-500">
+                    <svg viewBox="0 0 100 40" fill="none" className="w-full h-full">
+                      <path
+                        d="M5 35 Q 25 15, 45 25 T 90 5"
+                        stroke="currentColor"
+                        strokeWidth="3"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </div>
+                </div>
+
+                {/* Badge 2: ATS Score & Users */}
+                <div className="absolute -bottom-6 -left-4 bg-white rounded-2xl p-4 shadow-xl border border-gray-100 animate-float-delayed flex flex-col gap-2 max-w-[240px]">
+                  <div className="flex items-center justify-between border-b border-gray-50 pb-2">
+                    <div className="flex flex-col">
+                      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                        ATS Score
+                      </span>
+                      <span className="text-xl font-extrabold text-green-700">95/100</span>
+                    </div>
+                    <div className="flex items-center gap-1 bg-yellow-50 text-yellow-600 px-2 py-0.5 rounded text-[10px] font-bold">
+                      <Star className="h-3 w-3 fill-yellow-600" />
+                      4.9/5
+                    </div>
+                  </div>
+                  {/* Avatars bubbles */}
+                  <div className="flex items-center gap-2">
+                    <div className="flex -space-x-2">
+                      <img
+                        src="/mentor-female.png"
+                        className="w-6 h-6 rounded-full border border-white"
+                        alt="user"
+                      />
+                      <img
+                        src="/mentor-male.png"
+                        className="w-6 h-6 rounded-full border border-white"
+                        alt="user"
+                      />
+                      <img
+                        src="/mentor-female.png"
+                        className="w-6 h-6 rounded-full border border-white"
+                        alt="user"
+                      />
+                    </div>
+                    <span className="text-[10px] font-medium text-gray-500">
+                      10k+ pengguna sudah mencoba
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Hero Stats Bar */}
+      <section className="relative z-10 px-4 -mt-12">
+        <div className="container-page">
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 sm:p-8 grid grid-cols-2 md:grid-cols-4 gap-6">
+            {proofPoints.map((item) => (
+              <div
+                key={item.label}
+                className="flex items-center gap-4 px-4 py-2 border-r border-gray-100 last:border-0 md:justify-center"
+              >
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-green-50 text-green-700">
+                  <item.icon className="h-6 w-6 text-green-700 fill-none" />
+                </div>
+                <div>
+                  <div className="text-xl sm:text-2xl font-extrabold text-gray-900 leading-none">
+                    {item.value}
+                  </div>
+                  <div className="text-xs sm:text-sm font-medium text-gray-500 mt-1">
+                    {item.label}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Kenapa Penting Section */}
+      <section className="py-20 bg-white">
+        <div className="container-page">
+          <div className="grid gap-8 lg:grid-cols-2 lg:items-end border-b border-gray-100 pb-12 mb-12">
+            <div>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-green-50 text-green-700 uppercase tracking-wider">
+                Kenapa Penting?
+              </span>
+              <h2 className="mt-4 font-display text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight leading-tight">
+                CV yang bagus belum tentu terbaca.
+              </h2>
+            </div>
+            <p className="text-base sm:text-lg text-gray-600 leading-relaxed max-w-xl">
+              Rekruter hanya butuh 6-10 detik untuk menilai sebuah CV. Pastikan CV kamu mudah
+              dibaca, relevan, dan menonjol dari ribuan pelamar lainnya.
+            </p>
+          </div>
+
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {[
+              {
+                title: "Terlalu Ramai",
+                desc: "Tata letak berantakan membuat informasi penting tidak terlihat.",
+                icon: AlertCircle,
+              },
+              {
+                title: "Tidak Relevan",
+                desc: "Pengalaman dan skill tidak sesuai dengan posisi yang dilamar.",
+                icon: Briefcase,
+              },
+              {
+                title: "Tidak ATS Friendly",
+                desc: "Banyak CV ditolak sistem ATS sebelum sampai ke tangan rekruter.",
+                icon: Cpu,
+              },
+            ].map((item) => (
+              <div
+                key={item.title}
+                className="rounded-2xl border border-gray-100 bg-white p-8 transition-all duration-300 hover:shadow-lg"
+              >
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-50 text-green-700">
+                  <item.icon className="h-6 w-6" />
+                </div>
+                <h3 className="mt-6 font-display text-lg font-bold text-gray-900">{item.title}</h3>
+                <p className="mt-2 text-sm text-gray-500 leading-relaxed">{item.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Fitur Unggulan Section */}
+      <section id="fitur" className="py-20 bg-green-50/20 border-y border-green-100/40">
+        <div className="container-page">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-green-50 text-green-700 uppercase tracking-wider">
+              Fitur Unggulan
+            </span>
+            <h2 className="mt-4 font-display text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight leading-tight">
+              Semua alat penting, tanpa ribet.
+            </h2>
+            <p className="mt-4 text-base sm:text-lg text-gray-600">
+              Lengkap, mudah digunakan, dan siap bantu kamu menang di setiap tahap.
+            </p>
+          </div>
+
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {features.map((feature) => (
+              <Card
+                key={feature.title}
+                className="rounded-2xl border border-gray-100 bg-white p-6 shadow-none transition-all duration-300 hover:shadow-md"
+              >
+                <CardContent className="p-0">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-green-100 text-green-700">
+                    <feature.icon className="h-6 w-6" />
+                  </div>
+                  <h3 className="mt-6 font-display text-lg font-bold text-gray-900">
+                    {feature.title}
+                  </h3>
+                  <p className="mt-2 text-sm text-gray-500 leading-relaxed">{feature.desc}</p>
                 </CardContent>
               </Card>
             ))}
@@ -342,455 +479,615 @@ function LandingPage() {
         </div>
       </section>
 
-      <section className="container-page py-16 md:py-24">
-        <div className="grid gap-10 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
-          <div>
-            <Badge className="bg-info text-info-foreground hover:bg-info">
-              AI Job Match + Tailor CV
-            </Badge>
-            <h2 className="mt-4 font-display text-3xl font-bold tracking-tight md:text-4xl">
-              Jangan kirim CV yang sama ke semua lowongan.
-            </h2>
-            <p className="mt-4 text-base leading-8 text-muted-foreground">
-              Setelah punya CV dasar yang rapi, bandingkan CV dengan lowongan target. AI Job Match
-              Score menunjukkan seberapa cocok CV kamu, keyword yang belum muncul, dan bagian yang
-              perlu dinaikkan. Kalau sudah siap, Tailor CV membantu membuat versi yang lebih relevan
-              tanpa menambahkan pengalaman palsu.
-            </p>
+      {/* Berbasis Data Section */}
+      <section className="py-20 bg-white">
+        <div className="container-page">
+          <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
+            {/* Left Column */}
+            <div>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-green-50 text-green-700 uppercase tracking-wider">
+                Berbasis Data
+              </span>
+              <h2 className="mt-4 font-display text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight leading-tight">
+                Jangan kirim CV yang sama ke semua lowongan.
+              </h2>
+              <p className="mt-4 text-base sm:text-lg text-gray-600 leading-relaxed">
+                Gunakan data & analisis untuk menyesuaikan CV dengan setiap posisi. Hasilnya?
+                Peluang dipanggil naik hingga 3x lipat!
+              </p>
 
-            <div className="mt-7 grid gap-3 sm:grid-cols-2">
-              {[
-                [
-                  FileSearch,
-                  "Cek kecocokan lowongan",
-                  "Lihat match score, keyword gap, dan rekomendasi perbaikan sebelum apply.",
-                ],
-                [
-                  RefreshCw,
-                  "Buat versi tailored",
-                  "Sesuaikan summary, skill, dan bullet pengalaman berdasarkan job description.",
-                ],
-              ].map(([Icon, title, desc]) => (
-                <div key={title as string} className="rounded-lg border border-border bg-card p-4">
-                  <Icon className="h-5 w-5 text-primary" aria-hidden />
-                  <h3 className="mt-3 text-sm font-semibold text-foreground">{title as string}</h3>
-                  <p className="mt-1 text-sm leading-6 text-muted-foreground">{desc as string}</p>
-                </div>
-              ))}
-            </div>
-
-            <Button asChild size="lg" className="mt-8 h-12 px-6 text-base">
-              <Link to="/harga">
-                Lihat paket Job Match
-                <ArrowRight className="h-4 w-4" aria-hidden />
-              </Link>
-            </Button>
-          </div>
-
-          <div className="rounded-lg border border-border bg-card p-4 shadow-xl shadow-primary/10">
-            <div className="rounded-md bg-background p-5">
-              <div className="flex flex-col gap-4 border-b border-border pb-5 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="grid h-14 w-14 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground">
-                    <FileSearch className="h-7 w-7" aria-hidden />
-                  </div>
-                  <div>
-                    <h3 className="font-display text-lg font-bold">Job Match Report</h3>
-                    <p className="text-sm text-muted-foreground">CV vs job description target</p>
-                  </div>
-                </div>
-                <Badge variant="secondary" className="w-fit">
-                  Match 78%
-                </Badge>
-              </div>
-
-              <div className="mt-5 grid gap-4 sm:grid-cols-[0.8fr_1.2fr]">
-                <div className="rounded-lg bg-primary p-5 text-primary-foreground">
-                  <p className="text-sm font-medium text-primary-foreground/85">Kesiapan apply</p>
-                  <div className="mt-3 font-display text-5xl font-bold">78%</div>
-                  <p className="mt-2 text-sm leading-6 text-primary-foreground/90">
-                    Cukup kuat, tapi masih bisa naik dengan keyword dan bukti impact yang lebih
-                    tepat.
-                  </p>
-                </div>
-
-                <div className="space-y-3">
-                  {[
-                    ["Keyword cocok", "Project management, reporting, stakeholder."],
-                    ["Keyword gap", "Budgeting, vendor management, risk tracking."],
-                    ["Tailor next", "Naikkan bullet pengalaman yang paling relevan."],
-                  ].map(([title, desc]) => (
-                    <div key={title} className="rounded-lg border border-border bg-card p-4">
-                      <p className="text-sm font-semibold text-foreground">{title}</p>
-                      <p className="mt-1 text-sm leading-6 text-muted-foreground">{desc}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="mt-5 rounded-lg bg-info p-4">
-                <div className="flex items-start gap-3">
-                  <RefreshCw className="mt-0.5 h-5 w-5 shrink-0 text-info-foreground" aria-hidden />
-                  <p className="text-sm leading-6 text-info-foreground">
-                    Tailor CV menjaga fakta tetap sama, lalu mengatur ulang pesan agar lebih dekat
-                    dengan kebutuhan lowongan.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="container-page py-16 md:py-24">
-        <div className="grid gap-10 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
-          <div>
-            <Badge className="bg-info text-info-foreground hover:bg-info">
-              Review CV by HR Expert AI
-            </Badge>
-            <h2 className="mt-4 font-display text-3xl font-bold tracking-tight md:text-4xl">
-              Feedback tajam sebelum CV kamu dikirim.
-            </h2>
-            <p className="mt-4 text-base leading-8 text-muted-foreground">
-              Dapat analisis mendalam dari perspektif HR profesional 20+ tahun. Bukan sekadar
-              komentar umum, tapi prioritas perbaikan yang jelas: apa yang sudah kuat, apa yang
-              melemahkan peluang, dan bagian mana yang bisa cepat dinaikkan kualitasnya.
-            </p>
-
-            <div className="mt-7 grid gap-3 sm:grid-cols-2">
-              {[
-                ["Kekuatan CV", "Bagian yang sudah meyakinkan rekruter."],
-                ["Risiko screening", "Hal yang bisa membuat CV dilewati ATS atau HR."],
-                ["Quick wins", "Perbaikan kecil dengan dampak besar."],
-                ["Standar industri", "Benchmark terhadap ekspektasi role target."],
-              ].map(([title, desc]) => (
-                <div key={title} className="rounded-lg border border-border bg-card p-4">
-                  <CheckCircle2 className="h-5 w-5 text-primary" aria-hidden />
-                  <h3 className="mt-3 text-sm font-semibold text-foreground">{title}</h3>
-                  <p className="mt-1 text-sm leading-6 text-muted-foreground">{desc}</p>
-                </div>
-              ))}
-            </div>
-
-            <Button asChild size="lg" className="mt-8 h-12 px-6 text-base">
-              <Link to="/harga">
-                Coba review CV
-                <ArrowRight className="h-4 w-4" aria-hidden />
-              </Link>
-            </Button>
-          </div>
-
-          <div className="rounded-lg border border-border bg-card p-4 shadow-xl shadow-primary/10">
-            <div className="rounded-md bg-background p-5">
-              <div className="flex flex-col gap-4 border-b border-border pb-5 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="grid h-14 w-14 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground">
-                    <UserRoundCheck className="h-7 w-7" aria-hidden />
-                  </div>
-                  <div>
-                    <h3 className="font-display text-lg font-bold">Hira AI</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Senior HR Recruitment Consultant
-                    </p>
-                  </div>
-                </div>
-                <Badge variant="secondary" className="w-fit">
-                  20+ tahun pengalaman
-                </Badge>
-              </div>
-
-              <div className="mt-5 grid gap-4 sm:grid-cols-[0.8fr_1.2fr]">
-                <div className="rounded-lg bg-primary p-5 text-primary-foreground">
-                  <p className="text-sm font-medium text-primary-foreground/85">Skor kesiapan</p>
-                  <div className="mt-3 font-display text-5xl font-bold">85</div>
-                  <p className="mt-2 text-sm leading-6 text-primary-foreground/90">
-                    Kuat, tapi masih bisa naik dengan bukti angka dan keyword role target.
-                  </p>
-                </div>
-
-                <div className="space-y-3">
-                  {[
-                    [
-                      "Kekuatan",
-                      "Ringkasan profil sudah fokus dan mudah dipindai.",
-                      "bg-primary/10",
-                    ],
-                    [
-                      "Perlu diperbaiki",
-                      "Pengalaman kerja butuh metrik kuantitatif.",
-                      "bg-warning/25",
-                    ],
-                    ["Quick win", "Tambahkan 3 keyword utama dari job description.", "bg-info"],
-                  ].map(([title, desc, tone]) => (
-                    <div key={title} className={`rounded-lg p-4 ${tone}`}>
-                      <p className="text-sm font-semibold text-foreground">{title}</p>
-                      <p className="mt-1 text-sm leading-6 text-muted-foreground">{desc}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="mt-5 rounded-lg border border-border p-4">
-                <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
-                  <TrendingUp className="h-4 w-4 text-primary" aria-hidden />
-                  Prioritas perbaikan
-                </div>
-                <div className="space-y-3">
-                  {[
-                    ["Tambahkan angka hasil", "75%"],
-                    ["Perkuat keyword role", "64%"],
-                    ["Ringkas bullet panjang", "48%"],
-                  ].map(([label, value]) => (
-                    <div key={label}>
-                      <div className="mb-1 flex justify-between text-xs text-muted-foreground">
-                        <span>{label}</span>
-                        <span>{value}</span>
-                      </div>
-                      <div className="h-2 overflow-hidden rounded-full bg-muted">
-                        <div className="h-full rounded-full bg-primary" style={{ width: value }} />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="bg-muted/45 py-16 md:py-24">
-        <div className="container-page grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
-          <div>
-            <Badge className="bg-info text-info-foreground hover:bg-info">
-              Private Mentoring by HR Recruiter
-            </Badge>
-            <h2 className="mt-4 font-display text-3xl font-bold tracking-tight md:text-4xl">
-              Butuh arahan manusia setelah CV kamu siap?
-            </h2>
-            <p className="mt-4 text-base leading-8 text-muted-foreground">
-              Konsultasi 1-on-1 dengan HR Recruiter untuk membedah CV, strategi apply, dan jawaban
-              interview. Cocok kalau kamu ingin feedback yang lebih personal sebelum mengirim
-              lamaran penting.
-            </p>
-            <div className="mt-7 grid gap-3 sm:grid-cols-2">
-              {[
-                [MessageCircle, "Chat Session", "Rp25.000 via WhatsApp"],
-                [Video, "Video Session", "Rp50.000 via Zoom"],
-              ].map(([Icon, title, desc]) => (
-                <div key={title as string} className="rounded-lg border border-border bg-card p-4">
-                  <Icon className="h-5 w-5 text-primary" aria-hidden />
-                  <h3 className="mt-3 text-sm font-semibold text-foreground">{title as string}</h3>
-                  <p className="mt-1 text-sm leading-6 text-muted-foreground">{desc as string}</p>
-                </div>
-              ))}
-            </div>
-            <Button asChild size="lg" className="mt-8 h-12 px-6 text-base">
-              <Link to="/private-coaching">
-                Lihat Private Mentoring
-                <ArrowRight className="h-4 w-4" aria-hidden />
-              </Link>
-            </Button>
-          </div>
-
-          <div className="rounded-lg border border-border bg-card p-4 shadow-xl shadow-primary/10">
-            <div className="rounded-md bg-background p-5">
-              <div className="flex flex-col gap-4 border-b border-border pb-5 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="grid h-14 w-14 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground">
-                    <UserRoundCheck className="h-7 w-7" aria-hidden />
-                  </div>
-                  <div>
-                    <h3 className="font-display text-lg font-bold">HR Recruiter 1-on-1</h3>
-                    <p className="text-sm text-muted-foreground">CV, apply strategy, interview</p>
-                  </div>
-                </div>
-                <Badge variant="secondary" className="w-fit">
-                  Mulai Rp25.000
-                </Badge>
-              </div>
-
-              <div className="mt-5 space-y-3">
+              <div className="mt-8 space-y-4">
                 {[
-                  ["Review CV personal", "Cari pesan utama yang harus terlihat oleh recruiter."],
-                  [
-                    "Strategi apply",
-                    "Pilih target role, keyword, dan angle pengalaman yang tepat.",
-                  ],
-                  ["Latihan interview", "Rapikan cara menjawab agar lebih jelas dan percaya diri."],
-                ].map(([title, desc]) => (
-                  <div key={title} className="rounded-lg border border-border p-4">
-                    <div className="flex items-start gap-3">
-                      <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-primary" aria-hidden />
-                      <div>
-                        <p className="text-sm font-semibold text-foreground">{title}</p>
-                        <p className="mt-1 text-sm leading-6 text-muted-foreground">{desc}</p>
-                      </div>
-                    </div>
+                  "Analisis kesesuaian CV dengan lowongan",
+                  "Rekomendasi perbaikan berkala AI",
+                  "Benchmark dibanding pelamar lain",
+                ].map((item) => (
+                  <div key={item} className="flex items-center gap-3">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-700">
+                      <CheckCircle2 className="h-4 w-4" />
+                    </span>
+                    <span className="text-sm font-semibold text-gray-700">{item}</span>
                   </div>
                 ))}
               </div>
 
-              <div className="mt-5 rounded-lg bg-primary/10 p-4">
-                <div className="flex items-start gap-3">
-                  <CalendarClock className="mt-0.5 h-5 w-5 shrink-0 text-primary" aria-hidden />
-                  <p className="text-sm leading-6 text-muted-foreground">
-                    Chat berjalan via WhatsApp. Untuk video session, link Zoom dikirim setelah
-                    pembayaran dan jadwal dikonfirmasi.
+              <Button
+                asChild
+                size="lg"
+                className="mt-8 h-12 px-8 bg-green-700 hover:bg-green-800 text-white font-semibold rounded-md shadow-md text-base"
+              >
+                <Link to="/register">
+                  Coba Gratis Sekarang
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
+
+            {/* Right Column: CV Analysis Mockup Card */}
+            <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-xl relative">
+              <div className="flex items-center justify-between border-b border-gray-100 pb-4 mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100 text-green-700 font-extrabold">
+                    R
+                  </div>
+                  <div>
+                    <h3 className="font-display text-sm font-bold text-gray-900">
+                      Analisis CV Kamu
+                    </h3>
+                    <p className="text-xs text-gray-400">cv-ats-final.pdf</p>
+                  </div>
+                </div>
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-bold bg-green-100 text-green-800">
+                  Sangat Baik
+                </span>
+              </div>
+
+              <div className="grid gap-6 md:grid-cols-2">
+                <div className="rounded-xl bg-green-700 p-6 text-white flex flex-col justify-between">
+                  <div>
+                    <span className="text-xs font-bold text-green-100 uppercase tracking-wider block mb-2">
+                      Match Score
+                    </span>
+                    <span className="text-5xl font-extrabold block">78%</span>
+                  </div>
+                  <p className="text-xs text-green-50 mt-4 leading-relaxed">
+                    CV kamu sudah kuat! Tingkatkan beberapa bagian untuk hasil maksimal.
                   </p>
                 </div>
+
+                <div className="space-y-3">
+                  <div className="flex items-start gap-2.5">
+                    <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0 mt-0.5" />
+                    <div>
+                      <h4 className="text-xs font-bold text-gray-900">Kekuatan Utama</h4>
+                      <p className="text-[11px] text-gray-500">Pengalaman relevan, skill sesuai.</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2.5">
+                    <AlertCircle className="h-5 w-5 text-yellow-500 shrink-0 mt-0.5" />
+                    <div>
+                      <h4 className="text-xs font-bold text-gray-900">Perlu Ditingkatkan</h4>
+                      <p className="text-[11px] text-gray-500">Ringkasan profesional, keyword.</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2.5">
+                    <XCircle className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />
+                    <div>
+                      <h4 className="text-xs font-bold text-gray-900">Disarankan</h4>
+                      <p className="text-[11px] text-gray-500">Tambahkan sertifikasi & proyek.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Tips Yellow Box */}
+              <div className="mt-6 rounded-xl bg-yellow-50 border border-yellow-100 p-4 flex gap-3">
+                <Star className="h-5 w-5 text-yellow-600 shrink-0 fill-yellow-600 mt-0.5" />
+                <p className="text-xs text-yellow-900 leading-relaxed">
+                  <strong>Tips:</strong> Sesuaikan ringkasan & keyword dengan deskripsi pekerjaan.
+                </p>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      <section className="container-page py-16 md:py-24">
-        <SectionIntro
-          eyebrow="Cara kerja"
-          title="Dari blank page ke CV siap kirim."
-          desc="Empat langkah pendek yang membuat proses menulis CV terasa lebih tenang."
-        />
+      {/* Testimonials Section */}
+      <section className="py-20 bg-green-50/20">
+        <div className="container-page">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-green-50 text-green-700 uppercase tracking-wider">
+              Dipercaya Ribuan Talenta
+            </span>
+            <h2 className="mt-4 font-display text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight leading-tight">
+              Dipakai untuk melamar dengan lebih percaya diri.
+            </h2>
+            <p className="mt-4 text-base sm:text-lg text-gray-600">
+              Bergabunglah dengan ribuan pengguna yang berhasil lolos seleksi impian.
+            </p>
+          </div>
 
-        <div className="mt-10 grid gap-4 md:grid-cols-4">
-          {steps.map((step) => (
-            <div key={step.n} className="rounded-lg border border-border bg-card p-6">
-              <div className="font-display text-sm font-bold text-primary">{step.n}</div>
-              <h3 className="mt-4 font-display text-lg font-semibold">{step.title}</h3>
-              <p className="mt-2 text-sm leading-6 text-muted-foreground">{step.desc}</p>
+          <div className="overflow-hidden w-full mt-10">
+            <div
+              className="flex transition-transform duration-500 ease-in-out"
+              style={{ transform: `translateX(-${activeSlide * 100}%)` }}
+            >
+              {isMobile ? (
+                // On mobile: 1 card per slide (full width)
+                testimonials.map((item) => (
+                  <div key={item.name} className="w-full shrink-0 px-4">
+                    <Card className="rounded-2xl border border-gray-100 bg-white p-6 shadow-none flex flex-col justify-between min-h-[260px]">
+                      <CardContent className="p-0">
+                        <div className="flex items-center justify-between gap-4 border-b border-gray-50 pb-4 mb-4">
+                          <div className="flex items-center gap-3">
+                            <img
+                              src={item.img}
+                              className="w-10 h-10 rounded-full object-cover"
+                              alt={item.name}
+                            />
+                            <div>
+                              <h3 className="font-display text-sm font-bold text-gray-900">
+                                {item.name}
+                              </h3>
+                              <p className="text-xs text-gray-400">{item.role}</p>
+                            </div>
+                          </div>
+                          <div className="flex gap-0.5 text-yellow-500">
+                            {Array.from({ length: 5 }).map((_, index) => (
+                              <Star key={index} className="h-3 w-3 fill-yellow-500 stroke-none" />
+                            ))}
+                          </div>
+                        </div>
+                        <Quote className="h-8 w-8 text-green-100 block mb-3" />
+                        <p className="text-sm text-gray-600 leading-relaxed font-medium">
+                          "{item.text}"
+                        </p>
+                      </CardContent>
+                      <div className="mt-6 border-t border-gray-50 pt-4 flex">
+                        <span className="inline-flex items-center px-2.5 py-1 rounded text-xs font-semibold bg-green-50 text-green-700 border border-green-100/50">
+                          {item.tag}
+                        </span>
+                      </div>
+                    </Card>
+                  </div>
+                ))
+              ) : (
+                // On desktop: 2 groups of 3 cards each (full width grids)
+                <>
+                  <div className="w-full shrink-0 grid gap-6 md:grid-cols-3 px-1">
+                    {testimonials.slice(0, 3).map((item) => (
+                      <Card
+                        key={item.name}
+                        className="rounded-2xl border border-gray-100 bg-white p-6 shadow-none flex flex-col justify-between min-h-[260px]"
+                      >
+                        <CardContent className="p-0">
+                          <div className="flex items-center justify-between gap-4 border-b border-gray-50 pb-4 mb-4">
+                            <div className="flex items-center gap-3">
+                              <img
+                                src={item.img}
+                                className="w-10 h-10 rounded-full object-cover"
+                                alt={item.name}
+                              />
+                              <div>
+                                <h3 className="font-display text-sm font-bold text-gray-900">
+                                  {item.name}
+                                </h3>
+                                <p className="text-xs text-gray-400">{item.role}</p>
+                              </div>
+                            </div>
+                            <div className="flex gap-0.5 text-yellow-500">
+                              {Array.from({ length: 5 }).map((_, index) => (
+                                <Star key={index} className="h-3 w-3 fill-yellow-500 stroke-none" />
+                              ))}
+                            </div>
+                          </div>
+                          <Quote className="h-8 w-8 text-green-100 block mb-3" />
+                          <p className="text-sm text-gray-600 leading-relaxed font-medium">
+                            "{item.text}"
+                          </p>
+                        </CardContent>
+                        <div className="mt-6 border-t border-gray-50 pt-4 flex">
+                          <span className="inline-flex items-center px-2.5 py-1 rounded text-xs font-semibold bg-green-50 text-green-700 border border-green-100/50">
+                            {item.tag}
+                          </span>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                  <div className="w-full shrink-0 grid gap-6 md:grid-cols-3 px-1">
+                    {testimonials.slice(3, 6).map((item) => (
+                      <Card
+                        key={item.name}
+                        className="rounded-2xl border border-gray-100 bg-white p-6 shadow-none flex flex-col justify-between min-h-[260px]"
+                      >
+                        <CardContent className="p-0">
+                          <div className="flex items-center justify-between gap-4 border-b border-gray-50 pb-4 mb-4">
+                            <div className="flex items-center gap-3">
+                              <img
+                                src={item.img}
+                                className="w-10 h-10 rounded-full object-cover"
+                                alt={item.name}
+                              />
+                              <div>
+                                <h3 className="font-display text-sm font-bold text-gray-900">
+                                  {item.name}
+                                </h3>
+                                <p className="text-xs text-gray-400">{item.role}</p>
+                              </div>
+                            </div>
+                            <div className="flex gap-0.5 text-yellow-500">
+                              {Array.from({ length: 5 }).map((_, index) => (
+                                <Star key={index} className="h-3 w-3 fill-yellow-500 stroke-none" />
+                              ))}
+                            </div>
+                          </div>
+                          <Quote className="h-8 w-8 text-green-100 block mb-3" />
+                          <p className="text-sm text-gray-600 leading-relaxed font-medium">
+                            "{item.text}"
+                          </p>
+                        </CardContent>
+                        <div className="mt-6 border-t border-gray-50 pt-4 flex">
+                          <span className="inline-flex items-center px-2.5 py-1 rounded text-xs font-semibold bg-green-50 text-green-700 border border-green-100/50">
+                            {item.tag}
+                          </span>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
-          ))}
+          </div>
+
+          {/* Indicators Dots */}
+          <div className="mt-8 flex justify-center gap-2">
+            {Array.from({ length: totalSlides }).map((_, index) => (
+              <button
+                key={index}
+                onClick={() => setActiveSlide(index)}
+                className={`transition-all duration-300 rounded-full ${
+                  activeSlide === index
+                    ? "w-6 h-2 bg-green-700"
+                    : "w-2 h-2 bg-gray-300 hover:bg-gray-400"
+                }`}
+                aria-label={`Go to slide ${index + 1}`}
+              />
+            ))}
+          </div>
         </div>
       </section>
 
-      <section className="bg-card py-16 md:py-24">
-        <div className="container-page grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
-          <div>
-            <Badge variant="secondary">Template</Badge>
-            <h2 className="mt-3 font-display text-3xl font-bold tracking-tight md:text-4xl">
-              Rapi untuk sistem. Tetap enak dilihat manusia.
+      {/* Cara Kerja Section */}
+      <section className="py-20 bg-white">
+        <div className="container-page">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-green-50 text-green-700 uppercase tracking-wider">
+              Cara Kerja
+            </span>
+            <h2 className="mt-4 font-display text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight leading-tight">
+              4 Langkah mudah bikin CV siap dilirik rekruter.
             </h2>
-            <p className="mt-4 text-base leading-8 text-muted-foreground">
-              Pilih gaya yang sesuai profesi kamu. Semua template dibuat untuk keterbacaan, hierarki
-              informasi, dan export PDF yang bersih.
-            </p>
-            <Button asChild variant="outline" className="mt-7">
-              <Link to="/template">
-                Jelajahi template
-                <ArrowRight className="h-4 w-4" aria-hidden />
+          </div>
+
+          <div className="relative">
+            {/* SVG Connecting lines for large screens */}
+            <div className="hidden lg:block absolute top-12 left-[12%] right-[12%] h-0.5 -z-10">
+              <svg
+                className="w-full h-8 text-green-200"
+                viewBox="0 0 800 20"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeDasharray="6 6"
+              >
+                <path d="M 0 10 Q 200 20, 400 10 T 800 10" />
+              </svg>
+            </div>
+
+            <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+              {steps.map((step) => (
+                <div key={step.n} className="flex flex-col items-center text-center">
+                  <div className="relative flex h-20 w-20 items-center justify-center rounded-2xl bg-green-50 text-green-700 shadow-md">
+                    <step.icon className="h-8 w-8" />
+                    <span className="absolute -top-3 -right-3 flex h-7 w-7 items-center justify-center rounded-full bg-green-700 text-white text-xs font-extrabold">
+                      {step.n}
+                    </span>
+                  </div>
+                  <h3 className="mt-6 font-display text-lg font-bold text-gray-900">
+                    {step.title}
+                  </h3>
+                  <p className="mt-2 text-sm text-gray-500 leading-relaxed max-w-[220px]">
+                    {step.desc}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Private Mentoring Section */}
+      <section className="py-20 bg-green-950 text-white relative overflow-hidden">
+        {/* Decorative elements */}
+        <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-green-900/40 blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-24 -left-24 w-96 h-96 rounded-full bg-green-800/20 blur-3xl pointer-events-none" />
+
+        <div className="container-page relative z-10">
+          <div className="grid gap-12 lg:grid-cols-2 items-center">
+            {/* Left Content */}
+            <div className="flex flex-col items-start text-left max-w-2xl">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-green-900 text-green-300 uppercase tracking-wider">
+                MINTA BANTUAN MENTOR
+              </span>
+              <h2 className="mt-4 font-display text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight">
+                Bimbingan Private 1-on-1 dengan Mentor Expert.
+              </h2>
+              <p className="mt-6 text-base sm:text-lg text-green-100/80 leading-relaxed">
+                Bingung cara menulis CV atau mempersiapkan interview? Dapatkan review langsung dan
+                simulasi wawancara dari praktisi industri berpengalaman.
+              </p>
+
+              {/* Benefits Checklist */}
+              <div className="mt-8 space-y-4 w-full">
+                {[
+                  "Review CV mendalam baris-demi-baris oleh praktisi.",
+                  "Mock interview (simulasi wawancara) & feedback instan.",
+                  "Konsultasi strategi karir & tips negosiasi gaji.",
+                  "Pilihan jadwal fleksibel sesuai dengan kebutuhanmu.",
+                ].map((benefit, i) => (
+                  <div key={i} className="flex items-start gap-3">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-green-900 text-green-300 text-sm shrink-0 font-bold">
+                      ✓
+                    </span>
+                    <span className="text-sm sm:text-base text-green-50 font-medium">
+                      {benefit}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              <Button
+                asChild
+                size="lg"
+                className="mt-10 h-12 px-8 bg-yellow-300 hover:bg-yellow-400 text-gray-950 font-extrabold rounded-lg shadow-lg text-base"
+              >
+                <Link to="/private-coaching">
+                  Daftar Private Mentoring Sekarang
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
+
+            {/* Right Visual Image */}
+            <div className="flex justify-center lg:justify-end">
+              <div className="relative max-w-[380px] w-full aspect-square rounded-2xl overflow-hidden shadow-2xl border-4 border-green-800/40">
+                <img
+                  src="/private-mentoring.png"
+                  alt="Private Mentoring Session"
+                  className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Panduan & Contoh Section */}
+      <section className="py-20 bg-gray-50/50">
+        <div className="container-page">
+          <div className="grid gap-12 lg:grid-cols-[1fr_2fr] lg:items-start">
+            {/* Left Info Column */}
+            <div>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-green-50 text-green-700 uppercase tracking-wider">
+                Panduan & Contoh
+              </span>
+              <h2 className="mt-4 font-display text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight leading-tight">
+                Rapi untuk sistem, Tetap enak dilihat manusia.
+              </h2>
+              <p className="mt-4 text-base text-gray-600 leading-relaxed">
+                Akses panduan, tips karir, dan contoh nyata untuk setiap tahap perjalanan kariermu.
+              </p>
+
+              <Button
+                asChild
+                size="lg"
+                className="mt-8 h-12 px-8 bg-green-700 hover:bg-green-800 text-white font-semibold rounded-md shadow-md text-base"
+              >
+                <Link to="/panduan-cv-ats">
+                  Lihat Semua Artikel
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
+
+            {/* Right Guide Cards Column */}
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {[
+                {
+                  title: "Panduan Lengkap Buat CV ATS-Friendly",
+                  desc: "Langkah demi langkah membuat CV yang lolos ATS.",
+                  img: "/ats-cv-preview.png",
+                },
+                {
+                  title: "Contoh CV Fresh Graduate",
+                  desc: "Inspirasi CV untuk kamu yang baru lulus.",
+                  img: "/fresh-graduate-cv-preview.png",
+                },
+                {
+                  title: "Tips Interview yang Meningkatkan Peluang Diterima",
+                  desc: "Persiapan interview biar makin percaya diri.",
+                  img: "/interview-tips.png",
+                },
+              ].map((item) => (
+                <div
+                  key={item.title}
+                  className="group rounded-2xl border border-gray-100 bg-white overflow-hidden shadow-none transition-all duration-300 hover:shadow-lg"
+                >
+                  <div className="aspect-[4/3] overflow-hidden bg-gray-100">
+                    <img
+                      src={item.img}
+                      alt={item.title}
+                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                  </div>
+                  <div className="p-5 flex flex-col justify-between h-[200px]">
+                    <div>
+                      <h3 className="font-display text-sm font-bold text-gray-900 leading-snug group-hover:text-green-700 transition-colors">
+                        {item.title}
+                      </h3>
+                      <p className="text-xs text-gray-400 mt-2 leading-relaxed">{item.desc}</p>
+                    </div>
+                    <Link
+                      to="/panduan-cv-ats"
+                      className="text-xs font-bold text-green-700 hover:text-green-800 flex items-center gap-1 self-start mt-4"
+                    >
+                      Baca Selengkapnya
+                      <ArrowRight className="h-3 w-3" />
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ Section */}
+      <section className="py-20 bg-white">
+        <div className="container-page">
+          <div className="grid gap-12 lg:grid-cols-12 lg:items-center">
+            {/* Left Column: Title and Mascot side-by-side */}
+            <div className="lg:col-span-7 flex flex-col sm:flex-row items-center justify-between gap-6">
+              <div className="flex flex-col items-start text-left max-w-xs">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-green-50/80 text-green-700 uppercase tracking-wider">
+                  PERTANYAAN UMUM
+                </span>
+                <h2 className="mt-4 font-display text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight leading-tight">
+                  Pertanyaan cepat sebelum mulai.
+                </h2>
+              </div>
+              <div className="relative max-w-[280px] lg:translate-y-4 shrink-0">
+                <img
+                  src="/avatar-pointing.png"
+                  alt="3D Mascot pointing up"
+                  className="w-full h-auto object-contain"
+                />
+              </div>
+            </div>
+
+            {/* Right Column: Accordion & Button */}
+            <div className="lg:col-span-5 flex flex-col">
+              <Accordion type="single" collapsible className="w-full space-y-4">
+                {faqs.map((faq, index) => (
+                  <AccordionItem
+                    key={faq.q}
+                    value={`faq-${index}`}
+                    className="border border-gray-100 rounded-xl px-5 py-2 bg-white shadow-sm"
+                  >
+                    <AccordionTrigger className="text-left font-bold text-gray-800 text-sm hover:no-underline hover:text-green-700">
+                      {faq.q}
+                    </AccordionTrigger>
+                    <AccordionContent className="text-xs md:text-sm leading-relaxed text-gray-500 pt-2 border-t border-gray-50 mt-2">
+                      {faq.a}
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+
+              <Button
+                asChild
+                size="lg"
+                className="mt-8 h-11 px-6 bg-green-700 hover:bg-green-800 text-white font-semibold rounded-md shadow-md text-sm w-fit flex items-center gap-2"
+              >
+                <Link to="/panduan-cv-ats">
+                  Lihat Semua FAQ
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Banner Section */}
+      <section className="container-page pb-24">
+        <div className="rounded-3xl bg-green-700 px-8 py-12 text-white shadow-2xl relative overflow-hidden flex flex-col lg:flex-row items-center justify-between gap-12">
+          {/* Decorative background element */}
+          <div className="absolute -top-12 -left-12 w-48 h-48 rounded-full bg-green-600/30 blur-2xl" />
+
+          {/* Left Content */}
+          <div className="relative z-10 flex-1 max-w-2xl text-left">
+            <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight">
+              Siap tingkatkan peluangmu? Buat CV terbaikmu sekarang.
+            </h2>
+
+            {/* Checklist */}
+            <div className="mt-8 grid grid-cols-2 gap-4 text-sm font-semibold text-green-50">
+              <div className="flex items-center gap-2">
+                <span className="text-white text-xs">✓</span>
+                Gratis selamanya
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-white text-xs">✓</span>
+                Mudah & cepat
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-white text-xs">✓</span>
+                Mudah & cepat
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-white text-xs">✓</span>
+                Dipercaya 10.000+ pengguna
+              </div>
+            </div>
+
+            <Button
+              asChild
+              size="lg"
+              className="mt-10 h-12 px-8 bg-yellow-300 hover:bg-yellow-400 text-gray-950 font-extrabold rounded-lg shadow-lg text-base"
+            >
+              <Link to="/register">
+                Buat CV Gratis Sekarang
+                <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            {[
-              { name: "Jakarta", template: JakartaTemplate, data: previewData.jakarta },
-              { name: "Bandung", template: BandungTemplate, data: previewData.bandung },
-              { name: "Bali", template: BaliTemplate, data: previewData.bali },
-              { name: "Medan", template: MedanTemplate, data: previewData.medan },
-            ].map(({ name, template: Template, data }) => (
-              <Link key={name} to="/template" className="group block">
-                <div className="aspect-[3/4] overflow-hidden rounded-lg border border-border bg-background p-3 transition-shadow group-hover:shadow-md">
-                  <div
-                    className="h-full overflow-hidden rounded-md bg-white shadow-sm"
-                    style={{
-                      transform: "scale(0.55)",
-                      transformOrigin: "top left",
-                      width: "182%",
-                      height: "182%",
-                    }}
-                  >
-                    <div className="p-4" style={{ fontSize: "11px", lineHeight: 1.4 }}>
-                      <Template data={data} showHeader />
-                    </div>
-                  </div>
+          {/* Right Image & Floating Isometric 3D badges */}
+          <div className="relative z-10 w-full max-w-[280px] lg:max-w-[340px] flex justify-center lg:justify-end">
+            <div className="relative w-full">
+              <img
+                src="/avatar-laptop.png"
+                alt="3D Avatar with laptop celebrating success"
+                className="w-full h-auto drop-shadow-2xl"
+              />
+
+              {/* Left Floating Badge: Checkmark */}
+              <div className="absolute -left-4 top-[35%] bg-white text-green-600 rounded-full p-2 shadow-lg border border-green-50 animate-float flex items-center justify-center">
+                <div className="bg-green-100/80 rounded-full p-1">
+                  <CheckCircle2 className="h-5 w-5 fill-green-600 text-white animate-pulse" />
                 </div>
-                <div className="mt-3 text-sm font-semibold text-foreground">{name}</div>
-              </Link>
-            ))}
+              </div>
+
+              {/* Right Floating Badge 1: Message / Lines */}
+              <div className="absolute -right-4 top-[20%] bg-white rounded-xl p-2.5 shadow-lg border border-gray-100 flex flex-col gap-1 w-12 animate-float-delayed items-start">
+                <div className="h-1.5 w-7 rounded bg-green-500" />
+                <div className="h-1.5 w-5 rounded bg-gray-200" />
+                <div className="h-1.5 w-6 rounded bg-gray-200" />
+              </div>
+
+              {/* Right Floating Badge 2: Graph / Chart */}
+              <div className="absolute -right-6 bottom-[25%] bg-white rounded-xl p-3 shadow-lg border border-gray-100 flex flex-col gap-2 w-14 animate-float items-center">
+                <div className="flex items-end gap-1 h-7">
+                  <div className="w-1.5 h-3 bg-gray-200 rounded-sm" />
+                  <div className="w-1.5 h-6 bg-green-500 rounded-sm" />
+                  <div className="w-1.5 h-4 bg-green-600 rounded-sm" />
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
-
-      <section className="bg-muted/45 py-16 md:py-24">
-        <div className="container-page">
-          <SectionIntro
-            eyebrow="Cerita pengguna"
-            title="Dipakai untuk melamar dengan lebih percaya diri."
-            desc="Pengguna CV Pintar datang dari fresh graduate, profesional, sampai career switcher."
-          />
-
-          <div className="mt-10 grid gap-4 md:grid-cols-3">
-            {testimonials.map((item) => (
-              <Card key={item.name} className="rounded-lg border-border bg-card shadow-none">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between gap-4">
-                    <Quote className="h-6 w-6 text-primary" aria-hidden />
-                    <div className="flex gap-0.5 text-warning" aria-label="Rating 5 dari 5">
-                      {Array.from({ length: 5 }).map((_, index) => (
-                        <Star key={index} className="h-4 w-4 fill-warning" aria-hidden />
-                      ))}
-                    </div>
-                  </div>
-                  <p className="mt-5 text-sm leading-7 text-foreground">"{item.text}"</p>
-                  <div className="mt-5 border-t border-border pt-4">
-                    <p className="font-semibold text-foreground">{item.name}</p>
-                    <p className="text-sm text-muted-foreground">{item.role}</p>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="container-page py-16 md:py-24">
-        <div className="grid gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:items-start">
-          <div>
-            <Badge variant="secondary">FAQ</Badge>
-            <h2 className="mt-3 font-display text-3xl font-bold tracking-tight md:text-4xl">
-              Pertanyaan cepat sebelum mulai.
-            </h2>
-          </div>
-          <Accordion type="single" collapsible className="w-full">
-            {faqs.map((faq, index) => (
-              <AccordionItem key={faq.q} value={`faq-${index}`}>
-                <AccordionTrigger className="text-left text-base">{faq.q}</AccordionTrigger>
-                <AccordionContent className="text-sm leading-7 text-muted-foreground">
-                  {faq.a}
-                </AccordionContent>
-              </AccordionItem>
-            ))}
-          </Accordion>
-        </div>
-      </section>
-
-      <section className="container-page pb-16 md:pb-24">
-        <div className="rounded-lg bg-primary px-6 py-12 text-center text-primary-foreground md:px-10 md:py-16">
-          <LockKeyhole className="mx-auto h-8 w-8" aria-hidden />
-          <h2 className="mx-auto mt-5 max-w-2xl font-display text-3xl font-bold tracking-tight md:text-4xl">
-            Kirim CV yang terasa siap, bukan sekadar selesai.
-          </h2>
-          <p className="mx-auto mt-4 max-w-xl text-sm leading-7 text-primary-foreground/90 md:text-base">
-            Buat CV pertama gratis, perbaiki dengan AI, lalu export PDF saat kamu siap melamar.
-          </p>
-          <Button asChild size="lg" variant="secondary" className="mt-8 h-12 px-7 text-base">
-            <Link to="/register">
-              Mulai sekarang
-              <ArrowRight className="h-4 w-4" aria-hidden />
-            </Link>
-          </Button>
-        </div>
-      </section>
-    </>
-  );
-}
-
-function SectionIntro({ eyebrow, title, desc }: { eyebrow: string; title: string; desc: string }) {
-  return (
-    <div className="mx-auto max-w-2xl text-center">
-      <Badge variant="secondary">{eyebrow}</Badge>
-      <h2 className="mt-3 font-display text-3xl font-bold tracking-tight md:text-4xl">{title}</h2>
-      <p className="mt-4 text-base leading-8 text-muted-foreground">{desc}</p>
     </div>
   );
 }

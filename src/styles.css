@@ -174,7 +174,8 @@
 }
 
 @keyframes float {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0);
   }
   50% {
@@ -257,7 +258,12 @@
   }
 
   .bg-grad-hero-blue {
-    background: linear-gradient(135deg, oklch(0.45 0.12 250) 0%, oklch(0.55 0.14 240) 40%, oklch(0.60 0.10 220) 100%);
+    background: linear-gradient(
+      135deg,
+      oklch(0.45 0.12 250) 0%,
+      oklch(0.55 0.14 240) 40%,
+      oklch(0.6 0.1 220) 100%
+    );
   }
 
   .bg-grad-cta {

@@ -53,10 +53,15 @@ export function SiteHeader() {
           to="/"
           className="flex items-center gap-2 font-display text-lg font-bold text-foreground"
         >
-          <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary text-primary-foreground">
-            <FileText className="h-4 w-4" aria-hidden />
+          <img
+            src="/apple-touch-icon.png"
+            alt="CV Pintar Logo"
+            className="h-8 w-8 object-contain rounded-full"
+          />
+          <span className="flex items-center gap-1 font-display text-lg font-extrabold text-gray-900">
+            <span className="text-green-700">CV</span>
+            <span>PINTAR</span>
           </span>
-          <span>CV Pintar</span>
         </Link>
 
         <nav aria-label="Navigasi utama" className="hidden items-center gap-1 md:flex">
@@ -95,12 +100,21 @@ export function SiteHeader() {
             </>
           ) : (
             <>
-              <Button asChild variant="ghost" size="sm">
+              <Button
+                asChild
+                variant="ghost"
+                size="sm"
+                className="text-gray-700 hover:text-gray-950 font-medium"
+              >
                 <Link to="/login" search={{ redirect: "/dashboard" }}>
                   Masuk
                 </Link>
               </Button>
-              <Button asChild size="sm">
+              <Button
+                asChild
+                size="sm"
+                className="bg-green-700 hover:bg-green-800 text-white font-semibold px-4 py-2 rounded-md"
+              >
                 <Link to="/register">Daftar Gratis</Link>
               </Button>
             </>

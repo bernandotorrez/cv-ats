@@ -233,9 +233,9 @@ function DashboardPage() {
       .eq("user_id", userId)
       .order("updated_at", { ascending: false })
       .limit(5);
-    
+
     if (data && data.length > 0) {
-      const mappedCvs = data.map(cv => {
+      const mappedCvs = data.map((cv) => {
         let computedScore = null;
         try {
           if (cv.data) {
@@ -249,7 +249,7 @@ function DashboardPage() {
         }
         return {
           ...cv,
-          ats_score: computedScore
+          ats_score: computedScore,
         };
       });
       setCvs(mappedCvs);
@@ -301,14 +301,17 @@ function DashboardPage() {
     ).map((cv) => ({
       action: "edit",
       label: cv.title,
-      time: new Date(cv.updated_at).toLocaleDateString("id-ID", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-      }) + " • " + new Date(cv.updated_at).toLocaleTimeString("id-ID", {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
+      time:
+        new Date(cv.updated_at).toLocaleDateString("id-ID", {
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+        }) +
+        " • " +
+        new Date(cv.updated_at).toLocaleTimeString("id-ID", {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
     }));
     if (items.length === 0) {
       items.push({ action: "welcome", label: "CV pertamamu menunggu!", time: "Sekarang" });
@@ -347,8 +350,16 @@ function DashboardPage() {
   const atCvLimit = limits.maxCvs !== null && cvCount >= limits.maxCvs;
   const tierName = tier === "free" ? "Free" : tier === "starter" ? "Starter" : "Pro";
 
-  const totalAiUsage = aiUsageCount + scoreUsageCount + jobMatchUsageCount + tailorCvUsageCount +
-    coverLetterUsageCount + cvReviewUsageCount + keywordExtractUsageCount + textPolishUsageCount + chatUsageCount;
+  const totalAiUsage =
+    aiUsageCount +
+    scoreUsageCount +
+    jobMatchUsageCount +
+    tailorCvUsageCount +
+    coverLetterUsageCount +
+    cvReviewUsageCount +
+    keywordExtractUsageCount +
+    textPolishUsageCount +
+    chatUsageCount;
 
   // Average ATS score placeholder — we show "Bagus" label instead
   const avgAtsLabel = scoreUsageCount > 0 ? "Bagus" : "—";
@@ -588,9 +599,7 @@ function DashboardPage() {
           Section 2: Step Pills (Lanjutkan langkahmu)
           ═══════════════════════════════════════════════ */}
       <section>
-        <h3 className="font-display text-sm font-bold text-foreground mb-3">
-          Lanjutkan langkahmu
-        </h3>
+        <h3 className="font-display text-sm font-bold text-foreground mb-3">Lanjutkan langkahmu</h3>
         <div className="flex items-stretch gap-2 overflow-x-auto pb-1 scrollbar-thin">
           {careerSteps.map((step, idx) => {
             const StepIcon = step.icon;
@@ -640,7 +649,11 @@ function DashboardPage() {
                   <p
                     className={cn(
                       "text-xs font-semibold truncate",
-                      isActive ? "text-foreground" : step.done ? "text-foreground" : "text-muted-foreground",
+                      isActive
+                        ? "text-foreground"
+                        : step.done
+                          ? "text-foreground"
+                          : "text-muted-foreground",
                     )}
                   >
                     {step.label}
@@ -672,11 +685,7 @@ function DashboardPage() {
                 icon: FileText,
                 color: "text-emerald-700 bg-emerald-500/10",
                 note:
-                  cvCount === 0
-                    ? "Belum ada CV"
-                    : cvCount === 1
-                      ? "CV tersimpan"
-                      : `CV tersimpan`,
+                  cvCount === 0 ? "Belum ada CV" : cvCount === 1 ? "CV tersimpan" : `CV tersimpan`,
               },
               {
                 label: "AI Digunakan",
@@ -685,7 +694,8 @@ function DashboardPage() {
                 icon: Sparkles,
                 color: "text-emerald-700 bg-emerald-500/10",
                 note: "kali bulan ini",
-                change: totalAiUsage > 0 ? `+${Math.round(totalAiUsage * 0.12 * 100) / 100}%` : undefined,
+                change:
+                  totalAiUsage > 0 ? `+${Math.round(totalAiUsage * 0.12 * 100) / 100}%` : undefined,
               },
               {
                 label: "Skor ATS Rata-rata",
@@ -714,10 +724,7 @@ function DashboardPage() {
                     : "Aktif",
               },
             ].map((stat) => (
-              <div
-                key={stat.label}
-                className="rounded-xl border bg-card px-4 py-3 shadow-sm"
-              >
+              <div key={stat.label} className="rounded-xl border bg-card px-4 py-3 shadow-sm">
                 <div className="flex items-center gap-3">
                   <div
                     className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${stat.color}`}
@@ -826,12 +833,7 @@ function DashboardPage() {
                   </Link>
                 </Button>
               ) : (
-                <Button
-                  asChild
-                  size="sm"
-                  variant="outline"
-                  className="h-8 text-xs"
-                >
+                <Button asChild size="sm" variant="outline" className="h-8 text-xs">
                   <Link to="/harga">Kelola Paket</Link>
                 </Button>
               )}
@@ -844,7 +846,8 @@ function DashboardPage() {
               <AlertCircle className="h-4 w-4 text-warning" />
               <AlertDescription className="flex items-center justify-between gap-2">
                 <span className="text-sm">
-                  Kuota CV paket <strong>{tierName}</strong> sudah penuh ({cvCount}/{limits.maxCvs}).
+                  Kuota CV paket <strong>{tierName}</strong> sudah penuh ({cvCount}/{limits.maxCvs}
+                  ).
                 </span>
                 <Button asChild size="sm" variant="outline" className="shrink-0 gap-1.5">
                   <Link to="/harga">

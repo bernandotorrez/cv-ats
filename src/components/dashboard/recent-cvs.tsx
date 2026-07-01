@@ -56,9 +56,12 @@ function timeAgo(dateStr: string): { label: string; isStale: boolean } {
   if (days === 0) return { label: "Diperbarui hari ini", isStale: false };
   if (days === 1) return { label: "Diperbarui kemarin", isStale: false };
   if (days < 7) return { label: `Diperbarui ${days} hari lalu`, isStale: false };
-  if (days < 30) return { label: `Diperbarui ${Math.floor(days / 7)} minggu lalu`, isStale: days > 14 };
+  if (days < 30)
+    return { label: `Diperbarui ${Math.floor(days / 7)} minggu lalu`, isStale: days > 14 };
   return {
-    label: "Diperbarui " + new Date(dateStr).toLocaleDateString("id-ID", { day: "numeric", month: "short" }),
+    label:
+      "Diperbarui " +
+      new Date(dateStr).toLocaleDateString("id-ID", { day: "numeric", month: "short" }),
     isStale: true,
   };
 }
@@ -70,11 +73,14 @@ export function RecentCvs({ cvs, onCreateCv }: RecentCvsProps) {
       <div className="flex items-center justify-between px-6 py-5 border-b border-border/60">
         <div>
           <h2 className="font-display text-base font-bold text-foreground">CV Kamu</h2>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Kelola semua CV dalam satu tempat.
-          </p>
+          <p className="text-xs text-muted-foreground mt-0.5">Kelola semua CV dalam satu tempat.</p>
         </div>
-        <Button asChild variant="ghost" size="sm" className="gap-1 text-xs text-gray-500 hover:text-gray-800 font-semibold">
+        <Button
+          asChild
+          variant="ghost"
+          size="sm"
+          className="gap-1 text-xs text-gray-500 hover:text-gray-800 font-semibold"
+        >
           <Link to="/cv">
             Lihat semua CV
             <ArrowRight className="h-3.5 w-3.5" />
@@ -95,7 +101,11 @@ export function RecentCvs({ cvs, onCreateCv }: RecentCvsProps) {
             Buat CV pertamamu dan gunakan AI untuk memperjelas pengalaman, bukti, dan keyword.
           </p>
           {onCreateCv ? (
-            <Button onClick={onCreateCv} className="mt-5 gap-2 bg-emerald-600 hover:bg-emerald-700" size="sm">
+            <Button
+              onClick={onCreateCv}
+              className="mt-5 gap-2 bg-emerald-600 hover:bg-emerald-700"
+              size="sm"
+            >
               <Plus className="h-4 w-4" />
               Buat CV Pertama
             </Button>
@@ -118,19 +128,28 @@ export function RecentCvs({ cvs, onCreateCv }: RecentCvsProps) {
             // Replicate mockup's location and verified check marks
             const isFirst = idx === 0;
             const isSecond = idx === 1;
-            const location = isFirst ? "Jakarta" : isSecond ? "Surabaya" : (tpl?.name ?? cv.template_id);
-            
+            const location = isFirst
+              ? "Jakarta"
+              : isSecond
+                ? "Surabaya"
+                : (tpl?.name ?? cv.template_id);
+
             // Replicate timeAgo labels matching mockup crop exactly for visual fidelity
-            const timeAgoText = isFirst 
-              ? "Diperbarui 1 hari lalu" 
-              : isSecond 
-                ? "Diperbarui 1 minggu lalu" 
+            const timeAgoText = isFirst
+              ? "Diperbarui 1 hari lalu"
+              : isSecond
+                ? "Diperbarui 1 minggu lalu"
                 : timeAgo(cv.updated_at).label;
 
             // Score configuration: default to mockup values (86 and 72) if actual score is empty
-            const score = cv.ats_score !== undefined && cv.ats_score !== null 
-              ? cv.ats_score 
-              : (isFirst ? 86 : isSecond ? 72 : null);
+            const score =
+              cv.ats_score !== undefined && cv.ats_score !== null
+                ? cv.ats_score
+                : isFirst
+                  ? 86
+                  : isSecond
+                    ? 72
+                    : null;
 
             return (
               <div
@@ -147,7 +166,7 @@ export function RecentCvs({ cvs, onCreateCv }: RecentCvsProps) {
                   <div
                     className={cn(
                       "flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border transition-all duration-300",
-                      styleConfig.bg
+                      styleConfig.bg,
                     )}
                   >
                     <FileText className="h-5 w-5" />
@@ -162,7 +181,10 @@ export function RecentCvs({ cvs, onCreateCv }: RecentCvsProps) {
                       <span className="flex items-center gap-1 font-medium text-gray-500">
                         {location}
                         {isFirst && (
-                          <CheckCircle2 className="h-3.5 w-3.5 text-[#2e7d32] fill-[#ecf7ed]" strokeWidth={2.5} />
+                          <CheckCircle2
+                            className="h-3.5 w-3.5 text-[#2e7d32] fill-[#ecf7ed]"
+                            strokeWidth={2.5}
+                          />
                         )}
                       </span>
                       <span className="text-border">·</span>
@@ -181,9 +203,9 @@ export function RecentCvs({ cvs, onCreateCv }: RecentCvsProps) {
                     <div
                       className={cn(
                         "flex flex-col items-center justify-center rounded-full w-[52px] h-[52px] border",
-                        score >= 80 
-                          ? "bg-[#ecf7ed] border-[#d3ebd6] text-[#2e7d32]" 
-                          : "bg-[#fff8eb] border-[#fdf0d5] text-[#b76e00]"
+                        score >= 80
+                          ? "bg-[#ecf7ed] border-[#d3ebd6] text-[#2e7d32]"
+                          : "bg-[#fff8eb] border-[#fdf0d5] text-[#b76e00]",
                       )}
                     >
                       <span className="text-[17px] font-extrabold leading-none tracking-tight">

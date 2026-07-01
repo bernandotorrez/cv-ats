@@ -38,9 +38,7 @@ export function PowerFeatures({ features, onFeatureClick, onUpgrade }: PowerFeat
     <section className="space-y-4">
       {/* Section Header */}
       <div>
-        <h2 className="font-display text-lg font-bold text-foreground">
-          Tools AI untuk CV-mu
-        </h2>
+        <h2 className="font-display text-lg font-bold text-foreground">Tools AI untuk CV-mu</h2>
         <p className="text-sm text-muted-foreground mt-1">
           Manfaatkan AI untuk membuat CV yang lebih kuat dan relevan.
         </p>
@@ -142,7 +140,9 @@ export function PowerFeatures({ features, onFeatureClick, onUpgrade }: PowerFeat
             className="inline-flex items-center gap-1.5 text-sm font-medium text-emerald-700 hover:text-emerald-800 transition-colors"
           >
             {expanded ? "Sembunyikan" : "Lihat semua tools AI"}
-            <ArrowRight className={cn("h-3.5 w-3.5 transition-transform", expanded && "rotate-90")} />
+            <ArrowRight
+              className={cn("h-3.5 w-3.5 transition-transform", expanded && "rotate-90")}
+            />
           </button>
         </div>
       )}
