@@ -149,6 +149,7 @@ export async function generateCoverLetter(input: {
     companyName?: string;
     positionName?: string;
     language?: "id" | "en";
+    jobSource?: string;
   };
 }) {
   return callEdge("ai-cover-letter", input.data) as Promise<{ coverLetter: string }>;

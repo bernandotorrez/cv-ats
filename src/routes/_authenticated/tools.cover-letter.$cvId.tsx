@@ -31,6 +31,7 @@ import { Label } from "@/components/ui/label";
 import { BackButton } from "@/components/ui/back-button";
 import { Skeleton } from "@/components/ui/skeleton-loading";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { generateCoverLetter } from "@/lib/ai-functions";
 import { useAuth } from "@/lib/auth-context";
@@ -90,6 +91,8 @@ function CoverLetterPage() {
   const [generating, setGenerating] = useState(false);
   const [copied, setCopied] = useState(false);
   const [downloadingDocx, setDownloadingDocx] = useState(false);
+  const [jobSource, setJobSource] = useState("");
+  const [customJobSource, setCustomJobSource] = useState("");
 
   useEffect(() => {
     (async () => {
@@ -131,6 +134,11 @@ function CoverLetterPage() {
       return;
     }
 
+    if (jobSource === "Lainnya" && !customJobSource.trim()) {
+      toast.error("Silakan isi nama sumber lowongan.");
+      return;
+    }
+
     setGenerating(true);
     try {
       let finalJobDesc = jobDesc.trim();
@@ -140,6 +148,13 @@ function CoverLetterPage() {
         }\n\nGenerate cover letter umum berdasarkan CV dan posisi yang dilamar.`;
       }
 
+      let finalSource = "";
+      if (jobSource === "Lainnya") {
+        finalSource = customJobSource.trim();
+      } else if (jobSource && jobSource !== "none") {
+        finalSource = jobSource;
+      }
+
       const res = await generateCoverLetter({
         data: {
           cvId,
@@ -147,6 +162,7 @@ function CoverLetterPage() {
           jobDescription: finalJobDesc,
           companyName: company.trim() || undefined,
           positionName: position.trim() || undefined,
+          jobSource: finalSource || undefined,
         },
       });
 
@@ -345,6 +361,8 @@ function CoverLetterPage() {
     setResult("");
     setEditedResult("");
     setViewMode("preview");
+    setJobSource("");
+    setCustomJobSource("");
   };
 
   if (loading) return <CoverLetterSkeleton />;
@@ -486,6 +504,37 @@ function CoverLetterPage() {
                   className="h-11 rounded-lg"
                 />
               </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="source">Sumber lowongan</Label>
+                <Select value={jobSource} onValueChange={setJobSource}>
+                  <SelectTrigger id="source" className="h-11 rounded-lg bg-background">
+                    <SelectValue placeholder="Pilih sumber lowongan (opsional)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Tidak disebutkan / Opsional</SelectItem>
+                    <SelectItem value="LinkedIn">LinkedIn</SelectItem>
+                    <SelectItem value="Jobstreet">Jobstreet</SelectItem>
+                    <SelectItem value="Glints">Glints</SelectItem>
+                    <SelectItem value="Website Perusahaan">Website Perusahaan</SelectItem>
+                    <SelectItem value="Karir.com">Karir.com</SelectItem>
+                    <SelectItem value="Lainnya">Lainnya</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {jobSource === "Lainnya" && (
+                <div className="grid gap-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <Label htmlFor="customSource">Sebutkan sumber lowongan</Label>
+                  <Input
+                    id="customSource"
+                    value={customJobSource}
+                    onChange={(event) => setCustomJobSource(event.target.value)}
+                    placeholder="Contoh: Instagram / Teman"
+                    className="h-11 rounded-lg"
+                  />
+                </div>
+              )}
             </div>
 
             {mode === "specific" ? (

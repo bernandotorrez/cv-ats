@@ -20,7 +20,7 @@ Deno.serve(async (req: Request) => {
   try {
     const userId = await getUserId(req);
     const admin = getAdminClient();
-    const { cvId, cvData, jobDescription, companyName, positionName, language } = await req.json();
+    const { cvId, cvData, jobDescription, companyName, positionName, language, jobSource } = await req.json();
     const lang: CvUiLang = language === "en" ? "en" : "id";
 
     if (!cvId || !cvData || !jobDescription)
@@ -37,10 +37,11 @@ DESKRIPSI PEKERJAAN:
 ${jobDescription}
 ${companyName ? `\nPerusahaan: ${companyName}` : ""}
 ${positionName ? `\nPosisi: ${positionName}` : ""}
+${jobSource ? `\nSumber Informasi Lowongan: ${jobSource}` : ""}
 
 PEDOMAN:
 1. Pembukaan: sapa rekruter, sebut posisi & perusahaan.
-2. Paragraf 1: intro singkat & ketertarikan.
+2. Paragraf 1: intro singkat & ketertarikan.${jobSource ? ` Cantumkan bahwa Anda mendapat informasi lowongan pekerjaan ini dari ${jobSource}.` : ""}
 3. Paragraf 2-3: 2-3 pencapaian relevan dengan metrik.
 4. Penutup: antusiasme, ajakan interview, kontak.
 5. ${lang === "en" ? "Professional English, warm and engaging, 250-400 words." : "Bahasa Indonesia formal hangat, 250-400 kata."}
