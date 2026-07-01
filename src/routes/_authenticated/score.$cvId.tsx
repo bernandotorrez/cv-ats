@@ -434,17 +434,28 @@ function ScoreResultPanel({ result }: { result: ScoreResult }) {
               <p className="mt-2 text-sm leading-6 text-muted-foreground">{result.summary}</p>
 
               <div className="mt-6 grid gap-3">
-                {Object.entries(result.breakdown).map(([key, value]) => (
-                  <div key={key} className="rounded-xl border border-border/70 p-4">
-                    <div className="mb-2 flex items-center justify-between gap-3 text-sm">
-                      <span className="font-medium text-foreground">
-                        {formatBreakdownLabel(key)}
-                      </span>
-                      <span className="font-semibold">{value}%</span>
+                {Object.entries(result.breakdown).map(([key, rawValue]) => {
+                  // Normalize legacy or varying AI scores (supports 0-1 ratio, 0-10 scale, and 0-100 scale)
+                  let value = rawValue;
+                  if (result.overallScore > 15) {
+                    if (rawValue <= 1) {
+                      value = rawValue * 100;
+                    } else if (rawValue <= 10) {
+                      value = rawValue * 10;
+                    }
+                  }
+                  return (
+                    <div key={key} className="rounded-xl border border-border/70 p-4">
+                      <div className="mb-2 flex items-center justify-between gap-3 text-sm">
+                        <span className="font-medium text-foreground">
+                          {formatBreakdownLabel(key)}
+                        </span>
+                        <span className="font-semibold">{value}%</span>
+                      </div>
+                      <Progress value={value} className="h-2" />
                     </div>
-                    <Progress value={value} className="h-2" />
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>

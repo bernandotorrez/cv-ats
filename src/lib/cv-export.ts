@@ -961,3 +961,281 @@ export function downloadPdf(_cv: CvData, fileName: string = "CV.pdf") {
   }, 250);
   setTimeout(cleanup, 60000);
 }
+
+// ─── Cover Letter DOCX Generator ─────────────────────────────
+
+function parseCoverLetter(text: string) {
+  if (!text) return { salutation: "", paragraphs: [] as string[], closing: "" };
+
+  const lines = text
+    .split(/\n/)
+    .map((l) => l.trim())
+    .filter(Boolean);
+
+  let salutation = "";
+  let closing = "";
+  const paragraphs: string[] = [];
+  const skipPhrases = [
+    "kepada yth",
+    "kepada yang terhormat",
+    "yang terhormat",
+    "kepada hrd",
+    "dengan hormat",
+    "hormat saya",
+    "salam hormat",
+    "terhormat",
+  ];
+
+  for (const line of lines) {
+    const lower = line.toLowerCase();
+
+    const isSkipPhrase = skipPhrases.some((phrase) => {
+      return lower === phrase || lower.startsWith(phrase + " ") || lower.startsWith(phrase + ",");
+    });
+
+    if (isSkipPhrase) {
+      if (!salutation) {
+        salutation = line;
+      }
+      closing = line;
+      continue;
+    }
+
+    paragraphs.push(line);
+  }
+
+  return { salutation, paragraphs, closing };
+}
+
+export async function generateCoverLetterDocx(
+  coverLetter: string,
+  cvData: CvData,
+  company?: string,
+  position?: string,
+): Promise<Blob> {
+  const sections: Paragraph[] = [];
+  const parsed = parseCoverLetter(coverLetter);
+
+  // 1. Sender Info
+  sections.push(
+    new Paragraph({
+      children: [
+        new TextRun({
+          text: cvData.personal.fullName || "Nama Lengkap",
+          bold: true,
+          size: 28, // 14pt * 2
+          font: "Times New Roman",
+        }),
+      ],
+      spacing: { after: 80 },
+    }),
+  );
+
+  const contactDetails: string[] = [];
+  if (cvData.personal.email) contactDetails.push(cvData.personal.email);
+  if (cvData.personal.phone) contactDetails.push(cvData.personal.phone);
+  if (cvData.personal.location) contactDetails.push(cvData.personal.location);
+
+  if (contactDetails.length > 0) {
+    sections.push(
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: contactDetails.join("  |  "),
+            size: 20, // 10pt * 2
+            color: "555555",
+            font: "Times New Roman",
+          }),
+        ],
+        spacing: { after: 240 },
+      }),
+    );
+  }
+
+  // Divider line
+  sections.push(
+    new Paragraph({
+      border: {
+        bottom: { style: BorderStyle.SINGLE, size: 6, color: "cccccc", space: 1 },
+      },
+      spacing: { after: 240 },
+      children: [],
+    }),
+  );
+
+  // 2. Date
+  const formattedDate = new Date().toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+  sections.push(
+    new Paragraph({
+      children: [
+        new TextRun({
+          text: formattedDate,
+          size: 24, // 12pt * 2
+          font: "Times New Roman",
+        }),
+      ],
+      spacing: { after: 240 },
+    }),
+  );
+
+  // 3. Recipient
+  if (company || position) {
+    sections.push(
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: "Kepada Yth.,",
+            size: 24,
+            font: "Times New Roman",
+          }),
+        ],
+      }),
+    );
+    sections.push(
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: `HRD ${company || "Perusahaan"}`,
+            bold: true,
+            size: 24,
+            font: "Times New Roman",
+          }),
+        ],
+        spacing: position ? undefined : { after: 240 },
+      }),
+    );
+
+    if (position) {
+      sections.push(
+        new Paragraph({
+          children: [
+            new TextRun({
+              text: `Posisi: ${position}`,
+              size: 24,
+              font: "Times New Roman",
+            }),
+          ],
+          spacing: { after: 240 },
+        }),
+      );
+    }
+  }
+
+  // 4. Salutation
+  sections.push(
+    new Paragraph({
+      children: [
+        new TextRun({
+          text: parsed.salutation || "Dengan hormat,",
+          size: 24,
+          font: "Times New Roman",
+        }),
+      ],
+      spacing: { after: 120 },
+    }),
+  );
+
+  // 5. Body Paragraphs
+  const bodyParagraphs = parsed.paragraphs.length > 0 ? parsed.paragraphs : [coverLetter];
+  for (const para of bodyParagraphs) {
+    sections.push(
+      new Paragraph({
+        alignment: AlignmentType.JUSTIFIED,
+        children: [
+          new TextRun({
+            text: para,
+            size: 24,
+            font: "Times New Roman",
+          }),
+        ],
+        spacing: { after: 160 },
+      }),
+    );
+  }
+
+  // 6. Closing
+  sections.push(
+    new Paragraph({
+      children: [
+        new TextRun({
+          text: parsed.closing || "Hormat saya,",
+          size: 24,
+          font: "Times New Roman",
+        }),
+      ],
+      spacing: { before: 240, after: 600 },
+    }),
+  );
+
+  // 7. Signature
+  sections.push(
+    new Paragraph({
+      children: [
+        new TextRun({
+          text: cvData.personal.fullName || "Nama Lengkap",
+          bold: true,
+          size: 24,
+          font: "Times New Roman",
+        }),
+      ],
+    }),
+  );
+
+  if (cvData.personal.headline) {
+    sections.push(
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: cvData.personal.headline,
+            size: 18,
+            color: "555555",
+            font: "Times New Roman",
+          }),
+        ],
+      }),
+    );
+  }
+
+  const doc = new Document({
+    sections: [
+      {
+        properties: {
+          page: {
+            size: {
+              orientation: PageOrientation.PORTRAIT,
+              width: convertInchesToTwip(8.27),
+              height: convertInchesToTwip(11.69),
+            },
+            margin: {
+              top: convertInchesToTwip(1),
+              right: convertInchesToTwip(1),
+              bottom: convertInchesToTwip(1),
+              left: convertInchesToTwip(1),
+            },
+          },
+        },
+        children: sections,
+      },
+    ],
+    creator: "CV Pintar",
+    title: "Cover Letter",
+    styles: {
+      default: {
+        document: {
+          run: {
+            font: "Times New Roman",
+            size: 24,
+            color: "000000",
+          },
+        },
+      },
+    },
+  });
+
+  return await Packer.toBlob(doc);
+}
+

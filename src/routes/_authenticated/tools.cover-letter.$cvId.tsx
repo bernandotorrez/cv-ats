@@ -38,6 +38,7 @@ import type { CvData } from "@/lib/cv-types";
 import { emptyCv } from "@/lib/cv-types";
 import { buildSeo } from "@/lib/seo";
 import { checkFeatureAccess } from "@/lib/subscription";
+import { generateCoverLetterDocx, downloadBlob } from "@/lib/cv-export";
 
 export const Route = createFileRoute("/_authenticated/tools/cover-letter/$cvId")({
   head: () =>
@@ -88,6 +89,7 @@ function CoverLetterPage() {
   const [viewMode, setViewMode] = useState<"preview" | "edit">("preview");
   const [generating, setGenerating] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [downloadingDocx, setDownloadingDocx] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -185,9 +187,8 @@ function CoverLetterPage() {
   };
 
   const handleDownloadPdf = async () => {
+    const toastId = toast.loading("Membuat PDF...");
     try {
-      toast.loading("Membuat PDF...");
-
       const htmlContent = `<!DOCTYPE html>
 <html>
 <head>
@@ -217,7 +218,12 @@ function CoverLetterPage() {
     .closing { margin-top: 12mm; }
     .signature { margin-top: 25mm; }
     .signature-name { font-weight: bold; }
-    @media print { body { padding: 15mm 20mm; } }
+    @media print {
+      body {
+        padding: 0;
+        margin: 0;
+      }
+    }
   </style>
 </head>
 <body>
@@ -260,31 +266,77 @@ function CoverLetterPage() {
 </body>
 </html>`;
 
-      const blob = new Blob([htmlContent], { type: "text/html" });
-      const url = URL.createObjectURL(blob);
-      const printWindow = window.open(url, "_blank");
+      const iframe = document.createElement("iframe");
+      iframe.setAttribute("aria-hidden", "true");
+      iframe.style.position = "fixed";
+      iframe.style.right = "0";
+      iframe.style.bottom = "0";
+      iframe.style.width = "1px";
+      iframe.style.height = "1px";
+      iframe.style.border = "0";
+      iframe.style.opacity = "0";
+      iframe.style.pointerEvents = "none";
+      document.body.appendChild(iframe);
 
-      toast.dismiss();
+      const printDocument = iframe.contentDocument;
+      const printWindow = iframe.contentWindow;
 
-      if (printWindow) {
-        printWindow.onload = () => {
-          toast.success("PDF siap. Tekan Ctrl+P untuk menyimpan sebagai PDF.");
-        };
-      } else {
-        const anchor = document.createElement("a");
-        anchor.href = url;
-        anchor.download = `cover-letter-${cvTitle || "document"}.html`;
-        document.body.appendChild(anchor);
-        anchor.click();
-        document.body.removeChild(anchor);
-        toast.success("File dibuat. Buka file lalu tekan Ctrl+P untuk PDF.");
+      if (!printDocument || !printWindow) {
+        iframe.remove();
+        throw new Error("Gagal membuka jendela cetak.");
       }
+
+      printDocument.open();
+      printDocument.write(htmlContent);
+      printDocument.close();
+
+      toast.dismiss(toastId);
+
+      let cleanedUp = false;
+      const cleanup = () => {
+        if (cleanedUp) return;
+        cleanedUp = true;
+        setTimeout(() => iframe.remove(), 1000);
+      };
+
+      printWindow.addEventListener("afterprint", cleanup, { once: true });
+      setTimeout(() => {
+        printWindow.focus();
+        printWindow.print();
+        toast.success("PDF siap dicetak.");
+      }, 250);
+      setTimeout(cleanup, 60000);
+
     } catch (error) {
       const message = error instanceof Error ? error.message : "Gagal membuat PDF";
-      toast.dismiss();
+      toast.dismiss(toastId);
       toast.error(message);
     }
   };
+
+  const handleDownloadDocx = async () => {
+    setDownloadingDocx(true);
+    const toastId = toast.loading("Membuat Word...");
+    try {
+      const blob = await generateCoverLetterDocx(
+        result,
+        cvData,
+        company.trim() || undefined,
+        position.trim() || undefined,
+      );
+      downloadBlob(blob, `cover-letter-${cvTitle || "document"}.docx`);
+      toast.dismiss(toastId);
+      toast.success("Cover letter berhasil diunduh dalam format Word.");
+    } catch (error) {
+      console.error("Gagal mengunduh Word:", error);
+      toast.dismiss(toastId);
+      const message = error instanceof Error ? error.message : "Gagal membuat Word";
+      toast.error(message);
+    } finally {
+      setDownloadingDocx(false);
+    }
+  };
+
 
   const handleReset = () => {
     setJobDesc("");
@@ -562,6 +614,19 @@ function CoverLetterPage() {
                     <Download className="mr-1.5 h-3.5 w-3.5" />
                     TXT
                   </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleDownloadDocx}
+                    disabled={downloadingDocx}
+                  >
+                    {downloadingDocx ? (
+                      <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Download className="mr-1.5 h-3.5 w-3.5" />
+                    )}
+                    Word
+                  </Button>
                   <Button variant="outline" size="sm" onClick={handleDownloadPdf}>
                     <Download className="mr-1.5 h-3.5 w-3.5" />
                     PDF
@@ -678,6 +743,7 @@ function EmptyResultState({ generating }: { generating: boolean }) {
 }
 
 function LockedCoverLetter() {
+  const { cvId } = Route.useParams();
   return (
     <main className="container-page flex min-h-[70vh] items-center justify-center py-10">
       <Card className="w-full max-w-xl border-border bg-card">
@@ -697,7 +763,7 @@ function LockedCoverLetter() {
           </p>
           <div className="mt-7 flex flex-col gap-3 sm:flex-row">
             <Button variant="outline" asChild className="rounded-lg">
-              <Link to="/tools">Kembali ke Tools</Link>
+              <Link to="/tools" search={{ cvId }}>Kembali ke Tools</Link>
             </Button>
             <Button asChild className="rounded-lg">
               <Link to="/harga">Upgrade paket</Link>

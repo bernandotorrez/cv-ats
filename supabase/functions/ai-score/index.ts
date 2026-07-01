@@ -39,11 +39,11 @@ Output HARUS JSON valid (tanpa markdown wrapper):
 {
   "overall_score": number (0-100),
   "breakdown": {
-    "relevance": number,
-    "skills_match": number,
-    "experience": number,
-    "format": number,
-    "keywords": number
+    "relevance": number (0-100),
+    "skills_match": number (0-100),
+    "experience": number (0-100),
+    "format": number (0-100),
+    "keywords": number (0-100)
   },
   "summary": string (2-3 kalimat ${getLanguageInstruction(lang)}),
   "strengths": string[] (3-5),
