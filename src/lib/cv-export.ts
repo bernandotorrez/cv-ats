@@ -36,6 +36,8 @@ const COLOR_SEMARANG_BG = "059669";
 const COLOR_SEMARANG_BG2 = "047857";
 const COLOR_BALI_ACCENT = "0891b2";
 const COLOR_BALI_HEADING = "0f172a";
+const COLOR_MALANG_PRIMARY = "1e40af";
+const COLOR_MALANG_TEXT = "1e3a8a";
 
 function headingSection(text: string, spacing?: { before?: number; after?: number }): Paragraph[] {
   return [
@@ -522,6 +524,67 @@ function buildBaliHeader(cv: CvData): Paragraph[] {
   return paras;
 }
 
+function buildMalangHeader(cv: CvData): Paragraph[] {
+  const fullName = cv.personal.fullName || "Nama Lengkap";
+  const contact = [cv.personal.email, cv.personal.phone, cv.personal.location, cv.personal.linkedin]
+    .filter(Boolean)
+    .join(" • ");
+
+  const paras: Paragraph[] = [
+    new Paragraph({
+      children: [
+        new TextRun({
+          text: fullName,
+          bold: true,
+          size: 40,
+          font: FONT_DISPLAY,
+          color: COLOR_MALANG_TEXT,
+        }),
+      ],
+      spacing: { after: 40 },
+    }),
+  ];
+
+  if (cv.personal.headline) {
+    paras.push(
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: cv.personal.headline,
+            size: 22,
+            font: FONT_NAME,
+            color: COLOR_MALANG_PRIMARY,
+            bold: true,
+          }),
+        ],
+        spacing: { after: 60 },
+      }),
+    );
+  }
+
+  if (contact) {
+    paras.push(
+      new Paragraph({
+        children: [new TextRun({ text: contact, size: 18, font: FONT_NAME, color: "64748b" })],
+        spacing: { after: 120 },
+      }),
+    );
+  }
+
+  // Underline border in Malang primary color
+  paras.push(
+    new Paragraph({
+      border: {
+        bottom: { style: BorderStyle.SINGLE, size: 4, color: COLOR_MALANG_PRIMARY, space: 4 },
+      },
+      spacing: { after: 120 },
+      children: [],
+    }),
+  );
+
+  return paras;
+}
+
 // ─── Main DOCX Generator ──────────────────────────────────────
 
 export async function generateDocx(cv: CvData, options: ExportOptions): Promise<Blob> {
@@ -551,6 +614,9 @@ export async function generateDocx(cv: CvData, options: ExportOptions): Promise<
       break;
     case "bali":
       sections.push(...buildBaliHeader(cv));
+      break;
+    case "malang":
+      sections.push(...buildMalangHeader(cv));
       break;
     case "jakarta":
     default:

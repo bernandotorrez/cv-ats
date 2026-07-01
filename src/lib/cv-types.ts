@@ -115,6 +115,7 @@ export const TEMPLATES = [
   { id: "makassar", name: "Makassar", description: "Dua kolom modern, clean layout." },
   { id: "semarang", name: "Semarang", description: "Modern corporate dengan aksen hijau." },
   { id: "bali", name: "Bali", description: "Clean minimalist dengan aksen cyan." },
+  { id: "malang", name: "Malang", description: "Desain dua kolom kreatif, modern & ATS-friendly." },
 ] as const;
 
 export type TemplateId = (typeof TEMPLATES)[number]["id"];

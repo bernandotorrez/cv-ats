@@ -11,6 +11,7 @@ import {
   MakassarTemplate,
   SemarangTemplate,
   BaliTemplate,
+  MalangTemplate,
 } from "./templates";
 
 function formatDescription(text: string): string {
@@ -107,6 +108,10 @@ export function CvPreview({
       case "bali":
         return (
           <BaliTemplate data={formattedData} sectionOrder={sectionOrder} language={language} />
+        );
+      case "malang":
+        return (
+          <MalangTemplate data={formattedData} sectionOrder={sectionOrder} language={language} />
         );
       case "jakarta":
       default:
@@ -425,6 +430,10 @@ function renderTemplateById(
         </div>
       );
 
+    case "malang":
+      return (
+        <MalangTemplate data={dataWithHiddenHeader} showHeader={showHeader} language={language} />
+      );
     case "jakarta":
     default:
       return (

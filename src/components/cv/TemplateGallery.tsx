@@ -13,6 +13,7 @@ import { MedanTemplate } from "./templates/MedanTemplate";
 import { SemarangTemplate } from "./templates/SemarangTemplate";
 import { SurabayaTemplate } from "./templates/SurabayaTemplate";
 import { YogyaTemplate } from "./templates/YogyaTemplate";
+import { MalangTemplate } from "./templates/MalangTemplate";
 
 // Template component mapping
 const templateComponents = {
@@ -24,6 +25,7 @@ const templateComponents = {
   semarang: SemarangTemplate,
   surabaya: SurabayaTemplate,
   yogya: YogyaTemplate,
+  malang: MalangTemplate,
 };
 
 interface TemplateMeta {
@@ -48,8 +50,8 @@ const FREE_TEMPLATES = ["jakarta", "bandung"];
 // Starter+ templates: medan, makassar, surabaya, yogya (badge "Starter")
 const STARTER_TEMPLATES = ["medan", "makassar", "surabaya", "yogya"];
 
-// Pro templates: semarang, bali (badge "Pro")
-const PRO_TEMPLATES = ["semarang", "bali"];
+// Pro templates: semarang, bali, malang (badge "Pro")
+const PRO_TEMPLATES = ["semarang", "bali", "malang"];
 
 export function TemplateGallery({
   selected,

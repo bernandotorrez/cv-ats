@@ -27,6 +27,7 @@ import { MedanTemplate } from "@/components/cv/templates/MedanTemplate";
 import { SemarangTemplate } from "@/components/cv/templates/SemarangTemplate";
 import { SurabayaTemplate } from "@/components/cv/templates/SurabayaTemplate";
 import { YogyaTemplate } from "@/components/cv/templates/YogyaTemplate";
+import { MalangTemplate } from "@/components/cv/templates/MalangTemplate";
 import { previewData, type TemplateSlug } from "@/components/site/TemplatePreview";
 import { TemplateCardSkeleton } from "@/components/ui/skeleton-loading";
 import { Badge } from "@/components/ui/badge";
@@ -50,10 +51,11 @@ const templateComponents = {
   semarang: SemarangTemplate,
   surabaya: SurabayaTemplate,
   yogya: YogyaTemplate,
+  malang: MalangTemplate,
 };
 
 const FREE_TEMPLATES = ["jakarta", "bandung"];
-const PRO_TEMPLATES = ["semarang", "surabaya"];
+const PRO_TEMPLATES = ["semarang", "surabaya", "malang"];
 
 export const Route = createFileRoute("/template")({
   pendingComponent: TemplateLoading,
@@ -70,6 +72,13 @@ export const Route = createFileRoute("/template")({
 });
 
 const templates = [
+  {
+    slug: "malang" as TemplateSlug,
+    name: "Malang",
+    desc: "Desain dua kolom kreatif dengan sidebar warna soft. Menarik perhatian rekruter namun tetap terbaca rapi oleh ATS.",
+    bestFor: "Creative & Marketing",
+    tags: ["Kreatif", "Marketing", "Sidebar"],
+  },
   {
     slug: "bali" as TemplateSlug,
     name: "Bali",

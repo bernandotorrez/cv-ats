@@ -504,6 +504,73 @@ export const previewData = {
     ],
     certificates: [{ id: "1", name: "Google Digital Marketing", issuer: "Google", date: "2023" }],
   } as CvData,
+  malang: {
+    personal: {
+      fullName: "Bagus Aditya",
+      headline: "UI/UX & Creative Designer",
+      email: "bagus.aditya@creative.id",
+      phone: "0812-9876-5432",
+      location: "Malang, Jawa Timur",
+      linkedin: "linkedin.com/in/bagusaditya",
+      website: "bagusaditya.design",
+      summary:
+        "UI/UX & Creative Designer dengan 5+ tahun pengalaman menciptakan produk digital dan branding yang intuitif serta estetis. Berpengalaman memimpin tim kreatif dalam merancang interface web/app yang user-centric dan meningkatkan konversi user sebesar 40%.",
+      summaryAlign: "left" as const,
+    },
+    experiences: [
+      {
+        id: "1",
+        position: "Senior UI/UX Designer",
+        company: "PT Creative Studio Malang",
+        location: "Malang",
+        startDate: "Jan 2022",
+        current: true,
+        endDate: "",
+        description:
+          "Memimpin tim desainer dalam merancang ulang mobile app untuk 5 klien enterprise. Meningkatkan skor kepuasan pengguna sebesar 35% dan mempercepat proses design-to-development handoff.",
+      },
+      {
+        id: "2",
+        position: "Product Designer",
+        company: "GoTo Financial",
+        location: "Jakarta",
+        startDate: "Jul 2019",
+        current: false,
+        endDate: "Des 2021",
+        description:
+          "Merancang wireframe, user flow, dan high-fidelity mockups untuk fitur pembayaran digital. Berkolaborasi dengan product manager dan engineer untuk merilis 3 fitur utama.",
+      },
+    ],
+    educations: [
+      {
+        id: "1",
+        school: "Universitas Brawijaya",
+        degree: "S1",
+        field: "Desain Komunikasi Visual",
+        startDate: "2015",
+        endDate: "2019",
+        description: "Fokus pada interaksi digital dan visual branding. Lulus dengan IPK 3.75.",
+      },
+    ],
+    skills: [
+      { id: "1", name: "UI/UX Design" },
+      { id: "2", name: "Wireframing & Prototyping" },
+      { id: "3", name: "Figma & Adobe CC" },
+      { id: "4", name: "Interaction Design" },
+    ],
+    languages: [
+      { id: "1", name: "Bahasa Indonesia", level: "Native" },
+      { id: "2", name: "English", level: "Professional" },
+    ],
+    certificates: [
+      {
+        id: "1",
+        name: "Certified Interaction Designer",
+        issuer: "Interaction Design Foundation",
+        date: "2022",
+      },
+    ],
+  } as CvData,
 };
 
 // Template mapping untuk halaman /template
@@ -516,6 +583,7 @@ export const templateMap = {
   semarang: { name: "Semarang", premium: false },
   surabaya: { name: "Surabaya", premium: true },
   yogya: { name: "Yogyakarta", premium: false },
+  malang: { name: "Malang", premium: true },
 } as const;
 
 export type TemplateSlug = keyof typeof previewData;
