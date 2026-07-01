@@ -964,7 +964,7 @@ export function downloadPdf(_cv: CvData, fileName: string = "CV.pdf") {
 
 // ─── Cover Letter DOCX Generator ─────────────────────────────
 
-function parseCoverLetter(text: string) {
+export function parseCoverLetter(text: string, cvData?: CvData) {
   if (!text) return { salutation: "", paragraphs: [] as string[], closing: "" };
 
   const lines = text
@@ -986,8 +986,21 @@ function parseCoverLetter(text: string) {
     "terhormat",
   ];
 
+  // Clean values for comparison
+  const nameClean = cvData?.personal?.fullName?.trim().toLowerCase() || "";
+  const emailClean = cvData?.personal?.email?.trim().toLowerCase() || "";
+  const phoneClean = cvData?.personal?.phone?.trim().toLowerCase() || "";
+  const phoneDigits = phoneClean.replace(/\D/g, "");
+
   for (const line of lines) {
     const lower = line.toLowerCase();
+    const cleanLine = lower.trim();
+
+    // Skip candidate details if present at the end or beginning
+    if (nameClean && cleanLine === nameClean) continue;
+    if (emailClean && cleanLine === emailClean) continue;
+    if (phoneClean && cleanLine === phoneClean) continue;
+    if (phoneDigits && cleanLine.replace(/\D/g, "") === phoneDigits) continue;
 
     const isSkipPhrase = skipPhrases.some((phrase) => {
       return lower === phrase || lower.startsWith(phrase + " ") || lower.startsWith(phrase + ",");
@@ -1014,7 +1027,7 @@ export async function generateCoverLetterDocx(
   position?: string,
 ): Promise<Blob> {
   const sections: Paragraph[] = [];
-  const parsed = parseCoverLetter(coverLetter);
+  const parsed = parseCoverLetter(coverLetter, cvData);
 
   // 1. Sender Info
   sections.push(

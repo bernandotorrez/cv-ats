@@ -1,4 +1,5 @@
 import type { CvData } from "@/lib/cv-types";
+import { parseCoverLetter } from "@/lib/cv-export";
 
 interface Props {
   coverLetter: string;
@@ -15,7 +16,7 @@ const MARGIN_MM = 20;
 
 export function CoverLetterPreview({ coverLetter, cvData, company, position, scale = 0.7 }: Props) {
   // Parse cover letter into structured sections
-  const parsed = parseCoverLetter(coverLetter);
+  const parsed = parseCoverLetter(coverLetter, cvData);
 
   const formatDate = (date: Date) => {
     return date.toLocaleDateString("id-ID", {
@@ -142,53 +143,6 @@ export function CoverLetterPreview({ coverLetter, cvData, company, position, sca
   );
 }
 
-// Parse cover letter text into structured sections
-function parseCoverLetter(text: string) {
-  if (!text) return { salutation: "", paragraphs: [] as string[], closing: "" };
-
-  // Split by double newlines or single newlines for better parsing
-  const lines = text
-    .split(/\n/)
-    .map((l) => l.trim())
-    .filter(Boolean);
-
-  let salutation = "";
-  let closing = "";
-  const paragraphs: string[] = [];
-  const skipPhrases = [
-    "kepada yth",
-    "kepada yang terhormat",
-    "yang terhormat",
-    "kepada hrd",
-    "dengan hormat",
-    "hormat saya",
-    "salam hormat",
-    "terhormat",
-  ];
-
-  for (const line of lines) {
-    const lower = line.toLowerCase();
-
-    // Check if line is a skip phrase (salutation or closing)
-    const isSkipPhrase = skipPhrases.some((phrase) => {
-      // Check if line starts with or equals skip phrase
-      return lower === phrase || lower.startsWith(phrase + " ") || lower.startsWith(phrase + ",");
-    });
-
-    if (isSkipPhrase) {
-      // First skip phrase is salutation, last is closing
-      if (!salutation) {
-        salutation = line;
-      }
-      closing = line; // Keep updating, last one wins
-      continue;
-    }
-
-    paragraphs.push(line);
-  }
-
-  return { salutation, paragraphs, closing };
-}
 
 // Print styles for cover letter
 export const coverLetterPrintStyles = `

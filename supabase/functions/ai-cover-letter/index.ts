@@ -40,12 +40,11 @@ ${positionName ? `\nPosisi: ${positionName}` : ""}
 ${jobSource ? `\nSumber Informasi Lowongan: ${jobSource}` : ""}
 
 PEDOMAN:
-1. Pembukaan: sapa rekruter, sebut posisi & perusahaan.
-2. Paragraf 1: intro singkat & ketertarikan.${jobSource ? ` Cantumkan bahwa Anda mendapat informasi lowongan pekerjaan ini dari ${jobSource}.` : ""}
-3. Paragraf 2-3: 2-3 pencapaian relevan dengan metrik.
-4. Penutup: antusiasme, ajakan interview, kontak.
-5. ${lang === "en" ? "Professional English, warm and engaging, 250-400 words." : "Bahasa Indonesia formal hangat, 250-400 kata."}
-6. JANGAN pakai "Saya yang bertanda tangan di bawah ini".
+1. Pembukaan & Intro: Sapa rekruter secara profesional. Hindari kalimat klise kaku seperti "Dengan ini saya bermaksud melamar...". Mulailah dengan kalimat pembuka yang menarik, menyebut posisi, perusahaan, dan sumber informasi lowongan (${jobSource || "informasi lowongan"}).
+2. Mengapa Saya (Dampak Kuantitatif): Tuliskan 2-3 pencapaian relevan dari CV, lengkap dengan metrik kuantitatif (angka, persentase, nominal, efisiensi waktu, dll.) untuk membuktikan dampak nyata dari keahlian Anda.
+3. Mengapa Perusahaan Ini (Value Fit): Tunjukkan ketertarikan Anda pada misi/industri perusahaan, dan bagaimana Anda dapat membantu memecahkan masalah atau berkontribusi pada tujuan mereka.
+4. Penutup: Kalimat penutup yang percaya diri namun sopan, ajakan untuk berdiskusi/wawancara (call to action), serta sebutkan kontak Anda (email/telepon) untuk mempermudah rekruter.
+5. Gaya Bahasa & Nada: ${lang === "en" ? "Professional English, confident, warm and engaging, 250-400 words. Avoid generic boilerplate text." : "Bahasa Indonesia profesional formal, percaya diri, hangat, dan mengalir (tidak kaku/statis). JANGAN gunakan kalimat birokratis kuno seperti 'Saya yang bertanda tangan di bawah ini' atau 'Demikian surat lamaran ini saya buat'."}
 
 OUTPUT: HANYA teks surat, tanpa kata pembuka/penutup.`;
 

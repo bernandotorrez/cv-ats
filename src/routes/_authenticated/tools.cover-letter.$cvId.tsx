@@ -39,7 +39,7 @@ import type { CvData } from "@/lib/cv-types";
 import { emptyCv } from "@/lib/cv-types";
 import { buildSeo } from "@/lib/seo";
 import { checkFeatureAccess } from "@/lib/subscription";
-import { generateCoverLetterDocx, downloadBlob } from "@/lib/cv-export";
+import { generateCoverLetterDocx, downloadBlob, parseCoverLetter } from "@/lib/cv-export";
 
 export const Route = createFileRoute("/_authenticated/tools/cover-letter/$cvId")({
   head: () =>
@@ -205,6 +205,13 @@ function CoverLetterPage() {
   const handleDownloadPdf = async () => {
     const toastId = toast.loading("Membuat PDF...");
     try {
+      const parsed = parseCoverLetter(result, cvData);
+      const salutationText = parsed.salutation || "Dengan hormat,";
+      const bodyHtml = (parsed.paragraphs.length > 0 ? parsed.paragraphs : [result])
+        .map((paragraph) => `<p>${paragraph.replace(/\n/g, "<br>")}</p>`)
+        .join("\n");
+      const closingText = parsed.closing || "Hormat saya,";
+
       const htmlContent = `<!DOCTYPE html>
 <html>
 <head>
@@ -268,14 +275,11 @@ function CoverLetterPage() {
   </div>`
       : ""
   }
-  <div class="salutation">Dengan hormat,</div>
+  <div class="salutation">${salutationText}</div>
   <div class="body-text">
-    ${result
-      .split("\n\n")
-      .map((paragraph) => `<p>${paragraph.replace(/\n/g, "<br>")}</p>`)
-      .join("\n")}
+    ${bodyHtml}
   </div>
-  <div class="closing"><p>Hormat saya,</p></div>
+  <div class="closing"><p>${closingText}</p></div>
   <div class="signature">
     <p class="signature-name">${cvData.personal.fullName || "Nama Anda"}</p>
   </div>
