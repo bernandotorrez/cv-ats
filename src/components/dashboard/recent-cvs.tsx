@@ -103,16 +103,16 @@ export function RecentCvs({ cvs, onCreateCv }: RecentCvsProps) {
           {onCreateCv ? (
             <Button
               onClick={onCreateCv}
-              className="mt-5 gap-2 bg-emerald-600 hover:bg-emerald-700"
-              size="sm"
+              className="mt-5 gap-2.5 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white font-bold shadow-md hover:shadow-lg transition-all duration-300 active:scale-[0.98]"
+              size="default"
             >
-              <Plus className="h-4 w-4" />
+              <Plus className="h-4.5 w-4.5" />
               Buat CV Pertama
             </Button>
           ) : (
-            <Button asChild className="mt-5 gap-2 bg-emerald-600 hover:bg-emerald-700" size="sm">
+            <Button asChild className="mt-5 gap-2.5 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white font-bold shadow-md hover:shadow-lg transition-all duration-300 active:scale-[0.98]" size="default">
               <Link to="/cv">
-                <Plus className="h-4 w-4" />
+                <Plus className="h-4.5 w-4.5" />
                 Buat CV Pertama
               </Link>
             </Button>
@@ -250,13 +250,15 @@ export function RecentCvs({ cvs, onCreateCv }: RecentCvsProps) {
               <span>Perbarui CV secara rutin untuk hasil ATS terbaik</span>
             </p>
             {onCreateCv && (
-              <button
+              <Button
                 type="button"
                 onClick={onCreateCv}
-                className="flex items-center gap-1 text-xs font-bold text-[#2e7d32] hover:text-[#235825] transition-colors shrink-0 self-end sm:self-auto"
+                className="w-full sm:w-auto gap-2 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white font-bold shadow-sm hover:shadow transition-all duration-300 shrink-0"
+                size="sm"
               >
-                + Buat CV baru
-              </button>
+                <Plus className="h-3.5 w-3.5" />
+                Buat CV Baru
+              </Button>
             )}
           </div>
         </div>

@@ -144,6 +144,7 @@ function DashboardPage() {
   const [creating, setCreating] = useState(false);
   const [allowedTemplates, setAllowedTemplates] = useState<string[] | null>(null);
   const [subscriptionEndDate, setSubscriptionEndDate] = useState<string | null>(null);
+  const [showQuotas, setShowQuotas] = useState(false);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -363,6 +364,115 @@ function DashboardPage() {
 
   // Average ATS score placeholder — we show "Bagus" label instead
   const avgAtsLabel = scoreUsageCount > 0 ? "Bagus" : "—";
+
+  const usageBars = [
+    {
+      icon: FileText,
+      label: "CV",
+      used: cvCount,
+      max: limits.maxCvs,
+      color: "bg-[#ecf7ed] text-[#2e7d32]",
+      visible: true,
+    },
+    {
+      icon: Sparkles,
+      label: "AI Saran",
+      used: aiUsageCount,
+      max: tierQuotas?.quota_ai_suggest ?? limits.maxAiSuggestions,
+      color: "bg-violet-500/10 text-violet-600",
+      visible: limits.enableAiSuggest,
+    },
+    {
+      icon: BarChart3,
+      label: "CV Scoring",
+      used: scoreUsageCount,
+      max: tierQuotas?.quota_ai_score ?? limits.maxAtsScores,
+      color: "bg-amber-500/10 text-amber-600",
+      visible: limits.enableAiScore,
+    },
+    {
+      icon: FileSearch,
+      label: "Job Match",
+      used: jobMatchUsageCount,
+      max: tierQuotas?.quota_ai_job_match ?? (tier === "free" ? 0 : tier === "starter" ? 20 : 100),
+      color: "bg-lime-500/10 text-lime-700",
+      visible: true,
+    },
+    {
+      icon: RefreshCw,
+      label: "Tailor CV",
+      used: tailorCvUsageCount,
+      max: tierQuotas?.quota_ai_tailor_cv ?? (tier === "pro" ? 30 : 0),
+      color: "bg-cyan-500/10 text-cyan-700",
+      visible: true,
+    },
+    {
+      icon: Brain,
+      label: "Guided Mode",
+      used: guidedUsageCount,
+      max: tierQuotas?.quota_guided_mode ?? limits.maxGuidedSessions,
+      color: "bg-emerald-500/10 text-emerald-600",
+      visible: tierQuotas?.enable_guided_mode ?? limits.enableGuidedMode,
+    },
+    {
+      icon: FileCheck,
+      label: "Cover Letter",
+      used: coverLetterUsageCount,
+      max:
+        tierQuotas?.quota_ai_cover_letter ??
+        (tierQuotas?.enable_cover_letter
+          ? tier === "free"
+            ? 1
+            : tier === "starter"
+              ? 10
+              : null
+          : 0),
+      color: "bg-teal-500/10 text-teal-600",
+      visible: tierQuotas?.enable_cover_letter ?? limits.canCoverLetter,
+    },
+    {
+      icon: Target,
+      label: "CV Review",
+      used: cvReviewUsageCount,
+      max:
+        tierQuotas?.quota_cv_review ??
+        (tierQuotas?.enable_cv_review ? (tier === "starter" ? 10 : null) : 0),
+      color: "bg-rose-500/10 text-rose-600",
+      visible: tierQuotas?.enable_cv_review ?? limits.enableCvReview,
+    },
+    {
+      icon: Key,
+      label: "Keyword Extract",
+      used: keywordExtractUsageCount,
+      max:
+        tierQuotas?.quota_ai_keyword_extract ??
+        (tierQuotas?.enable_keyword_extractor
+          ? tier === "free"
+            ? 2
+            : tier === "starter"
+              ? 20
+              : null
+          : 0),
+      color: "bg-blue-500/10 text-blue-600",
+      visible: tierQuotas?.enable_keyword_extractor ?? limits.canKeywordExtract,
+    },
+    {
+      icon: Type,
+      label: "Text Polish",
+      used: textPolishUsageCount,
+      max: tierQuotas?.quota_ai_polish ?? limits.maxTextPolish,
+      color: "bg-purple-500/10 text-purple-600",
+      visible: tierQuotas?.enable_text_polish ?? limits.enableTextPolish,
+    },
+    {
+      icon: MessageSquare,
+      label: "AI Chat",
+      used: chatUsageCount,
+      max: tierQuotas?.quota_ai_chat ?? (tier === "free" ? 5 : tier === "starter" ? 50 : null),
+      color: "bg-cyan-500/10 text-cyan-600",
+      visible: true,
+    },
+  ];
 
   const powerFeatures = [
     {
@@ -751,95 +861,129 @@ function DashboardPage() {
           {/* Tier Status Banner */}
           <div
             className={cn(
-              "flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-4 rounded-xl border p-4",
+              "rounded-xl border transition-all overflow-hidden",
               tier === "pro"
-                ? "bg-emerald-50 border-emerald-200"
+                ? "bg-emerald-50/50 border-emerald-200"
                 : tier === "starter"
-                  ? "bg-blue-50 border-blue-200"
+                  ? "bg-blue-50/50 border-blue-200"
                   : "bg-card border-border",
             )}
           >
-            <div className="flex items-center gap-3 flex-1 min-w-0">
-              {/* Status icon */}
-              <div
-                className={cn(
-                  "flex h-9 w-9 shrink-0 items-center justify-center rounded-full",
-                  tier === "pro"
-                    ? "bg-emerald-500"
-                    : tier === "starter"
-                      ? "bg-blue-500"
-                      : "bg-muted-foreground/20",
-                )}
-              >
-                <Crown className="h-4 w-4 text-white" />
-              </div>
+            {/* Header / Clickable Area */}
+            <div
+              onClick={() => setShowQuotas(!showQuotas)}
+              className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-4 p-4 cursor-pointer select-none hover:bg-muted/10 transition-colors"
+            >
+              <div className="flex items-center gap-3 flex-1 min-w-0">
+                {/* Status icon */}
+                <div
+                  className={cn(
+                    "flex h-9 w-9 shrink-0 items-center justify-center rounded-full",
+                    tier === "pro"
+                      ? "bg-emerald-500"
+                      : tier === "starter"
+                        ? "bg-blue-500"
+                        : "bg-muted-foreground/20",
+                  )}
+                >
+                  <Crown className="h-4 w-4 text-white" />
+                </div>
 
-              {/* Info */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span
+                {/* Info */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span
+                      className={cn(
+                        "rounded-full px-2.5 py-0.5 text-[11px] font-bold text-white",
+                        tier === "pro"
+                          ? "bg-emerald-500"
+                          : tier === "starter"
+                            ? "bg-blue-500"
+                            : "bg-muted-foreground/60",
+                      )}
+                    >
+                      {tierName}
+                    </span>
+                    <span
+                      className={cn(
+                        "flex items-center gap-1 text-xs font-medium",
+                        tier === "pro"
+                          ? "text-emerald-600"
+                          : tier === "starter"
+                            ? "text-blue-600"
+                            : "text-muted-foreground",
+                      )}
+                    >
+                      <Star className="h-3 w-3" />
+                      Aktif
+                    </span>
+                  </div>
+                  <p
                     className={cn(
-                      "rounded-full px-2.5 py-0.5 text-[11px] font-bold text-white",
+                      "mt-0.5 text-xs truncate",
                       tier === "pro"
-                        ? "bg-emerald-500"
+                        ? "text-emerald-800/70"
                         : tier === "starter"
-                          ? "bg-blue-500"
-                          : "bg-muted-foreground/60",
-                    )}
-                  >
-                    {tierName}
-                  </span>
-                  <span
-                    className={cn(
-                      "flex items-center gap-1 text-xs font-medium",
-                      tier === "pro"
-                        ? "text-emerald-600"
-                        : tier === "starter"
-                          ? "text-blue-600"
+                          ? "text-blue-800/70"
                           : "text-muted-foreground",
                     )}
                   >
-                    <Star className="h-3 w-3" />
-                    Aktif
-                  </span>
-                </div>
-                <p
-                  className={cn(
-                    "mt-0.5 text-xs truncate",
-                    tier === "pro"
-                      ? "text-emerald-800/70"
+                    {tier === "pro"
+                      ? "Kamu pengguna Pro! Nikmati semua fitur premium tanpa batas."
                       : tier === "starter"
-                        ? "text-blue-800/70"
-                        : "text-muted-foreground",
+                        ? "Tools dasar untuk membuat CV profesional."
+                        : "Mulai buat CV pertama kamu dan cek kesiapan ATS."}
+                  </p>
+                  <p
+                    className={cn(
+                      "mt-1 text-[11px] font-medium opacity-85",
+                      tier === "pro"
+                        ? "text-emerald-700"
+                        : tier === "starter"
+                          ? "text-blue-700"
+                          : "text-muted-foreground",
+                    )}
+                  >
+                    Klik ikon v untuk melihat sisa quota mu
+                  </p>
+                </div>
+              </div>
+
+              {/* Right side actions */}
+              <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto shrink-0">
+                <div onClick={(e) => e.stopPropagation()} className="w-full sm:w-auto shrink-0 flex justify-end">
+                  {tier === "free" ? (
+                    <Button
+                      asChild
+                      size="sm"
+                      className="h-8 text-xs gap-1.5 bg-emerald-600 hover:bg-emerald-700 w-full sm:w-auto"
+                    >
+                      <Link to="/harga">
+                        <Crown className="h-3.5 w-3.5" /> Upgrade
+                      </Link>
+                    </Button>
+                  ) : (
+                    <Button asChild size="sm" variant="outline" className="h-8 text-xs w-full sm:w-auto">
+                      <Link to="/harga">Kelola Paket</Link>
+                    </Button>
                   )}
-                >
-                  {tier === "pro"
-                    ? "Kamu pengguna Pro! Nikmati semua fitur premium tanpa batas."
-                    : tier === "starter"
-                      ? "Tools dasar untuk membuat CV profesional dan cek skor ATS."
-                      : "Mulai buat CV pertama kamu dan cek kesiapan ATS."}
-                </p>
+                </div>
+
+                <ChevronDown
+                  className={cn(
+                    "h-4 w-4 text-muted-foreground transition-transform duration-200 shrink-0",
+                    showQuotas && "rotate-180"
+                  )}
+                />
               </div>
             </div>
 
-            {/* Right side actions */}
-            <div className="w-full sm:w-auto shrink-0 flex justify-end">
-              {tier === "free" ? (
-                <Button
-                  asChild
-                  size="sm"
-                  className="h-8 text-xs gap-1.5 bg-emerald-600 hover:bg-emerald-700 w-full sm:w-auto"
-                >
-                  <Link to="/harga">
-                    <Crown className="h-3.5 w-3.5" /> Upgrade
-                  </Link>
-                </Button>
-              ) : (
-                <Button asChild size="sm" variant="outline" className="h-8 text-xs w-full sm:w-auto">
-                  <Link to="/harga">Kelola Paket</Link>
-                </Button>
-              )}
-            </div>
+            {/* Collapsible Content */}
+            {showQuotas && (
+              <div className="px-4 pb-5 pt-2 border-t border-dashed border-border/60 bg-background/30">
+                <UsageBars bars={usageBars} />
+              </div>
+            )}
           </div>
 
           {/* CV Limit Warning */}
