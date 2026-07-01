@@ -17,7 +17,7 @@
 5. ✅ Landing page `/` - Badge "Pro+" → "Pro", harga diupdate
 6. ✅ **REMOVED: Pro+ tier** - Dihapus dari semua file
 7. ✅ **REMOVED: LinkedIn Optimizer** - Dihapus dari semua file
-8. ✅ **UPDATED: Harga** - Starter Rp 14.900, Pro Rp 39.000
+8. ✅ **UPDATED: Harga** - Starter Rp 15.000, Pro Rp 35.000
 9. ✅ **UPDATED: Free tier quotas** - AI Polish 5x, hapus Cover Letter & Keyword
 10. ✅ **UPDATED: Semua halaman** - Harga lama diganti dengan harga baru
 
@@ -45,7 +45,7 @@
 | Download DOCX          | ❌             |
 | Export PDF             | Watermark only |
 
-### STARTER TIER (Rp 14.900/bulan)
+### STARTER TIER (Rp 15.000/bulan)
 
 | Fitur                   | Quota |
 | ----------------------- | ----- |
@@ -64,7 +64,7 @@
 | Analitik CV             | ❌    |
 | Download DOCX           | ✅    |
 
-### PRO TIER (Rp 39.000/bulan)
+### PRO TIER (Rp 35.000/bulan)
 
 | Fitur                    | Quota |
 | ------------------------ | ----- |
@@ -141,8 +141,8 @@
 | Tier    | Harga Lama | Harga Baru    |
 | ------- | ---------- | ------------- |
 | Free    | Rp 0       | Rp 0          |
-| Starter | Rp 19.000  | **Rp 14.900** |
-| Pro     | Rp 49.000  | **Rp 39.000** |
+| Starter | Rp 19.000  | **Rp 15.000** |
+| Pro     | Rp 49.000  | **Rp 35.000** |
 
 ---
 
@@ -187,8 +187,8 @@
 
 ### Issue #6: Harga Update
 
-- [x] ✅ UPDATED - Starter: Rp 19.000 → Rp 14.900
-- [x] ✅ UPDATED - Pro: Rp 49.000 → Rp 39.000
+- [x] ✅ UPDATED - Starter: Rp 19.000 → Rp 15.000
+- [x] ✅ UPDATED - Pro: Rp 49.000 → Rp 35.000
 - [x] ✅ UPDATED - priceMonthly di TIER_LIMITS
 - [x] ✅ UPDATED - features JSON di migration
 - [x] ✅ UPDATED - harga.tsx tier cards

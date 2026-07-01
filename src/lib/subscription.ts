@@ -114,7 +114,7 @@ const TIER_LIMITS: Record<Tier, TierLimits> = {
   starter: {
     tier: "starter",
     tierName: "Starter",
-    priceMonthly: 14900,
+    priceMonthly: 15000,
     maxCvs: 3,
     maxAiSuggestions: 50,
     maxAtsScores: 10,
@@ -144,7 +144,7 @@ const TIER_LIMITS: Record<Tier, TierLimits> = {
   pro: {
     tier: "pro",
     tierName: "Pro",
-    priceMonthly: 39000,
+    priceMonthly: 35000,
     maxCvs: 10,
     maxAiSuggestions: 200,
     maxAtsScores: 50,

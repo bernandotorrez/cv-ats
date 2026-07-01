@@ -612,7 +612,7 @@ CTA:
 
 Harga:
 
-- Rp 14.900 per bulan.
+- Rp 15.000 per bulan.
 
 Cocok untuk:
 
@@ -651,7 +651,7 @@ CTA:
 
 Harga:
 
-- Rp 39.000 per bulan.
+- Rp 35.000 per bulan.
 
 Cocok untuk:
 
@@ -992,7 +992,7 @@ Jawaban:
 
 | Fitur              | Free      | Starter         | Pro             |
 | ------------------ | --------- | --------------- | --------------- |
-| Harga              | Rp 0      | Rp 14.900/bulan | Rp 39.000/bulan |
+| Harga              | Rp 0      | Rp 15.000/bulan | Rp 35.000/bulan |
 | CV aktif           | 1         | 3               | 10              |
 | Template           | 2 basic   | Premium/all     | Semua premium   |
 | AI suggestions     | 5x/bulan  | 50x/bulan       | 200x/bulan      |

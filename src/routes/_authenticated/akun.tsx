@@ -62,14 +62,14 @@ const TIER_INFO: Record<
   },
   starter: {
     name: "Starter",
-    price: "Rp 14.900/bln",
+    price: "Rp 15.000/bln",
     bg: "bg-primary",
     text: "text-primary-foreground",
     icon: Zap,
   },
   pro: {
     name: "Pro",
-    price: "Rp 39.000/bln",
+    price: "Rp 35.000/bln",
     bg: "bg-warning",
     text: "text-warning-foreground",
     icon: Crown,
@@ -347,14 +347,14 @@ export function AkunPage() {
               {tier === "free" && (
                 <Button asChild className="w-full gap-1.5">
                   <Link to="/harga">
-                    <Zap className="h-4 w-4" /> Upgrade ke Starter — Rp 14.900/bln
+                    <Zap className="h-4 w-4" /> Upgrade ke Starter — Rp 15.000/bln
                   </Link>
                 </Button>
               )}
               {tier === "starter" && (
                 <Button asChild variant="outline" className="w-full gap-1.5">
                   <Link to="/harga">
-                    <Crown className="h-4 w-4" /> Upgrade ke Pro — Rp 39.000/bln
+                    <Crown className="h-4 w-4" /> Upgrade ke Pro — Rp 35.000/bln
                   </Link>
                 </Button>
               )}

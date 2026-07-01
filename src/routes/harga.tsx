@@ -71,7 +71,7 @@ const tiers = [
   },
   {
     name: "Starter",
-    price: "Rp 14.900",
+    price: "Rp 15.000",
     period: "/bulan",
     badge: "Paling pas untuk apply kerja",
     desc: "Untuk pencari kerja aktif yang ingin CV lebih rapi, tajam, dan siap kirim.",
@@ -97,7 +97,7 @@ const tiers = [
   },
   {
     name: "Pro",
-    price: "Rp 39.000",
+    price: "Rp 35.000",
     period: "/bulan",
     badge: "Untuk karier yang serius naik kelas",
     desc: "Untuk profesional yang butuh banyak versi CV, simulasi interview, dan insight lengkap.",
@@ -202,7 +202,7 @@ export const Route = createFileRoute("/harga")({
     buildSeo({
       title: "Harga CV Pintar - Mulai Gratis, Upgrade Saat Siap",
       description:
-        "Pilih paket CV Pintar: Free selamanya, Starter Rp 14.900/bulan, atau Pro Rp 39.000/bulan untuk AI CV, scoring ATS, review HR, Job Match Score, Tailor CV, cover letter, dan interview.",
+        "Pilih paket CV Pintar: Free selamanya, Starter Rp 15.000/bulan, atau Pro Rp 35.000/bulan untuk AI CV, scoring ATS, review HR, Job Match Score, Tailor CV, cover letter, dan interview.",
       path: "/harga",
       keywords: "harga cv builder, cv ats murah, langganan cv ai indonesia, paket cv pintar",
       jsonLd: [
@@ -213,7 +213,7 @@ export const Route = createFileRoute("/harga")({
           offers: tiers.map((tier) => ({
             "@type": "Offer",
             name: tier.name,
-            price: tier.name === "Free" ? "0" : tier.name === "Starter" ? "14900" : "39000",
+            price: tier.name === "Free" ? "0" : tier.name === "Starter" ? "15000" : "35000",
             priceCurrency: "IDR",
             availability: "https://schema.org/InStock",
           })),
@@ -625,7 +625,7 @@ function PriceSignal() {
               </p>
               <h2 className="mt-2 font-display text-2xl font-bold text-foreground">Starter</h2>
             </div>
-            <Badge className="bg-primary text-primary-foreground">Rp 14.900</Badge>
+            <Badge className="bg-primary text-primary-foreground">Rp 15.000</Badge>
           </div>
 
           <div className="space-y-3">

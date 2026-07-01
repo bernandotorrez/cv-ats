@@ -49,7 +49,7 @@ const posts: Record<
       "Template premium menawarkan: desain lebih profesional dan bervariasi, AI scoring unlimited, cover letter generator, export tanpa watermark, dan prioritas akses fitur AI. Investasi kecil ini bisa jadi pembeda antara CV yang dilirik dan yang terlewat.",
       "Kapan upgrade ke premium? Jika kamu: melamar ke 10+ perusahaan sekaligus, ingin ganti industri atau posisi, target posisi senior/managerial, atau butuh CV dalam berbagai format untuk berbagai keperluan.",
       "Di CV Pintar, semua template — baik gratis maupun premium — sudah ATS-friendly dan dioptimasi untuk screening otomatis. Perbedaannya ada di variasi desain, fitur AI, dan pengalaman export.",
-      "Mulai dari paket Free (Rp 0 selamanya) dengan 1 CV dan 2 template. Upgrade ke Starter (Rp 14.900/bln) untuk 3 CV dan semua fitur AI, atau Pro (Rp 39.000/bln) untuk 10 CV dan fitur lengkap.",
+      "Mulai dari paket Free (Rp 0 selamanya) dengan 1 CV dan 2 template. Upgrade ke Starter (Rp 15.000/bln) untuk 3 CV dan semua fitur AI, atau Pro (Rp 35.000/bln) untuk 10 CV dan fitur lengkap.",
     ],
   },
   "cara-menulis-ringkasan-cv": {
