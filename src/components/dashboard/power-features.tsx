@@ -45,7 +45,7 @@ export function PowerFeatures({ features, onFeatureClick, onUpgrade }: PowerFeat
       </div>
 
       {/* 2×2 Grid */}
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-3 sm:gap-4 sm:grid-cols-2">
         {displayed.map((f) => (
           <button
             key={f.label}
@@ -55,7 +55,7 @@ export function PowerFeatures({ features, onFeatureClick, onUpgrade }: PowerFeat
           >
             <article
               className={cn(
-                "relative flex items-start gap-4 rounded-2xl border bg-card p-5 transition-all duration-200 shadow-sm",
+                "relative flex items-start gap-3 sm:gap-4 rounded-2xl border bg-card p-4 sm:p-5 transition-all duration-200 shadow-sm",
                 f.locked
                   ? "border-dashed opacity-75 hover:border-amber-400/60 hover:bg-amber-50/30"
                   : "hover:border-emerald-300/50 hover:shadow-md hover:-translate-y-px",
@@ -64,7 +64,7 @@ export function PowerFeatures({ features, onFeatureClick, onUpgrade }: PowerFeat
               {/* Icon */}
               <div
                 className={cn(
-                  "flex h-12 w-12 shrink-0 items-center justify-center rounded-xl transition-transform group-hover:scale-105",
+                  "flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-xl transition-transform group-hover:scale-105",
                   f.locked
                     ? "bg-muted text-muted-foreground"
                     : f.gradient

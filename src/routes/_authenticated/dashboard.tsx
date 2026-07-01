@@ -678,7 +678,7 @@ function DashboardPage() {
   }
 
   return (
-    <div className="container-page space-y-6 py-5 md:space-y-7 md:py-8 w-full max-w-full overflow-x-hidden">
+    <div className="container-page space-y-6 py-5 md:space-y-7 md:py-8 w-full max-w-full overflow-x-hidden box-border">
       {/* ═══════════════════════════════════════════════
           Section 1: Hero Banner (CareerProgress)
           ═══════════════════════════════════════════════ */}
@@ -710,7 +710,7 @@ function DashboardPage() {
           ═══════════════════════════════════════════════ */}
       <section>
         <h3 className="font-display text-sm font-bold text-foreground mb-3">Lanjutkan langkahmu</h3>
-        <div className="flex items-stretch gap-2 overflow-x-auto pb-1 scrollbar-thin w-full max-w-full">
+        <div className="flex items-stretch gap-2 overflow-x-auto pb-1 scrollbar-thin w-full max-w-full -mx-1 px-1">
           {careerSteps.map((step, idx) => {
             const StepIcon = step.icon;
             const isActive = !step.done && careerSteps.findIndex((s) => !s.done) === idx;
@@ -731,7 +731,7 @@ function DashboardPage() {
                   }
                 }}
                 className={cn(
-                  "flex items-center gap-3 shrink-0 rounded-xl border px-4 py-3 transition-all min-w-[140px]",
+                  "flex items-center gap-2 sm:gap-3 shrink-0 rounded-xl border px-3 sm:px-4 py-2.5 sm:py-3 transition-all min-w-[130px] sm:min-w-[140px]",
                   isActive
                     ? "border-emerald-400 bg-white shadow-sm ring-1 ring-emerald-200"
                     : step.done
@@ -779,9 +779,9 @@ function DashboardPage() {
       {/* ═══════════════════════════════════════════════
           Section 3: Main 2-Column Layout
           ═══════════════════════════════════════════════ */}
-      <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
+      <div className="grid gap-6 lg:grid-cols-[1fr_340px] min-w-0">
         {/* ── Left Column ── */}
-        <div className="space-y-6">
+        <div className="space-y-6 min-w-0">
           {/* CV Kamu */}
           <RecentCvs cvs={cvs} loading={loading} onCreateCv={() => setShowCreateDialog(true)} />
 
@@ -872,7 +872,7 @@ function DashboardPage() {
             {/* Header / Clickable Area */}
             <div
               onClick={() => setShowQuotas(!showQuotas)}
-              className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-4 p-4 cursor-pointer select-none hover:bg-muted/10 transition-colors"
+              className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 sm:gap-4 p-3 sm:p-4 cursor-pointer select-none hover:bg-muted/10 transition-colors"
             >
               <div className="flex items-center gap-3 flex-1 min-w-0">
                 {/* Status icon */}
@@ -1013,7 +1013,7 @@ function DashboardPage() {
         </div>
 
         {/* ── Right Column (Sidebar) ── */}
-        <div className="space-y-5">
+        <div className="space-y-5 min-w-0">
           {/* AI Recommendations Carousel */}
           <AiRecommendations
             recommendations={recommendations}

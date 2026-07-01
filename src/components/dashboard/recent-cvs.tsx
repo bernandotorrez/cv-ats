@@ -156,27 +156,27 @@ export function RecentCvs({ cvs, onCreateCv }: RecentCvsProps) {
             return (
               <div
                 key={cv.id}
-                className="group flex items-center justify-between px-4 py-3.5 sm:px-6 sm:py-4 transition-colors hover:bg-muted/30"
+                className="group flex items-center justify-between px-3 py-3 sm:px-6 sm:py-4 transition-colors hover:bg-muted/30 gap-2"
               >
                 {/* Clickable Info Area */}
                 <Link
                   to="/cv/$id"
                   params={{ id: cv.id }}
-                  className="flex items-center gap-4 flex-1 min-w-0"
+                  className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0"
                 >
                   {/* Styled Icon box */}
                   <div
                     className={cn(
-                      "flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border transition-all duration-300",
+                      "flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-xl sm:rounded-2xl border transition-all duration-300",
                       styleConfig.bg,
                     )}
                   >
-                    <FileText className="h-5 w-5" />
+                    <FileText className="h-4 w-4 sm:h-5 sm:w-5" />
                   </div>
 
                   {/* Info */}
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-[15px] font-bold text-foreground transition-colors group-hover:text-emerald-700">
+                    <p className="truncate text-sm sm:text-[15px] font-bold text-foreground transition-colors group-hover:text-emerald-700">
                       {cv.title}
                     </p>
                     <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
@@ -204,7 +204,7 @@ export function RecentCvs({ cvs, onCreateCv }: RecentCvsProps) {
                   {score !== null && (
                     <div
                       className={cn(
-                        "flex flex-col items-center justify-center rounded-full w-[44px] h-[44px] sm:w-[52px] sm:h-[52px] border shrink-0",
+                        "flex flex-col items-center justify-center rounded-full w-[38px] h-[38px] sm:w-[52px] sm:h-[52px] border shrink-0",
                         score >= 80
                           ? "bg-[#ecf7ed] border-[#d3ebd6] text-[#2e7d32]"
                           : "bg-[#fff8eb] border-[#fdf0d5] text-[#b76e00]",

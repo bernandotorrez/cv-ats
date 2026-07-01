@@ -32,8 +32,8 @@ interface CareerProgressProps {
 
 /** Circular progress ring SVG */
 function CircularProgress({ percentage }: { percentage: number }) {
-  const size = 140;
-  const strokeWidth = 10;
+  const size = 120;
+  const strokeWidth = 9;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (percentage / 100) * circumference;
@@ -67,7 +67,7 @@ function CircularProgress({ percentage }: { percentage: number }) {
       </svg>
       {/* Center text */}
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-3xl font-bold text-foreground">{percentage}%</span>
+        <span className="text-2xl sm:text-3xl font-bold text-foreground">{percentage}%</span>
         <span className="text-[10px] text-muted-foreground mt-0.5">Target: 100%</span>
       </div>
     </div>
@@ -90,13 +90,13 @@ export function CareerProgress({ user, steps, onCreateCv, onStepClick }: CareerP
 
   return (
     <section className="rounded-2xl border bg-card shadow-sm overflow-hidden">
-      <div className="px-5 py-6 sm:px-6 lg:px-8">
+      <div className="px-4 py-5 sm:px-6 lg:px-8">
         {/* 3-column grid on desktop */}
         <div className="grid gap-6 lg:grid-cols-[1fr_auto_1fr] lg:items-center">
           {/* ── Left: Greeting + CTAs ── */}
           <div className="min-w-0">
             {/* Green greeting badge */}
-            <div className="mb-4 inline-flex max-w-full items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1.5 text-xs font-semibold text-emerald-700">
+            <div className="mb-3 sm:mb-4 inline-flex max-w-full items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200 px-2.5 sm:px-3 py-1 sm:py-1.5 text-[11px] sm:text-xs font-semibold text-emerald-700">
               <span className="flex h-2 w-2 shrink-0 rounded-full bg-emerald-500" />
               <span className="shrink-0">Selamat datang kembali,</span>
               <span className="truncate max-w-[100px] xs:max-w-[140px] sm:max-w-xs inline-block align-bottom font-bold">
@@ -105,7 +105,7 @@ export function CareerProgress({ user, steps, onCreateCv, onStepClick }: CareerP
               <span className="shrink-0">! 👋</span>
             </div>
 
-            <h1 className="font-display text-2xl font-bold leading-tight tracking-tight text-foreground sm:text-3xl">
+            <h1 className="font-display text-xl sm:text-2xl font-bold leading-tight tracking-tight text-foreground sm:text-3xl">
               Saatnya wujudkan <span className="text-emerald-600">karier impianmu!</span>
             </h1>
 
@@ -151,7 +151,7 @@ export function CareerProgress({ user, steps, onCreateCv, onStepClick }: CareerP
           </div>
 
           {/* ── Center: Circular Progress + Checklist ── */}
-          <div className="rounded-2xl border bg-background p-5 sm:p-6 w-full min-w-0">
+          <div className="rounded-2xl border bg-background p-4 sm:p-6 w-full min-w-0">
             <div className="flex items-center gap-2 mb-4">
               <h3 className="font-display font-bold text-sm text-foreground">Progres CV-mu</h3>
               {isOnFire && !isComplete && (

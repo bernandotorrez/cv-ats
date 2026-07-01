@@ -3,7 +3,7 @@ import { ArrowRight } from "lucide-react";
 
 export function MentoringCta() {
   return (
-    <aside className="relative rounded-3xl overflow-hidden shadow-xl bg-gradient-to-br from-[#12664f] via-[#1c8066] to-[#7ebf43] text-white p-6 min-h-[220px] flex flex-col justify-between">
+    <aside className="relative rounded-3xl overflow-hidden shadow-xl bg-gradient-to-br from-[#12664f] via-[#1c8066] to-[#7ebf43] text-white p-4 sm:p-6 min-h-[200px] sm:min-h-[220px] flex flex-col justify-between min-w-0">
       {/* Decorative gradient blobs */}
       <div className="absolute -top-10 -right-10 w-36 h-36 rounded-full bg-[#94d152]/20 blur-2xl pointer-events-none" />
       <div className="absolute -bottom-10 -left-10 w-28 h-28 rounded-full bg-[#12664f]/30 blur-xl pointer-events-none" />

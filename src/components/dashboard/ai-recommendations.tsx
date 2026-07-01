@@ -44,7 +44,7 @@ export function AiRecommendations({ recommendations, onAction }: AiRecommendatio
     setCurrentIndex((i) => (i - 1 + recommendations.length) % recommendations.length);
 
   return (
-    <aside className="rounded-3xl bg-[#061d13] p-4 sm:p-5 shadow-xl text-white flex flex-col justify-between min-h-[340px]">
+    <aside className="rounded-3xl bg-[#061d13] p-4 sm:p-5 shadow-xl text-white flex flex-col justify-between min-h-[320px] sm:min-h-[340px] min-w-0 overflow-hidden">
       <div>
         {/* Header row — "AI Rekomendasi" + badge */}
         <div className="flex items-center justify-between mb-5">

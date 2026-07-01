@@ -42,7 +42,7 @@ export function UsageBars({ bars }: UsageBarsProps) {
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 xs:grid-cols-2 lg:grid-cols-3">
         {visibleBars.map((bar) => {
           const status = getStatus(bar.used, bar.max);
           const pct = bar.max === null ? 100 : Math.min((bar.used / bar.max) * 100, 100);
