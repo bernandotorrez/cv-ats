@@ -616,35 +616,35 @@ function LandingPage() {
                 // On mobile: 1 card per slide (full width)
                 testimonials.map((item) => (
                   <div key={item.name} className="w-full shrink-0 px-4">
-                    <Card className="rounded-2xl border border-gray-100 bg-white p-6 shadow-none flex flex-col justify-between min-h-[260px]">
+                    <Card className="rounded-2xl border border-gray-100 bg-white p-8 shadow-none flex flex-col justify-between min-h-[300px]">
                       <CardContent className="p-0">
                         <div className="flex items-center justify-between gap-4 border-b border-gray-50 pb-4 mb-4">
                           <div className="flex items-center gap-3">
                             <img
                               src={item.img}
-                              className="w-10 h-10 rounded-full object-cover"
+                              className="w-12 h-12 rounded-full object-cover"
                               alt={item.name}
                             />
                             <div>
-                              <h3 className="font-display text-sm font-bold text-gray-900">
+                              <h3 className="font-display text-base font-bold text-gray-900">
                                 {item.name}
                               </h3>
-                              <p className="text-xs text-gray-400">{item.role}</p>
+                              <p className="text-sm text-gray-400">{item.role}</p>
                             </div>
                           </div>
                           <div className="flex gap-0.5 text-yellow-500">
                             {Array.from({ length: 5 }).map((_, index) => (
-                              <Star key={index} className="h-3 w-3 fill-yellow-500 stroke-none" />
+                              <Star key={index} className="h-4 w-4 fill-yellow-500 stroke-none" />
                             ))}
                           </div>
                         </div>
-                        <Quote className="h-8 w-8 text-green-100 block mb-3" />
-                        <p className="text-sm text-gray-600 leading-relaxed font-medium">
+                        <Quote className="h-9 w-9 text-green-100 block mb-3" />
+                        <p className="text-base text-gray-600 leading-relaxed font-medium">
                           "{item.text}"
                         </p>
                       </CardContent>
                       <div className="mt-6 border-t border-gray-50 pt-4 flex">
-                        <span className="inline-flex items-center px-2.5 py-1 rounded text-xs font-semibold bg-green-50 text-green-700 border border-green-100/50">
+                        <span className="inline-flex items-center px-2.5 py-1 rounded text-sm font-semibold bg-green-50 text-green-700 border border-green-100/50">
                           {item.tag}
                         </span>
                       </div>
@@ -658,36 +658,36 @@ function LandingPage() {
                     {testimonials.slice(0, 3).map((item) => (
                       <Card
                         key={item.name}
-                        className="rounded-2xl border border-gray-100 bg-white p-6 shadow-none flex flex-col justify-between min-h-[260px]"
+                        className="rounded-2xl border border-gray-100 bg-white p-8 shadow-none flex flex-col justify-between min-h-[300px]"
                       >
                         <CardContent className="p-0">
                           <div className="flex items-center justify-between gap-4 border-b border-gray-50 pb-4 mb-4">
                             <div className="flex items-center gap-3">
                               <img
                                 src={item.img}
-                                className="w-10 h-10 rounded-full object-cover"
+                                className="w-12 h-12 rounded-full object-cover"
                                 alt={item.name}
                               />
                               <div>
-                                <h3 className="font-display text-sm font-bold text-gray-900">
+                                <h3 className="font-display text-base font-bold text-gray-900">
                                   {item.name}
                                 </h3>
-                                <p className="text-xs text-gray-400">{item.role}</p>
+                                <p className="text-sm text-gray-400">{item.role}</p>
                               </div>
                             </div>
                             <div className="flex gap-0.5 text-yellow-500">
                               {Array.from({ length: 5 }).map((_, index) => (
-                                <Star key={index} className="h-3 w-3 fill-yellow-500 stroke-none" />
+                                <Star key={index} className="h-4 w-4 fill-yellow-500 stroke-none" />
                               ))}
                             </div>
                           </div>
-                          <Quote className="h-8 w-8 text-green-100 block mb-3" />
-                          <p className="text-sm text-gray-600 leading-relaxed font-medium">
+                          <Quote className="h-9 w-9 text-green-100 block mb-3" />
+                          <p className="text-base text-gray-600 leading-relaxed font-medium">
                             "{item.text}"
                           </p>
                         </CardContent>
                         <div className="mt-6 border-t border-gray-50 pt-4 flex">
-                          <span className="inline-flex items-center px-2.5 py-1 rounded text-xs font-semibold bg-green-50 text-green-700 border border-green-100/50">
+                          <span className="inline-flex items-center px-2.5 py-1 rounded text-sm font-semibold bg-green-50 text-green-700 border border-green-100/50">
                             {item.tag}
                           </span>
                         </div>
@@ -698,36 +698,36 @@ function LandingPage() {
                     {testimonials.slice(3, 6).map((item) => (
                       <Card
                         key={item.name}
-                        className="rounded-2xl border border-gray-100 bg-white p-6 shadow-none flex flex-col justify-between min-h-[260px]"
+                        className="rounded-2xl border border-gray-100 bg-white p-8 shadow-none flex flex-col justify-between min-h-[300px]"
                       >
                         <CardContent className="p-0">
                           <div className="flex items-center justify-between gap-4 border-b border-gray-50 pb-4 mb-4">
                             <div className="flex items-center gap-3">
                               <img
                                 src={item.img}
-                                className="w-10 h-10 rounded-full object-cover"
+                                className="w-12 h-12 rounded-full object-cover"
                                 alt={item.name}
                               />
                               <div>
-                                <h3 className="font-display text-sm font-bold text-gray-900">
+                                <h3 className="font-display text-base font-bold text-gray-900">
                                   {item.name}
                                 </h3>
-                                <p className="text-xs text-gray-400">{item.role}</p>
+                                <p className="text-sm text-gray-400">{item.role}</p>
                               </div>
                             </div>
                             <div className="flex gap-0.5 text-yellow-500">
                               {Array.from({ length: 5 }).map((_, index) => (
-                                <Star key={index} className="h-3 w-3 fill-yellow-500 stroke-none" />
+                                <Star key={index} className="h-4 w-4 fill-yellow-500 stroke-none" />
                               ))}
                             </div>
                           </div>
-                          <Quote className="h-8 w-8 text-green-100 block mb-3" />
-                          <p className="text-sm text-gray-600 leading-relaxed font-medium">
+                          <Quote className="h-9 w-9 text-green-100 block mb-3" />
+                          <p className="text-base text-gray-600 leading-relaxed font-medium">
                             "{item.text}"
                           </p>
                         </CardContent>
                         <div className="mt-6 border-t border-gray-50 pt-4 flex">
-                          <span className="inline-flex items-center px-2.5 py-1 rounded text-xs font-semibold bg-green-50 text-green-700 border border-green-100/50">
+                          <span className="inline-flex items-center px-2.5 py-1 rounded text-sm font-semibold bg-green-50 text-green-700 border border-green-100/50">
                             {item.tag}
                           </span>
                         </div>
@@ -816,9 +816,14 @@ function LandingPage() {
           <div className="grid gap-12 lg:grid-cols-2 items-center">
             {/* Left Content */}
             <div className="flex flex-col items-start text-left max-w-2xl">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-green-900 text-green-300 uppercase tracking-wider">
-                MINTA BANTUAN MENTOR
-              </span>
+              <div className="flex gap-2">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-green-900 text-green-300 uppercase tracking-wider">
+                  MINTA BANTUAN MENTOR
+                </span>
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 uppercase tracking-wider">
+                  SEGERA HADIR
+                </span>
+              </div>
               <h2 className="mt-4 font-display text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight">
                 Bimbingan Private 1-on-1 dengan Mentor Expert.
               </h2>
@@ -847,14 +852,12 @@ function LandingPage() {
               </div>
 
               <Button
-                asChild
+                disabled
                 size="lg"
-                className="mt-10 h-12 px-8 bg-yellow-300 hover:bg-yellow-400 text-gray-950 font-extrabold rounded-lg shadow-lg text-base"
+                className="mt-10 h-12 px-8 bg-yellow-300/50 text-gray-800 font-extrabold rounded-lg shadow-lg text-base opacity-75 cursor-not-allowed"
               >
-                <Link to="/private-coaching">
-                  Daftar Private Mentoring Sekarang
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
+                Segera Hadir
+                <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </div>
 
