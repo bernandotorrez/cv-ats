@@ -910,45 +910,48 @@ function LandingPage() {
                   title: "Panduan Lengkap Buat CV ATS-Friendly",
                   desc: "Langkah demi langkah membuat CV yang lolos ATS.",
                   img: "/ats-cv-preview.png",
+                  to: "/blog/apa-itu-cv-ats" as const,
                 },
                 {
                   title: "Contoh CV Fresh Graduate",
                   desc: "Inspirasi CV untuk kamu yang baru lulus.",
                   img: "/fresh-graduate-cv-preview.png",
+                  to: "/panduan-cv-ats" as const,
                 },
                 {
                   title: "Tips Interview yang Meningkatkan Peluang Diterima",
                   desc: "Persiapan interview biar makin percaya diri.",
                   img: "/interview-tips.png",
+                  to: "/tips-interview/persiapan-interview-pertama" as const,
                 },
               ].map((item) => (
-                <div
+                <Link
                   key={item.title}
-                  className="group rounded-2xl border border-gray-100 bg-white overflow-hidden shadow-none transition-all duration-300 hover:shadow-lg"
+                  to={item.to}
+                  className="group rounded-2xl border border-gray-100 bg-white overflow-hidden shadow-none transition-all duration-300 hover:shadow-lg flex flex-col justify-between"
                 >
-                  <div className="aspect-[4/3] overflow-hidden bg-gray-100">
-                    <img
-                      src={item.img}
-                      alt={item.title}
-                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                    />
-                  </div>
-                  <div className="p-5 flex flex-col justify-between h-[200px]">
-                    <div>
+                  <div>
+                    <div className="aspect-[4/3] overflow-hidden bg-gray-100">
+                      <img
+                        src={item.img}
+                        alt={item.title}
+                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
+                    </div>
+                    <div className="p-5">
                       <h3 className="font-display text-sm font-bold text-gray-900 leading-snug group-hover:text-green-700 transition-colors">
                         {item.title}
                       </h3>
                       <p className="text-xs text-gray-400 mt-2 leading-relaxed">{item.desc}</p>
                     </div>
-                    <Link
-                      to="/panduan-cv-ats"
-                      className="text-xs font-bold text-green-700 hover:text-green-800 flex items-center gap-1 self-start mt-4"
-                    >
+                  </div>
+                  <div className="p-5 pt-0 mt-auto">
+                    <span className="text-xs font-bold text-green-700 group-hover:text-green-800 flex items-center gap-1 self-start">
                       Baca Selengkapnya
                       <ArrowRight className="h-3 w-3" />
-                    </Link>
+                    </span>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           </div>
