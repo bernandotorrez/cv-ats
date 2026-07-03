@@ -21,6 +21,7 @@ interface CareerStep {
   icon: typeof FileText;
   done: boolean;
   link?: string;
+  actionLabel?: string;
 }
 
 interface CareerProgressProps {
@@ -121,13 +122,13 @@ export function CareerProgress({ user, steps, onCreateCv, onStepClick }: CareerP
                     onClick={onCreateCv}
                     className="gap-2 bg-emerald-600 hover:bg-emerald-700"
                   >
-                    Lanjutkan Interview
+                    {nextStep.actionLabel || "Lanjutkan"}
                     <ArrowRight className="h-3.5 w-3.5" />
                   </Button>
                 ) : nextStep.link ? (
                   <Button asChild size="sm" className="gap-2 bg-emerald-600 hover:bg-emerald-700">
                     <Link to={nextStep.link as never}>
-                      Lanjutkan Interview
+                      {nextStep.actionLabel || "Lanjutkan"}
                       <ArrowRight className="h-3.5 w-3.5" />
                     </Link>
                   </Button>
@@ -137,7 +138,7 @@ export function CareerProgress({ user, steps, onCreateCv, onStepClick }: CareerP
                     onClick={() => onStepClick?.(nextStep)}
                     className="gap-2 bg-emerald-600 hover:bg-emerald-700"
                   >
-                    Lanjutkan Interview
+                    {nextStep.actionLabel || "Lanjutkan"}
                     <ArrowRight className="h-3.5 w-3.5" />
                   </Button>
                 ))}
@@ -241,6 +242,7 @@ export function getCareerSteps(data: {
   hasInterview: boolean;
   hasApplied: boolean;
   tier: "free" | "starter" | "pro";
+  interviewCount?: number;
 }): CareerStep[] {
   const allSteps: (CareerStep & { hidden?: boolean })[] = [
     {
@@ -250,6 +252,7 @@ export function getCareerSteps(data: {
       icon: FileText,
       done: data.hasCv,
       link: "/cv",
+      actionLabel: "Buat CV Kamu",
     },
     {
       id: "score-cv",
@@ -257,6 +260,7 @@ export function getCareerSteps(data: {
       description: "Cek kecocokan CV kamu",
       icon: BarChart3,
       done: data.hasScore,
+      actionLabel: "Cek Skor ATS",
     },
     {
       id: "cover-letter",
@@ -266,6 +270,7 @@ export function getCareerSteps(data: {
       done: data.hasCoverLetter,
       // Starter+ only
       hidden: data.tier === "free",
+      actionLabel: "Buat Cover Letter",
     },
     {
       id: "interview",
@@ -276,6 +281,9 @@ export function getCareerSteps(data: {
       link: "/simulasi-wawancara",
       // Pro only
       hidden: data.tier !== "pro",
+      actionLabel: data.interviewCount && data.interviewCount > 0 
+        ? "Lanjutkan Simulasi Wawancara" 
+        : "Belajar Simulasi Wawancara",
     },
     {
       id: "apply",
@@ -284,6 +292,7 @@ export function getCareerSteps(data: {
       icon: Send,
       done: data.hasApplied,
       link: "/lamaran",
+      actionLabel: "Kirim Lamaran",
     },
   ];
 

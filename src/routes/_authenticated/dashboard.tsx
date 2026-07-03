@@ -135,6 +135,8 @@ function DashboardPage() {
   const [keywordExtractUsageCount, setKeywordExtractUsageCount] = useState(0);
   const [textPolishUsageCount, setTextPolishUsageCount] = useState(0);
   const [chatUsageCount, setChatUsageCount] = useState(0);
+  const [interviewCount, setInterviewCount] = useState(0);
+  const [applicationCount, setApplicationCount] = useState(0);
   const [showCvPicker, setShowCvPicker] = useState<{ action: string } | null>(null);
   const [activities, setActivities] = useState<ActivityItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -159,6 +161,8 @@ function DashboardPage() {
       loadActivities(user.id),
       loadAllowedTemplates(user.id),
       loadSubscriptionEndDate(user.id),
+      loadInterviewCount(user.id),
+      loadApplicationCount(user.id),
     ]).finally(() => setLoading(false));
   }, [user?.id]);
 
@@ -288,6 +292,26 @@ function DashboardPage() {
     setKeywordExtractUsageCount(counts["keyword_extract"] ?? 0);
     setTextPolishUsageCount(counts["polish"] ?? 0);
     setChatUsageCount(counts["chat"] ?? 0);
+  };
+  
+  const loadInterviewCount = async (userId: string) => {
+    const { count, error } = await supabase
+      .from("interview_sessions")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId);
+    if (!error && count !== null) {
+      setInterviewCount(count);
+    }
+  };
+
+  const loadApplicationCount = async (userId: string) => {
+    const { count, error } = await supabase
+      .from("job_applications")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId);
+    if (!error && count !== null) {
+      setApplicationCount(count);
+    }
   };
 
   const loadActivities = async (userId: string) => {
@@ -651,9 +675,10 @@ function DashboardPage() {
     hasCv,
     hasScore: hasCv && scoreUsageCount > 0,
     hasCoverLetter: hasCv && coverLetterUsageCount > 0,
-    hasInterview: hasCv && false, // can be enhanced later with interview data
-    hasApplied: hasCv && false, // can be enhanced later with job application data
+    hasInterview: hasCv && interviewCount > 0,
+    hasApplied: hasCv && applicationCount > 0,
     tier,
+    interviewCount,
   });
 
   // ─── AI Recommendations ───
