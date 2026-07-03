@@ -12,3 +12,4 @@ export { CareerProgress, getCareerSteps } from "./career-progress";
 export { AiRecommendations, getRecommendations } from "./ai-recommendations";
 export { MentoringCta } from "./mentoring-cta";
 export { OnboardingWizard } from "./onboarding-wizard";
+export { LowScoreOnboarding } from "./low-score-onboarding";

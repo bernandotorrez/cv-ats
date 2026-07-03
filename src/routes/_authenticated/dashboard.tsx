@@ -38,6 +38,7 @@ import {
   getRecommendations,
   MentoringCta,
   OnboardingWizard,
+  LowScoreOnboarding,
 } from "@/components/dashboard";
 import {
   FileText,
@@ -149,6 +150,7 @@ function DashboardPage() {
   const [subscriptionEndDate, setSubscriptionEndDate] = useState<string | null>(null);
   const [showQuotas, setShowQuotas] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showLowScoreOnboarding, setShowLowScoreOnboarding] = useState(false);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -177,10 +179,52 @@ function DashboardPage() {
     }
   }, [loading, cvCount]);
 
+  useEffect(() => {
+    if (!loading && cvCount > 0 && cvs.length > 0) {
+      const latestCv = cvs[0];
+      const score = latestCv.ats_score;
+      if (score !== null && score < 70) {
+        const dismissed = localStorage.getItem(`low_score_dismissed_${latestCv.id}`);
+        if (dismissed !== "true") {
+          setShowLowScoreOnboarding(true);
+        }
+      }
+    }
+  }, [loading, cvCount, cvs]);
+
   const handleOnboardingOpenChange = (open: boolean) => {
     setShowOnboarding(open);
     if (!open) {
       localStorage.setItem("onboarding_dismissed", "true");
+    }
+  };
+
+  const handleLowScoreOpenChange = (open: boolean) => {
+    setShowLowScoreOnboarding(open);
+    if (!open && cvs.length > 0) {
+      localStorage.setItem(`low_score_dismissed_${cvs[0].id}`, "true");
+    }
+  };
+
+  const handleLowScoreAction = (action: "cv-review" | "keyword-extractor" | "tailor-cv" | "score" | "upgrade") => {
+    setShowLowScoreOnboarding(false);
+    if (cvs.length > 0) {
+      localStorage.setItem(`low_score_dismissed_${cvs[0].id}`, "true");
+      const cvId = cvs[0].id;
+      if (action === "upgrade") {
+        navigate({ to: "/harga" as never });
+        return;
+      }
+      const routes: Record<string, string> = {
+        "cv-review": "/cv-review/$cvId",
+        "keyword-extractor": "/tools/keyword/$cvId",
+        "tailor-cv": "/tools/tailor/$cvId",
+        score: "/score/$cvId",
+      };
+      const route = routes[action];
+      if (route) {
+        navigate({ to: route.replace("$cvId", cvId) as never });
+      }
     }
   };
 
@@ -1196,6 +1240,21 @@ function DashboardPage() {
         onCreateCv={(tpl, guided) => handleCreate(guided, tpl)}
         creating={creating}
       />
+
+      {/* Low ATS Score Onboarding Modal */}
+      {cvs.length > 0 && (
+        <LowScoreOnboarding
+          open={showLowScoreOnboarding}
+          onOpenChange={handleLowScoreOpenChange}
+          score={cvs[0].ats_score ?? 0}
+          cvTitle={cvs[0].title}
+          cvId={cvs[0].id}
+          onStartAction={handleLowScoreAction}
+          tier={tier}
+          scoreUsageCount={scoreUsageCount}
+          maxScoreUsage={tierQuotas?.quota_ai_score ?? limits.maxAtsScores}
+        />
+      )}
     </div>
   );
 }
