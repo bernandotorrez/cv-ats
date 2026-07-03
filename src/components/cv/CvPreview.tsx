@@ -670,7 +670,8 @@ export const cvPrintStyles = `
   .cv-preview {
     box-shadow: none !important;
     margin: 0 !important;
-    padding: 16mm !important;
+    /* Small top/bottom padding; @page provides 5mm margin at breaks */
+    padding: 11mm 16mm !important;
     width: auto !important;
     height: auto !important;
     min-height: 0 !important;
@@ -697,20 +698,16 @@ export const cvPrintStyles = `
     overflow: visible !important;
   }
 
-  @page {
-    size: A4;
-    margin: 0;
-  }
-
   /* Section headings: keep with next content */
   .cv-preview h2,
   .cv-preview h3 {
     page-break-after: avoid;
+    break-after: avoid;
   }
 
-  /* Keep section items together when possible */
-  .cv-preview section > *:last-child {
-    page-break-after: auto;
+  @page {
+    size: A4;
+    margin: 5mm 0;
   }
 
   /* Watermark should flow after the last CV content */

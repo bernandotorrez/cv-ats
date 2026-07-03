@@ -999,12 +999,19 @@ export function downloadPdf(_cv: CvData, fileName: string = "CV.pdf") {
       }
 
       .cv-preview {
-        padding: 16mm !important;
+        /* Small top/bottom padding; @page provides 5mm margin at breaks */
+        padding: 11mm 16mm !important;
+      }
+
+      /* Keep headings with content below them */
+      .cv-preview h2,
+      .cv-preview h3 {
+        break-after: avoid;
       }
 
       @page {
         size: A4;
-        margin: 0;
+        margin: 5mm 0;
       }
     </style>
   </head>

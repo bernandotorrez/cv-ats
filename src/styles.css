@@ -348,18 +348,23 @@
     height: auto !important;
     overflow: visible !important;
     box-shadow: none !important;
-    padding: 16mm !important;
+    /* Small top/bottom padding; @page provides 5mm margin at breaks */
+    padding: 11mm 16mm !important;
+    margin: 0 !important;
   }
   .cv-preview-container {
     width: auto !important;
     height: auto !important;
   }
-  .cv-preview {
-    box-shadow: none !important;
-    margin: 0 !important;
+
+  /* Keep headings with the content below them */
+  .cv-preview h2,
+  .cv-preview h3 {
+    break-after: avoid;
   }
+
   @page {
     size: A4;
-    margin: 0;
+    margin: 5mm 0;
   }
 }
