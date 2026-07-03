@@ -37,6 +37,7 @@ import {
   AiRecommendations,
   getRecommendations,
   MentoringCta,
+  OnboardingWizard,
 } from "@/components/dashboard";
 import {
   FileText,
@@ -147,6 +148,7 @@ function DashboardPage() {
   const [allowedTemplates, setAllowedTemplates] = useState<string[] | null>(null);
   const [subscriptionEndDate, setSubscriptionEndDate] = useState<string | null>(null);
   const [showQuotas, setShowQuotas] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -165,6 +167,22 @@ function DashboardPage() {
       loadApplicationCount(user.id),
     ]).finally(() => setLoading(false));
   }, [user?.id]);
+
+  useEffect(() => {
+    if (!loading && cvCount === 0) {
+      const dismissed = localStorage.getItem("onboarding_dismissed");
+      if (dismissed !== "true") {
+        setShowOnboarding(true);
+      }
+    }
+  }, [loading, cvCount]);
+
+  const handleOnboardingOpenChange = (open: boolean) => {
+    setShowOnboarding(open);
+    if (!open) {
+      localStorage.setItem("onboarding_dismissed", "true");
+    }
+  };
 
   const loadTierQuotas = async (userId: string) => {
     const { data } = await supabase
@@ -344,7 +362,7 @@ function DashboardPage() {
     setActivities(items);
   };
 
-  const handleCreate = async (guided = false) => {
+  const handleCreate = async (guided = false, templateId?: TemplateId) => {
     if (!user) return;
     if (atCvLimit) {
       toast.error(`Paket ${tierName} hanya bisa ${limits.maxCvs} CV. Upgrade untuk lebih banyak.`);
@@ -356,7 +374,7 @@ function DashboardPage() {
       .insert({
         user_id: user.id,
         title: "CV Baru",
-        template_id: selectedTemplate,
+        template_id: templateId || selectedTemplate,
         data: emptyCv as unknown as Json,
       })
       .select("id")
@@ -365,6 +383,9 @@ function DashboardPage() {
     if (error) return toast.error(error.message);
     setShowCreateDialog(false);
     setShowModeDialog(false);
+    setShowOnboarding(false);
+    localStorage.setItem("onboarding_dismissed", "true");
+    
     navigate({
       to: "/cv/$id",
       params: { id: data.id },
@@ -1165,6 +1186,16 @@ function DashboardPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Onboarding Wizard Modal */}
+      <OnboardingWizard
+        open={showOnboarding}
+        onOpenChange={handleOnboardingOpenChange}
+        tier={tier}
+        allowedTemplates={allowedTemplates}
+        onCreateCv={(tpl, guided) => handleCreate(guided, tpl)}
+        creating={creating}
+      />
     </div>
   );
 }
