@@ -571,6 +571,73 @@ export const previewData = {
       },
     ],
   } as CvData,
+  ubud: {
+    personal: {
+      fullName: "Rian Cahyadi",
+      headline: "Senior Creative Director & Brand Strategist",
+      email: "rian.cahyadi@studio.com",
+      phone: "0813-8765-4321",
+      location: "Ubud, Bali",
+      linkedin: "linkedin.com/in/riancahyadi",
+      website: "riancahyadi.co",
+      summary:
+        "Senior Creative Director dengan 7+ tahun pengalaman memimpin kampanye visual dan strategi brand untuk berbagai klien internasional. Spesialis dalam digital art direction, corporate branding, dan interaksi visual modern. Sukses meluncurkan 15+ kampanye kreatif berskala nasional.",
+      summaryAlign: "left" as const,
+    },
+    experiences: [
+      {
+        id: "1",
+        position: "Senior Creative Director",
+        company: "PT Bali Creative Agency",
+        location: "Ubud, Bali",
+        startDate: "Jan 2021",
+        current: true,
+        endDate: "",
+        description:
+          "Memimpin divisi kreatif dan merancang strategi visual untuk kampanye brand global. Meningkatkan kepuasan klien sebesar 45% dan berhasil memenangkan 3 penghargaan desain bergengsi di tingkat regional.",
+      },
+      {
+        id: "2",
+        position: "Lead Visual Designer",
+        company: "Arah Studio",
+        location: "Jakarta",
+        startDate: "Agt 2018",
+        current: false,
+        endDate: "Des 2020",
+        description:
+          "Bertanggung jawab atas arsitektur identitas visual brand dan aset digital klien. Berkolaborasi dengan product team untuk mendesain aset kampanye marketing terintegrasi.",
+      },
+    ],
+    educations: [
+      {
+        id: "1",
+        school: "Institut Teknologi Bandung",
+        degree: "S1",
+        field: "Desain Komunikasi Visual",
+        startDate: "2014",
+        endDate: "2018",
+        description: "Lulus dengan predikat Cum Laude. Aktif dalam organisasi kemahasiswaan bidang seni rupa.",
+      },
+    ],
+    skills: [
+      { id: "1", name: "Creative Direction" },
+      { id: "2", name: "Brand Strategy" },
+      { id: "3", name: "Visual Art & Layout" },
+      { id: "4", name: "Design Systems" },
+    ],
+    languages: [
+      { id: "1", name: "Bahasa Indonesia", level: "Native" },
+      { id: "2", name: "English", level: "Fluent" },
+    ],
+    certificates: [
+      {
+        id: "1",
+        name: "Advanced Art Direction",
+        issuer: "Creative Academy",
+        date: "2021",
+      },
+    ],
+  } as CvData,
 };
 
 // Template mapping untuk halaman /template
@@ -584,6 +651,7 @@ export const templateMap = {
   surabaya: { name: "Surabaya", premium: true },
   yogya: { name: "Yogyakarta", premium: false },
   malang: { name: "Malang", premium: true },
+  ubud: { name: "Ubud", premium: true },
 } as const;
 
 export type TemplateSlug = keyof typeof previewData;

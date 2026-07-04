@@ -28,6 +28,7 @@ import { SemarangTemplate } from "@/components/cv/templates/SemarangTemplate";
 import { SurabayaTemplate } from "@/components/cv/templates/SurabayaTemplate";
 import { YogyaTemplate } from "@/components/cv/templates/YogyaTemplate";
 import { MalangTemplate } from "@/components/cv/templates/MalangTemplate";
+import { UbudTemplate } from "@/components/cv/templates/UbudTemplate";
 import { previewData, type TemplateSlug } from "@/components/site/TemplatePreview";
 import { TemplateCardSkeleton } from "@/components/ui/skeleton-loading";
 import { Badge } from "@/components/ui/badge";
@@ -52,10 +53,11 @@ const templateComponents = {
   surabaya: SurabayaTemplate,
   yogya: YogyaTemplate,
   malang: MalangTemplate,
+  ubud: UbudTemplate,
 };
 
 const FREE_TEMPLATES = ["jakarta", "bandung"];
-const PRO_TEMPLATES = ["semarang", "surabaya", "malang"];
+const PRO_TEMPLATES = ["semarang", "surabaya", "malang", "ubud"];
 
 export const Route = createFileRoute("/template")({
   pendingComponent: TemplateLoading,
@@ -72,6 +74,13 @@ export const Route = createFileRoute("/template")({
 });
 
 const templates = [
+  {
+    slug: "ubud" as TemplateSlug,
+    name: "Ubud",
+    desc: "Desain dua kolom kreatif dengan sidebar kontras gelap yang elegan. Sangat cocok untuk menonjolkan portfolio, keahlian kreatif, dan personal branding.",
+    bestFor: "Creative, Design & Art",
+    tags: ["Kreatif", "Modern", "Sidebar"],
+  },
   {
     slug: "malang" as TemplateSlug,
     name: "Malang",

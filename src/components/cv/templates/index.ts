@@ -8,3 +8,4 @@ export { MakassarTemplate } from "./MakassarTemplate";
 export { SemarangTemplate } from "./SemarangTemplate";
 export { BaliTemplate } from "./BaliTemplate";
 export { MalangTemplate } from "./MalangTemplate";
+export { UbudTemplate } from "./UbudTemplate";
