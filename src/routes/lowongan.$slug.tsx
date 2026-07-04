@@ -152,6 +152,7 @@ export const Route = createFileRoute("/lowongan/$slug")({
       path: `/lowongan/${loaderData.slug}`,
       keywords: `lowongan ${loaderData.title}, loker ${loaderData.company}, kerja ${loaderData.location}`,
       jsonLd: {
+        "@context": "https://schema.org",
         "@type": "JobPosting",
         title: loaderData.title,
         description: loaderData.description,
