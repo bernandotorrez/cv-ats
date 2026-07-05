@@ -302,7 +302,31 @@ function DashboardPage() {
       .limit(5);
 
     if (data && data.length > 0) {
+      const cvIds = data.map((cv) => cv.id);
+      const { data: dbScores } = await supabase
+        .from("cv_scores")
+        .select("cv_id, overall_score, created_at")
+        .in("cv_id", cvIds)
+        .order("created_at", { ascending: false });
+
+      const latestScoresMap: Record<string, number> = {};
+      if (dbScores) {
+        for (const score of dbScores) {
+          if (latestScoresMap[score.cv_id] === undefined) {
+            latestScoresMap[score.cv_id] = score.overall_score;
+          }
+        }
+      }
+
       const mappedCvs = data.map((cv) => {
+        const score = latestScoresMap[cv.id];
+        if (score !== undefined) {
+          return {
+            ...cv,
+            ats_score: score,
+          };
+        }
+
         let computedScore = null;
         try {
           if (cv.data) {

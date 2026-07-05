@@ -127,31 +127,15 @@ export function RecentCvs({ cvs, onCreateCv }: RecentCvsProps) {
             const isDraft = cv.status === "draft";
             const styleConfig = rowStyles[idx % rowStyles.length];
 
-            // Replicate mockup's location and verified check marks
+            // Replicate mockup's verified check marks only, but use actual template name
             const isFirst = idx === 0;
-            const isSecond = idx === 1;
-            const location = isFirst
-              ? "Jakarta"
-              : isSecond
-                ? "Surabaya"
-                : (tpl?.name ?? cv.template_id);
+            const location = tpl?.name ?? (cv.template_id ? cv.template_id.charAt(0).toUpperCase() + cv.template_id.slice(1) : "");
 
-            // Replicate timeAgo labels matching mockup crop exactly for visual fidelity
-            const timeAgoText = isFirst
-              ? "Diperbarui 1 hari lalu"
-              : isSecond
-                ? "Diperbarui 1 minggu lalu"
-                : timeAgo(cv.updated_at).label;
+            // Use dynamic timeAgo labels
+            const timeAgoText = timeAgo(cv.updated_at).label;
 
-            // Score configuration: default to mockup values (86 and 72) if actual score is empty
-            const score =
-              cv.ats_score !== undefined && cv.ats_score !== null
-                ? cv.ats_score
-                : isFirst
-                  ? 86
-                  : isSecond
-                    ? 72
-                    : null;
+            // Score configuration: use actual score or null if none is calculated/saved
+            const score = cv.ats_score !== undefined && cv.ats_score !== null ? cv.ats_score : null;
 
             return (
               <div
