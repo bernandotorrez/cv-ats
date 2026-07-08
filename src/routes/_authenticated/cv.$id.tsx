@@ -75,6 +75,7 @@ import {
   Upload,
   ExternalLink,
   Linkedin,
+  LockKeyhole,
   Wand2,
   Star,
   Zap,
@@ -152,6 +153,7 @@ function CvEditorPage() {
   const [cvUploadParsing, setCvUploadParsing] = useState(false);
   const [cvUploadError, setCvUploadError] = useState<string | null>(null);
   const [userTier, setUserTier] = useState("free");
+  const [hasUploadCvFeature, setHasUploadCvFeature] = useState(false);
   const [cvLanguage, setCvLanguage] = useState<CvUiLang>("id");
   const [allowedTemplates, setAllowedTemplates] = useState<string[] | null>(null);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "unsaved">("idle");
@@ -257,6 +259,18 @@ function CvEditorPage() {
         .eq("user_id", row.user_id)
         .eq("status", "active")
         .single();
+      const { data: profile } = await (supabase as any)
+        .from("profiles")
+        .select("has_upload_cv, upload_cv_end_date")
+        .eq("id", row.user_id)
+        .single();
+      if (profile) {
+        let isUnlocked = profile.has_upload_cv;
+        if (profile.upload_cv_end_date) {
+          isUnlocked = new Date(profile.upload_cv_end_date) > new Date();
+        }
+        setHasUploadCvFeature(isUnlocked);
+      }
       if (sub) {
         setUserTier(sub.subscription_tiers?.slug ?? "free");
         // Set allowed templates
@@ -606,6 +620,8 @@ function CvEditorPage() {
   );
 
   if (loading) return <EditorSkeleton />;
+
+  const canUploadCv = userTier === "starter" || userTier === "pro" || userTier === "pro_plus" || hasUploadCvFeature;
 
   return (
     <div className="cv-editor-page flex h-[calc(100vh-4rem)] min-h-0 flex-col bg-muted/30">
@@ -989,36 +1005,49 @@ function CvEditorPage() {
               Upload CV kamu dalam format PDF atau DOCX. AI akan membaca dan mengisi data otomatis.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
-            <CvFileUpload
-              onFileReady={handleCvFileReady}
-              extracting={cvUploadExtracting}
-              error={cvUploadError}
-              currentFile={cvUploadFile}
-              onClear={() => {
-                setCvUploadFile(null);
-                setCvUploadError(null);
-              }}
-            />
-            <Button
-              className="w-full gap-2"
-              disabled={!cvUploadFile || cvUploadExtracting || cvUploadParsing}
-              onClick={handleCvUploadParse}
-            >
-              {cvUploadParsing ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" /> AI membaca CV...
-                </>
-              ) : cvUploadExtracting ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" /> Mengekstrak teks...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="h-4 w-4" /> Parse & Isi CV
-                </>
-              )}
-            </Button>
+          <div className="relative">
+            {!canUploadCv && (
+              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 rounded-lg bg-background/60 backdrop-blur-sm p-4 text-center">
+                <LockKeyhole className="h-10 w-10 text-muted-foreground" />
+                <p className="text-sm font-medium text-foreground">
+                  Upgrade Tier kamu atau beli Fitur Upload CV (Langganan 1 Bulan)
+                </p>
+                <Button asChild size="sm">
+                  <Link to="/harga">Beli Sekarang</Link>
+                </Button>
+              </div>
+            )}
+            <div className={cn("space-y-4", !canUploadCv && "opacity-50 pointer-events-none blur-[2px]")}>
+              <CvFileUpload
+                onFileReady={handleCvFileReady}
+                extracting={cvUploadExtracting}
+                error={cvUploadError}
+                currentFile={cvUploadFile}
+                onClear={() => {
+                  setCvUploadFile(null);
+                  setCvUploadError(null);
+                }}
+              />
+              <Button
+                className="w-full gap-2"
+                disabled={!cvUploadFile || cvUploadExtracting || cvUploadParsing}
+                onClick={handleCvUploadParse}
+              >
+                {cvUploadParsing ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" /> AI membaca CV...
+                  </>
+                ) : cvUploadExtracting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" /> Mengekstrak teks...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4" /> Parse & Isi CV
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

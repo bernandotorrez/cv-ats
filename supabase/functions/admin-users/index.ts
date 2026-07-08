@@ -25,12 +25,15 @@ type AdminUsersPageRow = {
   auth_created_at?: string | null;
   last_sign_in_at?: string | null;
   total_count?: number | null;
+  has_upload_cv?: boolean;
+  upload_cv_end_date?: string | null;
 };
 
 type UpdateUserRequest = {
   userId?: string;
   tier?: string;
   role?: string;
+  has_upload_cv?: boolean;
 };
 
 const VALID_TIERS = new Set(["free", "starter", "pro"]);
@@ -96,10 +99,37 @@ Deno.serve(async (req: Request) => {
         auth_created_at: user.auth_created_at || "",
         last_sign_in_at: user.last_sign_in_at || null,
       }));
+      
+      const userIds = rows.map((u) => u.id);
+      let profileMap = new Map();
+      if (userIds.length > 0) {
+        const { data: profiles } = await admin
+          .from("profiles")
+          .select("id, has_upload_cv, upload_cv_end_date")
+          .in("id", userIds);
+        profileMap = new Map((profiles || []).map(p => [p.id, p]));
+      }
+
+      const now = new Date();
+      const rowsWithUploadCv = rows.map((user) => {
+        const p = profileMap.get(user.id);
+        const endDateStr = p?.upload_cv_end_date;
+        let isUnlocked = p?.has_upload_cv || false;
+        if (endDateStr) {
+           isUnlocked = new Date(endDateStr) > now;
+        }
+
+        return {
+          ...user,
+          has_upload_cv: isUnlocked,
+          upload_cv_end_date: endDateStr || null,
+        };
+      });
+
       const total = Number((data?.[0] as AdminUsersPageRow | undefined)?.total_count || 0);
 
       return json(req, {
-        users: rows,
+        users: rowsWithUploadCv,
         page,
         perPage,
         total,
@@ -138,6 +168,7 @@ async function updateUser(req: Request, admin: ReturnType<typeof getAdminClient>
   const userId = (body.userId || "").trim();
   const tier = (body.tier || "").trim().toLowerCase();
   const role = (body.role || "").trim().toLowerCase();
+  const has_upload_cv = typeof body.has_upload_cv === "boolean" ? body.has_upload_cv : false;
 
   if (!isUuid(userId)) {
     throw new Error("User ID tidak valid");
@@ -217,7 +248,24 @@ async function updateUser(req: Request, admin: ReturnType<typeof getAdminClient>
     .eq("role", oldRole);
   if (deleteOldRoleError) throw deleteOldRoleError;
 
-  return { ok: true, userId, tier, role };
+  // Update has_upload_cv and upload_cv_end_date
+  let endDateIso = null;
+  if (has_upload_cv) {
+    const d = new Date();
+    d.setMonth(d.getMonth() + 1);
+    endDateIso = d.toISOString();
+  }
+
+  const { error: profileUpdateError } = await admin
+    .from("profiles")
+    .update({ 
+      has_upload_cv,
+      upload_cv_end_date: endDateIso
+    })
+    .eq("id", userId);
+  if (profileUpdateError) throw profileUpdateError;
+
+  return { ok: true, userId, tier, role, has_upload_cv, upload_cv_end_date: endDateIso };
 }
 
 async function buildUserRows(admin: ReturnType<typeof getAdminClient>, authUsers: AuthUser[]) {
@@ -225,7 +273,7 @@ async function buildUserRows(admin: ReturnType<typeof getAdminClient>, authUsers
 
   const [profiles, roles, subs, cvs, aiUsage] = await Promise.all([
     userIds.length
-      ? admin.from("profiles").select("id, full_name, created_at").in("id", userIds)
+      ? admin.from("profiles").select("id, full_name, created_at, has_upload_cv, upload_cv_end_date").in("id", userIds)
       : Promise.resolve({ data: [] }),
     userIds.length
       ? admin.from("user_roles").select("user_id, role").in("user_id", userIds)
@@ -273,6 +321,12 @@ async function buildUserRows(admin: ReturnType<typeof getAdminClient>, authUsers
     const sub = subMap.get(user.id);
     const metadataName = user.user_metadata?.full_name || user.user_metadata?.name;
 
+    const now = new Date();
+    let isUnlocked = profile?.has_upload_cv || false;
+    if (profile?.upload_cv_end_date) {
+      isUnlocked = new Date(profile.upload_cv_end_date) > now;
+    }
+
     return {
       id: user.id,
       email: user.email || "",
@@ -282,6 +336,8 @@ async function buildUserRows(admin: ReturnType<typeof getAdminClient>, authUsers
       tier_status: sub?.status || "active",
       cv_count: cvCountMap[user.id] || 0,
       ai_count: aiCountMap[user.id] || 0,
+      has_upload_cv: isUnlocked,
+      upload_cv_end_date: profile?.upload_cv_end_date || null,
       created_at: profile?.created_at || user.created_at || "",
       auth_created_at: user.created_at || "",
       last_sign_in_at: user.last_sign_in_at || null,

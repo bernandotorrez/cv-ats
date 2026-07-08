@@ -19,8 +19,9 @@ import {
   DialogContent,
   DialogDescription,
   DialogHeader,
-  DialogTitle,
 } from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { invalidateAdminCache } from "@/lib/admin";
 import {
@@ -64,6 +65,7 @@ interface UserRow {
   created_at: string;
   auth_created_at?: string;
   last_sign_in_at?: string | null;
+  has_upload_cv?: boolean;
 }
 
 interface PaginationState {
@@ -92,6 +94,7 @@ function AdminUsersPage() {
   const [editUser, setEditUser] = useState<UserRow | null>(null);
   const [editTier, setEditTier] = useState("");
   const [editRole, setEditRole] = useState("");
+  const [editHasUploadCv, setEditHasUploadCv] = useState(false);
   const [saving, setSaving] = useState(false);
   const [pagination, setPagination] = useState<PaginationState>({
     page: 1,
@@ -173,6 +176,7 @@ function AdminUsersPage() {
     setEditUser(u);
     setEditTier(u.tier);
     setEditRole(u.role);
+    setEditHasUploadCv(u.has_upload_cv || false);
   };
 
   const handleSaveEdit = async () => {
@@ -199,6 +203,7 @@ function AdminUsersPage() {
         userId: editUser.id,
         tier: editTier,
         role: editRole,
+        has_upload_cv: editHasUploadCv,
       }),
     });
 
@@ -317,6 +322,11 @@ function AdminUsersPage() {
                   {u.tier_status !== "active" && (
                     <Badge variant="outline" className="text-xs text-destructive">
                       {u.tier_status}
+                    </Badge>
+                  )}
+                  {u.has_upload_cv && (
+                    <Badge variant="outline" className="text-xs bg-yellow-50 text-yellow-700 border-yellow-200">
+                      Upload CV (1 Bulan)
                     </Badge>
                   )}
                 </div>
@@ -459,6 +469,15 @@ function AdminUsersPage() {
                     <SelectItem value="admin">Admin</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+
+              <div className="flex items-center space-x-2 py-2">
+                <Switch 
+                  id="has-upload-cv" 
+                  checked={editHasUploadCv} 
+                  onCheckedChange={setEditHasUploadCv} 
+                />
+                <Label htmlFor="has-upload-cv" className="text-sm font-medium">Unlock Fitur Upload CV (1 Bulan)</Label>
               </div>
 
               <div className="flex justify-end gap-2 pt-2">

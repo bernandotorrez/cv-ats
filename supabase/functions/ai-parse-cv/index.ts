@@ -25,6 +25,31 @@ Deno.serve(async (req: Request) => {
     const userId = await getUserId(req);
     const admin = getAdminClient();
 
+    // Check user tier and has_upload_cv feature
+    const { data: profile } = await admin
+      .from("profiles")
+      .select("has_upload_cv, upload_cv_end_date")
+      .eq("id", userId)
+      .single();
+
+    const { data: sub } = await admin
+      .from("user_subscriptions")
+      .select("subscription_tiers!inner(slug)")
+      .eq("user_id", userId)
+      .eq("status", "active")
+      .single();
+
+    const tier = sub?.subscription_tiers?.slug || "free";
+    let hasUploadCv = profile?.has_upload_cv || false;
+    if (profile?.upload_cv_end_date) {
+      hasUploadCv = new Date(profile.upload_cv_end_date) > new Date();
+    }
+    const canUpload = tier === "starter" || tier === "pro" || tier === "pro_plus" || hasUploadCv;
+
+    if (!canUpload) {
+      throw new Error("Fitur Upload CV hanya untuk pengguna berbayar. Silakan Upgrade Tier atau beli fitur Upload CV.");
+    }
+
     const { rawText, language } = await req.json();
     const lang: CvUiLang = language === "en" ? "en" : "id";
 

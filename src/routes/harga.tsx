@@ -16,6 +16,7 @@ import {
   Star,
   Target,
   TrendingUp,
+  Upload,
   Users,
   Wand2,
   Zap,
@@ -153,6 +154,7 @@ const quickFit = [
 const comparison = [
   ["CV aktif", "1", "3", "10"],
   ["Template", "2 basic", "Semua", "Semua"],
+  ["Upload CV (PDF/DOCX)", "Add-on (Rp 5.000 / bln)", "Termasuk", "Termasuk"],
   ["AI suggestions", "5x", "50x", "200x"],
   ["ATS scoring", "1x", "10x", "50x"],
   ["Perbaiki teks AI", "5x", "50x", "200x"],
@@ -361,6 +363,31 @@ function HargaPage() {
             ))}
           </div>
         </div>
+      </section>
+
+      {/* Upload CV Add-on Section */}
+      <section className="container-page py-12">
+        <Card className="border-yellow-200 bg-yellow-50/50 shadow-sm relative overflow-hidden">
+          <div className="absolute right-0 top-0 h-full w-1/3 bg-gradient-to-l from-yellow-200/50 to-transparent pointer-events-none" />
+          <CardContent className="p-8 sm:p-10 flex flex-col sm:flex-row items-center gap-8 relative z-10">
+            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-yellow-100 text-yellow-600">
+              <Upload className="h-8 w-8" />
+            </div>
+            <div className="flex-1 text-center sm:text-left">
+              <h3 className="font-display text-2xl font-bold text-foreground">Hanya Butuh Fitur Upload CV?</h3>
+              <p className="mt-2 text-muted-foreground text-lg">
+                Upload CV lama (PDF/DOCX), biarkan AI membaca dan mengisi datanya otomatis ke template baru. Beli satuan hanya Rp 5.000 / bulan.
+              </p>
+            </div>
+            <div className="shrink-0 w-full sm:w-auto">
+              <Button asChild size="lg" className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-semibold">
+                <a href="https://lynk.id/ben-yt-ai/qqom281ddwwm" target="_blank" rel="noopener noreferrer">
+                  Beli Upload CV (Rp 5rb / bln)
+                </a>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </section>
 
       <section className="container-page py-16 md:py-24">
