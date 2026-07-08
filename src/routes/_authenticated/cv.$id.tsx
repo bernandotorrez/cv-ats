@@ -1013,7 +1013,7 @@ function CvEditorPage() {
                   Upgrade Tier kamu atau beli Fitur Upload CV (Langganan 1 Bulan)
                 </p>
                 <Button asChild size="sm">
-                  <Link to="/harga">Beli Sekarang</Link>
+                  <a href="https://lynk.id/ben-yt-ai/qqom281ddwwm" target="_blank" rel="noopener noreferrer">Beli Sekarang</a>
                 </Button>
               </div>
             )}
