@@ -160,10 +160,17 @@ Deno.serve(async (req: Request) => {
       const resData = await response.json();
       console.log("Kie AI createTask response data:", JSON.stringify(resData));
       
+      if (resData.code !== 200 && resData.code !== 0 && resData.msg) {
+        return new Response(JSON.stringify({ error: `Kie AI Error: ${resData.msg}` }), {
+          status: 400,
+          headers: { ...corsHeaders(req), "Content-Type": "application/json" },
+        });
+      }
+
       const taskId = resData.data?.taskId || resData.taskId;
 
       if (!taskId) {
-        return new Response(JSON.stringify({ error: "No taskId returned from Kie AI" }), {
+        return new Response(JSON.stringify({ error: "No taskId returned from Kie AI", details: resData }), {
           status: 500,
           headers: { ...corsHeaders(req), "Content-Type": "application/json" },
         });
