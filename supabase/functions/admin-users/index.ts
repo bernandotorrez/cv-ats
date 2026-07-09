@@ -27,6 +27,8 @@ type AdminUsersPageRow = {
   total_count?: number | null;
   has_upload_cv?: boolean;
   upload_cv_end_date?: string | null;
+  has_pro_photo?: boolean;
+  pro_photo_end_date?: string | null;
 };
 
 type UpdateUserRequest = {
@@ -34,6 +36,7 @@ type UpdateUserRequest = {
   tier?: string;
   role?: string;
   has_upload_cv?: boolean;
+  has_pro_photo?: boolean;
 };
 
 const VALID_TIERS = new Set(["free", "starter", "pro"]);
@@ -105,7 +108,7 @@ Deno.serve(async (req: Request) => {
       if (userIds.length > 0) {
         const { data: profiles } = await admin
           .from("profiles")
-          .select("id, has_upload_cv, upload_cv_end_date")
+          .select("id, has_upload_cv, upload_cv_end_date, has_pro_photo, pro_photo_end_date")
           .in("id", userIds);
         profileMap = new Map((profiles || []).map(p => [p.id, p]));
       }
@@ -119,10 +122,18 @@ Deno.serve(async (req: Request) => {
            isUnlocked = new Date(endDateStr) > now;
         }
 
+        const proPhotoEndDateStr = p?.pro_photo_end_date;
+        let isProPhotoUnlocked = p?.has_pro_photo || false;
+        if (proPhotoEndDateStr) {
+          isProPhotoUnlocked = new Date(proPhotoEndDateStr) > now;
+        }
+
         return {
           ...user,
           has_upload_cv: isUnlocked,
           upload_cv_end_date: endDateStr || null,
+          has_pro_photo: isProPhotoUnlocked,
+          pro_photo_end_date: proPhotoEndDateStr || null,
         };
       });
 
@@ -169,6 +180,7 @@ async function updateUser(req: Request, admin: ReturnType<typeof getAdminClient>
   const tier = (body.tier || "").trim().toLowerCase();
   const role = (body.role || "").trim().toLowerCase();
   const has_upload_cv = typeof body.has_upload_cv === "boolean" ? body.has_upload_cv : false;
+  const has_pro_photo = typeof body.has_pro_photo === "boolean" ? body.has_pro_photo : false;
 
   if (!isUuid(userId)) {
     throw new Error("User ID tidak valid");
@@ -256,16 +268,25 @@ async function updateUser(req: Request, admin: ReturnType<typeof getAdminClient>
     endDateIso = d.toISOString();
   }
 
+  let proPhotoEndDateIso = null;
+  if (has_pro_photo) {
+    const d = new Date();
+    d.setMonth(d.getMonth() + 1);
+    proPhotoEndDateIso = d.toISOString();
+  }
+
   const { error: profileUpdateError } = await admin
     .from("profiles")
     .update({ 
       has_upload_cv,
-      upload_cv_end_date: endDateIso
+      upload_cv_end_date: endDateIso,
+      has_pro_photo,
+      pro_photo_end_date: proPhotoEndDateIso
     })
     .eq("id", userId);
   if (profileUpdateError) throw profileUpdateError;
 
-  return { ok: true, userId, tier, role, has_upload_cv, upload_cv_end_date: endDateIso };
+  return { ok: true, userId, tier, role, has_upload_cv, upload_cv_end_date: endDateIso, has_pro_photo, pro_photo_end_date: proPhotoEndDateIso };
 }
 
 async function buildUserRows(admin: ReturnType<typeof getAdminClient>, authUsers: AuthUser[]) {
@@ -273,7 +294,7 @@ async function buildUserRows(admin: ReturnType<typeof getAdminClient>, authUsers
 
   const [profiles, roles, subs, cvs, aiUsage] = await Promise.all([
     userIds.length
-      ? admin.from("profiles").select("id, full_name, created_at, has_upload_cv, upload_cv_end_date").in("id", userIds)
+      ? admin.from("profiles").select("id, full_name, created_at, has_upload_cv, upload_cv_end_date, has_pro_photo, pro_photo_end_date").in("id", userIds)
       : Promise.resolve({ data: [] }),
     userIds.length
       ? admin.from("user_roles").select("user_id, role").in("user_id", userIds)
@@ -327,6 +348,11 @@ async function buildUserRows(admin: ReturnType<typeof getAdminClient>, authUsers
       isUnlocked = new Date(profile.upload_cv_end_date) > now;
     }
 
+    let isProPhotoUnlocked = profile?.has_pro_photo || false;
+    if (profile?.pro_photo_end_date) {
+      isProPhotoUnlocked = new Date(profile.pro_photo_end_date) > now;
+    }
+
     return {
       id: user.id,
       email: user.email || "",
@@ -338,6 +364,8 @@ async function buildUserRows(admin: ReturnType<typeof getAdminClient>, authUsers
       ai_count: aiCountMap[user.id] || 0,
       has_upload_cv: isUnlocked,
       upload_cv_end_date: profile?.upload_cv_end_date || null,
+      has_pro_photo: isProPhotoUnlocked,
+      pro_photo_end_date: profile?.pro_photo_end_date || null,
       created_at: profile?.created_at || user.created_at || "",
       auth_created_at: user.created_at || "",
       last_sign_in_at: user.last_sign_in_at || null,

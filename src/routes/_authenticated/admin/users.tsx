@@ -67,6 +67,7 @@ interface UserRow {
   auth_created_at?: string;
   last_sign_in_at?: string | null;
   has_upload_cv?: boolean;
+  has_pro_photo?: boolean;
 }
 
 interface PaginationState {
@@ -96,6 +97,7 @@ function AdminUsersPage() {
   const [editTier, setEditTier] = useState("");
   const [editRole, setEditRole] = useState("");
   const [editHasUploadCv, setEditHasUploadCv] = useState(false);
+  const [editHasProPhoto, setEditHasProPhoto] = useState(false);
   const [saving, setSaving] = useState(false);
   const [pagination, setPagination] = useState<PaginationState>({
     page: 1,
@@ -178,6 +180,7 @@ function AdminUsersPage() {
     setEditTier(u.tier);
     setEditRole(u.role);
     setEditHasUploadCv(u.has_upload_cv || false);
+    setEditHasProPhoto(u.has_pro_photo || false);
   };
 
   const handleSaveEdit = async () => {
@@ -205,6 +208,7 @@ function AdminUsersPage() {
         tier: editTier,
         role: editRole,
         has_upload_cv: editHasUploadCv,
+        has_pro_photo: editHasProPhoto,
       }),
     });
 
@@ -328,6 +332,11 @@ function AdminUsersPage() {
                   {u.has_upload_cv && (
                     <Badge variant="outline" className="text-xs bg-yellow-50 text-yellow-700 border-yellow-200">
                       Upload CV (1 Bulan)
+                    </Badge>
+                  )}
+                  {u.has_pro_photo && (
+                    <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-200">
+                      Foto Pro (1 Bulan)
                     </Badge>
                   )}
                 </div>
@@ -479,6 +488,15 @@ function AdminUsersPage() {
                   onCheckedChange={setEditHasUploadCv} 
                 />
                 <Label htmlFor="has-upload-cv" className="text-sm font-medium">Unlock Fitur Upload CV (1 Bulan)</Label>
+              </div>
+
+              <div className="flex items-center space-x-2 py-2">
+                <Switch 
+                  id="has-pro-photo" 
+                  checked={editHasProPhoto} 
+                  onCheckedChange={setEditHasProPhoto} 
+                />
+                <Label htmlFor="has-pro-photo" className="text-sm font-medium">Unlock Foto Profesional (1 Bulan)</Label>
               </div>
 
               <div className="flex justify-end gap-2 pt-2">

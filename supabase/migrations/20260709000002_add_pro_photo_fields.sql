@@ -1,0 +1,1 @@
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS has_pro_photo BOOLEAN DEFAULT FALSE; ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS pro_photo_end_date TIMESTAMPTZ;

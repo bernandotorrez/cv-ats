@@ -154,6 +154,7 @@ function CvEditorPage() {
   const [cvUploadError, setCvUploadError] = useState<string | null>(null);
   const [userTier, setUserTier] = useState("free");
   const [hasUploadCvFeature, setHasUploadCvFeature] = useState(false);
+  const [hasProPhotoFeature, setHasProPhotoFeature] = useState(false);
   const [cvLanguage, setCvLanguage] = useState<CvUiLang>("id");
   const [allowedTemplates, setAllowedTemplates] = useState<string[] | null>(null);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "unsaved">("idle");
@@ -261,7 +262,7 @@ function CvEditorPage() {
         .single();
       const { data: profile } = await (supabase as any)
         .from("profiles")
-        .select("has_upload_cv, upload_cv_end_date")
+        .select("has_upload_cv, upload_cv_end_date, has_pro_photo, pro_photo_end_date")
         .eq("id", row.user_id)
         .single();
       if (profile) {
@@ -270,6 +271,12 @@ function CvEditorPage() {
           isUnlocked = new Date(profile.upload_cv_end_date) > new Date();
         }
         setHasUploadCvFeature(isUnlocked);
+
+        let isProPhotoUnlocked = profile.has_pro_photo;
+        if (profile.pro_photo_end_date) {
+          isProPhotoUnlocked = new Date(profile.pro_photo_end_date) > new Date();
+        }
+        setHasProPhotoFeature(isProPhotoUnlocked);
       }
       if (sub) {
         setUserTier(sub.subscription_tiers?.slug ?? "free");
@@ -622,6 +629,7 @@ function CvEditorPage() {
   if (loading) return <EditorSkeleton />;
 
   const canUploadCv = userTier === "starter" || userTier === "pro" || userTier === "pro_plus" || hasUploadCvFeature;
+  const canUseProPhoto = userTier === "starter" || userTier === "pro" || userTier === "pro_plus" || hasProPhotoFeature;
 
   return (
     <div className="cv-editor-page flex h-[calc(100vh-4rem)] min-h-0 flex-col bg-muted/30">
@@ -1365,6 +1373,7 @@ function EditorForm({
               userId={userId}
               cvId={cvId}
               onPhotoChange={(url) => updatePersonal("photoUrl", url)}
+              canUseProPhoto={canUseProPhoto}
             />
           )}
           <div className="grid gap-4 sm:grid-cols-2">

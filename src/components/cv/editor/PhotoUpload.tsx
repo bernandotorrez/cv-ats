@@ -1,19 +1,30 @@
 import React, { useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, Trash2, Upload, User } from "lucide-react";
+import { Loader2, Trash2, Upload, User, Sparkles, LockKeyhole } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface PhotoUploadProps {
   photoUrl?: string;
   userId: string;
   cvId: string;
   onPhotoChange: (url: string) => void;
+  canUseProPhoto: boolean;
 }
 
-export function PhotoUpload({ photoUrl, userId, cvId, onPhotoChange }: PhotoUploadProps) {
+export function PhotoUpload({ photoUrl, userId, cvId, onPhotoChange, canUseProPhoto }: PhotoUploadProps) {
   const [uploading, setUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [generatingProPhoto, setGeneratingProPhoto] = useState(false);
+  const [showUnlockModal, setShowUnlockModal] = useState(false);
+  const [proPhotoProgressText, setProPhotoProgressText] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Extract storage path from signed URL to delete the correct file
@@ -134,6 +145,108 @@ export function PhotoUpload({ photoUrl, userId, cvId, onPhotoChange }: PhotoUplo
     }
   };
 
+  const handleGenerateProPhoto = async () => {
+    if (!photoUrl) {
+      toast.error("Unggah foto kasualmu terlebih dahulu.");
+      return;
+    }
+
+    if (!canUseProPhoto) {
+      setShowUnlockModal(true);
+      return;
+    }
+
+    setGeneratingProPhoto(true);
+    setProPhotoProgressText("Memulai pembuatan foto...");
+
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+
+      if (!token || !supabaseUrl) {
+        toast.error("Sesi tidak valid. Silakan login ulang.");
+        setGeneratingProPhoto(false);
+        return;
+      }
+
+      // 1. Create taskId
+      const response = await fetch(`${supabaseUrl}/functions/v1/pro-photo`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ imageUrl: photoUrl }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "Gagal menghubungi server AI.");
+      }
+
+      const { taskId } = await response.json();
+      if (!taskId) throw new Error("Gagal menerima ID tugas AI.");
+
+      setProPhotoProgressText("AI sedang memproses foto...");
+
+      // 2. Poll for status
+      let attempts = 0;
+      const maxAttempts = 40; // 40 * 3s = 120s max
+
+      const pollInterval = setInterval(async () => {
+        attempts++;
+        if (attempts > maxAttempts) {
+          clearInterval(pollInterval);
+          setGeneratingProPhoto(false);
+          toast.error("Waktu tunggu habis. Silakan coba beberapa saat lagi.");
+          return;
+        }
+
+        try {
+          const statusResponse = await fetch(
+            `${supabaseUrl}/functions/v1/pro-photo?taskId=${taskId}`,
+            {
+              method: "GET",
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+            }
+          );
+
+          if (!statusResponse.ok) {
+            // ignore temporary network failures
+            return;
+          }
+
+          const statusData = await statusResponse.json();
+
+          if (statusData.status === "success" && statusData.imageUrl) {
+            clearInterval(pollInterval);
+            onPhotoChange(statusData.imageUrl);
+            setGeneratingProPhoto(false);
+            toast.success("Foto profesional AI kamu siap!");
+          } else if (statusData.status === "failed") {
+            clearInterval(pollInterval);
+            setGeneratingProPhoto(false);
+            toast.error(statusData.error || "Gagal membuat foto profesional.");
+          } else {
+            // status === "generating"
+            setProPhotoProgressText(`AI sedang menjahit jas... (${attempts * 3}s)`);
+          }
+        } catch (pollError) {
+          console.error("Polling error:", pollError);
+        }
+      }, 3000);
+
+    } catch (error: any) {
+      console.error("AI photo generation error:", error);
+      toast.error(error.message || "Terjadi kesalahan saat memproses foto.");
+      setGeneratingProPhoto(false);
+    }
+  };
+
   return (
     <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start sm:gap-6 pb-6 border-b border-border/50 mb-6">
       <div
@@ -177,7 +290,7 @@ export function PhotoUpload({ photoUrl, userId, cvId, onPhotoChange }: PhotoUplo
             variant="outline"
             size="sm"
             onClick={() => fileInputRef.current?.click()}
-            disabled={uploading}
+            disabled={uploading || generatingProPhoto}
             className="gap-1.5 rounded-xl text-xs"
           >
             <Upload className="h-3.5 w-3.5" />
@@ -185,6 +298,33 @@ export function PhotoUpload({ photoUrl, userId, cvId, onPhotoChange }: PhotoUplo
           </Button>
 
           {photoUrl && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleGenerateProPhoto}
+              disabled={uploading || generatingProPhoto}
+              className="gap-1.5 rounded-xl text-xs bg-yellow-50 hover:bg-yellow-100 text-yellow-800 border-yellow-200"
+            >
+              {generatingProPhoto ? (
+                <>
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  {proPhotoProgressText}
+                </>
+              ) : (
+                <>
+                  {canUseProPhoto ? (
+                    <Sparkles className="h-3.5 w-3.5 text-yellow-600 fill-yellow-600 animate-pulse" />
+                  ) : (
+                    <LockKeyhole className="h-3.5 w-3.5 text-yellow-600" />
+                  )}
+                  Foto Pro AI (Jas)
+                </>
+              )}
+            </Button>
+          )}
+
+          {photoUrl && !generatingProPhoto && (
             <Button
               type="button"
               variant="ghost"
@@ -199,6 +339,42 @@ export function PhotoUpload({ photoUrl, userId, cvId, onPhotoChange }: PhotoUplo
           )}
         </div>
       </div>
+
+      {/* Unlock Pro Photo Modal */}
+      <Dialog open={showUnlockModal} onOpenChange={setShowUnlockModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-lg">
+              <LockKeyhole className="h-5 w-5 text-yellow-600" />
+              Fitur Foto Profesional AI
+            </DialogTitle>
+            <DialogDescription className="text-sm">
+              Ubah foto biasa kamu secara instan menjadi foto studio formal berjas hitam dan dasi rapi.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="rounded-lg bg-yellow-50/50 border border-yellow-100 p-4 text-sm text-yellow-900 space-y-2">
+              <p className="font-semibold">Keunggulan Foto Pro AI:</p>
+              <ul className="list-disc pl-4 space-y-1">
+                <li>Menggunakan setelan jas hitam & dasi formal otomatis</li>
+                <li>Latar belakang studio profesional abu-abu/biru</li>
+                <li>Rasio pas foto 1:1 tajam resolusi tinggi</li>
+                <li>Proses cepat 10-30 detik</li>
+              </ul>
+            </div>
+            <div className="flex flex-col gap-2">
+              <Button asChild className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-semibold">
+                <a href="https://lynk.id/ben-yt-ai/placeholder-pro-photo" target="_blank" rel="noopener noreferrer">
+                  Beli Fitur Foto Pro (Rp 5.000 / Bulan)
+                </a>
+              </Button>
+              <Button variant="ghost" className="w-full text-xs text-muted-foreground" asChild>
+                <a href="/harga">Lihat Perbandingan Paket</a>
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
