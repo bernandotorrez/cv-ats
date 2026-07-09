@@ -92,7 +92,7 @@ Deno.serve(async (req: Request) => {
             
             if (imageRes.ok) {
               const fileBlob = await imageRes.blob();
-              const filePath = `${requesterId}/pro-photo-${taskId}.png`;
+              const filePath = `${userId}/pro-photo-${taskId}.png`;
 
               // Upload to Supabase Storage
               const { error: uploadError } = await admin.storage
