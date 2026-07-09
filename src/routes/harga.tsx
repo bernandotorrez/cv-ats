@@ -408,7 +408,7 @@ function HargaPage() {
             </CardContent>
             <div className="px-8 pb-8 pt-0 z-10">
               <Button asChild size="lg" className="w-full bg-purple-500 hover:bg-purple-600 text-white font-semibold">
-                <a href="https://lynk.id/ben-yt-ai/placeholder-pro-photo" target="_blank" rel="noopener noreferrer">
+                <a href="https://lynk.id/ben-yt-ai/zz5m163mknj6" target="_blank" rel="noopener noreferrer">
                   Beli Kuota Foto Pro AI (Rp 5rb / Kuota)
                 </a>
               </Button>

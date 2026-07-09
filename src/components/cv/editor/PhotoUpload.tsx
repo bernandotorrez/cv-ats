@@ -363,7 +363,7 @@ export function PhotoUpload({ photoUrl, userId, cvId, onPhotoChange, proPhotoQuo
             </div>
             <div className="flex flex-col gap-2">
               <Button asChild className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-semibold">
-                <a href="https://lynk.id/ben-yt-ai/placeholder-pro-photo" target="_blank" rel="noopener noreferrer">
+                <a href="https://lynk.id/ben-yt-ai/zz5m163mknj6" target="_blank" rel="noopener noreferrer">
                   Beli Kuota Foto Pro (Rp 5.000 / Foto)
                 </a>
               </Button>
