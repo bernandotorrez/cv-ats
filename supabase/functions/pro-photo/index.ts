@@ -175,7 +175,7 @@ Deno.serve(async (req: Request) => {
         });
       }
 
-      const prompt = "foto harus tegap lurus, backgroudn bewarna putih, hanya sampai dada, seperti pas foto";
+      const prompt = "Convert this casual photo of a person into a highly professional business portrait headshot. The person should be facing directly forward with a straight, upright posture, looking directly at the camera. The composition should be a chest-up portrait only (cropped from the chest upward), similar to a professional passport or ID photo. The person should be wearing a clean, modern, and perfectly fitted professional dark suit with a collared white shirt and a matching professional tie (or a professional business blazer/blouse for a woman). The background should be a clean, slightly blurred professional studio background with neutral professional office colors (soft gray/blue). Face features, hairstyle, facial proportions, expression, and gender of the person must remain identical to the input photo. Use polished studio lighting, sharp focus, high-end DSLR camera quality, 8K resolution, and a photorealistic corporate portrait style.";
 
       const response = await fetch("https://api.kie.ai/api/v1/jobs/createTask", {
         method: "POST",
