@@ -36,6 +36,30 @@ export const Route = createFileRoute("/changelog")({
 const changelog = [
   {
     version: APP_VERSION,
+    date: "9 Juli 2026",
+    title: "Penambahan Fitur Enhance Foto CV Profesional",
+    summary:
+      "Kini Anda dapat mengonversi foto profil biasa menjadi pas foto formal profesional dengan jas rapi dan background studio menggunakan teknologi AI.",
+    highlights: [
+      {
+        icon: Sparkles,
+        type: "Fitur baru",
+        text: "Fitur AI Pro Photo yang dapat memproses foto kasual menjadi pas foto formal secara otomatis.",
+      },
+      {
+        icon: BadgeCheck,
+        type: "Subscription",
+        text: "Sistem pembelian kuota Add-on Foto Pro seharga Rp 5.000 / kuota dengan sisa kuota yang langsung terlihat di editor.",
+      },
+      {
+        icon: ShieldCheck,
+        type: "Keamanan",
+        text: "Penyimpanan otomatis hasil foto AI ke Supabase Storage (private bucket) demi menjamin keamanan dan keawetan berkas.",
+      },
+    ],
+  },
+  {
+    version: "v1.6.0-live",
     date: "20 Juni 2026",
     title: "Fitur Upload Foto Profil (Opsional)",
     summary:
