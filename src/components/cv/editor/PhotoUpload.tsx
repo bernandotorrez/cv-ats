@@ -24,6 +24,7 @@ export function PhotoUpload({ photoUrl, userId, cvId, onPhotoChange, proPhotoQuo
   const [isDragging, setIsDragging] = useState(false);
   const [generatingProPhoto, setGeneratingProPhoto] = useState(false);
   const [showUnlockModal, setShowUnlockModal] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [proPhotoProgressText, setProPhotoProgressText] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -145,7 +146,7 @@ export function PhotoUpload({ photoUrl, userId, cvId, onPhotoChange, proPhotoQuo
     }
   };
 
-  const handleGenerateProPhoto = async () => {
+  const handleGenerateProPhotoClick = () => {
     if (!photoUrl) {
       toast.error("Unggah foto kasualmu terlebih dahulu.");
       return;
@@ -155,6 +156,11 @@ export function PhotoUpload({ photoUrl, userId, cvId, onPhotoChange, proPhotoQuo
       setShowUnlockModal(true);
       return;
     }
+
+    setShowConfirmModal(true);
+  };
+
+  const executeGenerateProPhoto = async () => {
 
     setGeneratingProPhoto(true);
     setProPhotoProgressText("Memulai pembuatan foto...");
@@ -302,7 +308,7 @@ export function PhotoUpload({ photoUrl, userId, cvId, onPhotoChange, proPhotoQuo
               type="button"
               variant="outline"
               size="sm"
-              onClick={handleGenerateProPhoto}
+              onClick={handleGenerateProPhotoClick}
               disabled={uploading || generatingProPhoto}
               className="gap-1.5 rounded-xl text-xs bg-yellow-50 hover:bg-yellow-100 text-yellow-800 border-yellow-200"
             >
@@ -366,6 +372,58 @@ export function PhotoUpload({ photoUrl, userId, cvId, onPhotoChange, proPhotoQuo
                 <a href="https://lynk.id/ben-yt-ai/zz5m163mknj6" target="_blank" rel="noopener noreferrer">
                   Beli Kuota Foto Pro (Rp 5.000 / Foto)
                 </a>
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Confirm Generate Modal */}
+      <Dialog open={showConfirmModal} onOpenChange={(open) => !generatingProPhoto && setShowConfirmModal(open)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-lg">
+              <Sparkles className="h-5 w-5 text-yellow-600" />
+              Konfirmasi Pembuatan Foto
+            </DialogTitle>
+            <DialogDescription className="text-center pt-2">
+              Proses ini akan mengkonsumsi <strong>1 Kuota Foto Pro</strong>. Apakah Anda yakin ingin membuat pas foto profesional dari foto profil saat ini?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="flex flex-col items-center justify-center space-y-2 rounded-xl bg-muted/50 p-3">
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Contoh Hasil Pas Foto</span>
+              <img 
+                src="/contoh_enhance_photo.png" 
+                alt="Contoh Hasil Foto Profesional AI" 
+                className="w-48 h-48 object-cover rounded-xl shadow-md border"
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <Button 
+                className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-semibold"
+                onClick={executeGenerateProPhoto}
+                disabled={generatingProPhoto}
+              >
+                {generatingProPhoto ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    {proPhotoProgressText || "Memproses..."}
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="mr-2 h-4 w-4" />
+                    Enhance Sekarang (Sisa Kuota: {proPhotoQuota})
+                  </>
+                )}
+              </Button>
+              <Button 
+                variant="ghost" 
+                className="w-full" 
+                onClick={() => setShowConfirmModal(false)}
+                disabled={generatingProPhoto}
+              >
+                Batal
               </Button>
             </div>
           </div>
