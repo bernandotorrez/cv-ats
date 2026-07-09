@@ -10,26 +10,9 @@ Deno.serve(async (req: Request) => {
     const userId = await getUserId(req);
     const admin = getAdminClient();
 
-    // Check quota_pro_photo
-    const { data: profile } = await admin
-      .from("profiles")
-      .select("quota_pro_photo")
-      .eq("id", userId)
-      .single();
-
-    const currentQuota = profile?.quota_pro_photo || 0;
-    const canUse = currentQuota > 0;
-
-    if (!canUse) {
-      return new Response(JSON.stringify({ error: "Access Denied: Please buy Photo Pro Quota to use this feature." }), {
-        status: 403,
-        headers: { ...corsHeaders(req), "Content-Type": "application/json" },
-      });
-    }
-
     const url = new URL(req.url);
 
-    // GET Request: Check task status
+    // GET Request: Check task status (no quota check needed - task already created)
     if (req.method === "GET") {
       const taskId = url.searchParams.get("taskId");
       if (!taskId) {
@@ -173,6 +156,21 @@ Deno.serve(async (req: Request) => {
       if (!imageUrl) {
         return new Response(JSON.stringify({ error: "Missing imageUrl" }), {
           status: 400,
+          headers: { ...corsHeaders(req), "Content-Type": "application/json" },
+        });
+      }
+
+      // Check quota - only on POST (task creation)
+      const { data: profile } = await admin
+        .from("profiles")
+        .select("quota_pro_photo")
+        .eq("id", userId)
+        .single();
+
+      const currentQuota = profile?.quota_pro_photo || 0;
+      if (currentQuota <= 0) {
+        return new Response(JSON.stringify({ error: "Access Denied: Please buy Photo Pro Quota to use this feature." }), {
+          status: 403,
           headers: { ...corsHeaders(req), "Content-Type": "application/json" },
         });
       }
