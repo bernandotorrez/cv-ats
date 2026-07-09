@@ -493,15 +493,33 @@ function AdminUsersPage() {
               <div className="flex flex-col space-y-1.5 py-2">
                 <Label htmlFor="quota-pro-photo" className="text-sm font-medium">Kuota Foto Profesional</Label>
                 <div className="flex items-center gap-2">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="icon" 
+                    className="h-8 w-8" 
+                    onClick={() => setEditQuotaProPhoto(Math.max(0, editQuotaProPhoto - 1))}
+                  >
+                    <span className="font-bold">-</span>
+                  </Button>
                   <Input 
                     id="quota-pro-photo" 
                     type="number"
                     min="0"
                     value={editQuotaProPhoto} 
                     onChange={(e) => setEditQuotaProPhoto(parseInt(e.target.value) || 0)} 
-                    className="w-24"
+                    className="w-20 text-center"
                   />
-                  <span className="text-sm text-muted-foreground">Kuota</span>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="icon" 
+                    className="h-8 w-8" 
+                    onClick={() => setEditQuotaProPhoto(editQuotaProPhoto + 1)}
+                  >
+                    <span className="font-bold">+</span>
+                  </Button>
+                  <span className="text-sm text-muted-foreground ml-2">Kuota</span>
                 </div>
               </div>
 
