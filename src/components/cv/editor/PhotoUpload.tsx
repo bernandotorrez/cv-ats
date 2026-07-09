@@ -232,10 +232,12 @@ export function PhotoUpload({ photoUrl, userId, cvId, onPhotoChange, proPhotoQuo
             clearInterval(pollInterval);
             onPhotoChange(statusData.imageUrl);
             setGeneratingProPhoto(false);
+            setShowConfirmModal(false);
             toast.success("Foto profesional AI kamu siap!");
           } else if (statusData.status === "failed") {
             clearInterval(pollInterval);
             setGeneratingProPhoto(false);
+            setShowConfirmModal(false);
             toast.error(statusData.error || "Gagal membuat foto profesional.");
           } else {
             // status === "generating"

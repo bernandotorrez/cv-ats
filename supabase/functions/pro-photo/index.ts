@@ -100,6 +100,38 @@ Deno.serve(async (req: Request) => {
         }
 
         if (imageUrl) {
+          try {
+            // Download from Kie AI temporary URL
+            const imageRes = await fetch(imageUrl);
+            if (imageRes.ok) {
+              const arrayBuffer = await imageRes.arrayBuffer();
+              const filePath = `${requesterId}/pro-photo-${taskId}.png`;
+
+              // Upload to Supabase Storage
+              const { error: uploadError } = await admin.storage
+                .from("cv-photos")
+                .upload(filePath, arrayBuffer, {
+                  contentType: "image/png",
+                  upsert: true,
+                });
+
+              if (!uploadError) {
+                // Get Signed URL
+                const { data: signedData } = await admin.storage
+                  .from("cv-photos")
+                  .createSignedUrl(filePath, 31536000); // 1 year
+
+                if (signedData?.signedUrl) {
+                  imageUrl = signedData.signedUrl;
+                }
+              } else {
+                console.error("Failed to upload pro-photo to storage:", uploadError);
+              }
+            }
+          } catch (storageErr) {
+             console.error("Failed to process image storage:", storageErr);
+          }
+
           return new Response(JSON.stringify({ status: "success", imageUrl }), {
             status: 200,
             headers: { ...corsHeaders(req), "Content-Type": "application/json" },
