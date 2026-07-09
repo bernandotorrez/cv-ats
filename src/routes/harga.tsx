@@ -155,7 +155,7 @@ const comparison = [
   ["CV aktif", "1", "3", "10"],
   ["Template", "2 basic", "Semua", "Semua"],
   ["Upload CV (PDF/DOCX)", "Add-on (Rp 5.000 / bln)", "Termasuk", "Termasuk"],
-  ["Foto Profesional AI", "Add-on (Rp 5.000 / bln)", "Termasuk", "Termasuk"],
+  ["Foto Profesional AI", "Rp 5.000 / Kuota", "Rp 5.000 / Kuota", "Rp 5.000 / Kuota"],
   ["AI suggestions", "5x", "50x", "200x"],
   ["ATS scoring", "1x", "10x", "50x"],
   ["Perbaiki teks AI", "5x", "50x", "200x"],
@@ -409,7 +409,7 @@ function HargaPage() {
             <div className="px-8 pb-8 pt-0 z-10">
               <Button asChild size="lg" className="w-full bg-purple-500 hover:bg-purple-600 text-white font-semibold">
                 <a href="https://lynk.id/ben-yt-ai/placeholder-pro-photo" target="_blank" rel="noopener noreferrer">
-                  Beli Foto Pro AI (Rp 5rb / bln)
+                  Beli Kuota Foto Pro AI (Rp 5rb / Kuota)
                 </a>
               </Button>
             </div>

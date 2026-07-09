@@ -10,29 +10,18 @@ Deno.serve(async (req: Request) => {
     const userId = await getUserId(req);
     const admin = getAdminClient();
 
-    // Check user tier and has_pro_photo feature
+    // Check quota_pro_photo
     const { data: profile } = await admin
       .from("profiles")
-      .select("has_pro_photo, pro_photo_end_date")
+      .select("quota_pro_photo")
       .eq("id", userId)
       .single();
 
-    const { data: sub } = await admin
-      .from("user_subscriptions")
-      .select("subscription_tiers!inner(slug)")
-      .eq("user_id", userId)
-      .eq("status", "active")
-      .single();
-
-    const tier = sub?.subscription_tiers?.slug || "free";
-    let hasProPhoto = profile?.has_pro_photo || false;
-    if (profile?.pro_photo_end_date) {
-      hasProPhoto = new Date(profile.pro_photo_end_date) > new Date();
-    }
-    const canUse = tier === "starter" || tier === "pro" || tier === "pro_plus" || hasProPhoto;
+    const currentQuota = profile?.quota_pro_photo || 0;
+    const canUse = currentQuota > 0;
 
     if (!canUse) {
-      return new Response(JSON.stringify({ error: "Access Denied: Please upgrade your tier or buy the Professional Photo add-on" }), {
+      return new Response(JSON.stringify({ error: "Access Denied: Please buy Photo Pro Quota to use this feature." }), {
         status: 403,
         headers: { ...corsHeaders(req), "Content-Type": "application/json" },
       });
@@ -178,6 +167,17 @@ Deno.serve(async (req: Request) => {
           status: 500,
           headers: { ...corsHeaders(req), "Content-Type": "application/json" },
         });
+      }
+
+      // Decrement quota
+      const { error: updateError } = await admin
+        .from("profiles")
+        .update({ quota_pro_photo: currentQuota - 1 })
+        .eq("id", userId);
+
+      if (updateError) {
+        console.error("Failed to decrement quota:", updateError);
+        // We continue anyway, but log it.
       }
 
       return new Response(JSON.stringify({ success: true, taskId }), {

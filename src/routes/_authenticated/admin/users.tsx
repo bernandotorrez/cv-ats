@@ -67,7 +67,7 @@ interface UserRow {
   auth_created_at?: string;
   last_sign_in_at?: string | null;
   has_upload_cv?: boolean;
-  has_pro_photo?: boolean;
+  quota_pro_photo?: number;
 }
 
 interface PaginationState {
@@ -97,7 +97,7 @@ function AdminUsersPage() {
   const [editTier, setEditTier] = useState("");
   const [editRole, setEditRole] = useState("");
   const [editHasUploadCv, setEditHasUploadCv] = useState(false);
-  const [editHasProPhoto, setEditHasProPhoto] = useState(false);
+  const [editQuotaProPhoto, setEditQuotaProPhoto] = useState(0);
   const [saving, setSaving] = useState(false);
   const [pagination, setPagination] = useState<PaginationState>({
     page: 1,
@@ -180,7 +180,7 @@ function AdminUsersPage() {
     setEditTier(u.tier);
     setEditRole(u.role);
     setEditHasUploadCv(u.has_upload_cv || false);
-    setEditHasProPhoto(u.has_pro_photo || false);
+    setEditQuotaProPhoto(u.quota_pro_photo || 0);
   };
 
   const handleSaveEdit = async () => {
@@ -208,7 +208,7 @@ function AdminUsersPage() {
         tier: editTier,
         role: editRole,
         has_upload_cv: editHasUploadCv,
-        has_pro_photo: editHasProPhoto,
+        quota_pro_photo: editQuotaProPhoto,
       }),
     });
 
@@ -334,9 +334,9 @@ function AdminUsersPage() {
                       Upload CV (1 Bulan)
                     </Badge>
                   )}
-                  {u.has_pro_photo && (
+                  {(u.quota_pro_photo ?? 0) > 0 && (
                     <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-200">
-                      Foto Pro (1 Bulan)
+                      Sisa Kuota Pro: {u.quota_pro_photo}
                     </Badge>
                   )}
                 </div>
@@ -490,13 +490,19 @@ function AdminUsersPage() {
                 <Label htmlFor="has-upload-cv" className="text-sm font-medium">Unlock Fitur Upload CV (1 Bulan)</Label>
               </div>
 
-              <div className="flex items-center space-x-2 py-2">
-                <Switch 
-                  id="has-pro-photo" 
-                  checked={editHasProPhoto} 
-                  onCheckedChange={setEditHasProPhoto} 
-                />
-                <Label htmlFor="has-pro-photo" className="text-sm font-medium">Unlock Foto Profesional (1 Bulan)</Label>
+              <div className="flex flex-col space-y-1.5 py-2">
+                <Label htmlFor="quota-pro-photo" className="text-sm font-medium">Kuota Foto Profesional</Label>
+                <div className="flex items-center gap-2">
+                  <Input 
+                    id="quota-pro-photo" 
+                    type="number"
+                    min="0"
+                    value={editQuotaProPhoto} 
+                    onChange={(e) => setEditQuotaProPhoto(parseInt(e.target.value) || 0)} 
+                    className="w-24"
+                  />
+                  <span className="text-sm text-muted-foreground">Kuota</span>
+                </div>
               </div>
 
               <div className="flex justify-end gap-2 pt-2">

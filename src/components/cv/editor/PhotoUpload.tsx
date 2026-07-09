@@ -16,10 +16,10 @@ interface PhotoUploadProps {
   userId: string;
   cvId: string;
   onPhotoChange: (url: string) => void;
-  canUseProPhoto: boolean;
+  proPhotoQuota: number;
 }
 
-export function PhotoUpload({ photoUrl, userId, cvId, onPhotoChange, canUseProPhoto }: PhotoUploadProps) {
+export function PhotoUpload({ photoUrl, userId, cvId, onPhotoChange, proPhotoQuota }: PhotoUploadProps) {
   const [uploading, setUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [generatingProPhoto, setGeneratingProPhoto] = useState(false);
@@ -151,7 +151,7 @@ export function PhotoUpload({ photoUrl, userId, cvId, onPhotoChange, canUseProPh
       return;
     }
 
-    if (!canUseProPhoto) {
+    if (proPhotoQuota <= 0) {
       setShowUnlockModal(true);
       return;
     }
@@ -313,12 +313,12 @@ export function PhotoUpload({ photoUrl, userId, cvId, onPhotoChange, canUseProPh
                 </>
               ) : (
                 <>
-                  {canUseProPhoto ? (
+                  {proPhotoQuota > 0 ? (
                     <Sparkles className="h-3.5 w-3.5 text-yellow-600 fill-yellow-600 animate-pulse" />
                   ) : (
                     <LockKeyhole className="h-3.5 w-3.5 text-yellow-600" />
                   )}
-                  Foto Pro AI (Jas)
+                  {proPhotoQuota > 0 ? `Foto Pro AI (Sisa: ${proPhotoQuota})` : "Foto Pro AI (Jas)"}
                 </>
               )}
             </Button>
@@ -348,28 +348,24 @@ export function PhotoUpload({ photoUrl, userId, cvId, onPhotoChange, canUseProPh
               <LockKeyhole className="h-5 w-5 text-yellow-600" />
               Fitur Foto Profesional AI
             </DialogTitle>
-            <DialogDescription className="text-sm">
-              Ubah foto biasa kamu secara instan menjadi foto studio formal berjas hitam dan dasi rapi.
+            <DialogDescription className="text-center pt-2">
+              Fitur Foto Profesional AI memerlukan kuota generasi. Beli Kuota Add-on untuk menggunakan fitur ini dan menyempurnakan fotomu layaknya di studio profesional.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
-            <div className="rounded-lg bg-yellow-50/50 border border-yellow-100 p-4 text-sm text-yellow-900 space-y-2">
-              <p className="font-semibold">Keunggulan Foto Pro AI:</p>
-              <ul className="list-disc pl-4 space-y-1">
-                <li>Menggunakan setelan jas hitam & dasi formal otomatis</li>
-                <li>Latar belakang studio profesional abu-abu/biru</li>
-                <li>Rasio pas foto 1:1 tajam resolusi tinggi</li>
-                <li>Proses cepat 10-30 detik</li>
-              </ul>
+            <div className="flex flex-col items-center justify-center space-y-2 rounded-xl bg-muted/50 p-3">
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Contoh Hasil</span>
+              <img 
+                src="/contoh_enhance_photo.png" 
+                alt="Contoh Hasil Foto Profesional AI" 
+                className="w-48 h-48 object-cover rounded-xl shadow-md border"
+              />
             </div>
             <div className="flex flex-col gap-2">
               <Button asChild className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-semibold">
                 <a href="https://lynk.id/ben-yt-ai/placeholder-pro-photo" target="_blank" rel="noopener noreferrer">
-                  Beli Fitur Foto Pro (Rp 5.000 / Bulan)
+                  Beli Kuota Foto Pro (Rp 5.000 / Foto)
                 </a>
-              </Button>
-              <Button variant="ghost" className="w-full text-xs text-muted-foreground" asChild>
-                <a href="/harga">Lihat Perbandingan Paket</a>
               </Button>
             </div>
           </div>
