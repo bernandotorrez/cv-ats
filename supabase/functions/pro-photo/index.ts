@@ -92,25 +92,29 @@ Deno.serve(async (req: Request) => {
 
         // Broad fallback search if still not found
         if (!imageUrl) {
-           const str = typeof result === "string" ? result : JSON.stringify(result);
-           const match = str?.match(/https?:\/\/[^"'\s\\]+/i);
-           if (match) {
-             imageUrl = match[0].replace(/\\/g, '');
-           }
+          const str = typeof result === "string" ? result : JSON.stringify(result);
+          const match = str?.match(/https?:\/\/[^"'\s\\]+/i);
+          if (match) {
+            imageUrl = match[0].replace(/\\/g, '');
+          }
         }
 
         if (imageUrl) {
+          let debugMsg = "";
           try {
             // Download from Kie AI temporary URL
-            const imageRes = await fetch(imageUrl);
+            const imageRes = await fetch(imageUrl, {
+              headers: { "User-Agent": "Mozilla/5.0" }
+            });
+            
             if (imageRes.ok) {
-              const arrayBuffer = await imageRes.arrayBuffer();
+              const fileBlob = await imageRes.blob();
               const filePath = `${requesterId}/pro-photo-${taskId}.png`;
 
               // Upload to Supabase Storage
               const { error: uploadError } = await admin.storage
                 .from("cv-photos")
-                .upload(filePath, arrayBuffer, {
+                .upload(filePath, fileBlob, {
                   contentType: "image/png",
                   upsert: true,
                 });
@@ -123,16 +127,22 @@ Deno.serve(async (req: Request) => {
 
                 if (signedData?.signedUrl) {
                   imageUrl = signedData.signedUrl;
+                } else {
+                  debugMsg = "Failed to create signed URL";
                 }
               } else {
+                debugMsg = `Upload error: ${uploadError.message}`;
                 console.error("Failed to upload pro-photo to storage:", uploadError);
               }
+            } else {
+              debugMsg = `Download failed: ${imageRes.statusText}`;
             }
-          } catch (storageErr) {
+          } catch (storageErr: any) {
+             debugMsg = `Storage exception: ${storageErr.message}`;
              console.error("Failed to process image storage:", storageErr);
           }
 
-          return new Response(JSON.stringify({ status: "success", imageUrl }), {
+          return new Response(JSON.stringify({ status: "success", imageUrl, debug: debugMsg }), {
             status: 200,
             headers: { ...corsHeaders(req), "Content-Type": "application/json" },
           });
@@ -175,7 +185,7 @@ Deno.serve(async (req: Request) => {
         });
       }
 
-      const prompt = "Convert this casual photo of a person into a highly professional business portrait headshot. The person should be facing directly forward with a straight, upright posture, looking directly at the camera. The composition should be a chest-up portrait only (cropped from the chest upward), similar to a professional passport or ID photo. The person should be wearing a clean, modern, and perfectly fitted professional dark suit with a collared white shirt and a matching professional tie (or a professional business blazer/blouse for a woman). The background should be a clean, slightly blurred professional studio background with neutral professional office colors (soft gray/blue). Face features, hairstyle, facial proportions, expression, and gender of the person must remain identical to the input photo. Use polished studio lighting, sharp focus, high-end DSLR camera quality, 8K resolution, and a photorealistic corporate portrait style.";
+      const prompt = "Convert this casual photo of a person into a highly professional business portrait headshot. The person should be facing directly forward with a straight, upright posture, looking directly at the camera. The composition should be a chest-up portrait only (cropped from the chest upward), similar to a professional passport or ID photo. The person should be wearing a clean, modern, and perfectly fitted professional dark suit with a collared white shirt and a matching professional tie (or a professional business blazer/blouse for a woman). The background should be a clean, slightly blurred professional studio background with neutral professional office colors (soft gray/blue). Face features, hairstyle, facial proportions, expression, and gender of the person must remain identical to the input photo. Use polished studio lighting, sharp focus, high-end DSLR camera quality, 8K resolution, and a photorealistic corporate portrait style and Remove Background then Change to White Colour";
 
       const response = await fetch("https://api.kie.ai/api/v1/jobs/createTask", {
         method: "POST",
@@ -205,7 +215,7 @@ Deno.serve(async (req: Request) => {
 
       const resData = await response.json();
       console.log("Kie AI createTask response data:", JSON.stringify(resData));
-      
+
       if (resData.code !== 200 && resData.code !== 0 && resData.msg) {
         return new Response(JSON.stringify({ error: `Kie AI Error: ${resData.msg}` }), {
           status: 400,
