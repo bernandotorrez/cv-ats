@@ -67,22 +67,36 @@ Deno.serve(async (req: Request) => {
       const statusData = await statusRes.json();
       console.log("Kie AI status response:", JSON.stringify(statusData));
 
-      // Kie AI returns code: 200/0 and status field in data object
-      // 1 = success, 0 = generating/processing, 2/3 = failed
-      const code = statusData.code;
+      // Kie AI returns state in data.state and result in data.resultJson
       const data = statusData.data || {};
-      const status = data.status; // status integer
-      const result = data.result; // result object/string
+      const status = data.status ?? data.state;
+      const result = data.result || data.resultJson;
 
-      if (status === 1) {
-        // Find image URL in result safely
+      const isSuccess = status === 1 || status === "success" || status === "completed" || status === "successed" || status === "DONE";
+      const isFailed = status === 2 || status === 3 || status === "failed" || status === "error" || status === "FAILED";
+
+      if (isSuccess) {
         let imageUrl = null;
         if (result) {
           if (typeof result === "string") {
-            imageUrl = result;
+            try {
+              const parsed = JSON.parse(result);
+              imageUrl = parsed.url || parsed.image_url || parsed.imageUrl || parsed.images?.[0] || parsed.result;
+            } catch (e) {
+              if (result.startsWith("http")) imageUrl = result;
+            }
           } else if (typeof result === "object") {
-            imageUrl = result.url || result.image_url || result.imageUrl || result[0] || Object.values(result).find(val => typeof val === "string" && val.startsWith("http"));
+            imageUrl = result.url || result.image_url || result.imageUrl || result.images?.[0] || result.result;
           }
+        }
+
+        // Broad fallback search if still not found
+        if (!imageUrl) {
+           const str = typeof result === "string" ? result : JSON.stringify(result);
+           const match = str?.match(/https?:\/\/[^"'\s\\]+/i);
+           if (match) {
+             imageUrl = match[0].replace(/\\/g, '');
+           }
         }
 
         if (imageUrl) {
@@ -96,8 +110,8 @@ Deno.serve(async (req: Request) => {
             headers: { ...corsHeaders(req), "Content-Type": "application/json" },
           });
         }
-      } else if (status === 2 || status === 3) {
-        return new Response(JSON.stringify({ status: "failed", error: "AI generation failed" }), {
+      } else if (isFailed) {
+        return new Response(JSON.stringify({ status: "failed", error: data.failMsg || "AI generation failed" }), {
           status: 200,
           headers: { ...corsHeaders(req), "Content-Type": "application/json" },
         });
@@ -129,7 +143,7 @@ Deno.serve(async (req: Request) => {
         });
       }
 
-      const prompt = "Convert this casual photo of a person into a highly professional business portrait headshot. The person should be wearing a clean, modern, and perfectly fitted professional dark suit with a collared white shirt and a matching professional tie (or a professional business blazer/blouse for a woman). The background should be a clean, slightly blurred professional studio background with neutral professional office colors (soft gray/blue). Face features, hairstyle, and gender of the person must remain identical to the input photo, but with polished, studio lighting, sharp focus, high-end DSLR camera quality, 8k resolution, photorealistic corporate portrait.";
+      const prompt = "foto harus tegap lurus, backgroudn bewarna putih, hanya sampai dada, seperti pas foto";
 
       const response = await fetch("https://api.kie.ai/api/v1/jobs/createTask", {
         method: "POST",
