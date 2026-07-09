@@ -778,6 +778,7 @@ function CvEditorPage() {
                   cvLanguage={cvLanguage}
                   userId={user?.id}
                   cvId={id}
+                  canUseProPhoto={canUseProPhoto}
                 />
               )}
             />
@@ -818,6 +819,7 @@ function CvEditorPage() {
               cvLanguage={cvLanguage}
               userId={user?.id}
               cvId={id}
+              canUseProPhoto={canUseProPhoto}
             />
           </div>
         )}
@@ -1292,6 +1294,7 @@ function EditorForm({
   cvLanguage,
   userId,
   cvId,
+  canUseProPhoto,
 }: {
   data: CvData;
   setData: React.Dispatch<React.SetStateAction<CvData>>;
@@ -1334,6 +1337,7 @@ function EditorForm({
   cvLanguage: CvUiLang;
   userId?: string;
   cvId?: string;
+  canUseProPhoto: boolean;
 }) {
   return (
     <div className="space-y-6">
