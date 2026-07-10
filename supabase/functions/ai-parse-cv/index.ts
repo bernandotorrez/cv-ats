@@ -28,7 +28,7 @@ Deno.serve(async (req: Request) => {
     // Check user tier and has_upload_cv feature
     const { data: profile } = await admin
       .from("profiles")
-      .select("has_upload_cv, upload_cv_end_date")
+      .select("has_upload_cv, upload_cv_end_date, quota_upload_cv, quota_upload_cv_reset_at")
       .eq("id", userId)
       .single();
 
@@ -37,14 +37,39 @@ Deno.serve(async (req: Request) => {
       .select("subscription_tiers!inner(slug)")
       .eq("user_id", userId)
       .eq("status", "active")
-      .single();
+      .maybeSingle();
 
-    const tier = sub?.subscription_tiers?.slug || "free";
-    let hasUploadCv = profile?.has_upload_cv || false;
+    const tierSlug = (sub as any)?.subscription_tiers?.slug as string | undefined;
+    const TIER_UPLOAD_CV_QUOTA: Record<string, number> = { starter: 10, pro: 20 };
+
+    let hasUploadCvAddon = profile?.has_upload_cv || false;
     if (profile?.upload_cv_end_date) {
-      hasUploadCv = new Date(profile.upload_cv_end_date) > new Date();
+      hasUploadCvAddon = new Date(profile.upload_cv_end_date) > new Date();
     }
-    const canUpload = tier === "starter" || tier === "pro" || tier === "pro_plus" || hasUploadCv;
+
+    // Lazy monthly reset for tier quota
+    const monthStart = new Date();
+    monthStart.setDate(1);
+    monthStart.setHours(0, 0, 0, 0);
+
+    const lastReset = profile?.quota_upload_cv_reset_at ? new Date(profile.quota_upload_cv_reset_at) : null;
+    const needsReset = !lastReset || lastReset < monthStart;
+
+    let effectiveQuota = profile?.quota_upload_cv || 0;
+
+    if (needsReset) {
+      const tierAllocation = tierSlug ? TIER_UPLOAD_CV_QUOTA[tierSlug] : null;
+      if (tierAllocation !== null && tierAllocation !== undefined) {
+        effectiveQuota = tierAllocation;
+        await admin
+          .from("profiles")
+          .update({ quota_upload_cv: effectiveQuota, quota_upload_cv_reset_at: new Date().toISOString() })
+          .eq("id", userId);
+      }
+    }
+
+    // A user can upload CV if they have the add-on OR they have quota > 0
+    const canUpload = hasUploadCvAddon || effectiveQuota > 0;
 
     if (!canUpload) {
       throw new Error("Fitur Upload CV hanya untuk pengguna berbayar. Silakan Upgrade Tier atau beli fitur Upload CV.");
@@ -181,6 +206,14 @@ PENTING:
     }
 
     await checkAndTrackQuota(admin, userId, "guided", 600);
+
+    // If they don't have the addon, decrement the tier quota
+    if (!hasUploadCvAddon && effectiveQuota > 0) {
+      await admin
+        .from("profiles")
+        .update({ quota_upload_cv: effectiveQuota - 1 })
+        .eq("id", userId);
+    }
 
     return corsResponse({ success: true, cvData }, 200, req);
   } catch (e) {

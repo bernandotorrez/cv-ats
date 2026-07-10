@@ -163,12 +163,49 @@ Deno.serve(async (req: Request) => {
       // Check quota - only on POST (task creation)
       const { data: profile } = await admin
         .from("profiles")
-        .select("quota_pro_photo")
+        .select("quota_pro_photo, quota_pro_photo_reset_at")
         .eq("id", userId)
         .single();
 
-      const currentQuota = profile?.quota_pro_photo || 0;
-      if (currentQuota <= 0) {
+      const TIER_PHOTO_QUOTA: Record<string, number> = { starter: 2, pro: 5 };
+
+      // Lazy monthly reset: check if user has a tier subscription and month changed
+      const monthStart = new Date();
+      monthStart.setDate(1);
+      monthStart.setHours(0, 0, 0, 0);
+
+      const lastReset = profile?.quota_pro_photo_reset_at ? new Date(profile.quota_pro_photo_reset_at) : null;
+      const needsReset = !lastReset || lastReset < monthStart;
+
+      if (needsReset) {
+        // Check user's active subscription tier
+        const { data: sub } = await admin
+          .from("user_subscriptions")
+          .select("subscription_tiers!inner(slug)")
+          .eq("user_id", userId)
+          .eq("status", "active")
+          .maybeSingle();
+
+        const tierSlug = (sub as any)?.subscription_tiers?.slug as string | undefined;
+        const tierAllocation = tierSlug ? TIER_PHOTO_QUOTA[tierSlug] : null;
+
+        if (tierAllocation !== null && tierAllocation !== undefined) {
+          // Reset quota to tier allocation
+          await admin
+            .from("profiles")
+            .update({ quota_pro_photo: tierAllocation, quota_pro_photo_reset_at: new Date().toISOString() })
+            .eq("id", userId);
+
+          // Use the fresh quota
+          var effectiveQuota = tierAllocation;
+        } else {
+          var effectiveQuota = profile?.quota_pro_photo || 0;
+        }
+      } else {
+        var effectiveQuota = profile?.quota_pro_photo || 0;
+      }
+
+      if (effectiveQuota <= 0) {
         return new Response(JSON.stringify({ error: "Access Denied: Please buy Photo Pro Quota to use this feature." }), {
           status: 403,
           headers: { ...corsHeaders(req), "Content-Type": "application/json" },
@@ -233,7 +270,7 @@ Deno.serve(async (req: Request) => {
       // Decrement quota
       const { error: updateError } = await admin
         .from("profiles")
-        .update({ quota_pro_photo: currentQuota - 1 })
+        .update({ quota_pro_photo: effectiveQuota - 1 })
         .eq("id", userId);
 
       if (updateError) {

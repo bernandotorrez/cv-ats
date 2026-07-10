@@ -68,6 +68,7 @@ interface UserRow {
   last_sign_in_at?: string | null;
   has_upload_cv?: boolean;
   quota_pro_photo?: number;
+  quota_upload_cv?: number;
 }
 
 interface PaginationState {
@@ -98,6 +99,7 @@ function AdminUsersPage() {
   const [editRole, setEditRole] = useState("");
   const [editHasUploadCv, setEditHasUploadCv] = useState(false);
   const [editQuotaProPhoto, setEditQuotaProPhoto] = useState(0);
+  const [editQuotaUploadCv, setEditQuotaUploadCv] = useState(0);
   const [saving, setSaving] = useState(false);
   const [pagination, setPagination] = useState<PaginationState>({
     page: 1,
@@ -177,10 +179,11 @@ function AdminUsersPage() {
 
   const handleEdit = (u: UserRow) => {
     setEditUser(u);
-    setEditTier(u.tier);
-    setEditRole(u.role);
+    setEditTier(u.tier || "free");
+    setEditRole(u.role || "user");
     setEditHasUploadCv(u.has_upload_cv || false);
     setEditQuotaProPhoto(u.quota_pro_photo || 0);
+    setEditQuotaUploadCv(u.quota_upload_cv || 0);
   };
 
   const handleSaveEdit = async () => {
@@ -209,6 +212,7 @@ function AdminUsersPage() {
         role: editRole,
         has_upload_cv: editHasUploadCv,
         quota_pro_photo: editQuotaProPhoto,
+        quota_upload_cv: editQuotaUploadCv,
       }),
     });
 
@@ -329,16 +333,19 @@ function AdminUsersPage() {
                       {u.tier_status}
                     </Badge>
                   )}
-                  {u.has_upload_cv && (
-                    <Badge variant="outline" className="text-xs bg-yellow-50 text-yellow-700 border-yellow-200">
-                      Upload CV (1 Bulan)
-                    </Badge>
-                  )}
-                  {(u.quota_pro_photo ?? 0) > 0 && (
-                    <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-200">
-                      Sisa Kuota Pro: {u.quota_pro_photo}
-                    </Badge>
-                  )}
+                  <div className="flex flex-col gap-1 text-xs">
+                    {u.has_upload_cv && (
+                      <Badge variant="secondary" className="w-fit">
+                        Upload CV (1 Bulan)
+                      </Badge>
+                    )}
+                    {u.quota_upload_cv !== undefined && u.quota_upload_cv > 0 && (
+                      <span className="text-muted-foreground">Kuota Upload CV: {u.quota_upload_cv}</span>
+                    )}
+                    {u.quota_pro_photo !== undefined && u.quota_pro_photo > 0 && (
+                      <span className="text-muted-foreground">Kuota Pro Photo: {u.quota_pro_photo}</span>
+                    )}
+                  </div>
                 </div>
                 <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
                   <span className="flex items-center gap-1">
@@ -488,6 +495,38 @@ function AdminUsersPage() {
                   onCheckedChange={setEditHasUploadCv} 
                 />
                 <Label htmlFor="has-upload-cv" className="text-sm font-medium">Unlock Fitur Upload CV (1 Bulan)</Label>
+              </div>
+
+              <div className="flex flex-col space-y-1.5 py-2">
+                <Label htmlFor="quota-upload-cv" className="text-sm font-medium">Kuota Upload CV</Label>
+                <div className="flex items-center gap-2">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="icon" 
+                    className="h-8 w-8" 
+                    onClick={() => setEditQuotaUploadCv(Math.max(0, editQuotaUploadCv - 1))}
+                  >
+                    <span className="font-bold">-</span>
+                  </Button>
+                  <Input 
+                    id="quota-upload-cv" 
+                    type="number"
+                    min="0"
+                    value={editQuotaUploadCv} 
+                    onChange={(e) => setEditQuotaUploadCv(parseInt(e.target.value) || 0)} 
+                    className="w-20 text-center"
+                  />
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="icon" 
+                    className="h-8 w-8" 
+                    onClick={() => setEditQuotaUploadCv(editQuotaUploadCv + 1)}
+                  >
+                    <span className="font-bold">+</span>
+                  </Button>
+                </div>
               </div>
 
               <div className="flex flex-col space-y-1.5 py-2">

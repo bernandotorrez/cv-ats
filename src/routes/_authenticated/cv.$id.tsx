@@ -155,6 +155,7 @@ function CvEditorPage() {
   const [userTier, setUserTier] = useState("free");
   const [hasUploadCvFeature, setHasUploadCvFeature] = useState(false);
   const [quotaProPhoto, setQuotaProPhoto] = useState(0);
+  const [quotaUploadCv, setQuotaUploadCv] = useState(0);
   const [cvLanguage, setCvLanguage] = useState<CvUiLang>("id");
   const [allowedTemplates, setAllowedTemplates] = useState<string[] | null>(null);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "unsaved">("idle");
@@ -262,7 +263,7 @@ function CvEditorPage() {
         .single();
       const { data: profile } = await (supabase as any)
         .from("profiles")
-        .select("has_upload_cv, upload_cv_end_date, quota_pro_photo")
+        .select("has_upload_cv, upload_cv_end_date, quota_pro_photo, quota_upload_cv")
         .eq("id", row.user_id)
         .single();
       if (profile) {
@@ -272,6 +273,7 @@ function CvEditorPage() {
         }
         setHasUploadCvFeature(isUnlocked);
         setQuotaProPhoto(profile.quota_pro_photo || 0);
+        setQuotaUploadCv(profile.quota_upload_cv || 0);
       }
       if (sub) {
         setUserTier(sub.subscription_tiers?.slug ?? "free");
@@ -481,6 +483,10 @@ function CvEditorPage() {
       setShowCvUpload(false);
       setCvUploadFile(null);
       toast.success("CV berhasil di-import!");
+      // If they relied on tier quota (not add-on), decrement it locally
+      if (!hasUploadCvFeature && quotaUploadCv > 0) {
+        setQuotaUploadCv(prev => prev - 1);
+      }
     } catch (e: any) {
       setCvUploadError(e.message || "Gagal membaca CV");
     } finally {
@@ -623,7 +629,7 @@ function CvEditorPage() {
 
   if (loading) return <EditorSkeleton />;
 
-  const canUploadCv = userTier === "starter" || userTier === "pro" || userTier === "pro_plus" || hasUploadCvFeature;
+  const canUploadCv = hasUploadCvFeature || quotaUploadCv > 0;
 
   return (
     <div className="cv-editor-page flex h-[calc(100vh-4rem)] min-h-0 flex-col bg-muted/30">
@@ -1004,6 +1010,11 @@ function CvEditorPage() {
             <DialogTitle className="flex items-center gap-2 text-lg">
               <Upload className="h-5 w-5" />
               Upload CV yang Sudah Ada
+              {hasUploadCvFeature ? (
+                <span className="ml-auto text-xs font-normal text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-full dark:bg-emerald-900/30 dark:text-emerald-400">Add-on Aktif</span>
+              ) : quotaUploadCv > 0 ? (
+                <span className="ml-auto text-xs font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full">Sisa Kuota: {quotaUploadCv}x</span>
+              ) : null}
             </DialogTitle>
             <DialogDescription className="text-sm">
               Upload CV kamu dalam format PDF atau DOCX. AI akan membaca dan mengisi data otomatis.

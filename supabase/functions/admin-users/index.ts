@@ -28,6 +28,7 @@ type AdminUsersPageRow = {
   has_upload_cv?: boolean;
   upload_cv_end_date?: string | null;
   quota_pro_photo?: number;
+  quota_upload_cv?: number;
 };
 
 type UpdateUserRequest = {
@@ -36,6 +37,7 @@ type UpdateUserRequest = {
   role?: string;
   has_upload_cv?: boolean;
   quota_pro_photo?: number;
+  quota_upload_cv?: number;
 };
 
 const VALID_TIERS = new Set(["free", "starter", "pro"]);
@@ -107,7 +109,7 @@ Deno.serve(async (req: Request) => {
       if (userIds.length > 0) {
         const { data: profiles } = await admin
           .from("profiles")
-          .select("id, has_upload_cv, upload_cv_end_date, quota_pro_photo")
+          .select("id, has_upload_cv, upload_cv_end_date, quota_pro_photo, quota_upload_cv")
           .in("id", userIds);
         profileMap = new Map((profiles || []).map(p => [p.id, p]));
       }
@@ -126,6 +128,7 @@ Deno.serve(async (req: Request) => {
           has_upload_cv: isUnlocked,
           upload_cv_end_date: endDateStr || null,
           quota_pro_photo: p?.quota_pro_photo || 0,
+          quota_upload_cv: p?.quota_upload_cv || 0,
         };
       });
 
@@ -173,6 +176,7 @@ async function updateUser(req: Request, admin: ReturnType<typeof getAdminClient>
   const role = (body.role || "").trim().toLowerCase();
   const has_upload_cv = typeof body.has_upload_cv === "boolean" ? body.has_upload_cv : false;
   const quota_pro_photo = typeof body.quota_pro_photo === "number" ? body.quota_pro_photo : undefined;
+  const quota_upload_cv = typeof body.quota_upload_cv === "number" ? body.quota_upload_cv : undefined;
 
   if (!isUuid(userId)) {
     throw new Error("User ID tidak valid");
@@ -260,22 +264,20 @@ async function updateUser(req: Request, admin: ReturnType<typeof getAdminClient>
     endDateIso = d.toISOString();
   }
 
-  const updateData: any = {
+  const profilePayload: any = {
     has_upload_cv,
     upload_cv_end_date: endDateIso,
   };
-
-  if (quota_pro_photo !== undefined) {
-    updateData.quota_pro_photo = quota_pro_photo;
-  }
+  if (quota_pro_photo !== undefined) profilePayload.quota_pro_photo = quota_pro_photo;
+  if (quota_upload_cv !== undefined) profilePayload.quota_upload_cv = quota_upload_cv;
 
   const { error: profileUpdateError } = await admin
     .from("profiles")
-    .update(updateData)
+    .update(profilePayload)
     .eq("id", userId);
   if (profileUpdateError) throw profileUpdateError;
 
-  return { ok: true, userId, tier, role, has_upload_cv, upload_cv_end_date: endDateIso, quota_pro_photo };
+  return { ok: true, userId, tier, role, has_upload_cv, upload_cv_end_date: endDateIso, quota_pro_photo, quota_upload_cv };
 }
 
 async function buildUserRows(admin: ReturnType<typeof getAdminClient>, authUsers: AuthUser[]) {
