@@ -29,6 +29,7 @@ import { SurabayaTemplate } from "@/components/cv/templates/SurabayaTemplate";
 import { YogyaTemplate } from "@/components/cv/templates/YogyaTemplate";
 import { MalangTemplate } from "@/components/cv/templates/MalangTemplate";
 import { UbudTemplate } from "@/components/cv/templates/UbudTemplate";
+import { BogorTemplate } from "@/components/cv/templates/BogorTemplate";
 import { previewData, type TemplateSlug } from "@/components/site/TemplatePreview";
 import { TemplateCardSkeleton } from "@/components/ui/skeleton-loading";
 import { Badge } from "@/components/ui/badge";
@@ -42,6 +43,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { buildSeo } from "@/lib/seo";
+import { templatesData } from "@/lib/cv-templates-data";
 
 const templateComponents = {
   bali: BaliTemplate,
@@ -54,6 +56,7 @@ const templateComponents = {
   yogya: YogyaTemplate,
   malang: MalangTemplate,
   ubud: UbudTemplate,
+  bogor: BogorTemplate,
 };
 
 const FREE_TEMPLATES = ["jakarta", "bandung"];
@@ -73,88 +76,7 @@ export const Route = createFileRoute("/template")({
   component: TemplatePage,
 });
 
-const templates = [
-  {
-    slug: "ubud" as TemplateSlug,
-    name: "Ubud",
-    desc: "Desain dua kolom kreatif dengan sidebar kontras gelap yang elegan. Sangat cocok untuk menonjolkan portfolio, keahlian kreatif, dan personal branding.",
-    bestFor: "Creative, Design & Art",
-    tags: ["Kreatif", "Modern", "Sidebar"],
-  },
-  {
-    slug: "malang" as TemplateSlug,
-    name: "Malang",
-    desc: "Desain dua kolom kreatif dengan sidebar warna soft. Menarik perhatian rekruter namun tetap terbaca rapi oleh ATS.",
-    bestFor: "Creative & Marketing",
-    tags: ["Kreatif", "Marketing", "Sidebar"],
-  },
-  {
-    slug: "bali" as TemplateSlug,
-    name: "Bali",
-    desc: "Rapi, segar, dan mudah dipindai. Cocok untuk creative, hospitality, dan peran yang butuh kesan hangat.",
-    bestFor: "Creative & hospitality",
-    tags: ["Kreatif", "Hospitality", "Modern"],
-  },
-  {
-    slug: "jakarta" as TemplateSlug,
-    name: "Jakarta",
-    desc: "Tegas tanpa berlebihan. Pilihan aman untuk corporate, management trainee, dan posisi profesional.",
-    bestFor: "Corporate & management",
-    tags: ["Korporat", "Formal", "Manager"],
-  },
-  {
-    slug: "makassar" as TemplateSlug,
-    name: "Makassar",
-    desc: "Informasi kontak dan skill langsung terlihat. Enak untuk HR, admin, operations, dan support role.",
-    bestFor: "HR & admin",
-    tags: ["HR", "Admin", "Sidebar"],
-  },
-  {
-    slug: "bandung" as TemplateSlug,
-    name: "Bandung",
-    desc: "Modern, ringan, dan terasa gesit. Cocok untuk tech, startup, product, dan digital marketing.",
-    bestFor: "Tech & startup",
-    tags: ["Tech", "Startup", "Fresh"],
-  },
-  {
-    slug: "medan" as TemplateSlug,
-    name: "Medan",
-    desc: "Struktur formal dengan ritme baca yang tenang. Pas untuk finance, banking, dan analyst role.",
-    bestFor: "Finance & analyst",
-    tags: ["Finance", "Banking", "Corporate"],
-  },
-  {
-    slug: "semarang" as TemplateSlug,
-    name: "Semarang",
-    desc: "Lebih dinamis tanpa kehilangan kesan profesional. Bagus untuk project manager dan operations.",
-    bestFor: "PM & operations",
-    tags: ["PM", "Operations", "Dynamic"],
-  },
-  {
-    slug: "surabaya" as TemplateSlug,
-    name: "Surabaya",
-    desc: "Bold, presisi, dan siap untuk peran lapangan. Cocok untuk supply chain, manufacturing, dan engineering.",
-    bestFor: "Supply chain & engineering",
-    tags: ["Supply Chain", "Manufacturing", "Industrial"],
-  },
-  {
-    slug: "yogya" as TemplateSlug,
-    name: "Yogyakarta",
-    desc: "Tipografi bersih dengan karakter halus. Kuat untuk content, brand, design, dan komunikasi.",
-    bestFor: "Content & communication",
-    tags: ["Kreatif", "Content", "Modern"],
-  },
-].map((template) => {
-  const isFree = FREE_TEMPLATES.includes(template.slug);
-  const isPro = PRO_TEMPLATES.includes(template.slug);
-
-  return {
-    ...template,
-    isFree,
-    isPro,
-    badge: isFree ? "Gratis" : isPro ? "Pro" : "Starter",
-  };
-});
+const templates = templatesData;
 
 const filterCategories = ["Semua", "Korporat", "Tech", "Kreatif", "HR", "Finance", "PM", "Startup"];
 
