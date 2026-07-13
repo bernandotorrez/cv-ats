@@ -330,24 +330,31 @@ export function MakassarTemplate({
       {/* Left Sidebar */}
       <div style={{ width: "85mm", flexShrink: 0 }}>
         {/* Header in sidebar */}
+        {showHeader && hasPersonalContent && personal.photoUrl && (
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
+            <img
+              src={personal.photoUrl}
+              alt="Profile"
+              style={{
+                width: 110,
+                height: 110,
+                borderRadius: "50%",
+                objectFit: "cover",
+                marginBottom: 12,
+              }}
+            />
+          </div>
+        )}
+        {leftSections.map((s) => renderLeftSection(s))}
+      </div>
+
+      {/* Right Main Content */}
+      <div style={{ flex: 1 }}>
         {showHeader && hasPersonalContent && (
-          <div style={{ marginBottom: 16 }}>
-            {personal.photoUrl && (
-              <img
-                src={personal.photoUrl}
-                alt="Profile"
-                style={{
-                  width: 80,
-                  height: 80,
-                  borderRadius: "50%",
-                  objectFit: "cover",
-                  marginBottom: 12,
-                }}
-              />
-            )}
+          <div style={{ marginBottom: 12 }}>
             <h1
               style={{
-                fontSize: "16pt",
+                fontSize: "24pt",
                 fontWeight: 800,
                 margin: 0,
                 color: "#1e3a8a",
@@ -357,17 +364,12 @@ export function MakassarTemplate({
               {personal.fullName || "Nama Lengkap"}
             </h1>
             {personal.headline && (
-              <p style={{ fontSize: "9pt", margin: "3px 0 0", color: "#3b82f6", fontWeight: 500 }}>
+              <p style={{ fontSize: "11pt", margin: "4px 0 0", color: "#3b82f6", fontWeight: 500 }}>
                 {personal.headline}
               </p>
             )}
           </div>
         )}
-        {leftSections.map((s) => renderLeftSection(s))}
-      </div>
-
-      {/* Right Main Content */}
-      <div style={{ flex: 1 }}>
         {showHeader && <div style={{ height: 1, backgroundColor: "#1e40af", marginBottom: 10 }} />}
         {rightSections.map((s) => renderRightSection(s))}
       </div>

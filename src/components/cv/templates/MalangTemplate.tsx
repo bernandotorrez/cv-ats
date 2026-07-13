@@ -17,12 +17,7 @@ const DEFAULT_SECTION_ORDER = [
   { id: "languages", label: "Bahasa" },
 ] as const;
 
-export function MalangTemplate({
-  data,
-  showHeader = true,
-  sectionOrder,
-  language = "id",
-}: Props) {
+export function MalangTemplate({ data, showHeader = true, sectionOrder, language = "id" }: Props) {
   const { personal, experiences, educations, skills, languages, certificates } = data;
   const internships = data.internships || [];
   const organizations = data.organizations || [];
@@ -195,14 +190,22 @@ export function MalangTemplate({
                       gap: 16,
                     }}
                   >
-                    <strong style={{ fontSize: "10pt", color: "#0f172a" }}>
-                      {e.position}
-                    </strong>
-                    <span style={{ fontSize: "8.5pt", color: "#64748b", fontWeight: 500, flexShrink: 0, whiteSpace: "nowrap" }}>
+                    <strong style={{ fontSize: "10pt", color: "#0f172a" }}>{e.position}</strong>
+                    <span
+                      style={{
+                        fontSize: "8.5pt",
+                        color: "#64748b",
+                        fontWeight: 500,
+                        flexShrink: 0,
+                        whiteSpace: "nowrap",
+                      }}
+                    >
                       {e.startDate} – {e.current ? t(language, "current") : e.endDate}
                     </span>
                   </div>
-                  <div style={{ fontSize: "9pt", color: "#1e40af", fontWeight: 600, marginBottom: 4 }}>
+                  <div
+                    style={{ fontSize: "9pt", color: "#1e40af", fontWeight: 600, marginBottom: 4 }}
+                  >
                     {e.company}
                     {e.location ? ` • ${e.location}` : ""}
                   </div>
@@ -247,11 +250,21 @@ export function MalangTemplate({
                       {ed.degree}
                       {ed.field ? `, ${ed.field}` : ""}
                     </strong>
-                    <span style={{ fontSize: "8.5pt", color: "#64748b", fontWeight: 500, flexShrink: 0, whiteSpace: "nowrap" }}>
+                    <span
+                      style={{
+                        fontSize: "8.5pt",
+                        color: "#64748b",
+                        fontWeight: 500,
+                        flexShrink: 0,
+                        whiteSpace: "nowrap",
+                      }}
+                    >
                       {ed.startDate} – {ed.endDate}
                     </span>
                   </div>
-                  <div style={{ fontSize: "9pt", color: "#1e40af", fontWeight: 600, marginBottom: 2 }}>
+                  <div
+                    style={{ fontSize: "9pt", color: "#1e40af", fontWeight: 600, marginBottom: 2 }}
+                  >
                     {ed.school}
                   </div>
                   {ed.description && (
@@ -291,14 +304,22 @@ export function MalangTemplate({
                       gap: 16,
                     }}
                   >
-                    <strong style={{ fontSize: "10pt", color: "#0f172a" }}>
-                      {item.position}
-                    </strong>
-                    <span style={{ fontSize: "8.5pt", color: "#64748b", fontWeight: 500, flexShrink: 0, whiteSpace: "nowrap" }}>
+                    <strong style={{ fontSize: "10pt", color: "#0f172a" }}>{item.position}</strong>
+                    <span
+                      style={{
+                        fontSize: "8.5pt",
+                        color: "#64748b",
+                        fontWeight: 500,
+                        flexShrink: 0,
+                        whiteSpace: "nowrap",
+                      }}
+                    >
                       {item.startDate} – {item.endDate}
                     </span>
                   </div>
-                  <div style={{ fontSize: "9pt", color: "#1e40af", fontWeight: 600, marginBottom: 4 }}>
+                  <div
+                    style={{ fontSize: "9pt", color: "#1e40af", fontWeight: 600, marginBottom: 4 }}
+                  >
                     {item.company}
                     {item.location ? ` • ${item.location}` : ""}
                   </div>
@@ -339,14 +360,22 @@ export function MalangTemplate({
                       gap: 16,
                     }}
                   >
-                    <strong style={{ fontSize: "10pt", color: "#0f172a" }}>
-                      {item.role}
-                    </strong>
-                    <span style={{ fontSize: "8.5pt", color: "#64748b", fontWeight: 500, flexShrink: 0, whiteSpace: "nowrap" }}>
+                    <strong style={{ fontSize: "10pt", color: "#0f172a" }}>{item.role}</strong>
+                    <span
+                      style={{
+                        fontSize: "8.5pt",
+                        color: "#64748b",
+                        fontWeight: 500,
+                        flexShrink: 0,
+                        whiteSpace: "nowrap",
+                      }}
+                    >
                       {item.startDate} – {item.endDate}
                     </span>
                   </div>
-                  <div style={{ fontSize: "9pt", color: "#1e40af", fontWeight: 600, marginBottom: 4 }}>
+                  <div
+                    style={{ fontSize: "9pt", color: "#1e40af", fontWeight: 600, marginBottom: 4 }}
+                  >
                     {item.name}
                   </div>
                   {item.description && (
@@ -420,20 +449,6 @@ export function MalangTemplate({
               </div>
             )}
           </div>
-          {personal.photoUrl && (
-            <img
-              src={personal.photoUrl}
-              alt="Profile"
-              style={{
-                width: 75,
-                height: 75,
-                borderRadius: "50%",
-                objectFit: "cover",
-                border: "2px solid #e0f2fe",
-                flexShrink: 0,
-              }}
-            />
-          )}
         </div>
       )}
 
@@ -450,6 +465,22 @@ export function MalangTemplate({
             minHeight: "100%",
           }}
         >
+          {/* Photo in Sidebar */}
+          {showHeader && personal.photoUrl && (
+            <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
+              <img
+                src={personal.photoUrl}
+                alt="Profile"
+                style={{
+                  width: 110,
+                  height: 110,
+                  borderRadius: "50%",
+                  objectFit: "cover",
+                  border: "2px solid #e0f2fe",
+                }}
+              />
+            </div>
+          )}
           {/* Static Contact Section */}
           <div>
             {renderSidebarHeading(t(language, "contactInfo"))}

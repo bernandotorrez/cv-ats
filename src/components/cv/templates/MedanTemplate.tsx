@@ -274,8 +274,8 @@ export function MedanTemplate({ data, showHeader = true, sectionOrder, language 
                 src={personal.photoUrl}
                 alt="Profile"
                 style={{
-                  width: 80,
-                  height: 80,
+                  width: 110,
+                  height: 110,
                   borderRadius: "50%",
                   objectFit: "cover",
                 }}
