@@ -26,6 +26,10 @@ import {
   UserRoundCheck,
   XCircle,
   AlertCircle,
+  Target,
+  Zap,
+  ArrowDown,
+  UserRound,
 } from "lucide-react";
 
 import {
@@ -242,8 +246,8 @@ function LandingPage() {
               </h1>
 
               <p className="mt-6 text-base sm:text-lg text-gray-600 leading-relaxed">
-                Buat CV profesional, rasakan performanya, dan tingkatkan peluang lolos seleksi
-                dengan panduan yang terbukti berhasil.
+                Buat CV profesional yang didukung teknologi AI, rasakan performanya, dan tingkatkan peluang lolos seleksi
+                dengan optimasi cerdas yang terbukti berhasil.
               </p>
 
               <div className="mt-8 flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
@@ -475,6 +479,146 @@ function LandingPage() {
                 </CardContent>
               </Card>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* AI Recommendations Section */}
+      <section className="py-20 bg-slate-50 relative overflow-hidden">
+        <div className="container-page relative z-10">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold bg-white text-green-700 border border-green-100 uppercase tracking-wider shadow-sm">
+              <Sparkles className="h-4 w-4" />
+              AI-POWERED RECOMMENDATIONS
+            </span>
+            <h2 className="mt-6 font-display text-3xl sm:text-4xl lg:text-5xl font-extrabold text-gray-900 tracking-tight leading-tight">
+              Bingung Mau Nulis Apa di{" "}
+              <span className="text-green-700 relative inline-block">
+                CV?
+                <svg
+                  className="absolute -bottom-2 left-0 w-full"
+                  viewBox="0 0 100 12"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  preserveAspectRatio="none"
+                >
+                  <path
+                    d="M3 9C25.5 3 75.5 -1.5 97 9"
+                    stroke="#15803d"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </span>
+            </h2>
+            <p className="mt-6 text-base sm:text-lg text-gray-500 max-w-2xl mx-auto">
+              CV Pintar AI Career Assistant merekomendasikan frasa profesional yang relevan dengan posisi yang kamu lamar.
+            </p>
+          </div>
+
+          <div className="grid gap-12 lg:grid-cols-[1fr_auto_1fr] items-center max-w-6xl mx-auto">
+            {/* Left side: Before/After */}
+            <div className="flex flex-col items-center lg:items-end w-full space-y-4">
+              <div className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-sm border border-gray-100 relative">
+                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-3">
+                  SEBELUM AI ASSISTANT
+                </span>
+                <div className="flex items-start justify-between gap-4">
+                  <p className="text-sm text-gray-500 leading-relaxed">
+                    "Bertanggung jawab atas berbagai tugas di departemen marketing"
+                  </p>
+                  <UserRound className="h-5 w-5 text-gray-300 shrink-0 mt-0.5" />
+                </div>
+              </div>
+
+              <div className="flex justify-center w-full max-w-sm -my-2 relative z-10">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-700 text-white shadow-lg border-4 border-slate-50">
+                  <ArrowDown className="h-5 w-5" />
+                </div>
+              </div>
+
+              <div className="w-full max-w-sm rounded-2xl bg-white p-1 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-teal-100 overflow-hidden">
+                <div className="flex items-center gap-2 mb-2 p-3 pb-0">
+                  <span className="inline-block bg-teal-500 text-white text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider">
+                    SESUDAH AI ASSISTANT
+                  </span>
+                  <span className="inline-flex items-center gap-1 bg-teal-50 text-teal-600 text-[10px] font-bold px-2 py-1 rounded border border-teal-100">
+                    <Sparkles className="h-3 w-3" /> Suggested
+                  </span>
+                </div>
+                <div className="p-4 pt-2 flex items-start gap-4">
+                  <p className="text-sm text-gray-700 leading-relaxed font-medium">
+                    "Meningkatkan <span className="text-green-700 font-bold">engagement</span> kampanye digital sebesar <span className="text-green-700 font-bold">45%</span> melalui <span className="text-teal-600 font-bold">strategi content marketing</span> yang <span className="text-teal-600 font-bold">terukur</span>"
+                  </p>
+                  <CheckCircle2 className="h-5 w-5 text-teal-500 shrink-0 mt-1" />
+                </div>
+              </div>
+            </div>
+
+            {/* Center: Robot Mascot */}
+            <div className="flex justify-center shrink-0 mx-auto lg:mx-4">
+              <img
+                src="/ai-robot-mascot.webp"
+                alt="AI Robot Mascot"
+                className="w-[280px] lg:w-[320px] object-contain drop-shadow-xl animate-float"
+              />
+            </div>
+
+            {/* Right side: Features */}
+            <div className="flex flex-col justify-center space-y-8 w-full max-w-sm mx-auto lg:mx-0">
+              <div className="flex gap-4">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-green-50 text-green-700">
+                  <Target className="h-6 w-6" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-gray-900 text-base">Disesuaikan dengan Posisi</h4>
+                  <p className="text-sm text-gray-500 mt-1 leading-relaxed">
+                    Frasa yang relevan dengan job title & industry yang kamu tuju
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-4">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-teal-50 text-teal-600">
+                  <Zap className="h-6 w-6" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-gray-900 text-base">ATS-Friendly</h4>
+                  <p className="text-sm text-gray-500 mt-1 leading-relaxed">
+                    Struktur kalimat ringkas yang mudah dipahami sistem ATS & recruiter
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-4">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-green-50 text-green-700">
+                  <TrendingUp className="h-6 w-6" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-gray-900 text-base">Lebih Berdampak</h4>
+                  <p className="text-sm text-gray-500 mt-1 leading-relaxed">
+                    Fokus pada hasil & kontribusi dengan kata kerja aktif yang kuat
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-16 text-center">
+            <Button
+              asChild
+              size="lg"
+              className="h-14 px-8 bg-green-700 hover:bg-green-800 text-white font-bold rounded-lg shadow-lg shadow-green-700/20 text-base"
+            >
+              <Link to="/register">
+                Cek Score CV Sekarang
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Link>
+            </Button>
+            <div className="mt-4 flex items-center justify-center gap-1.5 text-xs text-gray-400 font-medium">
+              <LockKeyhole className="h-3.5 w-3.5" />
+              100% Aman & Privasi Terjamin
+            </div>
           </div>
         </div>
       </section>
