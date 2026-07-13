@@ -483,8 +483,8 @@ export function UbudTemplate({ data, showHeader = true, sectionOrder, language =
                 src={personal.photoUrl}
                 alt="Profile"
                 style={{
-                  width: 110,
-                  height: 110,
+                  width: 135,
+                  height: 135,
                   borderRadius: "50%",
                   objectFit: "cover",
                   border: "2px solid #8b5cf6",

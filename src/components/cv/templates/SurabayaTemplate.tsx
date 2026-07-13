@@ -19,8 +19,8 @@ export function SurabayaTemplate({ data, sectionOrder, language = "id" }: Props)
               src={data.personal.photoUrl}
               alt="Profile"
               style={{
-                width: 110,
-                height: 110,
+                width: 135,
+                height: 135,
                 borderRadius: "50%",
                 objectFit: "cover",
               }}
