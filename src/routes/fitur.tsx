@@ -276,7 +276,7 @@ function FiturPage() {
                                 New
                               </Badge>
                             )}
-                            {item.badge && (
+                            {"badge" in item && item.badge && (
                               <Badge className="bg-info text-info-foreground hover:bg-info">
                                 {item.badge}
                               </Badge>

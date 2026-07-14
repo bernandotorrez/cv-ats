@@ -112,7 +112,11 @@ export function RecentCvs({ cvs, onCreateCv }: RecentCvsProps) {
               Buat CV Pertama
             </Button>
           ) : (
-            <Button asChild className="mt-5 gap-2.5 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white font-bold shadow-md hover:shadow-lg transition-all duration-300 active:scale-[0.98]" size="default">
+            <Button
+              asChild
+              className="mt-5 gap-2.5 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white font-bold shadow-md hover:shadow-lg transition-all duration-300 active:scale-[0.98]"
+              size="default"
+            >
               <Link to="/cv">
                 <Plus className="h-4.5 w-4.5" />
                 Buat CV Pertama
@@ -129,7 +133,11 @@ export function RecentCvs({ cvs, onCreateCv }: RecentCvsProps) {
 
             // Replicate mockup's verified check marks only, but use actual template name
             const isFirst = idx === 0;
-            const location = tpl?.name ?? (cv.template_id ? cv.template_id.charAt(0).toUpperCase() + cv.template_id.slice(1) : "");
+            const location =
+              tpl?.name ??
+              (cv.template_id
+                ? cv.template_id.charAt(0).toUpperCase() + cv.template_id.slice(1)
+                : "");
 
             // Use dynamic timeAgo labels
             const timeAgoText = timeAgo(cv.updated_at).label;

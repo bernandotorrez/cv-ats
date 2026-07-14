@@ -80,7 +80,7 @@ export const Route = createFileRoute("/sitemap/xml")({
         // Fetch lowongan slugs from Supabase
         try {
           const { supabase } = await import("@/integrations/supabase/client");
-          const { data } = await supabase
+          const { data } = await (supabase as any)
             .from("job_listings")
             .select("slug, updated_at")
             .eq("is_active", true)

@@ -249,6 +249,7 @@ function SimulasiWawancaraPage() {
       return;
     }
 
+    if (!data) return;
     navigate({ to: "/simulasi-wawancara/$id", params: { id: data.id } });
   };
 

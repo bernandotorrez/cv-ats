@@ -183,7 +183,7 @@ function DashboardPage() {
     if (!loading && cvCount > 0 && cvs.length > 0) {
       const latestCv = cvs[0];
       const score = latestCv.ats_score;
-      if (score !== null && score < 70) {
+      if (score !== null && score !== undefined && score < 70) {
         const dismissed = localStorage.getItem(`low_score_dismissed_${latestCv.id}`);
         if (dismissed !== "true") {
           setShowLowScoreOnboarding(true);
@@ -206,7 +206,9 @@ function DashboardPage() {
     }
   };
 
-  const handleLowScoreAction = (action: "cv-review" | "keyword-extractor" | "tailor-cv" | "score" | "upgrade") => {
+  const handleLowScoreAction = (
+    action: "cv-review" | "keyword-extractor" | "tailor-cv" | "score" | "upgrade",
+  ) => {
     setShowLowScoreOnboarding(false);
     if (cvs.length > 0) {
       localStorage.setItem(`low_score_dismissed_${cvs[0].id}`, "true");
@@ -379,9 +381,9 @@ function DashboardPage() {
     setTextPolishUsageCount(counts["polish"] ?? 0);
     setChatUsageCount(counts["chat"] ?? 0);
   };
-  
+
   const loadInterviewCount = async (userId: string) => {
-    const { count, error } = await supabase
+    const { count, error } = await (supabase as any)
       .from("interview_sessions")
       .select("id", { count: "exact", head: true })
       .eq("user_id", userId);
@@ -391,7 +393,7 @@ function DashboardPage() {
   };
 
   const loadApplicationCount = async (userId: string) => {
-    const { count, error } = await supabase
+    const { count, error } = await (supabase as any)
       .from("job_applications")
       .select("id", { count: "exact", head: true })
       .eq("user_id", userId);
@@ -453,7 +455,7 @@ function DashboardPage() {
     setShowModeDialog(false);
     setShowOnboarding(false);
     localStorage.setItem("onboarding_dismissed", "true");
-    
+
     navigate({
       to: "/cv/$id",
       params: { id: data.id },
@@ -948,7 +950,10 @@ function DashboardPage() {
                     : "Aktif",
               },
             ].map((stat) => (
-              <div key={stat.label} className="rounded-xl border bg-card px-3 py-2.5 sm:px-4 sm:py-3 shadow-sm">
+              <div
+                key={stat.label}
+                className="rounded-xl border bg-card px-3 py-2.5 sm:px-4 sm:py-3 shadow-sm"
+              >
                 <div className="flex items-center gap-2 sm:gap-3">
                   <div
                     className={`flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-lg ${stat.color}`}
@@ -965,7 +970,9 @@ function DashboardPage() {
                         </span>
                       )}
                     </div>
-                    <p className="text-[9px] sm:text-[10px] text-muted-foreground/70 truncate">{stat.note}</p>
+                    <p className="text-[9px] sm:text-[10px] text-muted-foreground/70 truncate">
+                      {stat.note}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -1065,7 +1072,10 @@ function DashboardPage() {
 
               {/* Right side actions */}
               <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto shrink-0">
-                <div onClick={(e) => e.stopPropagation()} className="flex-1 sm:flex-initial shrink-0 flex justify-end">
+                <div
+                  onClick={(e) => e.stopPropagation()}
+                  className="flex-1 sm:flex-initial shrink-0 flex justify-end"
+                >
                   {tier === "free" ? (
                     <Button
                       asChild
@@ -1086,7 +1096,7 @@ function DashboardPage() {
                 <ChevronDown
                   className={cn(
                     "h-4 w-4 text-muted-foreground transition-transform duration-200 shrink-0",
-                    showQuotas && "rotate-180"
+                    showQuotas && "rotate-180",
                   )}
                 />
               </div>
@@ -1109,7 +1119,12 @@ function DashboardPage() {
                   Kuota CV paket <strong>{tierName}</strong> sudah penuh ({cvCount}/{limits.maxCvs}
                   ).
                 </span>
-                <Button asChild size="sm" variant="outline" className="w-full sm:w-auto shrink-0 gap-1.5">
+                <Button
+                  asChild
+                  size="sm"
+                  variant="outline"
+                  className="w-full sm:w-auto shrink-0 gap-1.5"
+                >
                   <Link to="/harga">
                     <Crown className="h-3.5 w-3.5" /> Upgrade
                   </Link>

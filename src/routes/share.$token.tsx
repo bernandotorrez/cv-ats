@@ -67,7 +67,7 @@ function SharedCvPage() {
 
   useEffect(() => {
     if (!cvId || !userId) return;
-    void supabase.from("cv_analytics").insert({
+    void (supabase as any).from("cv_analytics").insert({
       cv_id: cvId,
       user_id: userId,
       event_type: "view",

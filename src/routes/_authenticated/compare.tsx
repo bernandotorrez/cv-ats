@@ -75,7 +75,7 @@ function ComparePage() {
         </div>
       </div>
 
-      <CvComparison cvs={cvs} canCompare={limits?.canCompare ?? false} />
+      <CvComparison cvs={cvs as unknown as CvVersion[]} canCompare={limits?.canCompare ?? false} />
     </div>
   );
 }

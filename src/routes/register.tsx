@@ -51,7 +51,7 @@ async function trackReferralSafely(
 
   // Step 3: Track via RPC with validated inputs
   try {
-    const { error } = await supabase.rpc("track_referral_signup", {
+    const { error } = await (supabase as any).rpc("track_referral_signup", {
       p_code: validatedCode,
       p_user_id: userId,
     });

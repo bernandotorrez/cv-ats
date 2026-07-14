@@ -68,7 +68,7 @@ function ForgotPage() {
     if (user) {
       navigate({ to: "/" });
     } else {
-      navigate({ to: "/login" });
+      (navigate as any)({ to: "/login" });
     }
   };
 

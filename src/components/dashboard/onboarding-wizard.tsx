@@ -126,7 +126,7 @@ export function OnboardingWizard({
                 {step === 3 && "Pilih Cara Membuat CV"}
               </h2>
             </div>
-            
+
             {/* Progress line */}
             <div className="flex items-center gap-2">
               {[1, 2, 3].map((s) => (
@@ -138,7 +138,7 @@ export function OnboardingWizard({
                         ? "border-emerald-600 bg-emerald-600 text-white"
                         : step > s
                           ? "border-emerald-500 bg-emerald-50 text-emerald-600"
-                          : "border-border bg-card text-muted-foreground"
+                          : "border-border bg-card text-muted-foreground",
                     )}
                   >
                     {step > s ? <Check className="h-4 w-4" strokeWidth={3} /> : s}
@@ -147,7 +147,7 @@ export function OnboardingWizard({
                     <div
                       className={cn(
                         "h-0.5 w-8 sm:w-12 transition-all mx-1.5",
-                        step > s ? "bg-emerald-500" : "bg-border"
+                        step > s ? "bg-emerald-500" : "bg-border",
                       )}
                     />
                   )}
@@ -164,8 +164,9 @@ export function OnboardingWizard({
             <div className="space-y-6">
               <div>
                 <p className="text-sm text-muted-foreground">
-                  Selamat datang di <strong>CV Pintar</strong>! Mari kita bantu kamu membuat CV ATS-friendly terbaik. 
-                  Untuk memulainya, bantu kami memahami kebutuhan kariermu agar kami bisa memberikan rekomendasi yang pas.
+                  Selamat datang di <strong>CV Pintar</strong>! Mari kita bantu kamu membuat CV
+                  ATS-friendly terbaik. Untuk memulainya, bantu kami memahami kebutuhan kariermu
+                  agar kami bisa memberikan rekomendasi yang pas.
                 </p>
               </div>
 
@@ -184,15 +185,24 @@ export function OnboardingWizard({
                         onClick={() => setGoal(opt.id)}
                         className={cn(
                           "flex items-start text-left gap-3.5 p-4 rounded-xl border-2 transition-all hover:shadow-sm",
-                          isSelected ? opt.activeColor : "border-border hover:border-muted-foreground/30 bg-card"
+                          isSelected
+                            ? opt.activeColor
+                            : "border-border hover:border-muted-foreground/30 bg-card",
                         )}
                       >
-                        <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border", opt.color)}>
+                        <div
+                          className={cn(
+                            "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border",
+                            opt.color,
+                          )}
+                        >
                           <Icon className="h-5 w-5" />
                         </div>
                         <div>
                           <h4 className="font-semibold text-sm text-foreground">{opt.label}</h4>
-                          <p className="text-xs text-muted-foreground mt-0.5 leading-normal">{opt.desc}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5 leading-normal">
+                            {opt.desc}
+                          </p>
                         </div>
                       </button>
                     );
@@ -201,7 +211,10 @@ export function OnboardingWizard({
               </div>
 
               <div className="space-y-2.5">
-                <label htmlFor="target-role" className="text-sm font-semibold text-foreground block">
+                <label
+                  htmlFor="target-role"
+                  className="text-sm font-semibold text-foreground block"
+                >
                   Posisi Pekerjaan Impian (Target Role)
                 </label>
                 <Input
@@ -213,7 +226,8 @@ export function OnboardingWizard({
                   className="rounded-xl h-11 border-border focus-visible:ring-emerald-500"
                 />
                 <p className="text-xs text-muted-foreground">
-                  Posisi ini akan dicantumkan di headline CV dan membantu AI mengoptimalkan CV kamu agar lolos seleksi ATS.
+                  Posisi ini akan dicantumkan di headline CV dan membantu AI mengoptimalkan CV kamu
+                  agar lolos seleksi ATS.
                 </p>
               </div>
             </div>
@@ -224,7 +238,8 @@ export function OnboardingWizard({
             <div className="space-y-4">
               <div>
                 <p className="text-sm text-muted-foreground">
-                  Pilih desain template untuk memulai CV pertamamu. Struktur layout dan isi data CV tetap dapat diubah, ditambah, atau disesuaikan kapan saja lewat editor.
+                  Pilih desain template untuk memulai CV pertamamu. Struktur layout dan isi data CV
+                  tetap dapat diubah, ditambah, atau disesuaikan kapan saja lewat editor.
                 </p>
               </div>
 
@@ -257,7 +272,7 @@ export function OnboardingWizard({
                     "flex flex-col items-center text-center p-6 rounded-2xl border-2 transition-all hover:shadow-md",
                     guidedMode === true
                       ? "border-emerald-500 ring-2 ring-emerald-100 bg-emerald-50/20"
-                      : "border-border hover:border-emerald-300 bg-card"
+                      : "border-border hover:border-emerald-300 bg-card",
                   )}
                 >
                   <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-600 mb-4 shrink-0 shadow-inner">
@@ -270,7 +285,8 @@ export function OnboardingWizard({
                     </Badge>
                   </h3>
                   <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
-                    AI kami akan memandu kamu mengisi data CV langkah demi langkah, melengkapi bagian yang kosong, dan merumuskan deskripsi pekerjaan.
+                    AI kami akan memandu kamu mengisi data CV langkah demi langkah, melengkapi
+                    bagian yang kosong, dan merumuskan deskripsi pekerjaan.
                   </p>
                 </button>
 
@@ -282,7 +298,7 @@ export function OnboardingWizard({
                     "flex flex-col items-center text-center p-6 rounded-2xl border-2 transition-all hover:shadow-md",
                     guidedMode === false
                       ? "border-emerald-500 ring-2 ring-emerald-100 bg-emerald-50/20"
-                      : "border-border hover:border-emerald-300 bg-card"
+                      : "border-border hover:border-emerald-300 bg-card",
                   )}
                 >
                   <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-muted text-muted-foreground mb-4 shrink-0 shadow-inner">
@@ -290,7 +306,8 @@ export function OnboardingWizard({
                   </div>
                   <h3 className="font-bold text-base text-foreground">Isi Sendiri / Upload</h3>
                   <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
-                    Langsung masuk ke editor interaktif. Kamu bisa mengetik isi CV secara manual atau mengimpor CV PDF lamamu untuk di-parse otomatis.
+                    Langsung masuk ke editor interaktif. Kamu bisa mengetik isi CV secara manual
+                    atau mengimpor CV PDF lamamu untuk di-parse otomatis.
                   </p>
                 </button>
               </div>
@@ -298,13 +315,15 @@ export function OnboardingWizard({
               {/* Summary recap */}
               <div className="rounded-xl bg-muted/40 p-4 border border-dashed flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="space-y-1">
-                  <span className="text-xs font-semibold text-muted-foreground block uppercase tracking-wider">Ringkasan Pilihan:</span>
+                  <span className="text-xs font-semibold text-muted-foreground block uppercase tracking-wider">
+                    Ringkasan Pilihan:
+                  </span>
                   <div className="text-xs text-foreground font-medium flex flex-wrap gap-x-2 gap-y-1">
-                    <span>Sasaran: {goalOptions.find(o => o.id === goal)?.label}</span>
+                    <span>Sasaran: {goalOptions.find((o) => o.id === goal)?.label}</span>
                     <span className="text-muted-foreground">•</span>
                     <span>Role: {targetRole}</span>
                     <span className="text-muted-foreground">•</span>
-                    <span>Template: {TEMPLATES.find(t => t.id === selectedTemplate)?.name}</span>
+                    <span>Template: {TEMPLATES.find((t) => t.id === selectedTemplate)?.name}</span>
                   </div>
                 </div>
                 {creating && (
@@ -339,7 +358,7 @@ export function OnboardingWizard({
             >
               Lewati Setup
             </Button>
-            
+
             {step < totalSteps ? (
               <Button
                 onClick={handleNext}

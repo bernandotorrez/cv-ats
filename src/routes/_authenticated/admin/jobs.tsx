@@ -187,7 +187,7 @@ type JobListingsQuery = {
 };
 
 function jobListingsTable() {
-  return supabase.from("job_listings") as unknown as JobListingsQuery;
+  return (supabase as any).from("job_listings") as unknown as JobListingsQuery;
 }
 
 const emptyForm: JobForm = {

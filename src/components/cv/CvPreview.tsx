@@ -13,6 +13,7 @@ import {
   BaliTemplate,
   MalangTemplate,
   UbudTemplate,
+  BogorTemplate,
 } from "./templates";
 
 function formatDescription(text: string): string {
@@ -117,6 +118,10 @@ export function CvPreview({
       case "ubud":
         return (
           <UbudTemplate data={formattedData} sectionOrder={sectionOrder} language={language} />
+        );
+      case "bogor":
+        return (
+          <BogorTemplate data={formattedData} sectionOrder={sectionOrder} language={language} />
         );
       case "jakarta":
       default:

@@ -101,7 +101,7 @@ function JobMatchPage() {
   };
 
   const loadJobs = async () => {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("job_listings")
       .select("id, title, company, location, level")
       .eq("is_active", true)
@@ -109,7 +109,7 @@ function JobMatchPage() {
       .limit(80);
 
     if (error) return;
-    const rows = (data ?? []) as JobOption[];
+    const rows = (data ?? []) as unknown as JobOption[];
     setJobs(rows);
     setSelectedJobId((current) => current || rows[0]?.id || "");
   };

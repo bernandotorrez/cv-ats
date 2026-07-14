@@ -106,17 +106,17 @@ function TailorCvPage() {
       setCvTitle(row.title);
       setTemplateId(row.template_id as TemplateId);
       setCvData(nextData);
-      setCvLanguage(row.language === "en" ? "en" : "id");
+      setCvLanguage((row as any).language === "en" ? "en" : "id");
       setJobTitle(nextData.personal.headline || "");
 
-      const { data: jobRows } = await supabase
+      const { data: jobRows } = await (supabase as any)
         .from("job_listings")
         .select("id, title, company, location, level")
         .eq("is_active", true)
         .order("created_at", { ascending: false })
         .limit(80);
 
-      const nextJobs = (jobRows ?? []) as JobOption[];
+      const nextJobs = (jobRows ?? []) as unknown as JobOption[];
       setJobs(nextJobs);
       setSelectedJobId((current) => current || nextJobs[0]?.id || "");
       setLoading(false);
@@ -612,7 +612,7 @@ function LockedTailor() {
           </p>
           <div className="mt-7 flex flex-col gap-3 sm:flex-row">
             <Button variant="outline" asChild className="rounded-lg">
-              <Link to="/tools">Kembali ke Tools</Link>
+              <Link to="/tools" search={{} as any}>Kembali ke Tools</Link>
             </Button>
             <Button asChild className="rounded-lg">
               <Link to="/harga">Upgrade Pro</Link>

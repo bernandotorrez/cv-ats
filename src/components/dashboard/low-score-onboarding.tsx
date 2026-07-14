@@ -25,7 +25,9 @@ interface LowScoreOnboardingProps {
   score: number;
   cvTitle: string;
   cvId: string;
-  onStartAction: (action: "cv-review" | "keyword-extractor" | "tailor-cv" | "score" | "upgrade") => void;
+  onStartAction: (
+    action: "cv-review" | "keyword-extractor" | "tailor-cv" | "score" | "upgrade",
+  ) => void;
   tier: "free" | "starter" | "pro";
   scoreUsageCount: number;
   maxScoreUsage: number | null;
@@ -65,10 +67,17 @@ function CircularProgress({ percentage }: { percentage: number }) {
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className={cn("text-2xl font-black tracking-tight", isRed ? "text-rose-600" : "text-amber-600")}>
+        <span
+          className={cn(
+            "text-2xl font-black tracking-tight",
+            isRed ? "text-rose-600" : "text-amber-600",
+          )}
+        >
           {percentage}%
         </span>
-        <span className="text-[8px] text-muted-foreground uppercase font-semibold mt-0.5">ATS Score</span>
+        <span className="text-[8px] text-muted-foreground uppercase font-semibold mt-0.5">
+          ATS Score
+        </span>
       </div>
     </div>
   );
@@ -210,25 +219,37 @@ export function LowScoreOnboarding({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl max-h-[92vh] flex flex-col p-0 overflow-hidden rounded-2xl gap-0 border bg-card">
         {/* Header banner alert */}
-        <div className={cn(
-          "px-6 py-5 shrink-0 border-b flex items-start gap-4",
-          isRed ? "bg-rose-50/40 border-rose-100" : "bg-amber-50/40 border-amber-100"
-        )}>
-          <div className={cn(
-            "p-2.5 rounded-xl border shrink-0",
-            isRed ? "bg-rose-50 text-rose-600 border-rose-200" : "bg-amber-50 text-amber-600 border-amber-200"
-          )}>
+        <div
+          className={cn(
+            "px-6 py-5 shrink-0 border-b flex items-start gap-4",
+            isRed ? "bg-rose-50/40 border-rose-100" : "bg-amber-50/40 border-amber-100",
+          )}
+        >
+          <div
+            className={cn(
+              "p-2.5 rounded-xl border shrink-0",
+              isRed
+                ? "bg-rose-50 text-rose-600 border-rose-200"
+                : "bg-amber-50 text-amber-600 border-amber-200",
+            )}
+          >
             <AlertTriangle className="h-6 w-6" />
           </div>
           <div>
-            <span className={cn("text-xs font-bold uppercase tracking-wider", isRed ? "text-rose-600" : "text-amber-600")}>
+            <span
+              className={cn(
+                "text-xs font-bold uppercase tracking-wider",
+                isRed ? "text-rose-600" : "text-amber-600",
+              )}
+            >
               Peringatan Optimalisasi CV
             </span>
             <DialogTitle className="text-lg font-bold text-foreground mt-0.5">
               Skor ATS CV &ldquo;{cvTitle}&rdquo; Masih Rendah!
             </DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground mt-1">
-              CV dengan skor ATS di bawah 70% berisiko tinggi langsung gugur saat disaring otomatis oleh software HRD.
+              CV dengan skor ATS di bawah 70% berisiko tinggi langsung gugur saat disaring otomatis
+              oleh software HRD.
             </DialogDescription>
           </div>
         </div>
@@ -243,8 +264,9 @@ export function LowScoreOnboarding({
             <div className="space-y-1.5 flex-1 min-w-0">
               <h4 className="font-bold text-sm text-foreground">Kenapa skor ini rendah?</h4>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                Skor dihitung berdasarkan kepadatan kata kunci, kelengkapan profil, dan formatting. 
-                Pemberi kerja menggunakan ATS untuk menyeleksi ratusan pelamar, dan hanya meloloskan CV yang relevan.
+                Skor dihitung berdasarkan kepadatan kata kunci, kelengkapan profil, dan formatting.
+                Pemberi kerja menggunakan ATS untuk menyeleksi ratusan pelamar, dan hanya meloloskan
+                CV yang relevan.
               </p>
               <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 mt-1">
                 <Info className="h-3 w-3 shrink-0" /> Target minimal kelulusan ATS: 70% - 80%
@@ -257,7 +279,7 @@ export function LowScoreOnboarding({
             <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
               Rekomendasi Aksi Cepat
             </h4>
-            
+
             <div className="grid gap-3">
               {recommendations.map((rec) => {
                 const Icon = rec.icon;
@@ -277,25 +299,39 @@ export function LowScoreOnboarding({
                       "flex items-start text-left gap-4 p-4 rounded-xl border border-border bg-card transition-all hover:shadow-sm",
                       isItemLocked
                         ? "border-dashed opacity-80 hover:border-amber-400 hover:bg-amber-50/10"
-                        : rec.hoverBorder
+                        : rec.hoverBorder,
                     )}
                   >
-                    <div className={cn("flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border shadow-sm", rec.color)}>
+                    <div
+                      className={cn(
+                        "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border shadow-sm",
+                        rec.color,
+                      )}
+                    >
                       <Icon className="h-5 w-5" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="font-bold text-sm text-foreground">{rec.title}</span>
                         {rec.isLocked ? (
-                          <Badge variant="outline" className="text-[9px] font-bold px-1.5 py-0 border-amber-400 text-amber-700 gap-0.5 bg-amber-50/50">
+                          <Badge
+                            variant="outline"
+                            className="text-[9px] font-bold px-1.5 py-0 border-amber-400 text-amber-700 gap-0.5 bg-amber-50/50"
+                          >
                             <Lock className="h-2 w-2" /> Upgrade {rec.upgradeTier}
                           </Badge>
                         ) : rec.id === "score" && isQuotaFull ? (
-                          <Badge variant="outline" className="text-[9px] font-bold px-1.5 py-0 border-rose-400 text-rose-700 bg-rose-50/50">
+                          <Badge
+                            variant="outline"
+                            className="text-[9px] font-bold px-1.5 py-0 border-rose-400 text-rose-700 bg-rose-50/50"
+                          >
                             Quota Habis
                           </Badge>
                         ) : (
-                          <Badge variant="outline" className="text-[9px] font-bold px-1.5 py-0 border-emerald-200 text-emerald-700 bg-emerald-50/50">
+                          <Badge
+                            variant="outline"
+                            className="text-[9px] font-bold px-1.5 py-0 border-emerald-200 text-emerald-700 bg-emerald-50/50"
+                          >
                             {rec.badge}
                           </Badge>
                         )}
@@ -308,7 +344,8 @@ export function LowScoreOnboarding({
                       {rec.id === "score" && maxScoreUsage !== null && (
                         <div className="mt-2 text-[11px] flex flex-col gap-0.5">
                           <span className="text-muted-foreground font-medium">
-                            Quota Scoring: {scoreUsageCount}/{maxScoreUsage} terpakai (Sisa: {remaining})
+                            Quota Scoring: {scoreUsageCount}/{maxScoreUsage} terpakai (Sisa:{" "}
+                            {remaining})
                           </span>
                           {isQuotaFull && (
                             <span className="text-rose-600 font-bold">
@@ -351,13 +388,15 @@ export function LowScoreOnboarding({
             }}
             className={cn(
               "text-white text-xs font-bold",
-              (tier === "free" && isQuotaFull)
+              tier === "free" && isQuotaFull
                 ? "bg-amber-600 hover:bg-amber-700"
-                : "bg-emerald-600 hover:bg-emerald-700"
+                : "bg-emerald-600 hover:bg-emerald-700",
             )}
           >
-            {tier === "free" 
-              ? (isQuotaFull ? "Upgrade Tier Sekarang" : "Mulai Cek Skor ATS") 
+            {tier === "free"
+              ? isQuotaFull
+                ? "Upgrade Tier Sekarang"
+                : "Mulai Cek Skor ATS"
               : "Mulai Perbaiki CV Sekarang"}
           </Button>
         </div>

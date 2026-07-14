@@ -159,7 +159,12 @@ const comparison = [
   ["CV aktif", "1", "3", "10"],
   ["Template", "2 basic", "Semua", "Semua"],
   ["Upload CV (PDF/DOCX)", "Add-on (Rp 5.000 / bln)", "10x / bulan", "20x / bulan"],
-  ["Foto Profesional AI", "Rp 5.000 / Kuota", "2x / bln (+Rp 5rb/Add-on)", "5x / bln (+Rp 5rb/Add-on)"],
+  [
+    "Foto Profesional AI",
+    "Rp 5.000 / Kuota",
+    "2x / bln (+Rp 5rb/Add-on)",
+    "5x / bln (+Rp 5rb/Add-on)",
+  ],
   ["AI suggestions", "5x", "50x", "200x"],
   ["ATS scoring", "1x", "10x", "50x"],
   ["Perbaiki teks AI", "5x", "50x", "200x"],
@@ -381,15 +386,26 @@ function HargaPage() {
                 <Upload className="h-7 w-7" />
               </div>
               <div className="flex-1 text-center sm:text-left">
-                <h3 className="font-display text-xl font-bold text-foreground">Hanya Butuh Fitur Upload CV?</h3>
+                <h3 className="font-display text-xl font-bold text-foreground">
+                  Hanya Butuh Fitur Upload CV?
+                </h3>
                 <p className="mt-2 text-muted-foreground text-sm">
-                  Upload CV lama (PDF/DOCX), biarkan AI membaca dan mengisi datanya otomatis ke template baru. Beli satuan hanya Rp 5.000 / bulan.
+                  Upload CV lama (PDF/DOCX), biarkan AI membaca dan mengisi datanya otomatis ke
+                  template baru. Beli satuan hanya Rp 5.000 / bulan.
                 </p>
               </div>
             </CardContent>
             <div className="px-8 pb-8 pt-0 z-10">
-              <Button asChild size="lg" className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-semibold">
-                <a href="https://lynk.id/ben-yt-ai/qqom281ddwwm" target="_blank" rel="noopener noreferrer">
+              <Button
+                asChild
+                size="lg"
+                className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-semibold"
+              >
+                <a
+                  href="https://lynk.id/ben-yt-ai/qqom281ddwwm"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
                   Beli Upload CV (Rp 5rb / bln)
                 </a>
               </Button>
@@ -404,15 +420,26 @@ function HargaPage() {
                 <Sparkles className="h-7 w-7" />
               </div>
               <div className="flex-1 text-center sm:text-left">
-                <h3 className="font-display text-xl font-bold text-foreground">Hanya Butuh Foto Profesional?</h3>
+                <h3 className="font-display text-xl font-bold text-foreground">
+                  Hanya Butuh Foto Profesional?
+                </h3>
                 <p className="mt-2 text-muted-foreground text-sm">
-                  Ubah foto kasual kamu menjadi pas foto formal jas hitam & dasi rapi kualitas studio foto secara instan. Beli satuan hanya Rp 5.000 / bulan.
+                  Ubah foto kasual kamu menjadi pas foto formal jas hitam & dasi rapi kualitas
+                  studio foto secara instan. Beli satuan hanya Rp 5.000 / bulan.
                 </p>
               </div>
             </CardContent>
             <div className="px-8 pb-8 pt-0 z-10">
-              <Button asChild size="lg" className="w-full bg-purple-500 hover:bg-purple-600 text-white font-semibold">
-                <a href="https://lynk.id/ben-yt-ai/zz5m163mknj6" target="_blank" rel="noopener noreferrer">
+              <Button
+                asChild
+                size="lg"
+                className="w-full bg-purple-500 hover:bg-purple-600 text-white font-semibold"
+              >
+                <a
+                  href="https://lynk.id/ben-yt-ai/zz5m163mknj6"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
                   Beli Kuota Foto Pro AI (Rp 5rb / Kuota)
                 </a>
               </Button>

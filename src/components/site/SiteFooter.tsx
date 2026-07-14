@@ -29,6 +29,8 @@ export function SiteFooter() {
                 src="/apple-touch-icon.png"
                 alt="CV Pintar Logo"
                 className="h-8 w-8 object-contain rounded-full"
+                loading="lazy"
+                decoding="async"
               />
               <span className="flex items-center gap-1 font-display text-lg font-extrabold text-white">
                 <span className="text-green-500">CV</span>

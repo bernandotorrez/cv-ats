@@ -616,7 +616,8 @@ export const previewData = {
         field: "Desain Komunikasi Visual",
         startDate: "2014",
         endDate: "2018",
-        description: "Lulus dengan predikat Cum Laude. Aktif dalam organisasi kemahasiswaan bidang seni rupa.",
+        description:
+          "Lulus dengan predikat Cum Laude. Aktif dalam organisasi kemahasiswaan bidang seni rupa.",
       },
     ],
     skills: [

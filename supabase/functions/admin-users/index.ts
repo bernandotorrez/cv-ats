@@ -103,7 +103,7 @@ Deno.serve(async (req: Request) => {
         auth_created_at: user.auth_created_at || "",
         last_sign_in_at: user.last_sign_in_at || null,
       }));
-      
+
       const userIds = rows.map((u) => u.id);
       let profileMap = new Map();
       if (userIds.length > 0) {
@@ -111,7 +111,7 @@ Deno.serve(async (req: Request) => {
           .from("profiles")
           .select("id, has_upload_cv, upload_cv_end_date, quota_pro_photo, quota_upload_cv")
           .in("id", userIds);
-        profileMap = new Map((profiles || []).map(p => [p.id, p]));
+        profileMap = new Map((profiles || []).map((p) => [p.id, p]));
       }
 
       const now = new Date();
@@ -120,7 +120,7 @@ Deno.serve(async (req: Request) => {
         const endDateStr = p?.upload_cv_end_date;
         let isUnlocked = p?.has_upload_cv || false;
         if (endDateStr) {
-           isUnlocked = new Date(endDateStr) > now;
+          isUnlocked = new Date(endDateStr) > now;
         }
 
         return {
@@ -175,8 +175,10 @@ async function updateUser(req: Request, admin: ReturnType<typeof getAdminClient>
   const tier = (body.tier || "").trim().toLowerCase();
   const role = (body.role || "").trim().toLowerCase();
   const has_upload_cv = typeof body.has_upload_cv === "boolean" ? body.has_upload_cv : false;
-  const quota_pro_photo = typeof body.quota_pro_photo === "number" ? body.quota_pro_photo : undefined;
-  const quota_upload_cv = typeof body.quota_upload_cv === "number" ? body.quota_upload_cv : undefined;
+  const quota_pro_photo =
+    typeof body.quota_pro_photo === "number" ? body.quota_pro_photo : undefined;
+  const quota_upload_cv =
+    typeof body.quota_upload_cv === "number" ? body.quota_upload_cv : undefined;
 
   if (!isUuid(userId)) {
     throw new Error("User ID tidak valid");
@@ -277,7 +279,16 @@ async function updateUser(req: Request, admin: ReturnType<typeof getAdminClient>
     .eq("id", userId);
   if (profileUpdateError) throw profileUpdateError;
 
-  return { ok: true, userId, tier, role, has_upload_cv, upload_cv_end_date: endDateIso, quota_pro_photo, quota_upload_cv };
+  return {
+    ok: true,
+    userId,
+    tier,
+    role,
+    has_upload_cv,
+    upload_cv_end_date: endDateIso,
+    quota_pro_photo,
+    quota_upload_cv,
+  };
 }
 
 async function buildUserRows(admin: ReturnType<typeof getAdminClient>, authUsers: AuthUser[]) {
@@ -285,7 +296,10 @@ async function buildUserRows(admin: ReturnType<typeof getAdminClient>, authUsers
 
   const [profiles, roles, subs, cvs, aiUsage] = await Promise.all([
     userIds.length
-      ? admin.from("profiles").select("id, full_name, created_at, has_upload_cv, upload_cv_end_date, quota_pro_photo").in("id", userIds)
+      ? admin
+          .from("profiles")
+          .select("id, full_name, created_at, has_upload_cv, upload_cv_end_date, quota_pro_photo")
+          .in("id", userIds)
       : Promise.resolve({ data: [] }),
     userIds.length
       ? admin.from("user_roles").select("user_id, role").in("user_id", userIds)

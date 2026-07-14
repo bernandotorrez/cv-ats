@@ -13,7 +13,7 @@ interface UseAutosaveOptions {
  * Uses a trailing debounce: only saves after `delay` ms of inactivity.
  */
 export function useAutosave({ onSave, delay = 2000, showToasts = true }: UseAutosaveOptions) {
-  const timerRef = useRef<ReturnType<typeof setTimeout>>();
+  const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const isSavingRef = useRef(false);
   const pendingDataRef = useRef<unknown>(null);
   const lastSavedKeyRef = useRef<string>("");

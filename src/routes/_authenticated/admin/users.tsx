@@ -340,10 +340,14 @@ function AdminUsersPage() {
                       </Badge>
                     )}
                     {u.quota_upload_cv !== undefined && u.quota_upload_cv > 0 && (
-                      <span className="text-muted-foreground">Kuota Upload CV: {u.quota_upload_cv}</span>
+                      <span className="text-muted-foreground">
+                        Kuota Upload CV: {u.quota_upload_cv}
+                      </span>
                     )}
                     {u.quota_pro_photo !== undefined && u.quota_pro_photo > 0 && (
-                      <span className="text-muted-foreground">Kuota Pro Photo: {u.quota_pro_photo}</span>
+                      <span className="text-muted-foreground">
+                        Kuota Pro Photo: {u.quota_pro_photo}
+                      </span>
                     )}
                   </div>
                 </div>
@@ -489,39 +493,43 @@ function AdminUsersPage() {
               </div>
 
               <div className="flex items-center space-x-2 py-2">
-                <Switch 
-                  id="has-upload-cv" 
-                  checked={editHasUploadCv} 
-                  onCheckedChange={setEditHasUploadCv} 
+                <Switch
+                  id="has-upload-cv"
+                  checked={editHasUploadCv}
+                  onCheckedChange={setEditHasUploadCv}
                 />
-                <Label htmlFor="has-upload-cv" className="text-sm font-medium">Unlock Fitur Upload CV (1 Bulan)</Label>
+                <Label htmlFor="has-upload-cv" className="text-sm font-medium">
+                  Unlock Fitur Upload CV (1 Bulan)
+                </Label>
               </div>
 
               <div className="flex flex-col space-y-1.5 py-2">
-                <Label htmlFor="quota-upload-cv" className="text-sm font-medium">Kuota Upload CV</Label>
+                <Label htmlFor="quota-upload-cv" className="text-sm font-medium">
+                  Kuota Upload CV
+                </Label>
                 <div className="flex items-center gap-2">
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    size="icon" 
-                    className="h-8 w-8" 
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
                     onClick={() => setEditQuotaUploadCv(Math.max(0, editQuotaUploadCv - 1))}
                   >
                     <span className="font-bold">-</span>
                   </Button>
-                  <Input 
-                    id="quota-upload-cv" 
+                  <Input
+                    id="quota-upload-cv"
                     type="number"
                     min="0"
-                    value={editQuotaUploadCv} 
-                    onChange={(e) => setEditQuotaUploadCv(parseInt(e.target.value) || 0)} 
+                    value={editQuotaUploadCv}
+                    onChange={(e) => setEditQuotaUploadCv(parseInt(e.target.value) || 0)}
                     className="w-20 text-center"
                   />
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    size="icon" 
-                    className="h-8 w-8" 
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
                     onClick={() => setEditQuotaUploadCv(editQuotaUploadCv + 1)}
                   >
                     <span className="font-bold">+</span>
@@ -530,30 +538,32 @@ function AdminUsersPage() {
               </div>
 
               <div className="flex flex-col space-y-1.5 py-2">
-                <Label htmlFor="quota-pro-photo" className="text-sm font-medium">Kuota Foto Profesional</Label>
+                <Label htmlFor="quota-pro-photo" className="text-sm font-medium">
+                  Kuota Foto Profesional
+                </Label>
                 <div className="flex items-center gap-2">
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    size="icon" 
-                    className="h-8 w-8" 
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
                     onClick={() => setEditQuotaProPhoto(Math.max(0, editQuotaProPhoto - 1))}
                   >
                     <span className="font-bold">-</span>
                   </Button>
-                  <Input 
-                    id="quota-pro-photo" 
+                  <Input
+                    id="quota-pro-photo"
                     type="number"
                     min="0"
-                    value={editQuotaProPhoto} 
-                    onChange={(e) => setEditQuotaProPhoto(parseInt(e.target.value) || 0)} 
+                    value={editQuotaProPhoto}
+                    onChange={(e) => setEditQuotaProPhoto(parseInt(e.target.value) || 0)}
                     className="w-20 text-center"
                   />
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    size="icon" 
-                    className="h-8 w-8" 
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
                     onClick={() => setEditQuotaProPhoto(editQuotaProPhoto + 1)}
                   >
                     <span className="font-bold">+</span>

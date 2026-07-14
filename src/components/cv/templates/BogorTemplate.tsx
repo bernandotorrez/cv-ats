@@ -83,10 +83,19 @@ export function BogorTemplate({ data, showHeader = true, sectionOrder, language 
               {renderSidebarHeading(t(language, "skills"))}
               <div style={{ padding: "0 20px", display: "flex", flexDirection: "column", gap: 12 }}>
                 {skills.map((s) => (
-                  <div key={s.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <div
+                    key={s.id}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                    }}
+                  >
                     <span style={{ fontSize: "9pt", color: textColor, flex: 1 }}>{s.name}</span>
                     <div style={{ width: "35%", height: 6, backgroundColor: "#e2e8f0" }}>
-                      <div style={{ width: "75%", height: "100%", backgroundColor: primaryColor }} />
+                      <div
+                        style={{ width: "75%", height: "100%", backgroundColor: primaryColor }}
+                      />
                     </div>
                   </div>
                 ))}
@@ -102,10 +111,19 @@ export function BogorTemplate({ data, showHeader = true, sectionOrder, language 
               {renderSidebarHeading(t(language, "languages"))}
               <div style={{ padding: "0 20px", display: "flex", flexDirection: "column", gap: 12 }}>
                 {languages.map((l) => (
-                  <div key={l.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <div
+                    key={l.id}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                    }}
+                  >
                     <span style={{ fontSize: "9pt", color: textColor, flex: 1 }}>{l.name}</span>
                     <div style={{ width: "35%", height: 6, backgroundColor: "#e2e8f0" }}>
-                      <div style={{ width: "100%", height: "100%", backgroundColor: primaryColor }} />
+                      <div
+                        style={{ width: "100%", height: "100%", backgroundColor: primaryColor }}
+                      />
                     </div>
                   </div>
                 ))}
@@ -122,7 +140,9 @@ export function BogorTemplate({ data, showHeader = true, sectionOrder, language 
               <div style={{ padding: "0 20px", display: "flex", flexDirection: "column", gap: 12 }}>
                 {certificates.map((c) => (
                   <div key={c.id}>
-                    <div style={{ fontSize: "9pt", fontWeight: 700, color: textColor }}>{c.name}</div>
+                    <div style={{ fontSize: "9pt", fontWeight: 700, color: textColor }}>
+                      {c.name}
+                    </div>
                     <div style={{ fontSize: "8.5pt", color: "#666" }}>{c.issuer}</div>
                   </div>
                 ))}
@@ -141,7 +161,16 @@ export function BogorTemplate({ data, showHeader = true, sectionOrder, language 
         return (
           <div key="personal" style={{ marginBottom: 20 }}>
             {renderMainHeading(t(language, "summary") || "Profil")}
-            <p style={{ fontSize: "9.5pt", color: textColor, lineHeight: 1.6, whiteSpace: "pre-wrap", margin: 0, paddingLeft: 16 }}>
+            <p
+              style={{
+                fontSize: "9.5pt",
+                color: textColor,
+                lineHeight: 1.6,
+                whiteSpace: "pre-wrap",
+                margin: 0,
+                paddingLeft: 16,
+              }}
+            >
               {personal.summary}
             </p>
           </div>
@@ -154,16 +183,37 @@ export function BogorTemplate({ data, showHeader = true, sectionOrder, language 
               <div style={{ paddingLeft: 16 }}>
                 {experiences.map((exp) => (
                   <div key={exp.id} style={{ marginBottom: 16 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                      <h4 style={{ margin: 0, fontSize: "10.5pt", fontWeight: 700, color: textColor }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "baseline",
+                      }}
+                    >
+                      <h4
+                        style={{ margin: 0, fontSize: "10.5pt", fontWeight: 700, color: textColor }}
+                      >
                         {exp.company}
                       </h4>
                       <span style={{ fontSize: "9pt", color: textColor, fontWeight: 700 }}>
                         {exp.location}
                       </span>
                     </div>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                      <h5 style={{ margin: "2px 0 4px 0", fontSize: "10pt", fontWeight: 400, color: textColor }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "baseline",
+                      }}
+                    >
+                      <h5
+                        style={{
+                          margin: "2px 0 4px 0",
+                          fontSize: "10pt",
+                          fontWeight: 400,
+                          color: textColor,
+                        }}
+                      >
                         {exp.position}
                       </h5>
                       <span style={{ fontSize: "9pt", color: textColor, fontWeight: 700 }}>
@@ -171,10 +221,19 @@ export function BogorTemplate({ data, showHeader = true, sectionOrder, language 
                       </span>
                     </div>
                     {exp.description && (
-                      <div style={{ fontSize: "9.5pt", color: textColor, lineHeight: 1.5, marginTop: 6 }}>
+                      <div
+                        style={{
+                          fontSize: "9.5pt",
+                          color: textColor,
+                          lineHeight: 1.5,
+                          marginTop: 6,
+                        }}
+                      >
                         <ul style={{ margin: 0, paddingLeft: 20, listStyleType: "disc" }}>
                           {exp.description.split("\n").map((line, i) => (
-                            <li key={i} style={{ marginBottom: 2 }}>{line.replace(/^[-•]\s*/, "")}</li>
+                            <li key={i} style={{ marginBottom: 2 }}>
+                              {line.replace(/^[-•]\s*/, "")}
+                            </li>
                           ))}
                         </ul>
                       </div>
@@ -194,15 +253,32 @@ export function BogorTemplate({ data, showHeader = true, sectionOrder, language 
               <div style={{ paddingLeft: 16 }}>
                 {educations.map((edu) => (
                   <div key={edu.id} style={{ marginBottom: 16 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                      <h4 style={{ margin: 0, fontSize: "10.5pt", fontWeight: 700, color: textColor }}>
-                        {edu.degree ? `${edu.degree} ${edu.field ? edu.field : ""} - ${edu.school}` : edu.school}
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "baseline",
+                      }}
+                    >
+                      <h4
+                        style={{ margin: 0, fontSize: "10.5pt", fontWeight: 700, color: textColor }}
+                      >
+                        {edu.degree
+                          ? `${edu.degree} ${edu.field ? edu.field : ""} - ${edu.school}`
+                          : edu.school}
                       </h4>
                       <span style={{ fontSize: "9pt", color: textColor, fontWeight: 700 }}>
-                        {edu.location}
+                        {(edu as any).location}
                       </span>
                     </div>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginTop: 2 }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "baseline",
+                        marginTop: 2,
+                      }}
+                    >
                       <span style={{ fontSize: "10pt", color: textColor }}>
                         {/* If field is already joined in degree, we can leave this empty or use something else */}
                       </span>
@@ -211,10 +287,19 @@ export function BogorTemplate({ data, showHeader = true, sectionOrder, language 
                       </span>
                     </div>
                     {edu.description && (
-                      <div style={{ margin: "4px 0 0 0", fontSize: "9.5pt", color: textColor, lineHeight: 1.5 }}>
+                      <div
+                        style={{
+                          margin: "4px 0 0 0",
+                          fontSize: "9.5pt",
+                          color: textColor,
+                          lineHeight: 1.5,
+                        }}
+                      >
                         <ul style={{ margin: 0, paddingLeft: 20, listStyleType: "disc" }}>
                           {edu.description.split("\n").map((line, i) => (
-                            <li key={i} style={{ marginBottom: 2 }}>{line.replace(/^[-•]\s*/, "")}</li>
+                            <li key={i} style={{ marginBottom: 2 }}>
+                              {line.replace(/^[-•]\s*/, "")}
+                            </li>
                           ))}
                         </ul>
                       </div>
@@ -234,16 +319,37 @@ export function BogorTemplate({ data, showHeader = true, sectionOrder, language 
               <div style={{ paddingLeft: 16 }}>
                 {internships.map((intern) => (
                   <div key={intern.id} style={{ marginBottom: 16 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                      <h4 style={{ margin: 0, fontSize: "10.5pt", fontWeight: 700, color: textColor }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "baseline",
+                      }}
+                    >
+                      <h4
+                        style={{ margin: 0, fontSize: "10.5pt", fontWeight: 700, color: textColor }}
+                      >
                         {intern.company}
                       </h4>
                       <span style={{ fontSize: "9pt", color: textColor, fontWeight: 700 }}>
                         {intern.location}
                       </span>
                     </div>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                      <h5 style={{ margin: "2px 0 4px 0", fontSize: "10pt", fontWeight: 400, color: textColor }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "baseline",
+                      }}
+                    >
+                      <h5
+                        style={{
+                          margin: "2px 0 4px 0",
+                          fontSize: "10pt",
+                          fontWeight: 400,
+                          color: textColor,
+                        }}
+                      >
                         {intern.position}
                       </h5>
                       <span style={{ fontSize: "9pt", color: textColor, fontWeight: 700 }}>
@@ -251,10 +357,19 @@ export function BogorTemplate({ data, showHeader = true, sectionOrder, language 
                       </span>
                     </div>
                     {intern.description && (
-                      <div style={{ fontSize: "9.5pt", color: textColor, lineHeight: 1.5, marginTop: 6 }}>
+                      <div
+                        style={{
+                          fontSize: "9.5pt",
+                          color: textColor,
+                          lineHeight: 1.5,
+                          marginTop: 6,
+                        }}
+                      >
                         <ul style={{ margin: 0, paddingLeft: 20, listStyleType: "disc" }}>
                           {intern.description.split("\n").map((line, i) => (
-                            <li key={i} style={{ marginBottom: 2 }}>{line.replace(/^[-•]\s*/, "")}</li>
+                            <li key={i} style={{ marginBottom: 2 }}>
+                              {line.replace(/^[-•]\s*/, "")}
+                            </li>
                           ))}
                         </ul>
                       </div>
@@ -274,16 +389,37 @@ export function BogorTemplate({ data, showHeader = true, sectionOrder, language 
               <div style={{ paddingLeft: 16 }}>
                 {organizations.map((org) => (
                   <div key={org.id} style={{ marginBottom: 16 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                      <h4 style={{ margin: 0, fontSize: "10.5pt", fontWeight: 700, color: textColor }}>
-                        {org.organization}
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "baseline",
+                      }}
+                    >
+                      <h4
+                        style={{ margin: 0, fontSize: "10.5pt", fontWeight: 700, color: textColor }}
+                      >
+                        {(org as any).organization}
                       </h4>
                       <span style={{ fontSize: "9pt", color: textColor, fontWeight: 700 }}>
-                        {org.location}
+                        {(org as any).location}
                       </span>
                     </div>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                      <h5 style={{ margin: "2px 0 4px 0", fontSize: "10pt", fontWeight: 400, color: textColor }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "baseline",
+                      }}
+                    >
+                      <h5
+                        style={{
+                          margin: "2px 0 4px 0",
+                          fontSize: "10pt",
+                          fontWeight: 400,
+                          color: textColor,
+                        }}
+                      >
                         {org.role}
                       </h5>
                       <span style={{ fontSize: "9pt", color: textColor, fontWeight: 700 }}>
@@ -291,10 +427,19 @@ export function BogorTemplate({ data, showHeader = true, sectionOrder, language 
                       </span>
                     </div>
                     {org.description && (
-                      <div style={{ margin: "4px 0 0 0", fontSize: "9.5pt", color: textColor, lineHeight: 1.5 }}>
+                      <div
+                        style={{
+                          margin: "4px 0 0 0",
+                          fontSize: "9.5pt",
+                          color: textColor,
+                          lineHeight: 1.5,
+                        }}
+                      >
                         <ul style={{ margin: 0, paddingLeft: 20, listStyleType: "disc" }}>
                           {org.description.split("\n").map((line, i) => (
-                            <li key={i} style={{ marginBottom: 2 }}>{line.replace(/^[-•]\s*/, "")}</li>
+                            <li key={i} style={{ marginBottom: 2 }}>
+                              {line.replace(/^[-•]\s*/, "")}
+                            </li>
                           ))}
                         </ul>
                       </div>
@@ -310,8 +455,15 @@ export function BogorTemplate({ data, showHeader = true, sectionOrder, language 
   };
 
   return (
-    <div style={{ display: "flex", minHeight: "100%", position: "relative", backgroundColor: "#fff", fontFamily: "'Inter', sans-serif" }}>
-      
+    <div
+      style={{
+        display: "flex",
+        minHeight: "100%",
+        position: "relative",
+        backgroundColor: "#fff",
+        fontFamily: "'Inter', sans-serif",
+      }}
+    >
       {/* ─── Left Sidebar (35% width) ─── */}
       <div
         style={{
@@ -326,24 +478,40 @@ export function BogorTemplate({ data, showHeader = true, sectionOrder, language 
         {showHeader && (
           <div style={{ height: "135px", backgroundColor: "#fff", position: "relative" }}>
             {/* The diagonal slash in the reference image at the top left corner */}
-            <div style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              width: "100%",
-              height: "100%",
-              backgroundColor: primaryColor,
-              clipPath: "polygon(0 0, 100% 0, 0 100%)",
-              opacity: 0.15
-            }} />
+            <div
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: "100%",
+                height: "100%",
+                backgroundColor: primaryColor,
+                clipPath: "polygon(0 0, 100% 0, 0 100%)",
+                opacity: 0.15,
+              }}
+            />
           </div>
         )}
-        
-        <div style={{ marginTop: showHeader && personal.photoUrl ? "90px" : "30px", paddingBottom: "20px" }}>
-          
+
+        <div
+          style={{
+            marginTop: showHeader && personal.photoUrl ? "90px" : "30px",
+            paddingBottom: "20px",
+          }}
+        >
           {/* STATIC CONTACT SECTION */}
           {renderSidebarHeading(t(language, "contactInfo"))}
-          <div style={{ padding: "0 20px", fontSize: "9pt", color: textColor, lineHeight: 1.6, display: "flex", flexDirection: "column", gap: 14 }}>
+          <div
+            style={{
+              padding: "0 20px",
+              fontSize: "9pt",
+              color: textColor,
+              lineHeight: 1.6,
+              display: "flex",
+              flexDirection: "column",
+              gap: 14,
+            }}
+          >
             {personal.phone && (
               <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
                 <Phone size={14} />
@@ -363,76 +531,107 @@ export function BogorTemplate({ data, showHeader = true, sectionOrder, language 
               </div>
             )}
           </div>
-          
+
           {/* Dynamic Sidebar Sections (Skills, Languages) */}
           {orderedSections
             .filter((s) => sidebarSectionIds.includes(s.id))
             .map((s) => renderSidebarSection(s.id))}
-          
+
           {/* Social Media Section */}
           {(personal.linkedin || personal.website) && (
-             <div>
-               {renderSidebarHeading("SOSIAL MEDIA")}
-               <div style={{ padding: "0 20px", fontSize: "9pt", color: textColor, lineHeight: 1.6, display: "flex", flexDirection: "column", gap: 14 }}>
-                 {personal.linkedin && (
-                   <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                     <Linkedin size={14} />
-                     <span style={{ fontWeight: 500 }}>{personal.linkedin.replace("https://linkedin.com/in/", "").replace("https://www.linkedin.com/in/", "")}</span>
-                   </div>
-                 )}
-                 {personal.website && (
-                   <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                     <Globe size={14} />
-                     <span style={{ fontWeight: 500 }}>{personal.website.replace("https://", "")}</span>
-                   </div>
-                 )}
-               </div>
-             </div>
+            <div>
+              {renderSidebarHeading("SOSIAL MEDIA")}
+              <div
+                style={{
+                  padding: "0 20px",
+                  fontSize: "9pt",
+                  color: textColor,
+                  lineHeight: 1.6,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 14,
+                }}
+              >
+                {personal.linkedin && (
+                  <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                    <Linkedin size={14} />
+                    <span style={{ fontWeight: 500 }}>
+                      {personal.linkedin
+                        .replace("https://linkedin.com/in/", "")
+                        .replace("https://www.linkedin.com/in/", "")}
+                    </span>
+                  </div>
+                )}
+                {personal.website && (
+                  <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                    <Globe size={14} />
+                    <span style={{ fontWeight: 500 }}>
+                      {personal.website.replace("https://", "")}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
           )}
         </div>
       </div>
 
       {/* ─── Right Column (Main Content) ─── */}
-      <div style={{ width: "65%", display: "flex", flexDirection: "column", backgroundColor: "#fff" }}>
-        
+      <div
+        style={{ width: "65%", display: "flex", flexDirection: "column", backgroundColor: "#fff" }}
+      >
         {/* Top Header Background */}
         {showHeader && (
-           <div style={{
-             backgroundColor: primaryColor,
-             height: "135px",
-             display: "flex",
-             flexDirection: "column",
-             justifyContent: "center",
-             paddingLeft: "70px",
-             position: "relative"
-           }}>
-             <h1 style={{ color: "#fff", fontSize: "20pt", fontWeight: 700, margin: 0, letterSpacing: "1px" }}>
-               {personal.fullName || "Nama Lengkap"}
-             </h1>
-             {personal.headline && (
-               <h2 style={{ color: "#fff", fontSize: "12pt", fontWeight: 400, margin: "8px 0 0 0" }}>
-                 {personal.headline}
-               </h2>
-             )}
-           </div>
+          <div
+            style={{
+              backgroundColor: primaryColor,
+              height: "135px",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+              paddingLeft: "70px",
+              position: "relative",
+            }}
+          >
+            <h1
+              style={{
+                color: "#fff",
+                fontSize: "20pt",
+                fontWeight: 700,
+                margin: 0,
+                letterSpacing: "1px",
+              }}
+            >
+              {personal.fullName || "Nama Lengkap"}
+            </h1>
+            {personal.headline && (
+              <h2 style={{ color: "#fff", fontSize: "12pt", fontWeight: 400, margin: "8px 0 0 0" }}>
+                {personal.headline}
+              </h2>
+            )}
+          </div>
         )}
-        
+
         {/* Main Content Area */}
-        <div style={{ 
-          padding: "10px 30px 30px 40px", 
-          flex: 1, 
-          position: "relative"
-        }}>
+        <div
+          style={{
+            padding: "10px 30px 30px 40px",
+            flex: 1,
+            position: "relative",
+          }}
+        >
           {/* Thin vertical line acting as border left */}
-          <div style={{
-            position: "absolute",
-            left: "15px",
-            top: 24,
-            bottom: 30,
-            width: "1.5px",
-            backgroundColor: "#e2e8f0"
-          }} />
-          
+          <div
+            style={{
+              position: "absolute",
+              left: "15px",
+              top: 24,
+              bottom: 30,
+              width: "1.5px",
+              backgroundColor: "#e2e8f0",
+            }}
+          />
+
           {orderedSections
             .filter((s) => mainSectionIds.includes(s.id))
             .map((s) => renderMainSection(s.id))}
@@ -441,15 +640,17 @@ export function BogorTemplate({ data, showHeader = true, sectionOrder, language 
 
       {/* ─── Overlapping Photo (Absolute) ─── */}
       {showHeader && personal.photoUrl && (
-        <div style={{ 
-          position: "absolute", 
-          top: "30px", 
-          left: "2%", 
-          zIndex: 10,
-          backgroundColor: "#fff",
-          borderRadius: "50%",
-          padding: "6px",
-        }}>
+        <div
+          style={{
+            position: "absolute",
+            top: "30px",
+            left: "2%",
+            zIndex: 10,
+            backgroundColor: "#fff",
+            borderRadius: "50%",
+            padding: "6px",
+          }}
+        >
           <img
             src={personal.photoUrl}
             alt="Profile"
@@ -458,7 +659,7 @@ export function BogorTemplate({ data, showHeader = true, sectionOrder, language 
               height: "180px",
               borderRadius: "50%",
               objectFit: "cover",
-              display: "block"
+              display: "block",
             }}
           />
         </div>

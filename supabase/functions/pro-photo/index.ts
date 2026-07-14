@@ -33,7 +33,7 @@ Deno.serve(async (req: Request) => {
       const statusRes = await fetch(`https://api.kie.ai/api/v1/jobs/recordInfo?taskId=${taskId}`, {
         method: "GET",
         headers: {
-          "Authorization": `Bearer ${apiKey}`,
+          Authorization: `Bearer ${apiKey}`,
           "Content-Type": "application/json",
         },
       });
@@ -55,8 +55,18 @@ Deno.serve(async (req: Request) => {
       const status = data.status ?? data.state;
       const result = data.result || data.resultJson;
 
-      const isSuccess = status === 1 || status === "success" || status === "completed" || status === "successed" || status === "DONE";
-      const isFailed = status === 2 || status === 3 || status === "failed" || status === "error" || status === "FAILED";
+      const isSuccess =
+        status === 1 ||
+        status === "success" ||
+        status === "completed" ||
+        status === "successed" ||
+        status === "DONE";
+      const isFailed =
+        status === 2 ||
+        status === 3 ||
+        status === "failed" ||
+        status === "error" ||
+        status === "FAILED";
 
       if (isSuccess) {
         let imageUrl = null;
@@ -64,12 +74,22 @@ Deno.serve(async (req: Request) => {
           if (typeof result === "string") {
             try {
               const parsed = JSON.parse(result);
-              imageUrl = parsed.url || parsed.image_url || parsed.imageUrl || parsed.images?.[0] || parsed.result;
+              imageUrl =
+                parsed.url ||
+                parsed.image_url ||
+                parsed.imageUrl ||
+                parsed.images?.[0] ||
+                parsed.result;
             } catch (e) {
               if (result.startsWith("http")) imageUrl = result;
             }
           } else if (typeof result === "object") {
-            imageUrl = result.url || result.image_url || result.imageUrl || result.images?.[0] || result.result;
+            imageUrl =
+              result.url ||
+              result.image_url ||
+              result.imageUrl ||
+              result.images?.[0] ||
+              result.result;
           }
         }
 
@@ -78,7 +98,7 @@ Deno.serve(async (req: Request) => {
           const str = typeof result === "string" ? result : JSON.stringify(result);
           const match = str?.match(/https?:\/\/[^"'\s\\]+/i);
           if (match) {
-            imageUrl = match[0].replace(/\\/g, '');
+            imageUrl = match[0].replace(/\\/g, "");
           }
         }
 
@@ -87,9 +107,9 @@ Deno.serve(async (req: Request) => {
           try {
             // Download from Kie AI temporary URL
             const imageRes = await fetch(imageUrl, {
-              headers: { "User-Agent": "Mozilla/5.0" }
+              headers: { "User-Agent": "Mozilla/5.0" },
             });
-            
+
             if (imageRes.ok) {
               const fileBlob = await imageRes.blob();
               const filePath = `${userId}/pro-photo-${taskId}.png`;
@@ -121,8 +141,8 @@ Deno.serve(async (req: Request) => {
               debugMsg = `Download failed: ${imageRes.statusText}`;
             }
           } catch (storageErr: any) {
-             debugMsg = `Storage exception: ${storageErr.message}`;
-             console.error("Failed to process image storage:", storageErr);
+            debugMsg = `Storage exception: ${storageErr.message}`;
+            console.error("Failed to process image storage:", storageErr);
           }
 
           return new Response(JSON.stringify({ status: "success", imageUrl, debug: debugMsg }), {
@@ -130,16 +150,22 @@ Deno.serve(async (req: Request) => {
             headers: { ...corsHeaders(req), "Content-Type": "application/json" },
           });
         } else {
-          return new Response(JSON.stringify({ status: "failed", error: "Image URL not found in result" }), {
-            status: 200,
-            headers: { ...corsHeaders(req), "Content-Type": "application/json" },
-          });
+          return new Response(
+            JSON.stringify({ status: "failed", error: "Image URL not found in result" }),
+            {
+              status: 200,
+              headers: { ...corsHeaders(req), "Content-Type": "application/json" },
+            },
+          );
         }
       } else if (isFailed) {
-        return new Response(JSON.stringify({ status: "failed", error: data.failMsg || "AI generation failed" }), {
-          status: 200,
-          headers: { ...corsHeaders(req), "Content-Type": "application/json" },
-        });
+        return new Response(
+          JSON.stringify({ status: "failed", error: data.failMsg || "AI generation failed" }),
+          {
+            status: 200,
+            headers: { ...corsHeaders(req), "Content-Type": "application/json" },
+          },
+        );
       } else {
         return new Response(JSON.stringify({ status: "generating" }), {
           status: 200,
@@ -174,7 +200,9 @@ Deno.serve(async (req: Request) => {
       monthStart.setDate(1);
       monthStart.setHours(0, 0, 0, 0);
 
-      const lastReset = profile?.quota_pro_photo_reset_at ? new Date(profile.quota_pro_photo_reset_at) : null;
+      const lastReset = profile?.quota_pro_photo_reset_at
+        ? new Date(profile.quota_pro_photo_reset_at)
+        : null;
       const needsReset = !lastReset || lastReset < monthStart;
 
       if (needsReset) {
@@ -193,7 +221,10 @@ Deno.serve(async (req: Request) => {
           // Reset quota to tier allocation
           await admin
             .from("profiles")
-            .update({ quota_pro_photo: tierAllocation, quota_pro_photo_reset_at: new Date().toISOString() })
+            .update({
+              quota_pro_photo: tierAllocation,
+              quota_pro_photo_reset_at: new Date().toISOString(),
+            })
             .eq("id", userId);
 
           // Use the fresh quota
@@ -206,10 +237,15 @@ Deno.serve(async (req: Request) => {
       }
 
       if (effectiveQuota <= 0) {
-        return new Response(JSON.stringify({ error: "Access Denied: Please buy Photo Pro Quota to use this feature." }), {
-          status: 403,
-          headers: { ...corsHeaders(req), "Content-Type": "application/json" },
-        });
+        return new Response(
+          JSON.stringify({
+            error: "Access Denied: Please buy Photo Pro Quota to use this feature.",
+          }),
+          {
+            status: 403,
+            headers: { ...corsHeaders(req), "Content-Type": "application/json" },
+          },
+        );
       }
 
       const apiKey = Deno.env.get("KIE_AI_KEY");
@@ -220,12 +256,13 @@ Deno.serve(async (req: Request) => {
         });
       }
 
-      const prompt = "Convert this casual photo of a person into a highly professional business portrait headshot. The person should be facing directly forward with a straight, upright posture, looking directly at the camera. The composition should be a chest-up portrait only (cropped from the chest upward), similar to a professional passport or ID photo. The person should be wearing a clean, modern, and perfectly fitted professional dark suit with a collared white shirt and a matching professional tie (or a professional business blazer/blouse for a woman). The background should be a clean, slightly blurred professional studio background with neutral professional office colors (soft gray/blue). Face features, hairstyle, facial proportions, expression, and gender of the person must remain identical to the input photo. Use polished studio lighting, sharp focus, high-end DSLR camera quality, 8K resolution, and a photorealistic corporate portrait style and Remove Background then Change to White Colour";
+      const prompt =
+        "Convert this casual photo of a person into a highly professional business portrait headshot. The person should be facing directly forward with a straight, upright posture, looking directly at the camera. The composition should be a chest-up portrait only (cropped from the chest upward), similar to a professional passport or ID photo. The person should be wearing a clean, modern, and perfectly fitted professional dark suit with a collared white shirt and a matching professional tie (or a professional business blazer/blouse for a woman). The background should be a clean, slightly blurred professional studio background with neutral professional office colors (soft gray/blue). Face features, hairstyle, facial proportions, expression, and gender of the person must remain identical to the input photo. Use polished studio lighting, sharp focus, high-end DSLR camera quality, 8K resolution, and a photorealistic corporate portrait style and Remove Background then Change to White Colour";
 
       const response = await fetch("https://api.kie.ai/api/v1/jobs/createTask", {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${apiKey}`,
+          Authorization: `Bearer ${apiKey}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
@@ -234,8 +271,8 @@ Deno.serve(async (req: Request) => {
             prompt: prompt,
             image_urls: [imageUrl],
             output_format: "png",
-            aspect_ratio: "1:1"
-          }
+            aspect_ratio: "1:1",
+          },
         }),
       });
 
@@ -261,10 +298,13 @@ Deno.serve(async (req: Request) => {
       const taskId = resData.data?.taskId || resData.taskId;
 
       if (!taskId) {
-        return new Response(JSON.stringify({ error: "No taskId returned from Kie AI", details: resData }), {
-          status: 500,
-          headers: { ...corsHeaders(req), "Content-Type": "application/json" },
-        });
+        return new Response(
+          JSON.stringify({ error: "No taskId returned from Kie AI", details: resData }),
+          {
+            status: 500,
+            headers: { ...corsHeaders(req), "Content-Type": "application/json" },
+          },
+        );
       }
 
       // Decrement quota

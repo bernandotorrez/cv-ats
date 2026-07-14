@@ -485,7 +485,7 @@ function CvEditorPage() {
       toast.success("CV berhasil di-import!");
       // If they relied on tier quota (not add-on), decrement it locally
       if (!hasUploadCvFeature && quotaUploadCv > 0) {
-        setQuotaUploadCv(prev => prev - 1);
+        setQuotaUploadCv((prev) => prev - 1);
       }
     } catch (e: any) {
       setCvUploadError(e.message || "Gagal membaca CV");
@@ -1011,9 +1011,13 @@ function CvEditorPage() {
               <Upload className="h-5 w-5" />
               Upload CV yang Sudah Ada
               {hasUploadCvFeature ? (
-                <span className="ml-auto text-xs font-normal text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-full dark:bg-emerald-900/30 dark:text-emerald-400">Add-on Aktif</span>
+                <span className="ml-auto text-xs font-normal text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-full dark:bg-emerald-900/30 dark:text-emerald-400">
+                  Add-on Aktif
+                </span>
               ) : quotaUploadCv > 0 ? (
-                <span className="ml-auto text-xs font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full">Sisa Kuota: {quotaUploadCv}x</span>
+                <span className="ml-auto text-xs font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                  Sisa Kuota: {quotaUploadCv}x
+                </span>
               ) : null}
             </DialogTitle>
             <DialogDescription className="text-sm">
@@ -1028,11 +1032,22 @@ function CvEditorPage() {
                   Upgrade Tier kamu atau beli Fitur Upload CV (Langganan 1 Bulan)
                 </p>
                 <Button asChild size="sm">
-                  <a href="https://lynk.id/ben-yt-ai/qqom281ddwwm" target="_blank" rel="noopener noreferrer">Beli Sekarang</a>
+                  <a
+                    href="https://lynk.id/ben-yt-ai/qqom281ddwwm"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Beli Sekarang
+                  </a>
                 </Button>
               </div>
             )}
-            <div className={cn("space-y-4", !canUploadCv && "opacity-50 pointer-events-none blur-[2px]")}>
+            <div
+              className={cn(
+                "space-y-4",
+                !canUploadCv && "opacity-50 pointer-events-none blur-[2px]",
+              )}
+            >
               <CvFileUpload
                 onFileReady={handleCvFileReady}
                 extracting={cvUploadExtracting}

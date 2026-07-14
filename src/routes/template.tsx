@@ -237,8 +237,10 @@ function TemplatePage() {
 
             <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {filtered.map((template) => {
-                const TemplateComponent = templateComponents[template.slug as keyof typeof templateComponents];
-                const data = (previewData as any)[template.slug] || (previewData as any).jakarta;
+                const TemplateComponent =
+                  templateComponents[template.slug as keyof typeof templateComponents];
+                const data =
+                  previewData[template.slug as keyof typeof previewData] || previewData.jakarta;
 
                 return (
                   <article key={template.slug} className="group">

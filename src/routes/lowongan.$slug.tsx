@@ -124,12 +124,12 @@ type CvOption = {
 };
 
 function savedJobListingsTable() {
-  return supabase.from("saved_job_listings") as unknown as SavedJobListingsQuery;
+  return (supabase as any).from("saved_job_listings") as unknown as SavedJobListingsQuery;
 }
 
 export const Route = createFileRoute("/lowongan/$slug")({
   loader: async ({ params }) => {
-    const jobListings = supabase.from("job_listings") as unknown as JobListingsQuery;
+    const jobListings = (supabase as any).from("job_listings") as unknown as JobListingsQuery;
     const { data, error } = await jobListings
       .select("*")
       .eq("slug", params.slug)
@@ -195,10 +195,10 @@ const prepCards = [
 function LowonganDetailPage() {
   const job = Route.useLoaderData();
   const salaryText = formatSalary(
-    job.salary_min,
-    job.salary_max,
-    job.salary_currency,
-    job.salary_period,
+    job.salary_min ?? undefined,
+    job.salary_max ?? undefined,
+    job.salary_currency ?? undefined,
+    job.salary_period ?? undefined,
   );
   const postedDate = new Date(job.created_at).toLocaleDateString("id-ID", {
     day: "numeric",

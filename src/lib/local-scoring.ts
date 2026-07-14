@@ -163,13 +163,13 @@ export function scoreCvLocally(data: CvData, targetRole?: string): ScoreResult {
   for (const exp of data.experiences) {
     if (exp.description) {
       if (typeof exp.description === "string") allDescriptions.push(exp.description);
-      else if (Array.isArray(exp.description)) allDescriptions.push(exp.description.join("\n"));
+      else if (Array.isArray(exp.description)) allDescriptions.push((exp.description as any).join("\n"));
     }
   }
   for (const edu of data.educations) {
     if (edu.description) {
       if (typeof edu.description === "string") allDescriptions.push(edu.description);
-      else if (Array.isArray(edu.description)) allDescriptions.push(edu.description.join("\n"));
+      else if (Array.isArray(edu.description)) allDescriptions.push((edu.description as any).join("\n"));
     }
   }
 

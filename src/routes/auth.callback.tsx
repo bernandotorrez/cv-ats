@@ -19,7 +19,7 @@ function AuthCallbackPage() {
         if (error) {
           console.error("[OAuth] Callback error:", error.message);
           toast.error("Gagal masuk dengan Google. Silakan coba lagi.");
-          navigate({ to: "/login", replace: true });
+          (navigate as any)({ to: "/login", replace: true });
           return;
         }
 
@@ -28,7 +28,7 @@ function AuthCallbackPage() {
       } catch (err) {
         console.error("[OAuth] Unexpected callback error:", err);
         toast.error("Terjadi kesalahan. Silakan coba lagi.");
-        navigate({ to: "/login", replace: true });
+        (navigate as any)({ to: "/login", replace: true });
       }
     };
 

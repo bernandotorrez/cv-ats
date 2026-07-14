@@ -52,7 +52,9 @@ Deno.serve(async (req: Request) => {
     monthStart.setDate(1);
     monthStart.setHours(0, 0, 0, 0);
 
-    const lastReset = profile?.quota_upload_cv_reset_at ? new Date(profile.quota_upload_cv_reset_at) : null;
+    const lastReset = profile?.quota_upload_cv_reset_at
+      ? new Date(profile.quota_upload_cv_reset_at)
+      : null;
     const needsReset = !lastReset || lastReset < monthStart;
 
     let effectiveQuota = profile?.quota_upload_cv || 0;
@@ -63,7 +65,10 @@ Deno.serve(async (req: Request) => {
         effectiveQuota = tierAllocation;
         await admin
           .from("profiles")
-          .update({ quota_upload_cv: effectiveQuota, quota_upload_cv_reset_at: new Date().toISOString() })
+          .update({
+            quota_upload_cv: effectiveQuota,
+            quota_upload_cv_reset_at: new Date().toISOString(),
+          })
           .eq("id", userId);
       }
     }
@@ -72,7 +77,9 @@ Deno.serve(async (req: Request) => {
     const canUpload = hasUploadCvAddon || effectiveQuota > 0;
 
     if (!canUpload) {
-      throw new Error("Fitur Upload CV hanya untuk pengguna berbayar. Silakan Upgrade Tier atau beli fitur Upload CV.");
+      throw new Error(
+        "Fitur Upload CV hanya untuk pengguna berbayar. Silakan Upgrade Tier atau beli fitur Upload CV.",
+      );
     }
 
     const { rawText, language } = await req.json();

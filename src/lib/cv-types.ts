@@ -116,7 +116,16 @@ export const TEMPLATES = [
   { id: "semarang", name: "Semarang", description: "Modern corporate dengan aksen hijau." },
   { id: "bali", name: "Bali", description: "Clean minimalist dengan aksen cyan." },
   { id: "malang", name: "Malang", description: "Desain dua kolom kreatif, modern & ATS-friendly." },
-  { id: "ubud", name: "Ubud", description: "Desain dua kolom bergaya kreatif dengan sidebar kontras premium." },
+  {
+    id: "ubud",
+    name: "Ubud",
+    description: "Desain dua kolom bergaya kreatif dengan sidebar kontras premium.",
+  },
+  {
+    id: "bogor",
+    name: "Bogor",
+    description: "Elegan dengan aksen cokelat dan layout foto overlap.",
+  },
 ] as const;
 
 export type TemplateId = (typeof TEMPLATES)[number]["id"];

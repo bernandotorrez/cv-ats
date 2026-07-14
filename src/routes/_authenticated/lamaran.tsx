@@ -242,11 +242,11 @@ function cvsTable() {
 }
 
 function jobApplicationsTable() {
-  return supabase.from("job_applications") as unknown as JobApplicationsQuery;
+  return (supabase as any).from("job_applications") as unknown as JobApplicationsQuery;
 }
 
 function savedJobListingsTable() {
-  return supabase.from("saved_job_listings") as unknown as SavedJobListingsQuery;
+  return (supabase as any).from("saved_job_listings") as unknown as SavedJobListingsQuery;
 }
 
 function mapSavedJobs(rows: SavedJobRow[]): SavedJobListing[] {
@@ -322,7 +322,7 @@ function LamaranPage() {
 
     const mapped = (apps ?? []).map((a) => ({
       ...a,
-      cv_title: a.cvs?.title ?? null,
+      cv_title: a.cvs?.title ?? undefined,
     }));
     setApplications(mapped);
     setLoading(false);

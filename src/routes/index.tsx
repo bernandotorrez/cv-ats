@@ -42,6 +42,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { buildSeo } from "@/lib/seo";
+import { TemplateGallery } from "@/components/site/TemplateGallery";
 
 export const Route = createFileRoute("/")({
   head: () =>
@@ -246,8 +247,8 @@ function LandingPage() {
               </h1>
 
               <p className="mt-6 text-base sm:text-lg text-gray-600 leading-relaxed">
-                Buat CV profesional yang didukung teknologi AI, rasakan performanya, dan tingkatkan peluang lolos seleksi
-                dengan optimasi cerdas yang terbukti berhasil.
+                Buat CV profesional yang didukung teknologi AI, rasakan performanya, dan tingkatkan
+                peluang lolos seleksi dengan optimasi cerdas yang terbukti berhasil.
               </p>
 
               <div className="mt-8 flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
@@ -347,16 +348,22 @@ function LandingPage() {
                         src="/mentor-female.png"
                         className="w-6 h-6 rounded-full border border-white"
                         alt="user"
+                        loading="lazy"
+                        decoding="async"
                       />
                       <img
                         src="/mentor-male.png"
                         className="w-6 h-6 rounded-full border border-white"
                         alt="user"
+                        loading="lazy"
+                        decoding="async"
                       />
                       <img
                         src="/mentor-female.png"
                         className="w-6 h-6 rounded-full border border-white"
                         alt="user"
+                        loading="lazy"
+                        decoding="async"
                       />
                     </div>
                     <span className="text-[10px] font-medium text-gray-500">
@@ -395,6 +402,9 @@ function LandingPage() {
           </div>
         </div>
       </section>
+
+      {/* Template Gallery Section */}
+      <TemplateGallery />
 
       {/* Kenapa Penting Section */}
       <section className="py-20 bg-white">
@@ -512,7 +522,8 @@ function LandingPage() {
               </span>
             </h2>
             <p className="mt-6 text-base sm:text-lg text-gray-500 max-w-2xl mx-auto">
-              CV Pintar AI Career Assistant merekomendasikan frasa profesional yang relevan dengan posisi yang kamu lamar.
+              CV Pintar AI Career Assistant merekomendasikan frasa profesional yang relevan dengan
+              posisi yang kamu lamar.
             </p>
           </div>
 
@@ -548,7 +559,11 @@ function LandingPage() {
                 </div>
                 <div className="p-4 pt-2 flex items-start gap-4">
                   <p className="text-sm text-gray-700 leading-relaxed font-medium">
-                    "Meningkatkan <span className="text-green-700 font-bold">engagement</span> kampanye digital sebesar <span className="text-green-700 font-bold">45%</span> melalui <span className="text-teal-600 font-bold">strategi content marketing</span> yang <span className="text-teal-600 font-bold">terukur</span>"
+                    "Meningkatkan <span className="text-green-700 font-bold">engagement</span>{" "}
+                    kampanye digital sebesar <span className="text-green-700 font-bold">45%</span>{" "}
+                    melalui{" "}
+                    <span className="text-teal-600 font-bold">strategi content marketing</span> yang{" "}
+                    <span className="text-teal-600 font-bold">terukur</span>"
                   </p>
                   <CheckCircle2 className="h-5 w-5 text-teal-500 shrink-0 mt-1" />
                 </div>
@@ -561,6 +576,8 @@ function LandingPage() {
                 src="/ai-robot-mascot.webp"
                 alt="AI Robot Mascot"
                 className="w-[280px] lg:w-[320px] object-contain drop-shadow-xl animate-float"
+                loading="lazy"
+                decoding="async"
               />
             </div>
 
@@ -571,7 +588,7 @@ function LandingPage() {
                   <Target className="h-6 w-6" />
                 </div>
                 <div>
-                  <h4 className="font-bold text-gray-900 text-base">Disesuaikan dengan Posisi</h4>
+                  <h3 className="font-bold text-gray-900 text-base">Disesuaikan dengan Posisi</h3>
                   <p className="text-sm text-gray-500 mt-1 leading-relaxed">
                     Frasa yang relevan dengan job title & industry yang kamu tuju
                   </p>
@@ -583,7 +600,7 @@ function LandingPage() {
                   <Zap className="h-6 w-6" />
                 </div>
                 <div>
-                  <h4 className="font-bold text-gray-900 text-base">ATS-Friendly</h4>
+                  <h3 className="font-bold text-gray-900 text-base">ATS-Friendly</h3>
                   <p className="text-sm text-gray-500 mt-1 leading-relaxed">
                     Struktur kalimat ringkas yang mudah dipahami sistem ATS & recruiter
                   </p>
@@ -595,7 +612,7 @@ function LandingPage() {
                   <TrendingUp className="h-6 w-6" />
                 </div>
                 <div>
-                  <h4 className="font-bold text-gray-900 text-base">Lebih Berdampak</h4>
+                  <h3 className="font-bold text-gray-900 text-base">Lebih Berdampak</h3>
                   <p className="text-sm text-gray-500 mt-1 leading-relaxed">
                     Fokus pada hasil & kontribusi dengan kata kerja aktif yang kuat
                   </p>
@@ -768,6 +785,8 @@ function LandingPage() {
                               src={item.img}
                               className="w-12 h-12 rounded-full object-cover"
                               alt={item.name}
+                              loading="lazy"
+                              decoding="async"
                             />
                             <div>
                               <h3 className="font-display text-base font-bold text-gray-900">
@@ -811,6 +830,8 @@ function LandingPage() {
                                 src={item.img}
                                 className="w-12 h-12 rounded-full object-cover"
                                 alt={item.name}
+                                loading="lazy"
+                                decoding="async"
                               />
                               <div>
                                 <h3 className="font-display text-base font-bold text-gray-900">
@@ -1012,6 +1033,8 @@ function LandingPage() {
                   src="/private-mentoring.png"
                   alt="Private Mentoring Session"
                   className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+                  loading="lazy"
+                  decoding="async"
                 />
               </div>
             </div>
@@ -1071,7 +1094,7 @@ function LandingPage() {
               ].map((item) => (
                 <Link
                   key={item.title}
-                  to={item.to}
+                  to={item.to as any}
                   className="group rounded-2xl border border-gray-100 bg-white overflow-hidden shadow-none transition-all duration-300 hover:shadow-lg flex flex-col justify-between"
                 >
                   <div>
@@ -1080,6 +1103,8 @@ function LandingPage() {
                         src={item.img}
                         alt={item.title}
                         className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        loading="lazy"
+                        decoding="async"
                       />
                     </div>
                     <div className="p-5">
@@ -1121,6 +1146,8 @@ function LandingPage() {
                   src="/avatar-pointing.png"
                   alt="3D Mascot pointing up"
                   className="w-full h-auto object-contain"
+                  loading="lazy"
+                  decoding="async"
                 />
               </div>
             </div>
@@ -1210,6 +1237,8 @@ function LandingPage() {
                 src="/avatar-laptop.png"
                 alt="3D Avatar with laptop celebrating success"
                 className="w-full h-auto drop-shadow-2xl"
+                loading="lazy"
+                decoding="async"
               />
 
               {/* Left Floating Badge: Checkmark */}

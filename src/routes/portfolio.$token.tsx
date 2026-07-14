@@ -95,7 +95,7 @@ function SharePage() {
 
   useEffect(() => {
     if (!cvId || !userId) return;
-    void supabase.from("cv_analytics").insert({
+    void (supabase as any).from("cv_analytics").insert({
       cv_id: cvId,
       user_id: userId,
       event_type: "view",
@@ -110,7 +110,7 @@ function SharePage() {
     await navigator.clipboard.writeText(shareUrl);
     setCopied(true);
     toast.success("Link portfolio disalin");
-    void supabase.from("cv_analytics").insert({
+    void (supabase as any).from("cv_analytics").insert({
       cv_id: cvId,
       user_id: userId,
       event_type: "share_link",

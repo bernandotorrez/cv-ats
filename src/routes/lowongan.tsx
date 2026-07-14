@@ -119,7 +119,7 @@ type SavedJobListingsQuery = {
 };
 
 function savedJobListingsTable() {
-  return supabase.from("saved_job_listings") as unknown as SavedJobListingsQuery;
+  return (supabase as any).from("saved_job_listings") as unknown as SavedJobListingsQuery;
 }
 
 const typeOptions = ["Semua Tipe", "full-time", "part-time", "contract", "internship"];
@@ -255,7 +255,7 @@ function LowonganPage() {
   const loadJobs = async () => {
     setLoading(true);
     try {
-      const { data } = await supabase
+      const { data } = await (supabase as any)
         .from("job_listings")
         .select("*")
         .eq("is_active", true)
@@ -650,12 +650,12 @@ function LowonganPage() {
 
           <div className="grid gap-3 sm:grid-cols-2">
             {[
-              ["ATS score", "Cek struktur dan keyword sebelum submit.", BadgeCheck],
-              ["Cover letter", "Buat surat lamaran sesuai lowongan.", FileText],
-              ["Keyword extractor", "Ambil skill penting dari job description.", Layers3],
-              ["Application tracker", "Catat status lamaran dan follow up.", TrendingUp],
-            ].map(([title, desc, Icon]) => (
-              <div key={title as string} className="rounded-lg border bg-card p-4 shadow-sm">
+              { title: "ATS score", desc: "Cek struktur dan keyword sebelum submit.", Icon: BadgeCheck },
+              { title: "Cover letter", desc: "Buat surat lamaran sesuai lowongan.", Icon: FileText },
+              { title: "Keyword extractor", desc: "Ambil skill penting dari job description.", Icon: Layers3 },
+              { title: "Application tracker", desc: "Catat status lamaran dan follow up.", Icon: TrendingUp },
+            ].map(({ title, desc, Icon }) => (
+              <div key={title} className="rounded-lg border bg-card p-4 shadow-sm">
                 <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
                   <Icon className="h-5 w-5" aria-hidden="true" />
                 </div>
@@ -756,10 +756,10 @@ function JobCard({
   onToggleSaved: (jobId: string) => void;
 }) {
   const salaryText = formatSalary(
-    job.salary_min,
-    job.salary_max,
-    job.salary_currency,
-    job.salary_period,
+    job.salary_min ?? undefined,
+    job.salary_max ?? undefined,
+    job.salary_currency ?? undefined,
+    job.salary_period ?? undefined,
   );
   const isFallback = job.id.startsWith("fallback-");
   const techItems = parseInlineList(job.tech_stack).slice(0, 3);

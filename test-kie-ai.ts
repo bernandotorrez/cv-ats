@@ -4,7 +4,7 @@ async function run() {
   const response = await fetch("https://api.kie.ai/api/v1/jobs/createTask", {
     method: "POST",
     headers: {
-      "Authorization": `Bearer ${apiKey}`,
+      Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
@@ -13,8 +13,8 @@ async function run() {
         prompt: "test",
         image_urls: ["https://picsum.photos/500/500"],
         output_format: "png",
-        aspect_ratio: "1:1"
-      }
+        aspect_ratio: "1:1",
+      },
     }),
   });
 

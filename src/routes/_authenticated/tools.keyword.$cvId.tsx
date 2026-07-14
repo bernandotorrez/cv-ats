@@ -626,7 +626,7 @@ function LockedKeywordExtractor() {
           </p>
           <div className="mt-7 flex flex-col gap-3 sm:flex-row">
             <Button variant="outline" asChild className="rounded-lg">
-              <Link to="/tools">Kembali ke Tools</Link>
+              <Link to="/tools" search={{} as any}>Kembali ke Tools</Link>
             </Button>
             <Button asChild className="rounded-lg">
               <Link to="/harga">Upgrade paket</Link>

@@ -281,9 +281,10 @@ export function getCareerSteps(data: {
       link: "/simulasi-wawancara",
       // Pro only
       hidden: data.tier !== "pro",
-      actionLabel: data.interviewCount && data.interviewCount > 0 
-        ? "Lanjutkan Simulasi Wawancara" 
-        : "Belajar Simulasi Wawancara",
+      actionLabel:
+        data.interviewCount && data.interviewCount > 0
+          ? "Lanjutkan Simulasi Wawancara"
+          : "Belajar Simulasi Wawancara",
     },
     {
       id: "apply",

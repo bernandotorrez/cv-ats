@@ -114,9 +114,9 @@ function CvListPage() {
       .eq("status", "active")
       .single();
 
-    if (data?.subscription_tiers?.template_access_detail) {
-      setAllowedTemplates(data.subscription_tiers.template_access_detail);
-    } else if (data?.subscription_tiers?.template_access_detail === null) {
+    if ((data?.subscription_tiers as any)?.template_access_detail) {
+      setAllowedTemplates((data.subscription_tiers as any).template_access_detail);
+    } else if ((data?.subscription_tiers as any)?.template_access_detail === null) {
       setAllowedTemplates(null);
     } else {
       setAllowedTemplates(["jakarta", "bandung"]);
@@ -188,10 +188,10 @@ function CvListPage() {
     const { data, error } = await supabase
       .from("cvs")
       .insert({
-        user_id: userId,
+        user_id: userId!,
         title: "CV Baru",
         template_id: selectedTemplate,
-        data: emptyCv,
+        data: emptyCv as any,
       })
       .select("id")
       .single();
