@@ -774,12 +774,12 @@ function LamaranPage() {
             </div>
             <div className="space-y-1.5">
               <Label>CV Terkait</Label>
-              <Select value={form.cv_id} onValueChange={(v) => setForm({ ...form, cv_id: v })}>
+              <Select value={form.cv_id || "none"} onValueChange={(v) => setForm({ ...form, cv_id: v === "none" ? "" : v })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Pilih CV" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Tanpa CV</SelectItem>
+                  <SelectItem value="none">Tanpa CV</SelectItem>
                   {userCvs.map((cv) => (
                     <SelectItem key={cv.id} value={cv.id}>
                       {cv.title}
