@@ -81,6 +81,7 @@ ATURAN UMUM:
 - ${languageRule}
 - ${getActionVerbExamples(lang)}
 - Tambahkan metrik/angka jika memungkinkan
+- Gunakan format BULLET POINTS (awali tiap poin dengan karakter '-') karena teks ini adalah deskripsi. Pastikan baris baru di dalam string JSON di-escape dengan '\\n'.
 - JANGAN ubah fakta — hanya perbaiki bahasa dan struktur
 - JANGAN tambahkan informasi yang tidak ada di teks asli
 
@@ -131,6 +132,7 @@ ATURAN:
 - ${getActionVerbExamples(lang)}
 - Tambahkan metrik/angka jika memungkinkan (contoh: ${lang === "en" ? '"increased 30%", "managed team of 5"' : '"meningkatkan 30%", "mengelola tim 5 orang"'})
 - ${lang === "en" ? "Professional & formal English" : "Bahasa Indonesia formal & profesional"}
+- Gunakan format BULLET POINTS (awali tiap poin dengan karakter '-')
 - JANGAN ubah fakta — hanya perbaiki bahasa dan struktur
 - JANGAN tambahkan informasi yang tidak ada di teks asli
 - Output LANGSUNG teks yang sudah diperbaiki, tanpa kata pembuka
