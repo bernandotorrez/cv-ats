@@ -244,6 +244,19 @@ export async function polishText(input: {
   }>;
 }
 
+export async function polishTextVariants(input: {
+  data: {
+    text: string;
+    context?: string;
+    language?: "id" | "en";
+  };
+}) {
+  return callEdge("ai-polish", { ...input.data, variants: 3 }) as Promise<{
+    original: string;
+    variants: { polished: string; tone: string }[];
+  }>;
+}
+
 export async function parseCvUpload(input: {
   data: {
     rawText: string;

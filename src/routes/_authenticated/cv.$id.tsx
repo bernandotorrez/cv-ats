@@ -25,7 +25,8 @@ import { WhatsAppShare } from "@/components/share/WhatsAppShare";
 import { TemplateGallery } from "@/components/cv/TemplateGallery";
 import { TEMPLATES, type CvData, type TemplateId, emptyCv } from "@/lib/cv-types";
 import { type CvUiLang } from "@/lib/cv-translations";
-import { suggestSection, polishText, parseCvUpload, extractCvTextWithAi } from "@/lib/ai-functions";
+import { suggestSection, polishText, polishTextVariants, parseCvUpload, extractCvTextWithAi } from "@/lib/ai-functions";
+import { PolishPanel, type PolishVariant } from "@/components/ai/polish-panel";
 import { AiChatPanel } from "@/components/cv/AiChatPanel";
 import { AtsPreview } from "@/components/cv/AtsPreview";
 import { LinkedInImport } from "@/components/cv/LinkedInImport";
@@ -159,6 +160,13 @@ function CvEditorPage() {
   const [cvLanguage, setCvLanguage] = useState<CvUiLang>("id");
   const [allowedTemplates, setAllowedTemplates] = useState<string[] | null>(null);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "unsaved">("idle");
+  const [polishPanel, setPolishPanel] = useState<{
+    open: boolean;
+    loading: boolean;
+    originalText: string;
+    variants: PolishVariant[] | null;
+    onAccept: ((polished: string) => void) | null;
+  }>({ open: false, loading: false, originalText: "", variants: null, onAccept: null });
 
   // ─── 3-Panel Layout State ─────────────────────────────────────
   const [activeSection, setActiveSection] = useState("personal");
@@ -586,24 +594,44 @@ function CvEditorPage() {
   const [polishingField, setPolishingField] = useState<string | null>(null);
 
   const handlePolishText = useCallback(
-    async (fieldKey: string, text: string, context?: string) => {
+    async (
+      fieldKey: string,
+      text: string,
+      context: string | undefined,
+      onApply: (polished: string) => void,
+    ) => {
       if (!text.trim() || text.trim().length < 5) {
         toast.error("Teks terlalu pendek untuk diperbaiki.");
         return;
       }
       setPolishingField(fieldKey);
+      setPolishPanel({
+        open: true,
+        loading: true,
+        originalText: text,
+        variants: null,
+        onAccept: onApply,
+      });
       try {
-        const result = await polishText({ data: { text, context, language: cvLanguage } });
-        return result.polished;
+        const result = await polishTextVariants({ data: { text, context, language: cvLanguage } });
+        setPolishPanel((prev) => ({
+          ...prev,
+          loading: false,
+          variants: result.variants,
+        }));
       } catch (e: any) {
         toast.error(e.message || "Gagal memperbaiki teks.");
-        return null;
+        setPolishPanel((prev) => ({ ...prev, open: false, loading: false }));
       } finally {
         setPolishingField(null);
       }
     },
     [cvLanguage],
   );
+
+  const closePolishPanel = useCallback(() => {
+    setPolishPanel((prev) => ({ ...prev, open: false, loading: false }));
+  }, []);
 
   // Local/instant ATS score (recalculated on data change)
   const localScore = useMemo(
@@ -979,7 +1007,35 @@ function CvEditorPage() {
       </Dialog>
 
       {/* Guided Mode Dialog */}
+      {/* PolishPanel — AI Perbaiki Teks 3 Variasi */}
+      <PolishPanel
+        open={polishPanel.open}
+        onClose={closePolishPanel}
+        loading={polishPanel.loading}
+        originalText={polishPanel.originalText}
+        variants={polishPanel.variants}
+        onAccept={(polished) => {
+          if (polishPanel.onAccept) polishPanel.onAccept(polished);
+          toast.success("Teks berhasil diperbarui!");
+        }}
+        onRegenerateAll={() => {
+          if (polishPanel.onAccept) {
+            const { originalText } = polishPanel;
+            setPolishPanel((prev) => ({ ...prev, loading: true, variants: null }));
+            polishTextVariants({ data: { text: originalText, language: cvLanguage } })
+              .then((r) =>
+                setPolishPanel((prev) => ({ ...prev, loading: false, variants: r.variants })),
+              )
+              .catch((e) => {
+                toast.error(e.message || "Gagal membuat ulang variasi.");
+                setPolishPanel((prev) => ({ ...prev, loading: false }));
+              });
+          }
+        }}
+      />
+
       <Dialog open={showGuidedMode} onOpenChange={setShowGuidedMode}>
+
         <DialogContent className="sm:max-w-2xl p-0 max-h-[90vh] overflow-hidden [&>button]:hidden">
           <GuidedMode
             cvId={id}
@@ -1332,8 +1388,9 @@ function EditorForm({
   handlePolishText: (
     fieldKey: string,
     text: string,
-    context?: string,
-  ) => Promise<string | null | undefined>;
+    context: string | undefined,
+    onApply: (polished: string) => void,
+  ) => void;
   polishingField: string | null;
   updatePersonal: <K extends keyof CvData["personal"]>(k: K, v: CvData["personal"][K]) => void;
   handleLinkedInImport: (imported: Partial<CvData>) => void;
@@ -1592,14 +1649,14 @@ function EditorForm({
                         size="sm"
                         className="h-7 gap-1 text-xs rounded-lg text-muted-foreground hover:text-primary"
                         disabled={polishingField === `exp-${i}`}
-                        onClick={async () => {
-                          const result = await handlePolishText(
+                        onClick={() =>
+                          handlePolishText(
                             `exp-${i}`,
                             item.description,
                             `Posisi: ${item.position} di ${item.company}`,
-                          );
-                          if (result) mutate(setData, "experiences", i, "description", result);
-                        }}
+                            (polished) => mutate(setData, "experiences", i, "description", polished),
+                          )
+                        }
                       >
                         {polishingField === `exp-${i}` ? (
                           <Loader2 className="h-3 w-3 animate-spin" />
@@ -1717,14 +1774,14 @@ function EditorForm({
                         size="sm"
                         className="h-7 gap-1 text-xs rounded-lg text-muted-foreground hover:text-primary"
                         disabled={polishingField === `edu-${i}`}
-                        onClick={async () => {
-                          const result = await handlePolishText(
+                        onClick={() =>
+                          handlePolishText(
                             `edu-${i}`,
                             item.description || "",
                             `${item.degree} ${item.field || ""} di ${item.school}`,
-                          );
-                          if (result) mutate(setData, "educations", i, "description", result);
-                        }}
+                            (polished) => mutate(setData, "educations", i, "description", polished),
+                          )
+                        }
                       >
                         {polishingField === `edu-${i}` ? (
                           <Loader2 className="h-3 w-3 animate-spin" />
@@ -1846,14 +1903,14 @@ function EditorForm({
                         size="sm"
                         className="h-7 gap-1 text-xs rounded-lg text-muted-foreground hover:text-primary"
                         disabled={polishingField === `intern-${i}`}
-                        onClick={async () => {
-                          const result = await handlePolishText(
+                        onClick={() =>
+                          handlePolishText(
                             `intern-${i}`,
                             item.description,
                             `Magang: ${item.position} di ${item.company}`,
-                          );
-                          if (result) mutate(setData, "internships", i, "description", result);
-                        }}
+                            (polished) => mutate(setData, "internships", i, "description", polished),
+                          )
+                        }
                       >
                         {polishingField === `intern-${i}` ? (
                           <Loader2 className="h-3 w-3 animate-spin" />
@@ -1946,14 +2003,14 @@ function EditorForm({
                         size="sm"
                         className="h-7 gap-1 text-xs rounded-lg text-muted-foreground hover:text-primary"
                         disabled={polishingField === `org-${i}`}
-                        onClick={async () => {
-                          const result = await handlePolishText(
+                        onClick={() =>
+                          handlePolishText(
                             `org-${i}`,
                             item.description,
                             `Organisasi: ${item.role} di ${item.name}`,
-                          );
-                          if (result) mutate(setData, "organizations", i, "description", result);
-                        }}
+                            (polished) => mutate(setData, "organizations", i, "description", polished),
+                          )
+                        }
                       >
                         {polishingField === `org-${i}` ? (
                           <Loader2 className="h-3 w-3 animate-spin" />
