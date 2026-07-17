@@ -629,7 +629,7 @@ function CvEditorPage() {
 
   if (loading) return <EditorSkeleton />;
 
-  const canUploadCv = hasUploadCvFeature || quotaUploadCv > 0;
+  const canUploadCv = hasUploadCvFeature || quotaUploadCv > 0 || userTier === "starter" || userTier === "pro";
 
   return (
     <div className="cv-editor-page flex h-[calc(100vh-4rem)] min-h-0 flex-col bg-muted/30">
