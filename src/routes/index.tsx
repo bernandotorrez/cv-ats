@@ -43,6 +43,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { buildSeo } from "@/lib/seo";
 import { TemplateGallery } from "@/components/site/TemplateGallery";
+import { AtsVsCreative } from "@/components/home/AtsVsCreative";
+import { ThreeSteps } from "@/components/home/ThreeSteps";
+import { AnalysisFeatures } from "@/components/home/AnalysisFeatures";
+import { SeoContent } from "@/components/home/SeoContent";
 
 export const Route = createFileRoute("/")({
   head: () =>
@@ -406,6 +410,9 @@ function LandingPage() {
       {/* Template Gallery Section */}
       <TemplateGallery />
 
+      {/* ATS vs Creative Section */}
+      <AtsVsCreative />
+
       {/* Kenapa Penting Section */}
       <section className="py-20 bg-white">
         <div className="container-page">
@@ -640,6 +647,9 @@ function LandingPage() {
         </div>
       </section>
 
+      {/* Analysis Features Section */}
+      <AnalysisFeatures />
+
       {/* Berbasis Data Section */}
       <section className="py-20 bg-white">
         <div className="container-page">
@@ -650,11 +660,10 @@ function LandingPage() {
                 Berbasis Data
               </span>
               <h2 className="mt-4 font-display text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight leading-tight">
-                Jangan kirim CV yang sama ke semua lowongan.
+                Analisa Score CV & Kecocokan lowongan
               </h2>
               <p className="mt-4 text-base sm:text-lg text-gray-600 leading-relaxed">
-                Gunakan data & analisis untuk menyesuaikan CV dengan setiap posisi. Hasilnya?
-                Peluang dipanggil naik hingga 3x lipat!
+                Dapatkan feedback instan untuk CV kamu. Cek seberapa cocok profile kamu dengan lowongan impianmu.
               </p>
 
               <div className="mt-8 space-y-4">
@@ -910,11 +919,10 @@ function LandingPage() {
               <button
                 key={index}
                 onClick={() => setActiveSlide(index)}
-                className={`transition-all duration-300 rounded-full ${
-                  activeSlide === index
-                    ? "w-6 h-2 bg-green-700"
-                    : "w-2 h-2 bg-gray-300 hover:bg-gray-400"
-                }`}
+                className={`transition-all duration-300 rounded-full ${activeSlide === index
+                  ? "w-6 h-2 bg-green-700"
+                  : "w-2 h-2 bg-gray-300 hover:bg-gray-400"
+                  }`}
                 aria-label={`Go to slide ${index + 1}`}
               />
             ))}
@@ -922,54 +930,8 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* Cara Kerja Section */}
-      <section className="py-20 bg-white">
-        <div className="container-page">
-          <div className="text-center max-w-3xl mx-auto mb-16">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-green-50 text-green-700 uppercase tracking-wider">
-              Cara Kerja
-            </span>
-            <h2 className="mt-4 font-display text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight leading-tight">
-              4 Langkah mudah bikin CV siap dilirik rekruter.
-            </h2>
-          </div>
-
-          <div className="relative">
-            {/* SVG Connecting lines for large screens */}
-            <div className="hidden lg:block absolute top-12 left-[12%] right-[12%] h-0.5 -z-10">
-              <svg
-                className="w-full h-8 text-green-200"
-                viewBox="0 0 800 20"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeDasharray="6 6"
-              >
-                <path d="M 0 10 Q 200 20, 400 10 T 800 10" />
-              </svg>
-            </div>
-
-            <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-              {steps.map((step) => (
-                <div key={step.n} className="flex flex-col items-center text-center">
-                  <div className="relative flex h-20 w-20 items-center justify-center rounded-2xl bg-green-50 text-green-700 shadow-md">
-                    <step.icon className="h-8 w-8" />
-                    <span className="absolute -top-3 -right-3 flex h-7 w-7 items-center justify-center rounded-full bg-green-700 text-white text-xs font-extrabold">
-                      {step.n}
-                    </span>
-                  </div>
-                  <h3 className="mt-6 font-display text-lg font-bold text-gray-900">
-                    {step.title}
-                  </h3>
-                  <p className="mt-2 text-sm text-gray-500 leading-relaxed max-w-[220px]">
-                    {step.desc}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* Three Steps Section */}
+      <ThreeSteps />
 
       {/* Private Mentoring Section */}
       <section className="py-20 bg-green-950 text-white relative overflow-hidden">
@@ -1126,6 +1088,9 @@ function LandingPage() {
           </div>
         </div>
       </section>
+
+      {/* SEO Content Section */}
+      <SeoContent />
 
       {/* FAQ Section */}
       <section className="py-20 bg-white">
