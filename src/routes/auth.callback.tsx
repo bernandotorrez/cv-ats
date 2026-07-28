@@ -13,10 +13,27 @@ function AuthCallbackPage() {
   useEffect(() => {
     const handleCallback = async () => {
       try {
-        // Exchange the auth code for a session (PKCE flow)
+        // 1. Cek dulu apakah sesi sudah terbentuk (bisa jadi sudah diproses otomatis oleh Supabase detectSessionInUrl)
+        const { data: initialSession } = await supabase.auth.getSession();
+        if (initialSession.session) {
+          toast.success("Berhasil masuk");
+          navigate({ to: "/dashboard", replace: true });
+          return;
+        }
+
+        // 2. Jika belum ada sesi, lakukan pertukaran kode PKCE dari URL
         const { error } = await supabase.auth.exchangeCodeForSession(window.location.href);
 
         if (error) {
+          // 3. Jika error (misal: "both auth code and code verifier should be non-empty"), 
+          // cek sekali lagi apakah sesi sebenarnya sudah berhasil terbentuk di background
+          const { data: retrySession } = await supabase.auth.getSession();
+          if (retrySession.session) {
+            toast.success("Berhasil masuk");
+            navigate({ to: "/dashboard", replace: true });
+            return;
+          }
+
           console.error("[OAuth] Callback error:", error.message);
           toast.error("Gagal masuk dengan Google. Silakan coba lagi.");
           (navigate as any)({ to: "/login", replace: true });
