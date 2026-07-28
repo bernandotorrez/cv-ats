@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Suspense, useEffect } from "react";
+import { Suspense, useEffect, useMemo } from "react";
 import {
   Outlet,
   Link,
@@ -142,7 +142,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     ],
     links: [
       { rel: "stylesheet", href: appCss },
-      { rel: "canonical", href: SITE_URL },
       { rel: "alternate", hrefLang: "id", href: SITE_URL },
       { rel: "alternate", hrefLang: "x-default", href: SITE_URL },
       { rel: "icon", href: "/favicon.ico", sizes: "any" },
@@ -199,6 +198,34 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   errorComponent: ErrorComponent,
 });
 
+// Query params yang dianggap tracking/marketing dan harus di-strip dari canonical
+const TRACKING_PARAMS = new Set(["ref", "utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "fbclid", "gclid", "msclkid"]);
+
+function CanonicalUpdater() {
+  const { location } = useRouterState();
+  const canonicalUrl = useMemo(() => {
+    const params = new URLSearchParams(location.search);
+    for (const key of [...params.keys()]) {
+      if (TRACKING_PARAMS.has(key)) params.delete(key);
+    }
+    const cleanSearch = params.toString();
+    return SITE_URL + location.pathname + (cleanSearch ? `?${cleanSearch}` : "");
+  }, [location.pathname, location.search]);
+
+  useEffect(() => {
+    // Update atau buat tag <link rel="canonical"> di <head>
+    let el = document.querySelector<HTMLLinkElement>("link[rel='canonical']");
+    if (!el) {
+      el = document.createElement("link");
+      el.rel = "canonical";
+      document.head.appendChild(el);
+    }
+    el.href = canonicalUrl;
+  }, [canonicalUrl]);
+
+  return null;
+}
+
 function ScrollToTop() {
   const { location } = useRouterState();
   useEffect(() => {
@@ -249,6 +276,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
+        <CanonicalUpdater />
         <ScrollToTop />
         <a href="#main" className="skip-link">
           Lewati ke konten utama
