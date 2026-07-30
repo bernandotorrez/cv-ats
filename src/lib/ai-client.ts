@@ -1,7 +1,7 @@
 /**
  * AI Gateway client — OpenAI-compatible API
  * Endpoint: ai.sumopod.com
- * Model: gemini/gemini-2.5-flash-lite (default, fast & capable)
+ * Model: gemini/gemini-3.1-flash-lite (default, fast & capable)
  */
 
 import type { CvUiLang } from "./cv-translations";
@@ -28,7 +28,7 @@ export async function aiComplete(
   options: AiCompletionOptions = {},
 ): Promise<string> {
   const {
-    model = "gemini/gemini-2.5-flash-lite",
+    model = "gemini/gemini-3.1-flash-lite",
     temperature = 0.7,
     maxTokens = 2048,
     jsonMode = false,
@@ -83,7 +83,7 @@ export async function aiCompleteStream(
   options: AiCompletionOptions = {},
 ): Promise<ReadableStream<Uint8Array>> {
   const {
-    model = "gemini/gemini-2.5-flash-lite",
+    model = "gemini/gemini-3.1-flash-lite",
     temperature = 0.7,
     maxTokens = 2048,
     language = "id",

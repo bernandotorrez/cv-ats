@@ -74,7 +74,7 @@ type JobParseResult = {
 };
 
 const AI_GATEWAY_URL = "https://ai.sumopod.com/v1/chat/completions";
-const AI_MODEL = "gemini/gemini-2.5-flash-lite";
+const AI_MODEL = "gemini/gemini-3.1-flash-lite";
 const DEFAULT_SOURCES: SearchSource[] = ["jobstreet", "glints", "kalibrr", "dealls", "google"];
 const RICH_AI_SOURCE_LIMIT = 6;
 const RICH_AI_CONTENT_CHARS = 3500;
@@ -964,9 +964,9 @@ function toJobRow(
     cleanUrl(job.source_url) || cleanUrl(matchedSource?.url) || fallbackSourceUrl || null;
   const sourceText = matchedSource
     ? cleanContent(
-        `${matchedSource.title}\n${matchedSource.content}\n${matchedSource.original_content || ""}`,
-        24000,
-      )
+      `${matchedSource.title}\n${matchedSource.content}\n${matchedSource.original_content || ""}`,
+      24000,
+    )
     : "";
   const parsedSalary = sourceText ? parseSalaryRange(sourceText) : null;
   const aiCurrency = normalizeSalaryCurrency(job.salary_currency);

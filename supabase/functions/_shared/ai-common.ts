@@ -30,7 +30,7 @@ export interface AiCompletionOptions {
 
 const AI_GATEWAY_URL = "https://ai.sumopod.com/v1/chat/completions";
 const AI_API_KEY = Deno.env.get("AI_API_KEY") || "";
-const AI_MODEL = "gemini/gemini-2.5-flash-lite";
+const AI_MODEL = "gemini/gemini-3.1-flash-lite";
 
 export const FEATURE_MAP: Record<string, string> = {
   "ai-suggest": "suggest",
