@@ -125,6 +125,7 @@ export const TEMPLATES = [
     id: "bogor",
     name: "Bogor",
     description: "Elegan dengan aksen cokelat dan layout foto overlap.",
+    isNeedLevelingSkill: true,
   },
 ] as const;
 

@@ -16,6 +16,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { CvPreview } from "@/components/cv/CvPreview";
@@ -127,6 +134,8 @@ function CvEditorPage() {
   const [title, setTitle] = useState("CV Baru");
   const [templateId, setTemplateId] = useState<TemplateId>("jakarta");
   const [targetRole, setTargetRole] = useState("");
+  const currentTemplate = TEMPLATES.find((t) => t.id === templateId);
+  const isNeedLevelingSkill = currentTemplate && "isNeedLevelingSkill" in currentTemplate ? currentTemplate.isNeedLevelingSkill : false;
   const [data, setData] = useState<CvData>(emptyCv);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -807,6 +816,7 @@ function CvEditorPage() {
                   userId={user?.id}
                   cvId={id}
                   proPhotoQuota={quotaProPhoto}
+                  isNeedLevelingSkill={isNeedLevelingSkill}
                 />
               )}
             />
@@ -848,6 +858,7 @@ function CvEditorPage() {
               userId={user?.id}
               cvId={id}
               proPhotoQuota={quotaProPhoto}
+              isNeedLevelingSkill={isNeedLevelingSkill}
             />
           </div>
         )}
@@ -1371,6 +1382,7 @@ function EditorForm({
   userId,
   cvId,
   proPhotoQuota,
+  isNeedLevelingSkill,
 }: {
   data: CvData;
   setData: React.Dispatch<React.SetStateAction<CvData>>;
@@ -1415,6 +1427,7 @@ function EditorForm({
   userId?: string;
   cvId?: string;
   proPhotoQuota: number;
+  isNeedLevelingSkill?: boolean;
 }) {
   return (
     <div className="space-y-6">
@@ -2061,13 +2074,34 @@ function EditorForm({
             });
           }}
           renderItem={(item, i) => (
-            <Field
-              label="Nama Skill"
-              value={item.name}
-              onChange={(v) => mutate(setData, "skills", i, "name", v)}
-              placeholder="React, SQL, Komunikasi..."
-              icon={<Zap className="h-4 w-4" />}
-            />
+            <div className="flex flex-col gap-4">
+              <Field
+                label="Nama Skill"
+                value={item.name}
+                onChange={(v) => mutate(setData, "skills", i, "name", v)}
+                placeholder="React, SQL, Komunikasi..."
+                icon={<Zap className="h-4 w-4" />}
+              />
+              {isNeedLevelingSkill && (
+                <div className="space-y-2">
+                  <Label className="text-sm font-semibold">Tingkat Kemahiran</Label>
+                  <Select
+                    value={item.level || ""}
+                    onValueChange={(v) => mutate(setData, "skills", i, "level", v)}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Pilih tingkat kemahiran" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Beginner">Pemula (Beginner)</SelectItem>
+                      <SelectItem value="Intermediate">Menengah (Intermediate)</SelectItem>
+                      <SelectItem value="Advanced">Mahir (Advanced)</SelectItem>
+                      <SelectItem value="Expert">Ahli (Expert)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </div>
           )}
           extraAction={
             <AiSuggestBtn

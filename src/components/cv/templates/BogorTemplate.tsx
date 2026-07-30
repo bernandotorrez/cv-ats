@@ -82,23 +82,31 @@ export function BogorTemplate({ data, showHeader = true, sectionOrder, language 
             <div key="skills">
               {renderSidebarHeading(t(language, "skills"))}
               <div style={{ padding: "0 20px", display: "flex", flexDirection: "column", gap: 12 }}>
-                {skills.map((s) => (
-                  <div
-                    key={s.id}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                    }}
-                  >
-                    <span style={{ fontSize: "9pt", color: textColor, flex: 1 }}>{s.name}</span>
-                    <div style={{ width: "35%", height: 6, backgroundColor: "#e2e8f0" }}>
-                      <div
-                        style={{ width: "75%", height: "100%", backgroundColor: primaryColor }}
-                      />
+                {skills.map((s) => {
+                  let width = "75%"; // Default if no level is set for backward compatibility
+                  if (s.level === "Beginner") width = "25%";
+                  else if (s.level === "Intermediate") width = "50%";
+                  else if (s.level === "Advanced") width = "75%";
+                  else if (s.level === "Expert") width = "100%";
+                  
+                  return (
+                    <div
+                      key={s.id}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                      }}
+                    >
+                      <span style={{ fontSize: "9pt", color: textColor, flex: 1 }}>{s.name}</span>
+                      <div style={{ width: "35%", height: 6, backgroundColor: "#e2e8f0", borderRadius: 3, overflow: "hidden" }}>
+                        <div
+                          style={{ width, height: "100%", backgroundColor: primaryColor }}
+                        />
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           );
