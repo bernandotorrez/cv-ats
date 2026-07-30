@@ -1,6 +1,6 @@
 # CV Pintar Knowledge Base untuk AI Assistant
 
-Terakhir dirangkum dari project: 31 Mei 2026.
+Terakhir dirangkum dari project: 30 Juli 2026.
 
 Dokumen ini dipakai sebagai knowledge base untuk AI Assistant di website CV Pintar. Gunakan isi dokumen ini untuk menjawab pertanyaan user tentang produk, fitur, paket harga, batasan paket, pembayaran, privasi, dan alur penggunaan.
 
@@ -85,6 +85,8 @@ Halaman akun atau fitur login:
 - `/tools` - AI Tools.
 - `/tools/cover-letter/$cvId` - Cover Letter AI.
 - `/tools/keyword/$cvId` - Keyword Extractor.
+- `/tools/tailor/$cvId` - Auto Tailor CV.
+- `/job-match` - AI Job Match Score.
 - `/compare` - CV Comparison.
 - `/analitik` - Analitik CV.
 - `/lamaran` - Pelacak lamaran dan lowongan tersimpan.
@@ -161,6 +163,9 @@ Template yang tersedia:
 - Semarang.
 - Surabaya.
 - Yogyakarta.
+- Bogor.
+- Malang.
+- Ubud.
 
 Akses template:
 
@@ -178,6 +183,9 @@ Keterangan template:
 - Semarang: dinamis, cocok untuk project manager dan operations.
 - Surabaya: bold dan presisi, cocok untuk supply chain, manufacturing, engineering.
 - Yogyakarta: bersih dan halus, cocok untuk content, brand, design, communication.
+- Bogor: profesional dan terstruktur, cocok untuk akademis, riset, atau data.
+- Malang: rapi dan fleksibel, cocok untuk fresh graduate atau role umum.
+- Ubud: estetik dan elegan, cocok untuk seni, media, UI/UX, dan industri kreatif.
 
 ### 3. AI Writing dan Saran AI
 
@@ -565,6 +573,35 @@ Fitur admin:
 - Mengelola template.
 - Mengimpor lowongan pekerjaan via AI search.
 
+### 23. AI Job Match Score
+
+Fungsi:
+
+- Mencocokkan CV dengan lowongan dari database, URL, atau teks manual.
+- Memberikan skor kecocokan dalam persentase.
+- Memberikan hasil keyword match dan keyword gap.
+- Memberikan rekomendasi action plan untuk mengubah CV.
+
+Akses:
+
+- Free: tidak tersedia.
+- Starter: 20x/bulan.
+- Pro: 100x/bulan.
+
+### 24. Auto Tailor CV
+
+Fungsi:
+
+- Menyesuaikan isi CV (ringkasan, skill, deskripsi pengalaman) berdasarkan target lowongan.
+- AI mempertahankan data asli dan hanya mengoptimalkan prioritas dan cara penyampaian.
+- Membantu membuat versi CV yang relevan untuk satu lowongan spesifik tanpa menulis ulang dari nol.
+
+Akses:
+
+- Free: tidak tersedia.
+- Starter: tidak tersedia.
+- Pro: 30x/bulan.
+
 ## Paket Harga
 
 Harga yang digunakan di halaman pricing dan konfigurasi saat ini:
@@ -631,6 +668,7 @@ Fitur dan kuota:
 - 10x cover letter AI per bulan.
 - 10x CV review HR per bulan.
 - 20x keyword extractor per bulan.
+- 20x job match score per bulan.
 - 50x AI chat per bulan.
 - Unlimited download CV.
 - Export PDF tanpa watermark.
@@ -641,6 +679,7 @@ Batasan:
 - Tidak ada simulasi wawancara AI.
 - Tidak ada CV comparison.
 - Tidak ada CV analytics.
+- Tidak ada auto tailor CV.
 
 CTA:
 
@@ -671,6 +710,8 @@ Fitur dan kuota:
 - 50x cover letter AI per bulan.
 - 50x CV review HR per bulan.
 - 100x keyword extractor per bulan.
+- 100x job match score per bulan.
+- 30x auto tailor CV per bulan.
 - 50x simulasi wawancara per bulan.
 - 200x AI chat per bulan.
 - CV comparison.
@@ -1005,6 +1046,8 @@ Jawaban:
 | Cover Letter AI    | Tidak     | 10x/bulan       | 50x/bulan       |
 | CV Review HR       | Tidak     | 10x/bulan       | 50x/bulan       |
 | Keyword Extractor  | Tidak     | 20x/bulan       | 100x/bulan      |
+| Job Match Score    | Tidak     | 20x/bulan       | 100x/bulan      |
+| Auto Tailor CV     | Tidak     | Tidak           | 30x/bulan       |
 | Simulasi Wawancara | Tidak     | Tidak           | 50x/bulan       |
 | CV Comparison      | Tidak     | Tidak           | Ada             |
 | CV Analytics       | Tidak     | Tidak           | Ada             |

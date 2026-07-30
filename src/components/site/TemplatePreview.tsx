@@ -639,6 +639,73 @@ export const previewData = {
       },
     ],
   } as CvData,
+  bogor: {
+    personal: {
+      fullName: "Andi Pratama",
+      headline: "Peneliti & Analis Data",
+      email: "andi.pratama@research.id",
+      phone: "0812-3456-7890",
+      location: "Bogor, Jawa Barat",
+      linkedin: "linkedin.com/in/andipratama",
+      website: "andipratama.com",
+      summary:
+        "Peneliti dan Analis Data dengan pengalaman 5+ tahun dalam bidang riset lingkungan dan analisis data spasial. Berpengalaman dalam mengelola proyek penelitian berskala nasional dan publikasi jurnal terindeks Scopus.",
+      summaryAlign: "left" as const,
+    },
+    experiences: [
+      {
+        id: "1",
+        position: "Senior Researcher",
+        company: "Lembaga Ilmu Pengetahuan",
+        location: "Bogor",
+        startDate: "Jan 2020",
+        current: true,
+        endDate: "",
+        description:
+          "Memimpin tim peneliti dalam proyek konservasi keanekaragaman hayati. Mengumpulkan dan menganalisis data spasial menggunakan ArcGIS dan R. Menerbitkan 3 makalah ilmiah di jurnal internasional.",
+      },
+      {
+        id: "2",
+        position: "Data Analyst",
+        company: "Pusat Riset Agrikultur",
+        location: "Bogor",
+        startDate: "Mar 2017",
+        current: false,
+        endDate: "Des 2019",
+        description:
+          "Bertanggung jawab atas pengolahan data statistik pertanian. Berkolaborasi dengan peneliti utama untuk mengembangkan model prediksi hasil panen berbasis machine learning.",
+      },
+    ],
+    educations: [
+      {
+        id: "1",
+        school: "Institut Pertanian Bogor",
+        degree: "S2",
+        field: "Ilmu Komputer & Analisis Data",
+        startDate: "2015",
+        endDate: "2017",
+        description: "Lulus dengan predikat Cum Laude (IPK 3.90). Fokus pada data mining.",
+      },
+    ],
+    skills: [
+      { id: "1", name: "Data Analysis (R, Python)" },
+      { id: "2", name: "Spatial Analysis (ArcGIS)" },
+      { id: "3", name: "Machine Learning" },
+      { id: "4", name: "Scientific Writing" },
+    ],
+    languages: [
+      { id: "1", name: "Bahasa Indonesia", level: "Native" },
+      { id: "2", name: "English", level: "Professional" },
+    ],
+    certificates: [
+      {
+        id: "1",
+        name: "Data Science Specialization",
+        issuer: "Coursera",
+        date: "2021",
+      },
+    ],
+  } as CvData,
 };
 
 // Template mapping untuk halaman /template
@@ -653,6 +720,7 @@ export const templateMap = {
   yogya: { name: "Yogyakarta", premium: false },
   malang: { name: "Malang", premium: true },
   ubud: { name: "Ubud", premium: true },
+  bogor: { name: "Bogor", premium: true },
 } as const;
 
 export type TemplateSlug = keyof typeof previewData;
