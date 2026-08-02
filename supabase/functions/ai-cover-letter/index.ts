@@ -29,6 +29,28 @@ Deno.serve(async (req: Request) => {
       return createRateLimitedResponse(rl, JSON.stringify({ error: "Terlalu banyak request. Silakan coba lagi nanti." }), corsHeaders(req));
     }
     const admin = getAdminClient();
+
+    // Check feature flag before processing
+    const { data: userSub } = await admin
+      .from("user_subscriptions")
+      .select("subscription_tiers!inner(slug, enable_cover_letter)")
+      .eq("user_id", userId)
+      .eq("status", "active")
+      .single();
+
+    const enabled = (userSub as any)?.subscription_tiers?.enable_cover_letter ?? false;
+    if (!enabled) {
+      return corsResponse(
+        {
+          error: "Fitur Cover Letter AI hanya tersedia untuk paket Starter ke atas. Silakan upgrade.",
+          requiresUpgrade: true,
+          upgradeUrl: "/harga",
+        },
+        403,
+        req,
+      );
+    }
+
     const { cvId, cvData, jobDescription, companyName, positionName, language, jobSource } =
       await req.json();
     const lang: CvUiLang = language === "en" ? "en" : "id";

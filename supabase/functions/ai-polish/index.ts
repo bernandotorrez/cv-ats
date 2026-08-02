@@ -38,12 +38,13 @@ Deno.serve(async (req: Request) => {
     // Check feature flag
     const { data: userSub } = await admin
       .from("user_subscriptions")
-      .select("subscription_tiers!inner(slug, enable_text_polish)")
+      .select("subscription_tiers!inner(slug, enable_text_polish, quota_ai_polish)")
       .eq("user_id", userId)
       .eq("status", "active")
       .single();
 
-    if (userSub && (userSub as any).subscription_tiers?.enable_text_polish === false) {
+    const tier = (userSub as any)?.subscription_tiers;
+    if (tier?.enable_text_polish === false || (tier?.quota_ai_polish !== null && tier?.quota_ai_polish <= 0)) {
       return corsResponse(
         {
           error: "Fitur Perbaiki Teks tidak tersedia di paket kamu. Silakan upgrade.",

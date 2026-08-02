@@ -29,6 +29,28 @@ Deno.serve(async (req: Request) => {
       return createRateLimitedResponse(rl, JSON.stringify({ error: "Terlalu banyak request. Silakan coba lagi nanti." }), corsHeaders(req));
     }
     const admin = getAdminClient();
+
+    // Check feature flag — ai-score available for all tiers but verify DB state
+    const { data: userSub } = await admin
+      .from("user_subscriptions")
+      .select("subscription_tiers!inner(slug, quota_ai_score)")
+      .eq("user_id", userId)
+      .eq("status", "active")
+      .single();
+
+    const scoreQuota = (userSub as any)?.subscription_tiers?.quota_ai_score ?? null;
+    if (scoreQuota !== null && scoreQuota <= 0) {
+      return corsResponse(
+        {
+          error: "Fitur AI Scoring tidak tersedia di paket kamu. Silakan upgrade.",
+          requiresUpgrade: true,
+          upgradeUrl: "/harga",
+        },
+        403,
+        req,
+      );
+    }
+
     const { cvId, cvData, jobDescription, targetRole, language } = await req.json();
     const lang: CvUiLang = language === "en" ? "en" : "id";
 

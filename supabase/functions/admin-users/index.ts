@@ -65,7 +65,7 @@ Deno.serve(async (req: Request) => {
     }
 
     if (req.method === "PATCH") {
-      const result = await updateUser(req, admin);
+      const result = await updateUser(req, admin, requesterId);
       return json(req, result);
     }
 
@@ -169,7 +169,7 @@ Deno.serve(async (req: Request) => {
   }
 });
 
-async function updateUser(req: Request, admin: ReturnType<typeof getAdminClient>) {
+async function updateUser(req: Request, admin: ReturnType<typeof getAdminClient>, requesterId: string) {
   const body = (await req.json().catch(() => ({}))) as UpdateUserRequest;
   const userId = (body.userId || "").trim();
   const tier = (body.tier || "").trim().toLowerCase();
@@ -179,6 +179,26 @@ async function updateUser(req: Request, admin: ReturnType<typeof getAdminClient>
     typeof body.quota_pro_photo === "number" ? body.quota_pro_photo : undefined;
   const quota_upload_cv =
     typeof body.quota_upload_cv === "number" ? body.quota_upload_cv : undefined;
+
+  // SECURITY: Prevent self-escalation — admin cannot modify their own role/tier
+  if (userId === requesterId) {
+    throw new Error("Tidak dapat mengubah data diri sendiri. Minta admin lain untuk melakukannya.");
+  }
+
+  // SECURITY: Validate upper bounds for quota values
+  const MAX_QUOTA_PRO_PHOTO = 100;
+  const MAX_QUOTA_UPLOAD_CV = 200;
+
+  if (quota_pro_photo !== undefined) {
+    if (!Number.isInteger(quota_pro_photo) || quota_pro_photo < 0 || quota_pro_photo > MAX_QUOTA_PRO_PHOTO) {
+      throw new Error(`Kuota Pro Photo harus antara 0-${MAX_QUOTA_PRO_PHOTO}`);
+    }
+  }
+  if (quota_upload_cv !== undefined) {
+    if (!Number.isInteger(quota_upload_cv) || quota_upload_cv < 0 || quota_upload_cv > MAX_QUOTA_UPLOAD_CV) {
+      throw new Error(`Kuota Upload CV harus antara 0-${MAX_QUOTA_UPLOAD_CV}`);
+    }
+  }
 
   if (!isUuid(userId)) {
     throw new Error("User ID tidak valid");

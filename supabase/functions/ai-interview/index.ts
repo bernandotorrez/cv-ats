@@ -9,6 +9,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders } from "../_shared/cors.ts";
 import {
   aiComplete,
+  checkAndTrackQuota,
+  getAdminClient,
   type AiMessage,
   getLanguageInstruction,
   type CvUiLang,
@@ -63,7 +65,10 @@ Deno.serve(async (req: Request) => {
     const { action, position, level, industry, questions, answers, cv, language } = body;
     const lang: CvUiLang = language === "en" ? "en" : "id";
 
+    const admin = getAdminClient();
+
     if (action === "generate") {
+      await checkAndTrackQuota(admin, user.id, "interview_simulator", 400);
       const result = await generateQuestions(position, level, industry, lang);
       return new Response(JSON.stringify(result), {
         headers: { ...corsHeaders(req), "Content-Type": "application/json" },
@@ -71,6 +76,7 @@ Deno.serve(async (req: Request) => {
     }
 
     if (action === "evaluate") {
+      await checkAndTrackQuota(admin, user.id, "interview_simulator", 600);
       const result = await evaluateAnswers(position, level, industry, questions, answers, lang);
       return new Response(JSON.stringify(result), {
         headers: { ...corsHeaders(req), "Content-Type": "application/json" },

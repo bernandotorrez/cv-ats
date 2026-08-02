@@ -65,16 +65,32 @@ Deno.serve(async (req: Request) => {
 
     if (cvError || !cv) throw new Error("CV tidak ditemukan");
 
-    // Get user tier for watermark check
+    // Get user tier for watermark & download quota check
     const { data: sub } = await (admin as any)
       .from("user_subscriptions")
-      .select("subscription_tiers!inner(slug)")
+      .select("subscription_tiers!inner(slug, quota_cv_downloads)")
       .eq("user_id", userId)
       .eq("status", "active")
       .single();
 
     const tier = sub?.subscription_tiers?.slug ?? "free";
+    const downloadQuota = sub?.subscription_tiers?.quota_cv_downloads ?? null;
     const shouldWatermark = tier === "free";
+
+    // Enforce download quota for free tier
+    if (downloadQuota !== null && downloadQuota !== undefined) {
+      const { count: downloadCount } = await (admin as any)
+        .from("cvs")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", userId)
+        .gte("last_downloaded_at", getMonthStartIso());
+
+      if (downloadCount !== null && downloadCount >= downloadQuota) {
+        throw new Error(
+          `Kuota download bulan ini habis (${downloadCount}/${downloadQuota}). Silakan upgrade untuk download tanpa batas.`,
+        );
+      }
+    }
 
     // Generate PDF content as HTML
     const cvData = cv.data || {};
@@ -598,6 +614,13 @@ function generateJakartaHtml(
   ${watermark ? '<div class="watermark">Dibuat dengan CV Pintar — cvpintar.web.id</div>' : ""}
 </body>
 </html>`;
+}
+
+function getMonthStartIso() {
+  const d = new Date();
+  d.setDate(1);
+  d.setHours(0, 0, 0, 0);
+  return d.toISOString();
 }
 
 function escapeHtml(text: string): string {

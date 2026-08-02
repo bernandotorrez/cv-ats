@@ -29,6 +29,28 @@ Deno.serve(async (req: Request) => {
       return createRateLimitedResponse(rl, JSON.stringify({ error: "Terlalu banyak request. Silakan coba lagi nanti." }), corsHeaders(req));
     }
     const admin = getAdminClient();
+
+    // Check feature flag — ai-suggest available for all tiers but verify DB state
+    const { data: userSub } = await admin
+      .from("user_subscriptions")
+      .select("subscription_tiers!inner(slug, quota_ai_suggest)")
+      .eq("user_id", userId)
+      .eq("status", "active")
+      .single();
+
+    const suggestQuota = (userSub as any)?.subscription_tiers?.quota_ai_suggest ?? null;
+    if (suggestQuota !== null && suggestQuota <= 0) {
+      return corsResponse(
+        {
+          error: "Fitur AI Saran tidak tersedia di paket kamu. Silakan upgrade.",
+          requiresUpgrade: true,
+          upgradeUrl: "/harga",
+        },
+        403,
+        req,
+      );
+    }
+
     const {
       cvId,
       section,

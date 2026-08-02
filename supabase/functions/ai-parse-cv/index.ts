@@ -221,7 +221,8 @@ PENTING:
       }));
     }
 
-    await checkAndTrackQuota(admin, userId, "guided", 600);
+    // Track usage with dedicated feature key (quota enforced separately via profiles.quota_upload_cv)
+    await admin.from("ai_usage").insert({ user_id: userId, feature: "parse_cv", tokens_used: 600 });
 
     // If they don't have the addon, decrement the tier quota
     if (!hasUploadCvAddon && effectiveQuota > 0) {

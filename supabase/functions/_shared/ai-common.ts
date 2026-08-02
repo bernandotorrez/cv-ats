@@ -51,6 +51,7 @@ const FEATURE_QUOTA_MAP: Record<string, string> = {
   cover_letter: "quota_ai_cover_letter",
   keyword_extract: "quota_ai_keyword_extract",
   cv_review: "quota_cv_review",
+  interview_simulator: "quota_interview_simulator",
   polish: "quota_ai_polish",
   guided: "quota_guided_mode",
 };

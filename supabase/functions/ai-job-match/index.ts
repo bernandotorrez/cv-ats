@@ -53,6 +53,27 @@ Deno.serve(async (req: Request) => {
       return createRateLimitedResponse(rl, JSON.stringify({ error: "Terlalu banyak request. Silakan coba lagi nanti." }), corsHeaders(req));
     }
     const admin = getAdminClient();
+    // Check feature flag — job match available for all tiers but verify DB state
+    const { data: userSub } = await admin
+      .from("user_subscriptions")
+      .select("subscription_tiers!inner(slug, quota_ai_job_match)")
+      .eq("user_id", userId)
+      .eq("status", "active")
+      .single();
+
+    const matchQuota = (userSub as any)?.subscription_tiers?.quota_ai_job_match ?? null;
+    if (matchQuota !== null && matchQuota <= 0) {
+      return corsResponse(
+        {
+          error: "Fitur Job Match tidak tersedia di paket kamu. Silakan upgrade.",
+          requiresUpgrade: true,
+          upgradeUrl: "/harga",
+        },
+        403,
+        req,
+      );
+    }
+
     const { cvId, jobId, jobDescription, jobUrl, jobTitle, companyName, language } =
       await req.json();
     const lang: CvUiLang = language === "en" ? "en" : "id";
