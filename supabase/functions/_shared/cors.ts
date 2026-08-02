@@ -2,7 +2,6 @@
  * CORS Configuration — Dynamic Origin Policy
  * SECURITY: Allow origins based on environment and Supabase URL
  */
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 // Get Supabase URL from environment (set in Supabase Dashboard → Edge Functions → Secrets)
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "";

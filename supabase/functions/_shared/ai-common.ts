@@ -141,7 +141,7 @@ export async function checkAndTrackQuota(
 
   if (error) {
     console.error("Failed to check usage:", error);
-    return;
+    throw new Error("Gagal memverifikasi kuota. Silakan coba lagi.");
   }
   if (count !== null && count >= limit) {
     throw new Error(`Kuota ${feature} bulan ini habis (${count}/${limit}). Silakan upgrade.`);

@@ -124,7 +124,8 @@ Deno.serve(async (req: Request) => {
 
     // SECURITY: Rate limiting - 10 emails per hour per user
     const rateLimitKey = `send-email:${userId}`;
-    if (!checkRateLimit(rateLimitKey, 10, 60 * 60 * 1000)) {
+    const rl = checkRateLimit(rateLimitKey, 10, 60 * 60 * 1000);
+    if (!rl.allowed) {
       return new Response(
         JSON.stringify({ error: "Terlalu banyak request email. Silakan coba lagi dalam 1 jam." }),
         { status: 429, headers: { ...corsHeaders(req), "Content-Type": "application/json" } },

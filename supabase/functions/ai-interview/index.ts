@@ -19,33 +19,13 @@ const supabase = createClient(
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
 );
 
-// Rate limit: 20 requests per minute per IP
-const ipRequestCounts = new Map<string, { count: number; resetAt: number }>();
-
-function checkRateLimit(ip: string): boolean {
-  const now = Date.now();
-  const record = ipRequestCounts.get(ip);
-  if (!record || now > record.resetAt) {
-    ipRequestCounts.set(ip, { count: 1, resetAt: now + 60000 });
-    return true;
-  }
-  if (record.count >= 20) return false;
-  record.count++;
-  return true;
-}
+import { checkRateLimit, createRateLimitedResponse } from "../_shared/rate-limit.ts";
 
 Deno.serve(async (req: Request) => {
   const ip = req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || "unknown";
 
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders(req), status: 204 });
-  }
-
-  if (!checkRateLimit(ip)) {
-    return new Response(JSON.stringify({ error: "Terlalu banyak request. Coba lagi nanti." }), {
-      status: 429,
-      headers: { ...corsHeaders(req), "Content-Type": "application/json" },
-    });
   }
 
   try {
@@ -57,6 +37,12 @@ Deno.serve(async (req: Request) => {
       error: authErr,
     } = await supabase.auth.getUser(token);
     if (authErr || !user) throw new Error("Unauthorized");
+
+    const rateLimitKey = `ai-interview:${user.id}`;
+    const rl = checkRateLimit(rateLimitKey, 30, 60 * 1000);
+    if (!rl.allowed) {
+      return createRateLimitedResponse(rl, JSON.stringify({ error: "Terlalu banyak request. Coba lagi nanti." }), corsHeaders(req));
+    }
 
     // Check feature flag
     const { data: sub } = await (supabase as any)

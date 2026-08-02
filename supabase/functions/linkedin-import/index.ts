@@ -232,7 +232,8 @@ Deno.serve(async (req: Request) => {
     const userId = await getUserId(req);
 
     const rateLimitKey = `linkedin-import:${userId}`;
-    if (!checkRateLimit(rateLimitKey, 10, 60 * 60 * 1000)) {
+    const rl = checkRateLimit(rateLimitKey, 10, 60 * 60 * 1000);
+    if (!rl.allowed) {
       throw new Error("Terlalu banyak request. Silakan coba lagi dalam 1 jam.");
     }
 

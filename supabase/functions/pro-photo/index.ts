@@ -1,5 +1,7 @@
 import { corsHeaders } from "../_shared/cors.ts";
 import { getAdminClient, getUserId } from "../_shared/ai-common.ts";
+import { checkRateLimit, createRateLimitedResponse } from "../_shared/rate-limit.ts";
+
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
@@ -8,6 +10,13 @@ Deno.serve(async (req: Request) => {
 
   try {
     const userId = await getUserId(req);
+
+    // Rate Limiting
+    const rateLimitKey = `pro-photo:${userId}`;
+    const rl = checkRateLimit(rateLimitKey, 20, 60 * 1000);
+    if (!rl.allowed) {
+      return createRateLimitedResponse(rl, JSON.stringify({ error: "Terlalu banyak request. Silakan coba lagi nanti." }), corsHeaders(req));
+    }
     const admin = getAdminClient();
 
     const url = new URL(req.url);

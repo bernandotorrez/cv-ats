@@ -18,12 +18,21 @@ import {
   type CvUiLang,
 } from "../_shared/ai-common.ts";
 import { corsHeaders } from "../_shared/cors.ts";
+import { checkRateLimit, createRateLimitedResponse } from "../_shared/rate-limit.ts";
+
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders(req) });
 
   try {
     const userId = await getUserId(req);
+
+    // Rate Limiting
+    const rateLimitKey = `ai-polish:${userId}`;
+    const rl = checkRateLimit(rateLimitKey, 30, 60 * 1000);
+    if (!rl.allowed) {
+      return createRateLimitedResponse(rl, JSON.stringify({ error: "Terlalu banyak request. Silakan coba lagi nanti." }), corsHeaders(req));
+    }
     const admin = getAdminClient();
 
     // Check feature flag

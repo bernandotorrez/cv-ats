@@ -13,6 +13,8 @@ import {
   type CvUiLang,
 } from "../_shared/ai-common.ts";
 import { corsHeaders } from "../_shared/cors.ts";
+import { checkRateLimit, createRateLimitedResponse } from "../_shared/rate-limit.ts";
+
 
 type CvRow = {
   id: string;
@@ -43,6 +45,13 @@ Deno.serve(async (req: Request) => {
 
   try {
     const userId = await getUserId(req);
+
+    // Rate Limiting
+    const rateLimitKey = `ai-tailor-cv:${userId}`;
+    const rl = checkRateLimit(rateLimitKey, 30, 60 * 1000);
+    if (!rl.allowed) {
+      return createRateLimitedResponse(rl, JSON.stringify({ error: "Terlalu banyak request. Silakan coba lagi nanti." }), corsHeaders(req));
+    }
     const admin = getAdminClient();
     const { cvId, jobId, jobDescription, jobUrl, jobTitle, companyName, language } =
       await req.json();

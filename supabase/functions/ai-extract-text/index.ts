@@ -8,6 +8,7 @@
 
 import { getUserId, corsResponse, errorResponse } from "../_shared/ai-common.ts";
 import { corsHeaders } from "../_shared/cors.ts";
+import { checkRateLimit, createRateLimitedResponse } from "../_shared/rate-limit.ts";
 
 const AI_GATEWAY_URL = "https://ai.sumopod.com/v1/chat/completions";
 const AI_API_KEY = Deno.env.get("AI_API_KEY") || "";
@@ -16,7 +17,14 @@ Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders(req) });
 
   try {
-    await getUserId(req);
+    const userId = await getUserId(req);
+
+    // Rate Limiting
+    const rateLimitKey = `ai-extract-text:${userId}`;
+    const rl = checkRateLimit(rateLimitKey, 30, 60 * 1000);
+    if (!rl.allowed) {
+      return createRateLimitedResponse(rl, JSON.stringify({ error: "Terlalu banyak request. Silakan coba lagi nanti." }), corsHeaders(req));
+    }
 
     const { images, fileName } = await req.json();
 

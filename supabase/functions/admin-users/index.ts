@@ -244,19 +244,29 @@ async function updateUser(req: Request, admin: ReturnType<typeof getAdminClient>
     if (insertSubError) throw insertSubError;
   }
 
-  const { error: insertRoleError } = await admin
+  // Update role: first get current role to know what to replace
+  const { data: currentRoles } = await admin
     .from("user_roles")
-    .upsert({ user_id: userId, role }, { onConflict: "user_id,role" });
+    .select("role")
+    .eq("user_id", userId);
 
-  if (insertRoleError) throw insertRoleError;
+  const currentRole = (currentRoles || []).length > 0 ? (currentRoles || [])[0].role : null;
 
-  const oldRole = role === "admin" ? "user" : "admin";
-  const { error: deleteOldRoleError } = await admin
-    .from("user_roles")
-    .delete()
-    .eq("user_id", userId)
-    .eq("role", oldRole);
-  if (deleteOldRoleError) throw deleteOldRoleError;
+  // If role changed, remove old role and insert new one
+  if (currentRole !== role) {
+    // Delete all existing roles for this user (clean slate)
+    const { error: deleteRolesError } = await admin
+      .from("user_roles")
+      .delete()
+      .eq("user_id", userId);
+    if (deleteRolesError) throw deleteRolesError;
+
+    // Insert new role
+    const { error: insertNewRoleError } = await admin
+      .from("user_roles")
+      .insert({ user_id: userId, role });
+    if (insertNewRoleError) throw insertNewRoleError;
+  }
 
   // Update has_upload_cv and upload_cv_end_date
   let endDateIso = null;
