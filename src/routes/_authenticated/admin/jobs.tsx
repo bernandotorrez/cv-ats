@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { buildSeo } from "@/lib/seo";
@@ -61,6 +61,17 @@ import {
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/jobs")({
+  beforeLoad: async () => {
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (!sessionData.session) {
+      throw redirect({ to: "/login" });
+    }
+    const { data } = await supabase
+      .rpc("has_role", { _user_id: sessionData.session.user.id, _role: "admin" });
+    if (!data) {
+      throw redirect({ to: "/dashboard" });
+    }
+  },
   head: () =>
     buildSeo({
       title: "Admin Lowongan - CV Pintar",

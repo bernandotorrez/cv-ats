@@ -316,11 +316,12 @@ Deno.serve(async (req: Request) => {
         );
       }
 
-      // Decrement quota
+      // Decrement quota atomically
       const { error: updateError } = await admin
         .from("profiles")
         .update({ quota_pro_photo: effectiveQuota - 1 })
-        .eq("id", userId);
+        .eq("id", userId)
+        .eq("quota_pro_photo", effectiveQuota); // Atomic: prevents race-condition double-decrement
 
       if (updateError) {
         console.error("Failed to decrement quota:", updateError);

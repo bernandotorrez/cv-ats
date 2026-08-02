@@ -224,12 +224,17 @@ PENTING:
     // Track usage with dedicated feature key (quota enforced separately via profiles.quota_upload_cv)
     await admin.from("ai_usage").insert({ user_id: userId, feature: "parse_cv", tokens_used: 600 });
 
-    // If they don't have the addon, decrement the tier quota
+    // If they don't have the addon, decrement the tier quota atomically
     if (!hasUploadCvAddon && effectiveQuota > 0) {
-      await admin
+      const { error: decrementError } = await admin
         .from("profiles")
         .update({ quota_upload_cv: effectiveQuota - 1 })
-        .eq("id", userId);
+        .eq("id", userId)
+        .eq("quota_upload_cv", effectiveQuota); // Atomic: prevents race-condition double-decrement
+
+      if (decrementError) {
+        console.error("Failed to decrement upload quota:", decrementError);
+      }
     }
 
     return corsResponse({ success: true, cvData }, 200, req);

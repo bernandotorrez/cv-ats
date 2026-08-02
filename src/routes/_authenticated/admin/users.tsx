@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useEffect, useState, useCallback } from "react";
 import { toast } from "sonner";
 import { buildSeo } from "@/lib/seo";
@@ -44,6 +44,17 @@ import {
 const PAGE_SIZE = 10;
 
 export const Route = createFileRoute("/_authenticated/admin/users")({
+  beforeLoad: async () => {
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (!sessionData.session) {
+      throw redirect({ to: "/login" });
+    }
+    const { data } = await supabase
+      .rpc("has_role", { _user_id: sessionData.session.user.id, _role: "admin" });
+    if (!data) {
+      throw redirect({ to: "/dashboard" });
+    }
+  },
   head: () =>
     buildSeo({
       title: "Admin Users — CV Pintar",
