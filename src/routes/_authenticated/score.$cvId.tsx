@@ -199,104 +199,105 @@ function CvScorePage() {
   }, [result, cvData]);
 
   const handleApplySuggestion = useCallback(
-    (index: number, newText: string) => {
+    async (index: number, newText: string) => {
       const suggestion = highlightSuggestions[index];
       if (!suggestion) return;
 
-      const updatedCvData = { ...cvData };
+      const updatedCvData = JSON.parse(JSON.stringify(cvData)); // Deep clone
       const suggestedLower = suggestion.suggested.toLowerCase();
       let applied = false;
 
-      // Try to determine which section to apply based on suggestion content
-      if (suggestedLower.includes("summary") || suggestedLower.includes("ringkasan") || suggestedLower.includes("profil")) {
-        // If suggestion is about summary, append or replace
-        if (updatedCvData.personal.summary) {
-          updatedCvData.personal.summary = newText;
-        } else {
-          updatedCvData.personal.summary = newText;
-        }
+      // Determine which section based on suggestion content
+      const isSummary = suggestedLower.includes("summary") || suggestedLower.includes("ringkasan") || suggestedLower.includes("profil") || suggestedLower.includes("deskripsi diri");
+      const isHeadline = suggestedLower.includes("headline") || suggestedLower.includes("judul") || suggestedLower.includes("posisi");
+      const isExperience = suggestedLower.includes("experience") || suggestedLower.includes("pengalaman") || suggestedLower.includes("bullet") || suggestedLower.includes("kerja");
+
+      if (isSummary) {
+        updatedCvData.personal.summary = newText;
         applied = true;
-      } else if (suggestedLower.includes("headline") || suggestedLower.includes("judul")) {
+      } else if (isHeadline) {
         updatedCvData.personal.headline = newText;
         applied = true;
-      } else if (suggestedLower.includes("experience") || suggestedLower.includes("pengalaman") || suggestedLower.includes("bullet")) {
-        // Try to find matching experience
+      } else if (isExperience) {
+        // Try to find matching experience by current text
         if (suggestion.current) {
           const currentLower = suggestion.current.toLowerCase();
           for (let i = 0; i < updatedCvData.experiences.length; i++) {
             if (updatedCvData.experiences[i].description?.toLowerCase().includes(currentLower)) {
-              const escaped = suggestion.current.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-              const regex = new RegExp(escaped, "gi");
-              updatedCvData.experiences[i] = {
-                ...updatedCvData.experiences[i],
-                description: updatedCvData.experiences[i].description.replace(regex, newText),
-              };
+              updatedCvData.experiences[i].description = newText;
               applied = true;
               break;
             }
           }
         }
         if (!applied && updatedCvData.experiences.length > 0) {
-          // Apply to first experience as fallback
-          updatedCvData.experiences[0] = {
-            ...updatedCvData.experiences[0],
-            description: newText,
-          };
+          updatedCvData.experiences[0].description = newText;
           applied = true;
         }
+      } else {
+        // Default: apply to summary
+        updatedCvData.personal.summary = newText;
+        applied = true;
       }
 
+      // Update state
       setCvData(updatedCvData);
       setAppliedSuggestions((prev) => new Set([...prev, index]));
-      if (applied) {
-        toast.success(`Saran #${index + 1} berhasil diterapkan!`);
-      } else {
-        toast.info(`Saran #${index + 1} ditandai sebagai diterapkan.`);
+
+      // Save to database
+      try {
+        await supabase
+          .from("cvs")
+          .update({ data: updatedCvData })
+          .eq("id", cvId);
+      } catch (err) {
+        console.warn("Gagal menyimpan ke database:", err);
       }
+
+      toast.success(`Saran #${index + 1} berhasil diterapkan dan disimpan!`);
     },
-    [cvData, highlightSuggestions],
+    [cvData, cvId, highlightSuggestions],
   );
 
-  const handleApplyAllSuggestions = useCallback(() => {
-    let updatedCvData = { ...cvData };
+  const handleApplyAllSuggestions = useCallback(async () => {
+    const updatedCvData = JSON.parse(JSON.stringify(cvData)); // Deep clone
     let appliedCount = 0;
     const newApplied = new Set(appliedSuggestions);
 
     highlightSuggestions.forEach((suggestion, index) => {
-      if (newApplied.has(index)) return; // Skip already applied
+      if (newApplied.has(index)) return;
 
       const suggestedLower = suggestion.suggested.toLowerCase();
       let applied = false;
 
-      if (suggestedLower.includes("summary") || suggestedLower.includes("ringkasan") || suggestedLower.includes("profil")) {
+      const isSummary = suggestedLower.includes("summary") || suggestedLower.includes("ringkasan") || suggestedLower.includes("profil") || suggestedLower.includes("deskripsi diri");
+      const isHeadline = suggestedLower.includes("headline") || suggestedLower.includes("judul") || suggestedLower.includes("posisi");
+      const isExperience = suggestedLower.includes("experience") || suggestedLower.includes("pengalaman") || suggestedLower.includes("bullet") || suggestedLower.includes("kerja");
+
+      if (isSummary) {
         updatedCvData.personal.summary = suggestion.suggested;
         applied = true;
-      } else if (suggestedLower.includes("headline") || suggestedLower.includes("judul")) {
+      } else if (isHeadline) {
         updatedCvData.personal.headline = suggestion.suggested;
         applied = true;
-      } else if (suggestedLower.includes("experience") || suggestedLower.includes("pengalaman") || suggestedLower.includes("bullet")) {
+      } else if (isExperience) {
         if (suggestion.current) {
           const currentLower = suggestion.current.toLowerCase();
           for (let i = 0; i < updatedCvData.experiences.length; i++) {
             if (updatedCvData.experiences[i].description?.toLowerCase().includes(currentLower)) {
-              const escaped = suggestion.current.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-              const regex = new RegExp(escaped, "gi");
-              updatedCvData.experiences[i] = {
-                ...updatedCvData.experiences[i],
-                description: updatedCvData.experiences[i].description.replace(regex, suggestion.suggested),
-              };
+              updatedCvData.experiences[i].description = suggestion.suggested;
               applied = true;
               break;
             }
           }
         }
         if (!applied && updatedCvData.experiences.length > 0) {
-          updatedCvData.experiences[0] = {
-            ...updatedCvData.experiences[0],
-            description: suggestion.suggested,
-          };
+          updatedCvData.experiences[0].description = suggestion.suggested;
           applied = true;
         }
+      } else {
+        updatedCvData.personal.summary = suggestion.suggested;
+        applied = true;
       }
 
       if (applied) {
@@ -305,10 +306,22 @@ function CvScorePage() {
       }
     });
 
+    // Update state
     setCvData(updatedCvData);
     setAppliedSuggestions(newApplied);
-    toast.success(`${appliedCount} saran berhasil diterapkan!`);
-  }, [cvData, highlightSuggestions, appliedSuggestions]);
+
+    // Save to database
+    try {
+      await supabase
+        .from("cvs")
+        .update({ data: updatedCvData })
+        .eq("id", cvId);
+    } catch (err) {
+      console.warn("Gagal menyimpan ke database:", err);
+    }
+
+    toast.success(`${appliedCount} saran berhasil diterapkan dan disimpan!`);
+  }, [cvData, cvId, highlightSuggestions, appliedSuggestions]);
 
   return (
     <main className="container-page overflow-x-hidden py-6 sm:py-8 lg:py-10">
