@@ -92,79 +92,92 @@ export function CvScannerAnimation({ cvTitle }: CvScannerAnimationProps) {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative z-10 w-full max-w-md mx-auto"
+        className="relative z-10 w-full max-w-xl mx-auto px-4"
       >
-        {/* CV Document mockup */}
-        <div className="relative mx-auto w-64">
+        {/* CV Document mockup (Enlarged) */}
+        <div className="relative mx-auto w-full max-w-md">
           {/* Document background */}
           <motion.div
-            className="relative bg-white dark:bg-gray-800 rounded-lg shadow-2xl overflow-hidden"
-            initial={{ scale: 0.8, opacity: 0 }}
+            className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl overflow-hidden border border-border/80"
+            initial={{ scale: 0.85, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.5 }}
           >
             {/* Document header */}
-            <div className="bg-gradient-to-r from-primary/10 to-primary/5 p-4 border-b">
-              <div className="flex items-center gap-2">
-                <FileText className="h-5 w-5 text-primary" />
-                <span className="text-sm font-medium text-foreground truncate">{cvTitle}</span>
+            <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-5 border-b">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
+                  <FileText className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <span className="text-base font-bold text-foreground block truncate">{cvTitle}</span>
+                  <span className="text-xs text-muted-foreground">Scanning CV Document...</span>
+                </div>
               </div>
             </div>
 
-            {/* Document content lines */}
-            <div className="p-4 space-y-3">
-              {[...Array(8)].map((_, i) => (
-                <motion.div
-                  key={i}
-                  className="h-2 bg-gray-100 dark:bg-gray-700 rounded"
-                  style={{ width: `${60 + Math.random() * 40}%` }}
-                  initial={{ scaleX: 0 }}
-                  animate={{ scaleX: 1 }}
-                  transition={{ delay: 0.1 * i, duration: 0.3 }}
-                />
-              ))}
+            {/* Document content lines (Realistic CV skeleton layout) */}
+            <div className="p-6 space-y-4">
+              <div className="space-y-2 pb-3 border-b border-border/40">
+                <div className="h-4 bg-primary/20 rounded-md w-1/2" />
+                <div className="h-2.5 bg-gray-200 dark:bg-gray-700 rounded-md w-3/4" />
+              </div>
+              
+              <div className="space-y-2">
+                <div className="h-3 bg-gray-300 dark:bg-gray-600 rounded-md w-1/4" />
+                <div className="h-2 bg-gray-100 dark:bg-gray-700 rounded-md w-full" />
+                <div className="h-2 bg-gray-100 dark:bg-gray-700 rounded-md w-11/12" />
+                <div className="h-2 bg-gray-100 dark:bg-gray-700 rounded-md w-4/5" />
+              </div>
+
+              <div className="space-y-2 pt-2">
+                <div className="h-3 bg-gray-300 dark:bg-gray-600 rounded-md w-1/3" />
+                <div className="h-2 bg-gray-100 dark:bg-gray-700 rounded-md w-full" />
+                <div className="h-2 bg-gray-100 dark:bg-gray-700 rounded-md w-5/6" />
+                <div className="h-2 bg-gray-100 dark:bg-gray-700 rounded-md w-3/4" />
+              </div>
             </div>
 
             {/* Scanning line effect */}
             <motion.div
-              className="absolute left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-primary to-transparent"
+              className="absolute left-0 right-0 h-1 bg-gradient-to-r from-transparent via-primary to-transparent shadow-[0_0_15px_rgba(var(--primary-rgb),0.8)]"
               initial={{ top: 0 }}
               animate={{ top: ["0%", "100%", "0%"] }}
               transition={{
                 duration: 3,
                 repeat: Infinity,
-                ease: "linear",
+                ease: "easeInOut",
               }}
             />
 
             {/* Scan glow effect */}
             <motion.div
-              className="absolute left-0 right-0 h-20 pointer-events-none"
+              className="absolute left-0 right-0 h-28 pointer-events-none"
               initial={{ top: 0 }}
               animate={{ top: ["0%", "100%", "0%"] }}
               transition={{
                 duration: 3,
                 repeat: Infinity,
-                ease: "linear",
+                ease: "easeInOut",
               }}
               style={{
-                background: "linear-gradient(180deg, transparent, rgba(var(--primary-rgb), 0.1), transparent)",
+                background: "linear-gradient(180deg, transparent, rgba(var(--primary-rgb), 0.15), transparent)",
               }}
             />
 
             {/* Corner scan markers */}
-            <div className="absolute top-2 left-2 w-6 h-6 border-t-2 border-l-2 border-primary" />
-            <div className="absolute top-2 right-2 w-6 h-6 border-t-2 border-r-2 border-primary" />
-            <div className="absolute bottom-2 left-2 w-6 h-6 border-b-2 border-l-2 border-primary" />
-            <div className="absolute bottom-2 right-2 w-6 h-6 border-b-2 border-r-2 border-primary" />
+            <div className="absolute top-3 left-3 w-8 h-8 border-t-3 border-l-3 border-primary rounded-tl-sm" />
+            <div className="absolute top-3 right-3 w-8 h-8 border-t-3 border-r-3 border-primary rounded-tr-sm" />
+            <div className="absolute bottom-3 left-3 w-8 h-8 border-b-3 border-l-3 border-primary rounded-bl-sm" />
+            <div className="absolute bottom-3 right-3 w-8 h-8 border-b-3 border-r-3 border-primary rounded-br-sm" />
           </motion.div>
 
           {/* Pulse ring effect */}
           <motion.div
-            className="absolute inset-0 rounded-lg border-2 border-primary/30"
+            className="absolute inset-0 rounded-2xl border-2 border-primary/30"
             animate={{
-              scale: [1, 1.05, 1],
-              opacity: [0.5, 0, 0.5],
+              scale: [1, 1.04, 1],
+              opacity: [0.6, 0.1, 0.6],
             }}
             transition={{
               duration: 2,
@@ -174,28 +187,25 @@ export function CvScannerAnimation({ cvTitle }: CvScannerAnimationProps) {
         </div>
 
         {/* Progress section */}
-        <div className="mt-8 text-center">
+        <div className="mt-8 text-center max-w-sm mx-auto">
           {/* Phase indicator */}
           <AnimatePresence mode="wait">
             <motion.div
               key={currentPhase}
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
+              exit={{ opacity: 0, y: -8 }}
               className="flex items-center justify-center gap-3 mb-4"
             >
               {(() => {
                 const Icon = scanPhases[currentPhase].icon;
                 return (
-                  <motion.div
-                    animate={{ rotate: [0, 360] }}
-                    transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                  >
-                    <Icon className="h-5 w-5 text-primary" />
-                  </motion.div>
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 shrink-0">
+                    <Icon className="h-4 w-4 text-primary" />
+                  </div>
                 );
               })()}
-              <span className="text-sm font-medium text-foreground">
+              <span className="text-sm font-semibold text-foreground">
                 {scanPhases[currentPhase].text}
               </span>
             </motion.div>
