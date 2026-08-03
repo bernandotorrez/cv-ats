@@ -24,6 +24,7 @@ export function CvScannerAnimation({ cvTitle }: CvScannerAnimationProps) {
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
     const totalDuration = scanPhases.reduce((acc, p) => acc + p.duration, 0);
     const startTime = Date.now();
     let phaseIndex = 0;

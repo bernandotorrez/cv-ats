@@ -248,6 +248,7 @@ function CvReviewPage() {
   };
 
   const handleReview = async () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
     setPhase("scanning");
     setResult(null);
     setSelectedHistoryId(null);
@@ -265,6 +266,7 @@ function CvReviewPage() {
       // Small delay for animation to complete
       await new Promise(resolve => setTimeout(resolve, 1000));
       
+      window.scrollTo({ top: 0, behavior: "smooth" });
       setResult(response);
       setPhase("result");
       await saveReviewResult(response);
