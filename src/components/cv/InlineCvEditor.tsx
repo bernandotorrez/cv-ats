@@ -251,8 +251,8 @@ export function InlineCvEditor({
   );
 
   const handleReject = useCallback(
-    (index: number) => {
-      setAppliedIndices((prev) => new Set([...prev, index]));
+    (_index: number) => {
+      // Closing or canceling modal does NOT remove highlight or apply suggestion
       closeModal();
     },
     [closeModal],
@@ -588,11 +588,11 @@ export function InlineCvEditor({
                 <Button
                   size="default"
                   variant="ghost"
-                  className="px-3 text-muted-foreground hover:text-destructive"
-                  onClick={() => handleReject(activeIdx!)}
-                  title="Abaikan saran"
+                  className="px-3 text-muted-foreground"
+                  onClick={closeModal}
+                  title="Tutup popup"
                 >
-                  <X className="h-4 w-4" />
+                  Tutup
                 </Button>
               </div>
             )}
