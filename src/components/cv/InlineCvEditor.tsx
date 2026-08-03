@@ -1,11 +1,10 @@
 /**
- * Inline CV Editor - Side-by-Side with Inline Highlights
+ * Inline CV Editor — Side-by-Side
  *
- * Left:  CvPreview — original CV (clean, no changes)
- * Right: Custom text renderer — same CV content but with yellow stabilo
- *        highlights on the exact text that has AI suggestions.
- *        Click a highlight → popover with suggestion info + green ✓ button.
- *        No sidebar needed.
+ * Left:  CvPreview original (clean template, no changes)
+ * Right: CvPreview + yellow stabilo highlights injected directly into the
+ *        rendered DOM on the exact suggestion text.
+ *        Click a highlight → smart popover (flips above/below to avoid clipping).
  */
 
 import { useState, useCallback, useEffect, useRef } from "react";
@@ -22,14 +21,12 @@ import {
   CheckCircle2,
   Zap,
   Lightbulb,
-  ChevronDown,
-  ChevronUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { CvData, TemplateId } from "@/lib/cv-types";
 import { CvPreview } from "./CvPreview";
 
-// ─── Types ─────────────────────────────────────────────────────────────────
+// ─── Types ──────────────────────────────────────────────────────────────────
 
 interface Suggestion {
   priority: "high" | "medium" | "low";
@@ -41,7 +38,7 @@ interface Suggestion {
   bulletIndex?: number | null;
 }
 
-interface InlineCvEditorProps {
+export interface InlineCvEditorProps {
   cvData: CvData;
   templateId: TemplateId;
   suggestions: Suggestion[];
@@ -50,36 +47,165 @@ interface InlineCvEditorProps {
   onSave: () => void;
 }
 
-// ─── Config ─────────────────────────────────────────────────────────────────
+// ─── Highlight colours per priority ─────────────────────────────────────────
 
-const PRIORITY = {
+const HIGHLIGHT_STYLE: Record<Suggestion["priority"], { bg: string; border: string; badge: string; label: string }> = {
   high: {
-    mark: "bg-red-100 dark:bg-red-900/40 border-b-2 border-red-400 hover:bg-red-200 dark:hover:bg-red-800/50",
+    bg: "rgba(254,202,202,0.7)",
+    border: "#f87171",
     badge: "bg-red-100 text-red-700 border-red-200",
-    dot: "bg-red-400",
-    ring: "ring-red-300",
     label: "Tinggi",
-    icon: "🔴",
   },
   medium: {
-    mark: "bg-yellow-100 dark:bg-yellow-900/40 border-b-2 border-amber-400 hover:bg-yellow-200 dark:hover:bg-yellow-800/50",
+    bg: "rgba(253,224,71,0.65)",
+    border: "#fbbf24",
     badge: "bg-amber-100 text-amber-700 border-amber-200",
-    dot: "bg-amber-400",
-    ring: "ring-amber-300",
     label: "Sedang",
-    icon: "🟡",
   },
   low: {
-    mark: "bg-green-50 dark:bg-green-900/30 border-b-2 border-green-400 hover:bg-green-100 dark:hover:bg-green-800/40",
+    bg: "rgba(187,247,208,0.65)",
+    border: "#4ade80",
     badge: "bg-green-100 text-green-700 border-green-200",
-    dot: "bg-green-400",
-    ring: "ring-green-300",
     label: "Rendah",
-    icon: "🟢",
   },
-} as const;
+};
 
-// ─── Suggestion Popover ─────────────────────────────────────────────────────
+// ─── DOM helpers ─────────────────────────────────────────────────────────────
+
+/** Remove all previously injected marks from the container */
+function clearHighlights(container: HTMLElement) {
+  // Unwrap every mark: move its text children back to the parent, then delete the mark
+  container.querySelectorAll<HTMLElement>("mark.cv-ai-mark").forEach((mark) => {
+    const parent = mark.parentNode;
+    if (!parent) return;
+    // Remove the badge span first so it doesn't leak as text
+    mark.querySelectorAll(".cv-ai-badge").forEach((b) => b.remove());
+    while (mark.firstChild) parent.insertBefore(mark.firstChild, mark);
+    parent.removeChild(mark);
+    try { parent.normalize(); } catch (_) { /* noop */ }
+  });
+}
+
+/** Inject highlight marks for a single suggestion needle into container */
+function injectHighlight(
+  container: HTMLElement,
+  needle: string,
+  idx: number,
+  priority: Suggestion["priority"],
+  onClick: (idx: number, el: HTMLElement) => void,
+) {
+  if (!needle || needle.length < 4) return;
+
+  // Collect accepted text nodes (skip script/style/already-marked)
+  const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, {
+    acceptNode(node) {
+      const p = node.parentElement;
+      if (!p) return NodeFilter.FILTER_REJECT;
+      const tag = p.tagName;
+      if (tag === "SCRIPT" || tag === "STYLE") return NodeFilter.FILTER_REJECT;
+      if (p.closest("mark.cv-ai-mark")) return NodeFilter.FILTER_SKIP;
+      return NodeFilter.FILTER_ACCEPT;
+    },
+  });
+
+  const nodes: Text[] = [];
+  let n: Node | null;
+  while ((n = walker.nextNode())) nodes.push(n as Text);
+
+  // Concatenate all text to find position of needle
+  const fullText = nodes.map((n) => n.textContent ?? "").join("");
+  const pos = fullText.toLowerCase().indexOf(needle.toLowerCase());
+  if (pos === -1) return;
+
+  const end = pos + needle.length;
+  const style = HIGHLIGHT_STYLE[priority];
+
+  // Determine which text-node segments to wrap
+  type Seg = { node: Text; start: number; end: number };
+  const segs: Seg[] = [];
+  let charCount = 0;
+
+  for (const node of nodes) {
+    const len = node.textContent?.length ?? 0;
+    const nStart = charCount;
+    const nEnd = charCount + len;
+
+    if (nEnd > pos && nStart < end) {
+      segs.push({
+        node,
+        start: Math.max(0, pos - nStart),
+        end: Math.min(len, end - nStart),
+      });
+    }
+
+    charCount += len;
+    if (charCount >= end) break;
+  }
+
+  // Wrap each segment
+  segs.forEach(({ node, start, end: segEnd }, segIdx) => {
+    try {
+      const range = document.createRange();
+      range.setStart(node, start);
+      range.setEnd(node, segEnd);
+
+      // Use extractContents + insertNode (more reliable than surroundContents)
+      const mark = document.createElement("mark");
+      mark.className = "cv-ai-mark";
+      mark.dataset.idx = String(idx);
+      mark.style.cssText = [
+        `background-color:${style.bg}`,
+        `border-bottom:2px solid ${style.border}`,
+        `border-radius:2px`,
+        `cursor:pointer`,
+        `padding:0 1px`,
+        `transition:filter .15s`,
+      ].join(";");
+
+      const fragment = range.extractContents();
+      mark.appendChild(fragment);
+      range.insertNode(mark);
+
+      // Badge ✓ on the last segment only
+      if (segIdx === segs.length - 1) {
+        const badge = document.createElement("span");
+        badge.className = "cv-ai-badge";
+        badge.textContent = "✓";
+        badge.style.cssText = [
+          `display:inline-flex`,
+          `align-items:center`,
+          `justify-content:center`,
+          `width:14px`,
+          `height:14px`,
+          `background:#16a34a`,
+          `color:#fff`,
+          `border-radius:50%`,
+          `font-size:8px`,
+          `font-weight:700`,
+          `margin-left:2px`,
+          `vertical-align:middle`,
+          `flex-shrink:0`,
+        ].join(";");
+        mark.appendChild(badge);
+      }
+
+      mark.addEventListener("click", (e) => {
+        e.stopPropagation();
+        onClick(idx, mark);
+      });
+      mark.addEventListener("mouseenter", () => {
+        mark.style.filter = "brightness(0.92)";
+      });
+      mark.addEventListener("mouseleave", () => {
+        mark.style.filter = "";
+      });
+    } catch (_) {
+      /* skip if range crosses element boundaries */
+    }
+  });
+}
+
+// ─── Popover component ────────────────────────────────────────────────────────
 
 interface PopoverProps {
   suggestion: Suggestion;
@@ -108,21 +234,20 @@ function SuggestionPopover({
   onEditCancel,
   onClose,
 }: PopoverProps) {
-  const cfg = PRIORITY[suggestion.priority];
+  const cfg = HIGHLIGHT_STYLE[suggestion.priority];
 
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.95, y: -6 }}
+      initial={{ opacity: 0, scale: 0.95, y: -4 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.95, y: -6 }}
-      transition={{ duration: 0.15 }}
-      className="fixed z-[9999] w-80 rounded-2xl border-2 border-border bg-card shadow-2xl shadow-black/15 overflow-hidden"
+      exit={{ opacity: 0, scale: 0.95, y: -4 }}
+      transition={{ duration: 0.14 }}
+      className="w-80 rounded-2xl border-2 border-border bg-card shadow-2xl shadow-black/20 overflow-hidden"
       onClick={(e) => e.stopPropagation()}
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-3 pt-3 pb-2 border-b border-border/60 bg-muted/30">
+      <div className="flex items-center justify-between px-3 pt-2.5 pb-2 border-b border-border/60 bg-muted/30">
         <div className="flex items-center gap-1.5">
-          <span className={cn("h-2 w-2 rounded-full", cfg.dot)} />
           <span
             className={cn(
               "text-[10px] font-bold px-1.5 py-0.5 rounded border",
@@ -137,24 +262,24 @@ function SuggestionPopover({
         </div>
         <button
           onClick={onClose}
-          className="flex h-5 w-5 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+          className="flex h-5 w-5 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
         >
           <X className="h-3 w-3" />
         </button>
       </div>
 
       <div className="p-3 space-y-2.5">
-        {/* Current text (strikethrough) */}
+        {/* Current (strikethrough) */}
         <div>
           <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">
             Teks saat ini:
           </p>
-          <p className="text-xs text-red-500 dark:text-red-400 line-through decoration-red-300 leading-relaxed bg-red-50 dark:bg-red-950/20 px-2 py-1.5 rounded-lg">
+          <p className="text-xs text-red-500 dark:text-red-400 line-through decoration-red-300/60 leading-relaxed bg-red-50 dark:bg-red-950/20 px-2 py-1.5 rounded-lg">
             {suggestion.current}
           </p>
         </div>
 
-        {/* Suggested text */}
+        {/* Suggested */}
         <div>
           <p className="text-[10px] font-bold text-primary uppercase tracking-wider mb-1">
             Rekomendasi AI:
@@ -198,9 +323,9 @@ function SuggestionPopover({
           <span className="leading-relaxed">{suggestion.impact}</span>
         </div>
 
-        {/* Action buttons */}
+        {/* Actions */}
         {!isEditing && (
-          <div className="flex gap-1.5 pt-0.5">
+          <div className="flex gap-1.5">
             <Button
               size="sm"
               className="flex-1 gap-1.5 h-9 text-xs bg-emerald-600 hover:bg-emerald-700 shadow-sm"
@@ -223,7 +348,7 @@ function SuggestionPopover({
               variant="ghost"
               className="h-9 px-2.5 text-muted-foreground hover:text-destructive"
               onClick={() => onReject(index)}
-              title="Abaikan saran ini"
+              title="Abaikan"
             >
               <X className="h-3.5 w-3.5" />
             </Button>
@@ -234,351 +359,7 @@ function SuggestionPopover({
   );
 }
 
-// ─── Text highlight renderer ────────────────────────────────────────────────
-
-interface HighlightedTextProps {
-  text: string;
-  suggestions: Array<{ s: Suggestion; idx: number }>;
-  appliedIndices: Set<number>;
-  activeIdx: number | null;
-  onClickHighlight: (idx: number, el: HTMLElement) => void;
-  className?: string;
-}
-
-function HighlightedText({
-  text,
-  suggestions,
-  appliedIndices,
-  activeIdx,
-  onClickHighlight,
-  className,
-}: HighlightedTextProps) {
-  if (!text) return null;
-
-  // Build segment list by splitting text on each suggestion.current match
-  type Seg = { text: string; suggIdx?: number };
-  let segs: Seg[] = [{ text }];
-
-  for (const { s, idx } of suggestions) {
-    if (appliedIndices.has(idx)) continue;
-    const needle = s.current?.trim() ?? "";
-    if (needle.length < 4) continue;
-
-    const next: Seg[] = [];
-    for (const seg of segs) {
-      if (seg.suggIdx !== undefined) {
-        next.push(seg);
-        continue;
-      }
-      const lo = seg.text.toLowerCase();
-      const pos = lo.indexOf(needle.toLowerCase());
-      if (pos === -1) {
-        next.push(seg);
-      } else {
-        if (pos > 0) next.push({ text: seg.text.slice(0, pos) });
-        next.push({ text: seg.text.slice(pos, pos + needle.length), suggIdx: idx });
-        const after = pos + needle.length;
-        if (after < seg.text.length) next.push({ text: seg.text.slice(after) });
-      }
-    }
-    segs = next;
-  }
-
-  return (
-    <span className={className}>
-      {segs.map((seg, i) => {
-        if (seg.suggIdx === undefined) return <span key={i}>{seg.text}</span>;
-
-        const matched = suggestions.find((x) => x.idx === seg.suggIdx);
-        if (!matched) return <span key={i}>{seg.text}</span>;
-
-        const cfg = PRIORITY[matched.s.priority];
-        const isActive = activeIdx === seg.suggIdx;
-
-        return (
-          <mark
-            key={i}
-            className={cn(
-              "relative cursor-pointer rounded-sm px-0.5 transition-all duration-150 select-none",
-              cfg.mark,
-              isActive && cn("ring-2 ring-offset-0", cfg.ring),
-            )}
-            onClick={(e) => {
-              e.stopPropagation();
-              onClickHighlight(seg.suggIdx!, e.currentTarget as HTMLElement);
-            }}
-          >
-            {seg.text}
-            {/* Mini check badge */}
-            <span
-              className={cn(
-                "inline-flex ml-0.5 h-3.5 w-3.5 items-center justify-center",
-                "rounded-full bg-emerald-500 text-white text-[8px] font-bold align-middle",
-                "shadow-sm",
-              )}
-              aria-label="Klik untuk lihat saran"
-            >
-              ✓
-            </span>
-          </mark>
-        );
-      })}
-    </span>
-  );
-}
-
-// ─── CV Text Renderer (document-style with inline highlights) ───────────────
-
-interface CvHighlightedViewProps {
-  cvData: CvData;
-  suggestions: Suggestion[];
-  appliedIndices: Set<number>;
-  activeIdx: number | null;
-  onClickHighlight: (idx: number, el: HTMLElement) => void;
-}
-
-function CvHighlightedView({
-  cvData,
-  suggestions,
-  appliedIndices,
-  activeIdx,
-  onClickHighlight,
-}: CvHighlightedViewProps) {
-  const p = cvData.personal;
-
-  // Given a raw text, find which suggestions' .current appears in it
-  const suggsFor = (text: string) =>
-    suggestions
-      .map((s, idx) => ({ s, idx }))
-      .filter(
-        ({ s, idx }) =>
-          !appliedIndices.has(idx) &&
-          (s.current?.trim().length ?? 0) >= 4 &&
-          text.toLowerCase().includes((s.current?.trim() ?? "").toLowerCase()),
-      );
-
-  const HL = ({
-    text,
-    className,
-  }: {
-    text: string | undefined;
-    className?: string;
-  }) =>
-    text ? (
-      <HighlightedText
-        text={text}
-        suggestions={suggsFor(text)}
-        appliedIndices={appliedIndices}
-        activeIdx={activeIdx}
-        onClickHighlight={onClickHighlight}
-        className={className}
-      />
-    ) : null;
-
-  return (
-    <div className="bg-white dark:bg-gray-900 rounded-2xl border border-border/60 shadow-sm p-7 text-sm leading-relaxed font-sans">
-      {/* ── Header ── */}
-      <div className="pb-4 mb-5 border-b-2 border-gray-800 dark:border-gray-300">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-0.5">
-          <HL text={p.fullName} />
-        </h1>
-        {p.headline && (
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            <HL text={p.headline} />
-          </p>
-        )}
-        <div className="flex flex-wrap gap-4 mt-2 text-xs text-gray-500 dark:text-gray-400">
-          {p.email && <span>✉ {p.email}</span>}
-          {p.phone && <span>📞 {p.phone}</span>}
-          {(p as any).city && <span>📍 {(p as any).city}</span>}
-        </div>
-      </div>
-
-      {/* ── Summary / Profile ── */}
-      {p.summary && (
-        <section className="mb-5">
-          <h2 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-2">
-            Profil
-          </h2>
-          <p className="text-gray-800 dark:text-gray-200 leading-7">
-            <HL text={p.summary} />
-          </p>
-        </section>
-      )}
-
-      {/* ── Experiences ── */}
-      {(cvData.experiences?.length ?? 0) > 0 && (
-        <section className="mb-5">
-          <h2 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-3">
-            Pengalaman Kerja
-          </h2>
-          <div className="space-y-4">
-            {(cvData.experiences as any[]).map((exp, i) => (
-              <div
-                key={i}
-                className="pl-3 border-l-2 border-gray-200 dark:border-gray-700"
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <p className="font-semibold text-gray-900 dark:text-gray-100">
-                      <HL text={exp.position || exp.title || ""} />
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {exp.company}
-                    </p>
-                  </div>
-                  <span className="text-[10px] text-gray-400 shrink-0">
-                    {exp.startDate} – {exp.endDate || "Sekarang"}
-                  </span>
-                </div>
-                {exp.description && (
-                  <div className="mt-1.5 space-y-0.5">
-                    {String(exp.description)
-                      .split("\n")
-                      .filter((l: string) => l.trim())
-                      .map((line: string, li: number) => {
-                        const isBullet = /^[\-•*]/.test(line.trim());
-                        const content = isBullet
-                          ? line.replace(/^[\-•*]\s*/, "").trim()
-                          : line;
-                        return (
-                          <p
-                            key={li}
-                            className="text-gray-700 dark:text-gray-300 leading-relaxed"
-                          >
-                            {isBullet && (
-                              <span className="text-gray-400 mr-1.5">•</span>
-                            )}
-                            <HL text={content} />
-                          </p>
-                        );
-                      })}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* ── Internships ── */}
-      {((cvData as any).internships?.length ?? 0) > 0 && (
-        <section className="mb-5">
-          <h2 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-3">
-            Magang
-          </h2>
-          <div className="space-y-3">
-            {((cvData as any).internships as any[]).map((exp: any, i: number) => (
-              <div
-                key={i}
-                className="pl-3 border-l-2 border-gray-200 dark:border-gray-700"
-              >
-                <p className="font-semibold text-gray-900 dark:text-gray-100">
-                  <HL text={exp.position || exp.title || ""} />
-                </p>
-                <p className="text-xs text-gray-500">{exp.company}</p>
-                {exp.description && (
-                  <p className="text-gray-700 dark:text-gray-300 mt-1 text-xs leading-relaxed">
-                    <HL text={exp.description} />
-                  </p>
-                )}
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* ── Education ── */}
-      {(cvData.educations?.length ?? 0) > 0 && (
-        <section className="mb-5">
-          <h2 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-3">
-            Pendidikan
-          </h2>
-          <div className="space-y-3">
-            {(cvData.educations as any[]).map((edu, i) => (
-              <div
-                key={i}
-                className="pl-3 border-l-2 border-gray-200 dark:border-gray-700"
-              >
-                <p className="font-semibold text-gray-900 dark:text-gray-100">
-                  {edu.school || edu.institution}
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {edu.degree}
-                  {edu.major ? ` — ${edu.major}` : ""}
-                </p>
-                <span className="text-[10px] text-gray-400">
-                  {edu.startDate} – {edu.endDate || "Sekarang"}
-                </span>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* ── Skills ── */}
-      {(cvData.skills?.length ?? 0) > 0 && (
-        <section className="mb-5">
-          <h2 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-2">
-            Keahlian
-          </h2>
-          <div className="flex flex-wrap gap-1.5">
-            {(cvData.skills as any[]).map((skill, i) => (
-              <span
-                key={i}
-                className="rounded-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-2.5 py-0.5 text-xs text-gray-700 dark:text-gray-300"
-              >
-                {skill.name ?? skill}
-              </span>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* ── Languages ── */}
-      {((cvData as any).languages?.length ?? 0) > 0 && (
-        <section className="mb-5">
-          <h2 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-2">
-            Bahasa
-          </h2>
-          <div className="flex flex-wrap gap-1.5">
-            {((cvData as any).languages as any[]).map((lang: any, i: number) => (
-              <span
-                key={i}
-                className="rounded-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-2.5 py-0.5 text-xs text-gray-700 dark:text-gray-300"
-              >
-                {lang.name ?? lang}
-                {lang.level ? ` (${lang.level})` : ""}
-              </span>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* ── Certificates ── */}
-      {(cvData.certificates?.length ?? 0) > 0 && (
-        <section className="mb-5">
-          <h2 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-2">
-            Sertifikat
-          </h2>
-          <div className="space-y-1.5">
-            {(cvData.certificates as any[]).map((cert, i) => (
-              <div key={i} className="flex items-center gap-2">
-                <span className="text-gray-400 text-xs">🏅</span>
-                <span className="text-xs text-gray-700 dark:text-gray-300">
-                  {cert.name}
-                  {cert.issuer ? ` — ${cert.issuer}` : ""}
-                </span>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-    </div>
-  );
-}
-
-// ─── Main Component ──────────────────────────────────────────────────────────
+// ─── Main component ───────────────────────────────────────────────────────────
 
 export function InlineCvEditor({
   cvData,
@@ -590,32 +371,14 @@ export function InlineCvEditor({
 }: InlineCvEditorProps) {
   const [appliedIndices, setAppliedIndices] = useState<Set<number>>(new Set());
   const [activeIdx, setActiveIdx] = useState<number | null>(null);
-  const [popoverPos, setPopoverPos] = useState<{ top: number; left: number } | null>(null);
+  const [popoverPos, setPopoverPos] = useState<{ top: number; left: number; flipUp: boolean } | null>(null);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editText, setEditText] = useState("");
-  const [legendOpen, setLegendOpen] = useState(false);
 
-  const handleHighlightClick = useCallback(
-    (idx: number, el: HTMLElement) => {
-      // Toggle off if same highlight clicked
-      if (activeIdx === idx) {
-        setActiveIdx(null);
-        setPopoverPos(null);
-        setEditingIndex(null);
-        return;
-      }
-      const rect = el.getBoundingClientRect();
-      // Position popover below the highlighted word, clamped to viewport
-      setPopoverPos({
-        top: rect.bottom + 6,
-        left: Math.min(rect.left, window.innerWidth - 340),
-      });
-      setActiveIdx(idx);
-      setEditingIndex(null);
-      setEditText("");
-    },
-    [activeIdx],
-  );
+  // Ref for the scaled wrapper of the right CvPreview
+  const rightWrapperRef = useRef<HTMLDivElement>(null);
+
+  // ── Handlers ──────────────────────────────────────────────────────────────
 
   const closePopover = useCallback(() => {
     setActiveIdx(null);
@@ -623,6 +386,39 @@ export function InlineCvEditor({
     setEditingIndex(null);
     setEditText("");
   }, []);
+
+  const handleHighlightClick = useCallback(
+    (idx: number, el: HTMLElement) => {
+      if (activeIdx === idx) {
+        closePopover();
+        return;
+      }
+      const rect = el.getBoundingClientRect();
+      const POPOVER_W = 320;
+      const POPOVER_H = 310;
+      const PAD = 8;
+
+      // Horizontal: clamp so popover never overflows right/left
+      let left = rect.left;
+      if (left + POPOVER_W > window.innerWidth - PAD) {
+        left = window.innerWidth - POPOVER_W - PAD;
+      }
+      if (left < PAD) left = PAD;
+
+      // Vertical: prefer below, flip above if not enough space
+      const spaceBelow = window.innerHeight - rect.bottom - PAD;
+      const flipUp = spaceBelow < POPOVER_H && rect.top > POPOVER_H + PAD;
+      const top = flipUp
+        ? rect.top - POPOVER_H - 6
+        : rect.bottom + 6;
+
+      setPopoverPos({ top, left, flipUp });
+      setActiveIdx(idx);
+      setEditingIndex(null);
+      setEditText("");
+    },
+    [activeIdx, closePopover],
+  );
 
   const handleAccept = useCallback(
     (index: number) => {
@@ -656,11 +452,28 @@ export function InlineCvEditor({
     closePopover();
   }, [closePopover, onApplyAll, suggestions]);
 
-  // Close popover on click outside
+  // ── Inject highlights into right-panel DOM ────────────────────────────────
+  useEffect(() => {
+    const wrapper = rightWrapperRef.current;
+    if (!wrapper) return;
+
+    // Delay slightly so CvPreview finishes painting
+    const timer = setTimeout(() => {
+      clearHighlights(wrapper);
+      suggestions.forEach((s, idx) => {
+        if (appliedIndices.has(idx)) return;
+        injectHighlight(wrapper, s.current?.trim() ?? "", idx, s.priority, handleHighlightClick);
+      });
+    }, 120);
+
+    return () => clearTimeout(timer);
+  }, [suggestions, appliedIndices, cvData, handleHighlightClick]);
+
+  // Close popover on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      if (!target.closest("[data-popover]") && !target.closest("mark")) {
+      const t = e.target as HTMLElement;
+      if (!t.closest("[data-popover-root]") && !t.closest("mark.cv-ai-mark")) {
         closePopover();
       }
     };
@@ -668,16 +481,28 @@ export function InlineCvEditor({
     return () => document.removeEventListener("mousedown", handler);
   }, [closePopover]);
 
+  // ── Derived ───────────────────────────────────────────────────────────────
+
   const appliedCount = appliedIndices.size;
   const totalCount = suggestions.length;
   const pendingCount = totalCount - appliedCount;
 
+  // Shared scale style for both panels
+  const scaledStyle: React.CSSProperties = {
+    transform: "scale(0.62)",
+    transformOrigin: "top center",
+    width: `${100 / 0.62}%`,
+    marginLeft: `${-(100 / 0.62 - 100) / 2}%`,
+  };
+
+  // ── Render ────────────────────────────────────────────────────────────────
+
   return (
     <div className="flex h-[calc(100vh-5.5rem)] gap-0 overflow-hidden rounded-2xl border-2 border-border shadow-xl">
 
-      {/* ══════════════════════════════════════════════════════
-          LEFT PANEL — Original CV (clean, template preview)
-      ══════════════════════════════════════════════════════ */}
+      {/* ════════════════════════════════════════════════════════
+          LEFT PANEL — Original CV (clean template)
+      ════════════════════════════════════════════════════════ */}
       <div className="flex-1 flex flex-col border-r border-border min-w-0">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border bg-muted/40 px-4 py-2.5 shrink-0">
@@ -690,32 +515,22 @@ export function InlineCvEditor({
               <p className="text-[10px] text-muted-foreground">Versi asli tanpa perubahan</p>
             </div>
           </div>
-          <Badge variant="outline" className="text-[10px]">
-            Referensi
-          </Badge>
+          <Badge variant="outline" className="text-[10px]">Referensi</Badge>
         </div>
 
-        {/* CV template preview, scaled to fit */}
+        {/* Template preview */}
         <ScrollArea className="flex-1">
           <div className="p-4">
-            <div
-              style={{
-                transform: "scale(0.62)",
-                transformOrigin: "top center",
-                width: `${100 / 0.62}%`,
-                marginLeft: `${-(100 / 0.62 - 100) / 2}%`,
-              }}
-            >
+            <div style={scaledStyle}>
               <CvPreview data={cvData} template={templateId} scale={1} />
             </div>
           </div>
         </ScrollArea>
       </div>
 
-      {/* ══════════════════════════════════════════════════════
-          RIGHT PANEL — CV text with inline stabilo highlights
-          No sidebar – all interaction is via highlight popovers
-      ══════════════════════════════════════════════════════ */}
+      {/* ════════════════════════════════════════════════════════
+          RIGHT PANEL — Same template + injected highlights
+      ════════════════════════════════════════════════════════ */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border bg-gradient-to-r from-primary/5 to-primary/10 px-4 py-2.5 shrink-0">
@@ -725,12 +540,14 @@ export function InlineCvEditor({
             </div>
             <div>
               <p className="text-sm font-semibold leading-tight">CV + Saran AI</p>
-              <p className="text-[10px] text-muted-foreground">
+              <p className="text-[10px] text-muted-foreground leading-tight">
                 Klik{" "}
-                <mark className="bg-yellow-200 dark:bg-yellow-800 text-yellow-900 dark:text-yellow-100 rounded-sm px-0.5 not-italic">
+                <mark
+                  style={{ background: "rgba(253,224,71,0.65)", borderBottom: "2px solid #fbbf24", borderRadius: 2, padding: "0 2px" }}
+                >
                   teks kuning ✓
                 </mark>{" "}
-                untuk lihat & terapkan saran
+                untuk lihat saran & terapkan
               </p>
             </div>
           </div>
@@ -770,71 +587,56 @@ export function InlineCvEditor({
           </div>
         </div>
 
-        {/* CV text content */}
-        <ScrollArea className="flex-1">
-          <div className="p-5">
-            {/* Info banner */}
-            {pendingCount > 0 ? (
-              <div className="mb-4 rounded-xl bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 px-3.5 py-2.5">
-                <div className="flex items-start gap-2">
-                  <span className="mt-0.5 inline-block h-3.5 w-5 shrink-0 rounded-sm bg-yellow-300 dark:bg-yellow-600" />
-                  <div className="text-xs text-yellow-900 dark:text-yellow-200 leading-relaxed">
-                    <strong>{pendingCount} saran AI tersedia.</strong> Klik teks berwarna kuning untuk melihat rekomendasi perbaikan dan tombol{" "}
-                    <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 text-white text-[8px] font-bold align-middle">
-                      ✓
-                    </span>{" "}
-                    untuk menerapkannya.
-                  </div>
-                </div>
+        {/* Info banner */}
+        <div className="shrink-0 px-4 pt-3">
+          {pendingCount > 0 ? (
+            <div className="mb-3 flex items-center gap-2 rounded-xl bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 px-3 py-2">
+              <mark
+                style={{ background: "rgba(253,224,71,0.65)", borderBottom: "2px solid #fbbf24", borderRadius: 2, padding: "0 4px", flexShrink: 0 }}
+                className="text-[10px] font-bold"
+              >
+                {pendingCount} saran
+              </mark>
+              <p className="text-[10px] text-yellow-900 dark:text-yellow-200 leading-relaxed">
+                Klik teks yang disorot kuning untuk melihat saran AI. Tombol{" "}
+                <span className="inline-flex h-3.5 w-3.5 items-center justify-center rounded-full bg-emerald-500 text-white text-[7px] font-bold align-middle">✓</span>{" "}
+                = terapkan sekarang.
+              </p>
+            </div>
+          ) : (
+            <div className="mb-3 flex items-center gap-2 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 px-3 py-2">
+              <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+              <p className="text-[10px] text-emerald-800 dark:text-emerald-200 font-medium">
+                Semua saran sudah diterapkan! Klik <strong>Simpan</strong>.
+              </p>
+            </div>
+          )}
+        </div>
 
-                {/* Collapsible legend */}
-                <button
-                  className="mt-2 flex items-center gap-1 text-[10px] text-yellow-700 dark:text-yellow-400 hover:underline"
-                  onClick={() => setLegendOpen((v) => !v)}
-                >
-                  {legendOpen ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-                  Keterangan warna
-                </button>
-                {legendOpen && (
-                  <div className="mt-1.5 flex flex-wrap gap-3">
-                    {(["high", "medium", "low"] as const).map((p) => (
-                      <div key={p} className="flex items-center gap-1.5 text-[10px] text-yellow-800 dark:text-yellow-300">
-                        <mark className={cn("px-1 py-0.5 rounded-sm", PRIORITY[p].mark)}>
-                          Contoh ✓
-                        </mark>
-                        <span>{PRIORITY[p].label}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="mb-4 flex items-center gap-2 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 px-3.5 py-2.5">
-                <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
-                <p className="text-xs text-emerald-800 dark:text-emerald-200 font-medium">
-                  Semua saran sudah diterapkan! Klik <strong>Simpan</strong> untuk menyimpan perubahan.
-                </p>
-              </div>
-            )}
-
-            {/* CV with highlights */}
-            <CvHighlightedView
-              cvData={cvData}
-              suggestions={suggestions}
-              appliedIndices={appliedIndices}
-              activeIdx={activeIdx}
-              onClickHighlight={handleHighlightClick}
-            />
+        {/* CV template with DOM-injected highlights */}
+        <ScrollArea className="flex-1 px-4 pb-4">
+          <div>
+            {/* This div is the target for DOM injection */}
+            <div ref={rightWrapperRef} style={scaledStyle}>
+              <CvPreview data={cvData} template={templateId} scale={1} />
+            </div>
           </div>
         </ScrollArea>
       </div>
 
-      {/* ══ Fixed popover (renders outside scroll container) ══ */}
+      {/* ════════════════════════════════════════════════════════
+          POPOVER (fixed, smart positioning)
+      ════════════════════════════════════════════════════════ */}
       <AnimatePresence>
         {activeIdx !== null && popoverPos && suggestions[activeIdx] && (
           <div
-            data-popover
-            style={{ position: "fixed", top: popoverPos.top, left: popoverPos.left, zIndex: 9999 }}
+            data-popover-root
+            style={{
+              position: "fixed",
+              top: popoverPos.top,
+              left: popoverPos.left,
+              zIndex: 9999,
+            }}
           >
             <SuggestionPopover
               suggestion={suggestions[activeIdx]}
