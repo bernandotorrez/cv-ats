@@ -1,10 +1,11 @@
 /**
- * Inline CV Editor — Side-by-Side
+ * Inline CV Editor — Side-by-Side with Zoom Controls
  *
  * Left:  CvPreview original (clean template, no changes)
  * Right: CvPreview + yellow stabilo highlights injected directly into the
  *        rendered DOM on the exact suggestion text.
  *        Click a highlight → Modal Dialog popup in screen center (never clipped).
+ * Header: Zoom controls (50%, 65%, 85%, 100% + ZoomIn / ZoomOut buttons).
  */
 
 import { useState, useCallback, useEffect, useRef } from "react";
@@ -15,7 +16,6 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
@@ -27,6 +27,9 @@ import {
   CheckCircle2,
   Zap,
   Lightbulb,
+  ZoomIn,
+  ZoomOut,
+  RotateCcw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { CvData, TemplateId } from "@/lib/cv-types";
@@ -75,6 +78,8 @@ const HIGHLIGHT_STYLE: Record<Suggestion["priority"], { bg: string; border: stri
     label: "Rendah",
   },
 };
+
+const ZOOM_PRESETS = [50, 65, 85, 100];
 
 // ─── DOM helpers ─────────────────────────────────────────────────────────────
 
@@ -217,6 +222,7 @@ export function InlineCvEditor({
   const [activeIdx, setActiveIdx] = useState<number | null>(null);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editText, setEditText] = useState("");
+  const [zoomLevel, setZoomLevel] = useState<number>(65);
 
   const rightWrapperRef = useRef<HTMLDivElement>(null);
 
@@ -266,6 +272,14 @@ export function InlineCvEditor({
     closeModal();
   }, [closeModal, onApplyAll, suggestions]);
 
+  const handleZoomIn = () => {
+    setZoomLevel((prev) => Math.min(120, prev + 15));
+  };
+
+  const handleZoomOut = () => {
+    setZoomLevel((prev) => Math.max(40, prev - 15));
+  };
+
   // ── Inject highlights into right-panel DOM ────────────────────────────────
   useEffect(() => {
     const wrapper = rightWrapperRef.current;
@@ -280,7 +294,7 @@ export function InlineCvEditor({
     }, 120);
 
     return () => clearTimeout(timer);
-  }, [suggestions, appliedIndices, cvData, handleHighlightClick]);
+  }, [suggestions, appliedIndices, cvData, handleHighlightClick, zoomLevel]);
 
   // ── Derived ───────────────────────────────────────────────────────────────
 
@@ -288,11 +302,12 @@ export function InlineCvEditor({
   const totalCount = suggestions.length;
   const pendingCount = totalCount - appliedCount;
 
+  const scaleVal = zoomLevel / 100;
   const scaledStyle: React.CSSProperties = {
-    transform: "scale(0.62)",
+    transform: `scale(${scaleVal})`,
     transformOrigin: "top center",
-    width: `${100 / 0.62}%`,
-    marginLeft: `${-(100 / 0.62 - 100) / 2}%`,
+    width: `${100 / scaleVal}%`,
+    marginLeft: `${-(100 / scaleVal - 100) / 2}%`,
   };
 
   const activeSuggestion = activeIdx !== null ? suggestions[activeIdx] : null;
@@ -316,7 +331,45 @@ export function InlineCvEditor({
               <p className="text-[10px] text-muted-foreground">Versi asli tanpa perubahan</p>
             </div>
           </div>
-          <Badge variant="outline" className="text-[10px]">Referensi</Badge>
+
+          {/* Zoom controls */}
+          <div className="flex items-center gap-1 bg-background/80 border border-border rounded-xl p-0.5 shadow-sm">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 rounded-lg text-muted-foreground hover:text-foreground"
+              onClick={handleZoomOut}
+              title="Zoom Out"
+            >
+              <ZoomOut className="h-3 w-3" />
+            </Button>
+            <div className="flex items-center gap-0.5">
+              {ZOOM_PRESETS.map((z) => (
+                <button
+                  key={z}
+                  type="button"
+                  onClick={() => setZoomLevel(z)}
+                  className={cn(
+                    "h-6 px-1.5 rounded-md text-[10px] font-semibold transition-colors",
+                    zoomLevel === z
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted",
+                  )}
+                >
+                  {z}%
+                </button>
+              ))}
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 rounded-lg text-muted-foreground hover:text-foreground"
+              onClick={handleZoomIn}
+              title="Zoom In"
+            >
+              <ZoomIn className="h-3 w-3" />
+            </Button>
+          </div>
         </div>
 
         {/* Template preview */}
@@ -391,18 +444,25 @@ export function InlineCvEditor({
         {/* Info banner */}
         <div className="shrink-0 px-4 pt-3">
           {pendingCount > 0 ? (
-            <div className="mb-3 flex items-center gap-2 rounded-xl bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 px-3 py-2">
-              <mark
-                style={{ background: "rgba(253,224,71,0.65)", borderBottom: "2px solid #fbbf24", borderRadius: 2, padding: "0 4px", flexShrink: 0 }}
-                className="text-[10px] font-bold"
-              >
-                {pendingCount} saran
-              </mark>
-              <p className="text-[10px] text-yellow-900 dark:text-yellow-200 leading-relaxed">
-                Klik teks yang disorot kuning untuk melihat saran AI. Tombol{" "}
-                <span className="inline-flex h-3.5 w-3.5 items-center justify-center rounded-full bg-emerald-500 text-white text-[7px] font-bold align-middle">✓</span>{" "}
-                = terapkan sekarang.
-              </p>
+            <div className="mb-3 flex items-center justify-between gap-2 rounded-xl bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 px-3 py-2">
+              <div className="flex items-center gap-2">
+                <mark
+                  style={{ background: "rgba(253,224,71,0.65)", borderBottom: "2px solid #fbbf24", borderRadius: 2, padding: "0 4px", flexShrink: 0 }}
+                  className="text-[10px] font-bold"
+                >
+                  {pendingCount} saran
+                </mark>
+                <p className="text-[10px] text-yellow-900 dark:text-yellow-200 leading-relaxed">
+                  Klik teks yang disorot kuning untuk melihat saran AI. Tombol{" "}
+                  <span className="inline-flex h-3.5 w-3.5 items-center justify-center rounded-full bg-emerald-500 text-white text-[7px] font-bold align-middle">✓</span>{" "}
+                  = terapkan sekarang.
+                </p>
+              </div>
+
+              {/* Right side zoom preset indicator */}
+              <Badge variant="outline" className="text-[10px] font-mono shrink-0">
+                Skala: {zoomLevel}%
+              </Badge>
             </div>
           ) : (
             <div className="mb-3 flex items-center gap-2 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 px-3 py-2">
