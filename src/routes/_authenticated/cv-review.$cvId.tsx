@@ -822,7 +822,7 @@ function CvReviewPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="container-page py-6"
+            className="px-4 py-4"
           >
             {/* Summary Panel */}
             <AnimatePresence>
@@ -831,7 +831,7 @@ function CvReviewPage() {
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: "auto", opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
-                  className="overflow-hidden mb-6"
+                  className="overflow-hidden mb-4"
                 >
                   <Card className="border-2">
                     <CardContent className="p-6">
@@ -925,7 +925,7 @@ function CvReviewPage() {
               )}
             </AnimatePresence>
 
-            {/* Inline CV Editor */}
+            {/* Inline CV Editor - side-by-side */}
             <InlineCvEditor
               cvData={cvData}
               templateId={templateId}
