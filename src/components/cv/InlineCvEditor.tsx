@@ -1,10 +1,14 @@
 /**
- * Inline CV Editor with Suggestion Highlights - Side-by-Side Layout
- * Left panel: Original CV (clean)
- * Right panel: CV with yellow stabilo highlights + green ✓ buttons per suggestion
+ * Inline CV Editor - Side-by-Side with Inline Highlights
+ *
+ * Left:  CvPreview — original CV (clean, no changes)
+ * Right: Custom text renderer — same CV content but with yellow stabilo
+ *        highlights on the exact text that has AI suggestions.
+ *        Click a highlight → popover with suggestion info + green ✓ button.
+ *        No sidebar needed.
  */
 
-import { useState, useCallback, useMemo, useRef } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -17,14 +21,15 @@ import {
   Sparkles,
   CheckCircle2,
   Zap,
-  ChevronUp,
-  ChevronDown,
   Lightbulb,
-  ArrowRight,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { CvData, TemplateId } from "@/lib/cv-types";
 import { CvPreview } from "./CvPreview";
+
+// ─── Types ─────────────────────────────────────────────────────────────────
 
 interface Suggestion {
   priority: "high" | "medium" | "low";
@@ -45,346 +50,535 @@ interface InlineCvEditorProps {
   onSave: () => void;
 }
 
-const PRIORITY_CONFIG = {
+// ─── Config ─────────────────────────────────────────────────────────────────
+
+const PRIORITY = {
   high: {
-    stabilo: "bg-red-100 border-l-4 border-l-red-400",
+    mark: "bg-red-100 dark:bg-red-900/40 border-b-2 border-red-400 hover:bg-red-200 dark:hover:bg-red-800/50",
     badge: "bg-red-100 text-red-700 border-red-200",
-    checkBtn: "bg-emerald-500 hover:bg-emerald-600",
     dot: "bg-red-400",
+    ring: "ring-red-300",
     label: "Tinggi",
-    glow: "shadow-red-200",
+    icon: "🔴",
   },
   medium: {
-    stabilo: "bg-amber-100 border-l-4 border-l-amber-400",
+    mark: "bg-yellow-100 dark:bg-yellow-900/40 border-b-2 border-amber-400 hover:bg-yellow-200 dark:hover:bg-yellow-800/50",
     badge: "bg-amber-100 text-amber-700 border-amber-200",
-    checkBtn: "bg-emerald-500 hover:bg-emerald-600",
     dot: "bg-amber-400",
+    ring: "ring-amber-300",
     label: "Sedang",
-    glow: "shadow-amber-200",
+    icon: "🟡",
   },
   low: {
-    stabilo: "bg-green-50 border-l-4 border-l-green-400",
+    mark: "bg-green-50 dark:bg-green-900/30 border-b-2 border-green-400 hover:bg-green-100 dark:hover:bg-green-800/40",
     badge: "bg-green-100 text-green-700 border-green-200",
-    checkBtn: "bg-emerald-500 hover:bg-emerald-600",
     dot: "bg-green-400",
+    ring: "ring-green-300",
     label: "Rendah",
-    glow: "shadow-green-200",
+    icon: "🟢",
   },
-};
+} as const;
 
-// CV Section Text Renderer with stabilo highlight overlay
-function SuggestionCard({
+// ─── Suggestion Popover ─────────────────────────────────────────────────────
+
+interface PopoverProps {
+  suggestion: Suggestion;
+  index: number;
+  isEditing: boolean;
+  editText: string;
+  onAccept: (i: number) => void;
+  onReject: (i: number) => void;
+  onEdit: (i: number) => void;
+  onEditTextChange: (t: string) => void;
+  onEditSave: (i: number) => void;
+  onEditCancel: () => void;
+  onClose: () => void;
+}
+
+function SuggestionPopover({
   suggestion,
   index,
-  isApplied,
-  isActive,
-  editingIndex,
+  isEditing,
   editText,
-  onHover,
   onAccept,
   onReject,
   onEdit,
   onEditTextChange,
   onEditSave,
   onEditCancel,
-}: {
-  suggestion: Suggestion & { originalIndex: number };
-  index: number;
-  isApplied: boolean;
-  isActive: boolean;
-  editingIndex: number | null;
-  editText: string;
-  onHover: (idx: number | null) => void;
-  onAccept: (idx: number) => void;
-  onReject: (idx: number) => void;
-  onEdit: (idx: number) => void;
-  onEditTextChange: (text: string) => void;
-  onEditSave: (idx: number) => void;
-  onEditCancel: () => void;
-}) {
-  const [expanded, setExpanded] = useState(false);
-  const config = PRIORITY_CONFIG[suggestion.priority];
-  const isEditing = editingIndex === suggestion.originalIndex;
+  onClose,
+}: PopoverProps) {
+  const cfg = PRIORITY[suggestion.priority];
 
   return (
     <motion.div
-      layout
-      initial={{ opacity: 0, x: 20 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ delay: index * 0.05 }}
-      className={cn(
-        "rounded-xl border-2 overflow-hidden transition-all duration-200",
-        isApplied
-          ? "border-emerald-200 bg-emerald-50/80 dark:border-emerald-800 dark:bg-emerald-950/20 opacity-70"
-          : isActive
-          ? "border-primary/60 shadow-lg shadow-primary/10"
-          : "border-border bg-card hover:border-primary/30",
-      )}
-      onMouseEnter={() => onHover(suggestion.originalIndex)}
-      onMouseLeave={() => onHover(null)}
+      initial={{ opacity: 0, scale: 0.95, y: -6 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.95, y: -6 }}
+      transition={{ duration: 0.15 }}
+      className="fixed z-[9999] w-80 rounded-2xl border-2 border-border bg-card shadow-2xl shadow-black/15 overflow-hidden"
+      onClick={(e) => e.stopPropagation()}
     >
       {/* Header */}
-      <div
-        className="flex items-start gap-2 p-3 cursor-pointer"
-        onClick={() => !isApplied && setExpanded((v) => !v)}
-      >
-        {/* Priority dot */}
-        <div
-          className={cn(
-            "mt-1 h-2.5 w-2.5 shrink-0 rounded-full",
-            config.dot,
-          )}
-        />
-
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5 flex-wrap mb-1">
-            <span
-              className={cn(
-                "text-[10px] font-semibold px-1.5 py-0.5 rounded border",
-                config.badge,
-              )}
-            >
-              {config.label}
-            </span>
-            <span className="text-[10px] text-muted-foreground border border-border px-1.5 py-0.5 rounded">
-              {suggestion.category}
-            </span>
-            {isApplied && (
-              <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-100 border border-emerald-200 px-1.5 py-0.5 rounded">
-                ✓ Diterapkan
-              </span>
-            )}
-          </div>
-
-          {/* Current text (strikethrough) */}
-          <p
+      <div className="flex items-center justify-between px-3 pt-3 pb-2 border-b border-border/60 bg-muted/30">
+        <div className="flex items-center gap-1.5">
+          <span className={cn("h-2 w-2 rounded-full", cfg.dot)} />
+          <span
             className={cn(
-              "text-xs leading-relaxed line-clamp-2",
-              isApplied
-                ? "text-muted-foreground"
-                : "text-red-500 dark:text-red-400 line-through decoration-red-300",
+              "text-[10px] font-bold px-1.5 py-0.5 rounded border",
+              cfg.badge,
             )}
           >
+            {cfg.label}
+          </span>
+          <span className="text-[10px] text-muted-foreground border border-border px-1.5 py-0.5 rounded bg-background">
+            {suggestion.category}
+          </span>
+        </div>
+        <button
+          onClick={onClose}
+          className="flex h-5 w-5 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+        >
+          <X className="h-3 w-3" />
+        </button>
+      </div>
+
+      <div className="p-3 space-y-2.5">
+        {/* Current text (strikethrough) */}
+        <div>
+          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">
+            Teks saat ini:
+          </p>
+          <p className="text-xs text-red-500 dark:text-red-400 line-through decoration-red-300 leading-relaxed bg-red-50 dark:bg-red-950/20 px-2 py-1.5 rounded-lg">
             {suggestion.current}
           </p>
         </div>
 
-        {!isApplied && (
-          <div className="flex items-center gap-1 shrink-0">
-            {/* Quick apply button */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onAccept(suggestion.originalIndex);
-              }}
-              className={cn(
-                "flex h-7 w-7 items-center justify-center rounded-full text-white shadow-md transition-all hover:scale-110 active:scale-95",
-                config.checkBtn,
-              )}
-              title="Terapkan saran"
+        {/* Suggested text */}
+        <div>
+          <p className="text-[10px] font-bold text-primary uppercase tracking-wider mb-1">
+            Rekomendasi AI:
+          </p>
+          {isEditing ? (
+            <div className="space-y-1.5">
+              <Textarea
+                value={editText}
+                onChange={(e) => onEditTextChange(e.target.value)}
+                className="min-h-[60px] text-xs"
+                autoFocus
+              />
+              <div className="flex gap-1.5">
+                <Button
+                  size="sm"
+                  className="flex-1 gap-1 h-7 text-xs bg-emerald-600 hover:bg-emerald-700"
+                  onClick={() => onEditSave(index)}
+                >
+                  <Check className="h-3 w-3" /> Simpan
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 text-xs"
+                  onClick={onEditCancel}
+                >
+                  Batal
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <p className="text-xs text-foreground bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg px-2.5 py-2 leading-relaxed">
+              {suggestion.suggested}
+            </p>
+          )}
+        </div>
+
+        {/* Impact */}
+        <div className="flex items-start gap-1.5 text-[10px] text-muted-foreground bg-muted/40 rounded-lg px-2 py-1.5">
+          <Lightbulb className="h-3 w-3 shrink-0 text-amber-500 mt-0.5" />
+          <span className="leading-relaxed">{suggestion.impact}</span>
+        </div>
+
+        {/* Action buttons */}
+        {!isEditing && (
+          <div className="flex gap-1.5 pt-0.5">
+            <Button
+              size="sm"
+              className="flex-1 gap-1.5 h-9 text-xs bg-emerald-600 hover:bg-emerald-700 shadow-sm"
+              onClick={() => onAccept(index)}
             >
               <Check className="h-3.5 w-3.5" />
-            </button>
-            <button
-              className="flex h-7 w-7 items-center justify-center rounded-full border border-border bg-background text-muted-foreground transition-all hover:bg-muted"
-              onClick={(e) => {
-                e.stopPropagation();
-                setExpanded((v) => !v);
-              }}
+              Terapkan
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-1 h-9 text-xs"
+              onClick={() => onEdit(index)}
             >
-              {expanded ? (
-                <ChevronUp className="h-3.5 w-3.5" />
-              ) : (
-                <ChevronDown className="h-3.5 w-3.5" />
-              )}
-            </button>
+              <Pencil className="h-3 w-3" />
+              Edit
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-9 px-2.5 text-muted-foreground hover:text-destructive"
+              onClick={() => onReject(index)}
+              title="Abaikan saran ini"
+            >
+              <X className="h-3.5 w-3.5" />
+            </Button>
           </div>
         )}
       </div>
-
-      {/* Expanded content */}
-      <AnimatePresence>
-        {expanded && !isApplied && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="overflow-hidden"
-          >
-            <div className="px-3 pb-3 space-y-2 border-t border-border/50 pt-2">
-              {/* Suggestion text */}
-              <div>
-                <p className="text-[10px] font-semibold text-primary mb-1 uppercase tracking-wide">
-                  Rekomendasi:
-                </p>
-                {isEditing ? (
-                  <div className="space-y-2">
-                    <Textarea
-                      value={editText}
-                      onChange={(e) => onEditTextChange(e.target.value)}
-                      className="min-h-[70px] text-xs"
-                    />
-                    <div className="flex gap-1.5">
-                      <Button
-                        size="sm"
-                        className="flex-1 gap-1 h-7 text-xs bg-emerald-600 hover:bg-emerald-700"
-                        onClick={() => onEditSave(suggestion.originalIndex)}
-                      >
-                        <Check className="h-3 w-3" />
-                        Simpan
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-7 text-xs"
-                        onClick={onEditCancel}
-                      >
-                        Batal
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <p className="text-xs text-foreground bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg px-2.5 py-2 leading-relaxed">
-                    {suggestion.suggested}
-                  </p>
-                )}
-              </div>
-
-              {/* Impact */}
-              <div className="flex items-start gap-1.5 text-[10px] text-muted-foreground">
-                <Lightbulb className="h-3 w-3 shrink-0 text-amber-500 mt-0.5" />
-                <span>{suggestion.impact}</span>
-              </div>
-
-              {/* Action buttons */}
-              {!isEditing && (
-                <div className="flex gap-1.5 pt-1">
-                  <Button
-                    size="sm"
-                    className="flex-1 gap-1 h-8 text-xs bg-emerald-600 hover:bg-emerald-700"
-                    onClick={() => onAccept(suggestion.originalIndex)}
-                  >
-                    <Check className="h-3 w-3" />
-                    Terapkan
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="gap-1 h-8 text-xs"
-                    onClick={() => onEdit(suggestion.originalIndex)}
-                  >
-                    <Pencil className="h-3 w-3" />
-                    Edit
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-8 px-2 text-muted-foreground text-xs"
-                    onClick={() => onReject(suggestion.originalIndex)}
-                  >
-                    <X className="h-3 w-3" />
-                  </Button>
-                </div>
-              )}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </motion.div>
   );
 }
 
-// Overlay highlights shown on top of right-panel CV
-function SuggestionHighlightOverlay({
+// ─── Text highlight renderer ────────────────────────────────────────────────
+
+interface HighlightedTextProps {
+  text: string;
+  suggestions: Array<{ s: Suggestion; idx: number }>;
+  appliedIndices: Set<number>;
+  activeIdx: number | null;
+  onClickHighlight: (idx: number, el: HTMLElement) => void;
+  className?: string;
+}
+
+function HighlightedText({
+  text,
   suggestions,
   appliedIndices,
-  activeHighlight,
-  onActivate,
-  onQuickApply,
-}: {
-  suggestions: Array<Suggestion & { originalIndex: number }>;
-  appliedIndices: Set<number>;
-  activeHighlight: number | null;
-  onActivate: (idx: number) => void;
-  onQuickApply: (idx: number) => void;
-}) {
+  activeIdx,
+  onClickHighlight,
+  className,
+}: HighlightedTextProps) {
+  if (!text) return null;
+
+  // Build segment list by splitting text on each suggestion.current match
+  type Seg = { text: string; suggIdx?: number };
+  let segs: Seg[] = [{ text }];
+
+  for (const { s, idx } of suggestions) {
+    if (appliedIndices.has(idx)) continue;
+    const needle = s.current?.trim() ?? "";
+    if (needle.length < 4) continue;
+
+    const next: Seg[] = [];
+    for (const seg of segs) {
+      if (seg.suggIdx !== undefined) {
+        next.push(seg);
+        continue;
+      }
+      const lo = seg.text.toLowerCase();
+      const pos = lo.indexOf(needle.toLowerCase());
+      if (pos === -1) {
+        next.push(seg);
+      } else {
+        if (pos > 0) next.push({ text: seg.text.slice(0, pos) });
+        next.push({ text: seg.text.slice(pos, pos + needle.length), suggIdx: idx });
+        const after = pos + needle.length;
+        if (after < seg.text.length) next.push({ text: seg.text.slice(after) });
+      }
+    }
+    segs = next;
+  }
+
   return (
-    <div className="absolute inset-0 pointer-events-none">
-      {suggestions.map((s, i) => {
-        if (appliedIndices.has(s.originalIndex)) return null;
-        const config = PRIORITY_CONFIG[s.priority];
-        const isActive = activeHighlight === s.originalIndex;
-        // Position suggestions spaced down on the right side
-        const topPercent = 12 + i * 9;
+    <span className={className}>
+      {segs.map((seg, i) => {
+        if (seg.suggIdx === undefined) return <span key={i}>{seg.text}</span>;
+
+        const matched = suggestions.find((x) => x.idx === seg.suggIdx);
+        if (!matched) return <span key={i}>{seg.text}</span>;
+
+        const cfg = PRIORITY[matched.s.priority];
+        const isActive = activeIdx === seg.suggIdx;
 
         return (
-          <div
-            key={s.originalIndex}
-            className="absolute right-0 pointer-events-auto"
-            style={{ top: `${Math.min(topPercent, 88)}%` }}
+          <mark
+            key={i}
+            className={cn(
+              "relative cursor-pointer rounded-sm px-0.5 transition-all duration-150 select-none",
+              cfg.mark,
+              isActive && cn("ring-2 ring-offset-0", cfg.ring),
+            )}
+            onClick={(e) => {
+              e.stopPropagation();
+              onClickHighlight(seg.suggIdx!, e.currentTarget as HTMLElement);
+            }}
           >
-            <motion.div
-              initial={{ opacity: 0, x: 10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: i * 0.06 }}
+            {seg.text}
+            {/* Mini check badge */}
+            <span
               className={cn(
-                "flex items-center gap-1.5 cursor-pointer transition-all",
-                isActive && "scale-105",
+                "inline-flex ml-0.5 h-3.5 w-3.5 items-center justify-center",
+                "rounded-full bg-emerald-500 text-white text-[8px] font-bold align-middle",
+                "shadow-sm",
               )}
-              onMouseEnter={() => onActivate(s.originalIndex)}
-              onMouseLeave={() => onActivate(-1)}
+              aria-label="Klik untuk lihat saran"
             >
-              {/* Stabilo marker line */}
-              <div
-                className={cn(
-                  "h-0.5 w-8 rounded-full opacity-60",
-                  s.priority === "high"
-                    ? "bg-red-400"
-                    : s.priority === "medium"
-                    ? "bg-amber-400"
-                    : "bg-green-400",
-                )}
-              />
-
-              {/* Category badge */}
-              <div
-                className={cn(
-                  "flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold shadow-sm",
-                  config.badge,
-                  isActive && "shadow-md",
-                )}
-              >
-                <span
-                  className={cn(
-                    "h-1.5 w-1.5 rounded-full",
-                    config.dot,
-                  )}
-                />
-                {s.category}
-              </div>
-
-              {/* Quick apply check button */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onQuickApply(s.originalIndex);
-                }}
-                className={cn(
-                  "flex h-6 w-6 items-center justify-center rounded-full text-white shadow-md transition-all hover:scale-110 active:scale-95",
-                  config.checkBtn,
-                )}
-                title="Terapkan"
-              >
-                <Check className="h-3 w-3" />
-              </button>
-            </motion.div>
-          </div>
+              ✓
+            </span>
+          </mark>
         );
       })}
+    </span>
+  );
+}
+
+// ─── CV Text Renderer (document-style with inline highlights) ───────────────
+
+interface CvHighlightedViewProps {
+  cvData: CvData;
+  suggestions: Suggestion[];
+  appliedIndices: Set<number>;
+  activeIdx: number | null;
+  onClickHighlight: (idx: number, el: HTMLElement) => void;
+}
+
+function CvHighlightedView({
+  cvData,
+  suggestions,
+  appliedIndices,
+  activeIdx,
+  onClickHighlight,
+}: CvHighlightedViewProps) {
+  const p = cvData.personal;
+
+  // Given a raw text, find which suggestions' .current appears in it
+  const suggsFor = (text: string) =>
+    suggestions
+      .map((s, idx) => ({ s, idx }))
+      .filter(
+        ({ s, idx }) =>
+          !appliedIndices.has(idx) &&
+          (s.current?.trim().length ?? 0) >= 4 &&
+          text.toLowerCase().includes((s.current?.trim() ?? "").toLowerCase()),
+      );
+
+  const HL = ({
+    text,
+    className,
+  }: {
+    text: string | undefined;
+    className?: string;
+  }) =>
+    text ? (
+      <HighlightedText
+        text={text}
+        suggestions={suggsFor(text)}
+        appliedIndices={appliedIndices}
+        activeIdx={activeIdx}
+        onClickHighlight={onClickHighlight}
+        className={className}
+      />
+    ) : null;
+
+  return (
+    <div className="bg-white dark:bg-gray-900 rounded-2xl border border-border/60 shadow-sm p-7 text-sm leading-relaxed font-sans">
+      {/* ── Header ── */}
+      <div className="pb-4 mb-5 border-b-2 border-gray-800 dark:border-gray-300">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-0.5">
+          <HL text={p.fullName} />
+        </h1>
+        {p.headline && (
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            <HL text={p.headline} />
+          </p>
+        )}
+        <div className="flex flex-wrap gap-4 mt-2 text-xs text-gray-500 dark:text-gray-400">
+          {p.email && <span>✉ {p.email}</span>}
+          {p.phone && <span>📞 {p.phone}</span>}
+          {(p as any).city && <span>📍 {(p as any).city}</span>}
+        </div>
+      </div>
+
+      {/* ── Summary / Profile ── */}
+      {p.summary && (
+        <section className="mb-5">
+          <h2 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-2">
+            Profil
+          </h2>
+          <p className="text-gray-800 dark:text-gray-200 leading-7">
+            <HL text={p.summary} />
+          </p>
+        </section>
+      )}
+
+      {/* ── Experiences ── */}
+      {(cvData.experiences?.length ?? 0) > 0 && (
+        <section className="mb-5">
+          <h2 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-3">
+            Pengalaman Kerja
+          </h2>
+          <div className="space-y-4">
+            {(cvData.experiences as any[]).map((exp, i) => (
+              <div
+                key={i}
+                className="pl-3 border-l-2 border-gray-200 dark:border-gray-700"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <p className="font-semibold text-gray-900 dark:text-gray-100">
+                      <HL text={exp.position || exp.title || ""} />
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {exp.company}
+                    </p>
+                  </div>
+                  <span className="text-[10px] text-gray-400 shrink-0">
+                    {exp.startDate} – {exp.endDate || "Sekarang"}
+                  </span>
+                </div>
+                {exp.description && (
+                  <div className="mt-1.5 space-y-0.5">
+                    {String(exp.description)
+                      .split("\n")
+                      .filter((l: string) => l.trim())
+                      .map((line: string, li: number) => {
+                        const isBullet = /^[\-•*]/.test(line.trim());
+                        const content = isBullet
+                          ? line.replace(/^[\-•*]\s*/, "").trim()
+                          : line;
+                        return (
+                          <p
+                            key={li}
+                            className="text-gray-700 dark:text-gray-300 leading-relaxed"
+                          >
+                            {isBullet && (
+                              <span className="text-gray-400 mr-1.5">•</span>
+                            )}
+                            <HL text={content} />
+                          </p>
+                        );
+                      })}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ── Internships ── */}
+      {((cvData as any).internships?.length ?? 0) > 0 && (
+        <section className="mb-5">
+          <h2 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-3">
+            Magang
+          </h2>
+          <div className="space-y-3">
+            {((cvData as any).internships as any[]).map((exp: any, i: number) => (
+              <div
+                key={i}
+                className="pl-3 border-l-2 border-gray-200 dark:border-gray-700"
+              >
+                <p className="font-semibold text-gray-900 dark:text-gray-100">
+                  <HL text={exp.position || exp.title || ""} />
+                </p>
+                <p className="text-xs text-gray-500">{exp.company}</p>
+                {exp.description && (
+                  <p className="text-gray-700 dark:text-gray-300 mt-1 text-xs leading-relaxed">
+                    <HL text={exp.description} />
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ── Education ── */}
+      {(cvData.educations?.length ?? 0) > 0 && (
+        <section className="mb-5">
+          <h2 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-3">
+            Pendidikan
+          </h2>
+          <div className="space-y-3">
+            {(cvData.educations as any[]).map((edu, i) => (
+              <div
+                key={i}
+                className="pl-3 border-l-2 border-gray-200 dark:border-gray-700"
+              >
+                <p className="font-semibold text-gray-900 dark:text-gray-100">
+                  {edu.school || edu.institution}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {edu.degree}
+                  {edu.major ? ` — ${edu.major}` : ""}
+                </p>
+                <span className="text-[10px] text-gray-400">
+                  {edu.startDate} – {edu.endDate || "Sekarang"}
+                </span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ── Skills ── */}
+      {(cvData.skills?.length ?? 0) > 0 && (
+        <section className="mb-5">
+          <h2 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-2">
+            Keahlian
+          </h2>
+          <div className="flex flex-wrap gap-1.5">
+            {(cvData.skills as any[]).map((skill, i) => (
+              <span
+                key={i}
+                className="rounded-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-2.5 py-0.5 text-xs text-gray-700 dark:text-gray-300"
+              >
+                {skill.name ?? skill}
+              </span>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ── Languages ── */}
+      {((cvData as any).languages?.length ?? 0) > 0 && (
+        <section className="mb-5">
+          <h2 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-2">
+            Bahasa
+          </h2>
+          <div className="flex flex-wrap gap-1.5">
+            {((cvData as any).languages as any[]).map((lang: any, i: number) => (
+              <span
+                key={i}
+                className="rounded-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-2.5 py-0.5 text-xs text-gray-700 dark:text-gray-300"
+              >
+                {lang.name ?? lang}
+                {lang.level ? ` (${lang.level})` : ""}
+              </span>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ── Certificates ── */}
+      {(cvData.certificates?.length ?? 0) > 0 && (
+        <section className="mb-5">
+          <h2 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-2">
+            Sertifikat
+          </h2>
+          <div className="space-y-1.5">
+            {(cvData.certificates as any[]).map((cert, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <span className="text-gray-400 text-xs">🏅</span>
+                <span className="text-xs text-gray-700 dark:text-gray-300">
+                  {cert.name}
+                  {cert.issuer ? ` — ${cert.issuer}` : ""}
+                </span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }
+
+// ─── Main Component ──────────────────────────────────────────────────────────
 
 export function InlineCvEditor({
   cvData,
@@ -395,34 +589,58 @@ export function InlineCvEditor({
   onSave,
 }: InlineCvEditorProps) {
   const [appliedIndices, setAppliedIndices] = useState<Set<number>>(new Set());
+  const [activeIdx, setActiveIdx] = useState<number | null>(null);
+  const [popoverPos, setPopoverPos] = useState<{ top: number; left: number } | null>(null);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editText, setEditText] = useState("");
-  const [activeHighlight, setActiveHighlight] = useState<number>(-1);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const rightPanelRef = useRef<HTMLDivElement>(null);
+  const [legendOpen, setLegendOpen] = useState(false);
 
-  // Augment suggestions with original index
-  const indexedSuggestions = useMemo(
-    () => suggestions.map((s, i) => ({ ...s, originalIndex: i })),
-    [suggestions],
+  const handleHighlightClick = useCallback(
+    (idx: number, el: HTMLElement) => {
+      // Toggle off if same highlight clicked
+      if (activeIdx === idx) {
+        setActiveIdx(null);
+        setPopoverPos(null);
+        setEditingIndex(null);
+        return;
+      }
+      const rect = el.getBoundingClientRect();
+      // Position popover below the highlighted word, clamped to viewport
+      setPopoverPos({
+        top: rect.bottom + 6,
+        left: Math.min(rect.left, window.innerWidth - 340),
+      });
+      setActiveIdx(idx);
+      setEditingIndex(null);
+      setEditText("");
+    },
+    [activeIdx],
   );
+
+  const closePopover = useCallback(() => {
+    setActiveIdx(null);
+    setPopoverPos(null);
+    setEditingIndex(null);
+    setEditText("");
+  }, []);
 
   const handleAccept = useCallback(
     (index: number) => {
       const text = editingIndex === index ? editText : suggestions[index].suggested;
       onApplySuggestion(index, text);
       setAppliedIndices((prev) => new Set([...prev, index]));
-      setEditingIndex(null);
-      setEditText("");
+      closePopover();
     },
-    [editText, editingIndex, suggestions, onApplySuggestion],
+    [closePopover, editText, editingIndex, onApplySuggestion, suggestions],
   );
 
-  const handleReject = useCallback((index: number) => {
-    setAppliedIndices((prev) => new Set([...prev, index]));
-    setEditingIndex(null);
-    setEditText("");
-  }, []);
+  const handleReject = useCallback(
+    (index: number) => {
+      setAppliedIndices((prev) => new Set([...prev, index]));
+      closePopover();
+    },
+    [closePopover],
+  );
 
   const handleEdit = useCallback(
     (index: number) => {
@@ -435,41 +653,57 @@ export function InlineCvEditor({
   const handleAcceptAll = useCallback(() => {
     onApplyAll();
     setAppliedIndices(new Set(suggestions.map((_, i) => i)));
-  }, [onApplyAll, suggestions]);
+    closePopover();
+  }, [closePopover, onApplyAll, suggestions]);
+
+  // Close popover on click outside
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest("[data-popover]") && !target.closest("mark")) {
+        closePopover();
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [closePopover]);
 
   const appliedCount = appliedIndices.size;
   const totalCount = suggestions.length;
   const pendingCount = totalCount - appliedCount;
 
   return (
-    <div className="flex h-[calc(100vh-5rem)] gap-0 overflow-hidden rounded-2xl border-2 border-border shadow-xl">
-      {/* ═══ LEFT PANEL: Original CV ═══ */}
+    <div className="flex h-[calc(100vh-5.5rem)] gap-0 overflow-hidden rounded-2xl border-2 border-border shadow-xl">
+
+      {/* ══════════════════════════════════════════════════════
+          LEFT PANEL — Original CV (clean, template preview)
+      ══════════════════════════════════════════════════════ */}
       <div className="flex-1 flex flex-col border-r border-border min-w-0">
-        {/* Panel header */}
-        <div className="flex items-center justify-between border-b border-border bg-muted/40 px-4 py-3 shrink-0">
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-border bg-muted/40 px-4 py-2.5 shrink-0">
           <div className="flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-background border border-border">
-              <span className="text-xs font-bold text-muted-foreground">CV</span>
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-background border border-border shrink-0">
+              <span className="text-[10px] font-bold text-muted-foreground">CV</span>
             </div>
             <div>
-              <p className="text-sm font-semibold text-foreground">CV Original</p>
+              <p className="text-sm font-semibold leading-tight">CV Original</p>
               <p className="text-[10px] text-muted-foreground">Versi asli tanpa perubahan</p>
             </div>
           </div>
-          <Badge variant="outline" className="text-xs">
+          <Badge variant="outline" className="text-[10px]">
             Referensi
           </Badge>
         </div>
 
-        {/* CV Preview - clean version */}
+        {/* CV template preview, scaled to fit */}
         <ScrollArea className="flex-1">
           <div className="p-4">
             <div
               style={{
-                transform: "scale(0.65)",
+                transform: "scale(0.62)",
                 transformOrigin: "top center",
-                width: `${100 / 0.65}%`,
-                marginLeft: `${-(100 / 0.65 - 100) / 2}%`,
+                width: `${100 / 0.62}%`,
+                marginLeft: `${-(100 / 0.62 - 100) / 2}%`,
               }}
             >
               <CvPreview data={cvData} template={templateId} scale={1} />
@@ -478,238 +712,149 @@ export function InlineCvEditor({
         </ScrollArea>
       </div>
 
-      {/* ═══ RIGHT PANEL: CV with highlights + suggestions sidebar ═══ */}
-      <div
-        className={cn(
-          "flex flex-col min-w-0 transition-all duration-300",
-          sidebarCollapsed ? "flex-1" : "flex-[1.45]",
-        )}
-      >
-        {/* Panel header */}
-        <div className="flex items-center justify-between border-b border-border bg-gradient-to-r from-primary/5 to-primary/10 px-4 py-3 shrink-0">
-          <div className="flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/15">
+      {/* ══════════════════════════════════════════════════════
+          RIGHT PANEL — CV text with inline stabilo highlights
+          No sidebar – all interaction is via highlight popovers
+      ══════════════════════════════════════════════════════ */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-border bg-gradient-to-r from-primary/5 to-primary/10 px-4 py-2.5 shrink-0">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/15 shrink-0">
               <Sparkles className="h-4 w-4 text-primary" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-foreground">CV + Saran AI</p>
+              <p className="text-sm font-semibold leading-tight">CV + Saran AI</p>
               <p className="text-[10px] text-muted-foreground">
-                {pendingCount} saran menunggu •{" "}
-                <span className="text-yellow-600 font-medium">highlight = area perbaikan</span>
+                Klik{" "}
+                <mark className="bg-yellow-200 dark:bg-yellow-800 text-yellow-900 dark:text-yellow-100 rounded-sm px-0.5 not-italic">
+                  teks kuning ✓
+                </mark>{" "}
+                untuk lihat & terapkan saran
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+
+          <div className="flex items-center gap-2 shrink-0">
             <Badge
               className={cn(
-                "text-xs",
+                "text-[10px]",
                 pendingCount === 0
-                  ? "bg-emerald-100 text-emerald-700"
-                  : "bg-yellow-100 text-yellow-700",
+                  ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"
+                  : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300",
               )}
             >
               {appliedCount}/{totalCount} diterapkan
             </Badge>
-            <button
-              onClick={() => setSidebarCollapsed((v) => !v)}
-              className="flex h-7 w-7 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground hover:bg-muted transition-colors"
-              title={sidebarCollapsed ? "Buka panel saran" : "Tutup panel saran"}
-            >
-              <ArrowRight
-                className={cn(
-                  "h-3.5 w-3.5 transition-transform",
-                  sidebarCollapsed ? "rotate-180" : "rotate-0",
-                )}
-              />
-            </button>
-          </div>
-        </div>
-
-        {/* Right panel body: CV with overlay + sidebar */}
-        <div className="flex flex-1 overflow-hidden">
-          {/* CV with highlight overlays */}
-          <div className="flex-1 relative overflow-hidden" ref={rightPanelRef}>
-            <ScrollArea className="h-full">
-              <div className="p-4">
-                {/* Yellow stabilo bar at top */}
-                {pendingCount > 0 && (
-                  <div className="mb-3 flex items-center gap-2 rounded-lg bg-yellow-50 border border-yellow-200 px-3 py-2">
-                    <span className="h-3 w-4 rounded-sm bg-yellow-300 inline-block" />
-                    <p className="text-xs text-yellow-800 font-medium">
-                      Highlight kuning = teks yang perlu diperbaiki. Klik ✓ hijau untuk terapkan.
-                    </p>
-                  </div>
-                )}
-
-                {/* CV with overlay */}
-                <div className="relative">
-                  {/* Stabilo highlight backgrounds behind the CV */}
-                  {indexedSuggestions.map((s, i) => {
-                    if (appliedIndices.has(s.originalIndex)) return null;
-                    const isActive = activeHighlight === s.originalIndex;
-                    const topPercent = 12 + i * 9;
-
-                    return (
-                      <motion.div
-                        key={s.originalIndex}
-                        className={cn(
-                          "absolute left-0 right-14 rounded-sm transition-all pointer-events-none",
-                          isActive ? "opacity-40" : "opacity-20",
-                          s.priority === "high"
-                            ? "bg-red-200"
-                            : s.priority === "medium"
-                            ? "bg-yellow-200"
-                            : "bg-green-200",
-                        )}
-                        style={{
-                          top: `${Math.min(topPercent, 85)}%`,
-                          height: "2.5%",
-                        }}
-                        animate={{ opacity: isActive ? 0.4 : 0.2 }}
-                      />
-                    );
-                  })}
-
-                  {/* The actual CV preview */}
-                  <div
-                    style={{
-                      transform: "scale(0.65)",
-                      transformOrigin: "top center",
-                      width: `${100 / 0.65}%`,
-                      marginLeft: `${-(100 / 0.65 - 100) / 2}%`,
-                    }}
-                  >
-                    <CvPreview data={cvData} template={templateId} scale={1} />
-                  </div>
-
-                  {/* Overlay: badges + quick-apply buttons along right edge */}
-                  <SuggestionHighlightOverlay
-                    suggestions={indexedSuggestions}
-                    appliedIndices={appliedIndices}
-                    activeHighlight={activeHighlight}
-                    onActivate={(idx) => setActiveHighlight(idx)}
-                    onQuickApply={handleAccept}
-                  />
-                </div>
-
-                {/* Legend */}
-                <div className="mt-4 flex flex-wrap gap-3 border-t border-border pt-3">
-                  <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                    <span className="h-2.5 w-4 rounded-sm bg-red-200 inline-block" />
-                    Prioritas Tinggi
-                  </div>
-                  <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                    <span className="h-2.5 w-4 rounded-sm bg-yellow-200 inline-block" />
-                    Prioritas Sedang
-                  </div>
-                  <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                    <span className="h-2.5 w-4 rounded-sm bg-green-200 inline-block" />
-                    Prioritas Rendah
-                  </div>
-                  <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                    <Check className="h-3 w-3 text-emerald-600" />
-                    Tombol hijau = terapkan
-                  </div>
-                </div>
-              </div>
-            </ScrollArea>
-          </div>
-
-          {/* Suggestions Sidebar (collapsible) */}
-          <AnimatePresence>
-            {!sidebarCollapsed && (
-              <motion.div
-                initial={{ width: 0, opacity: 0 }}
-                animate={{ width: 300, opacity: 1 }}
-                exit={{ width: 0, opacity: 0 }}
-                transition={{ duration: 0.25 }}
-                className="flex flex-col border-l border-border overflow-hidden bg-muted/20"
-                style={{ minWidth: 0 }}
+            {pendingCount > 0 && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1 h-7 text-[10px] px-2"
+                onClick={handleAcceptAll}
               >
-                {/* Sidebar header */}
-                <div className="border-b border-border bg-background/80 px-3 py-2.5 shrink-0">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                      <p className="text-sm font-semibold">Daftar Saran</p>
-                    </div>
-                    <span className="text-xs text-muted-foreground">
-                      {pendingCount} tersisa
-                    </span>
-                  </div>
-
-                  {/* Progress */}
-                  <div className="mt-2 h-1.5 w-full bg-muted rounded-full overflow-hidden">
-                    <motion.div
-                      className="h-full bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-full"
-                      animate={{ width: `${(appliedCount / Math.max(totalCount, 1)) * 100}%` }}
-                      transition={{ duration: 0.4 }}
-                    />
-                  </div>
-                </div>
-
-                {/* Suggestion cards */}
-                <ScrollArea className="flex-1">
-                  <div className="p-2 space-y-2">
-                    {indexedSuggestions.length === 0 ? (
-                      <div className="py-8 text-center text-muted-foreground">
-                        <Sparkles className="h-8 w-8 mx-auto mb-2 opacity-30" />
-                        <p className="text-sm">Tidak ada saran</p>
-                      </div>
-                    ) : (
-                      indexedSuggestions.map((s, i) => (
-                        <SuggestionCard
-                          key={s.originalIndex}
-                          suggestion={s}
-                          index={i}
-                          isApplied={appliedIndices.has(s.originalIndex)}
-                          isActive={activeHighlight === s.originalIndex}
-                          editingIndex={editingIndex}
-                          editText={editText}
-                          onHover={(idx) => setActiveHighlight(idx ?? -1)}
-                          onAccept={handleAccept}
-                          onReject={handleReject}
-                          onEdit={handleEdit}
-                          onEditTextChange={setEditText}
-                          onEditSave={(idx) => handleAccept(idx)}
-                          onEditCancel={() => {
-                            setEditingIndex(null);
-                            setEditText("");
-                          }}
-                        />
-                      ))
-                    )}
-                  </div>
-                </ScrollArea>
-
-                {/* Sidebar footer actions */}
-                <div className="border-t border-border bg-background/80 p-3 space-y-2 shrink-0">
-                  {pendingCount > 0 && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full gap-2 text-xs h-8"
-                      onClick={handleAcceptAll}
-                    >
-                      <Zap className="h-3.5 w-3.5" />
-                      Terapkan Semua ({pendingCount})
-                    </Button>
-                  )}
-                  <Button
-                    size="sm"
-                    className="w-full gap-2 text-xs h-9 bg-emerald-600 hover:bg-emerald-700"
-                    onClick={onSave}
-                    disabled={appliedCount === 0}
-                  >
-                    <CheckCircle2 className="h-4 w-4" />
-                    Simpan Perubahan ({appliedCount} saran)
-                  </Button>
-                </div>
-              </motion.div>
+                <Zap className="h-3 w-3" />
+                Terapkan Semua
+              </Button>
             )}
-          </AnimatePresence>
+            {appliedCount > 0 && (
+              <Button
+                size="sm"
+                className="gap-1 h-7 text-[10px] px-2.5 bg-emerald-600 hover:bg-emerald-700"
+                onClick={onSave}
+              >
+                <CheckCircle2 className="h-3 w-3" />
+                Simpan
+              </Button>
+            )}
+          </div>
         </div>
+
+        {/* CV text content */}
+        <ScrollArea className="flex-1">
+          <div className="p-5">
+            {/* Info banner */}
+            {pendingCount > 0 ? (
+              <div className="mb-4 rounded-xl bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 px-3.5 py-2.5">
+                <div className="flex items-start gap-2">
+                  <span className="mt-0.5 inline-block h-3.5 w-5 shrink-0 rounded-sm bg-yellow-300 dark:bg-yellow-600" />
+                  <div className="text-xs text-yellow-900 dark:text-yellow-200 leading-relaxed">
+                    <strong>{pendingCount} saran AI tersedia.</strong> Klik teks berwarna kuning untuk melihat rekomendasi perbaikan dan tombol{" "}
+                    <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 text-white text-[8px] font-bold align-middle">
+                      ✓
+                    </span>{" "}
+                    untuk menerapkannya.
+                  </div>
+                </div>
+
+                {/* Collapsible legend */}
+                <button
+                  className="mt-2 flex items-center gap-1 text-[10px] text-yellow-700 dark:text-yellow-400 hover:underline"
+                  onClick={() => setLegendOpen((v) => !v)}
+                >
+                  {legendOpen ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                  Keterangan warna
+                </button>
+                {legendOpen && (
+                  <div className="mt-1.5 flex flex-wrap gap-3">
+                    {(["high", "medium", "low"] as const).map((p) => (
+                      <div key={p} className="flex items-center gap-1.5 text-[10px] text-yellow-800 dark:text-yellow-300">
+                        <mark className={cn("px-1 py-0.5 rounded-sm", PRIORITY[p].mark)}>
+                          Contoh ✓
+                        </mark>
+                        <span>{PRIORITY[p].label}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="mb-4 flex items-center gap-2 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 px-3.5 py-2.5">
+                <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+                <p className="text-xs text-emerald-800 dark:text-emerald-200 font-medium">
+                  Semua saran sudah diterapkan! Klik <strong>Simpan</strong> untuk menyimpan perubahan.
+                </p>
+              </div>
+            )}
+
+            {/* CV with highlights */}
+            <CvHighlightedView
+              cvData={cvData}
+              suggestions={suggestions}
+              appliedIndices={appliedIndices}
+              activeIdx={activeIdx}
+              onClickHighlight={handleHighlightClick}
+            />
+          </div>
+        </ScrollArea>
       </div>
+
+      {/* ══ Fixed popover (renders outside scroll container) ══ */}
+      <AnimatePresence>
+        {activeIdx !== null && popoverPos && suggestions[activeIdx] && (
+          <div
+            data-popover
+            style={{ position: "fixed", top: popoverPos.top, left: popoverPos.left, zIndex: 9999 }}
+          >
+            <SuggestionPopover
+              suggestion={suggestions[activeIdx]}
+              index={activeIdx}
+              isEditing={editingIndex === activeIdx}
+              editText={editText}
+              onAccept={handleAccept}
+              onReject={handleReject}
+              onEdit={handleEdit}
+              onEditTextChange={setEditText}
+              onEditSave={handleAccept}
+              onEditCancel={() => {
+                setEditingIndex(null);
+                setEditText("");
+              }}
+              onClose={closePopover}
+            />
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
