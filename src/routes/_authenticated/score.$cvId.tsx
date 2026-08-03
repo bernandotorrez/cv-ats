@@ -200,17 +200,115 @@ function CvScorePage() {
 
   const handleApplySuggestion = useCallback(
     (index: number, newText: string) => {
+      const suggestion = highlightSuggestions[index];
+      if (!suggestion) return;
+
+      const updatedCvData = { ...cvData };
+      const suggestedLower = suggestion.suggested.toLowerCase();
+      let applied = false;
+
+      // Try to determine which section to apply based on suggestion content
+      if (suggestedLower.includes("summary") || suggestedLower.includes("ringkasan") || suggestedLower.includes("profil")) {
+        // If suggestion is about summary, append or replace
+        if (updatedCvData.personal.summary) {
+          updatedCvData.personal.summary = newText;
+        } else {
+          updatedCvData.personal.summary = newText;
+        }
+        applied = true;
+      } else if (suggestedLower.includes("headline") || suggestedLower.includes("judul")) {
+        updatedCvData.personal.headline = newText;
+        applied = true;
+      } else if (suggestedLower.includes("experience") || suggestedLower.includes("pengalaman") || suggestedLower.includes("bullet")) {
+        // Try to find matching experience
+        if (suggestion.current) {
+          const currentLower = suggestion.current.toLowerCase();
+          for (let i = 0; i < updatedCvData.experiences.length; i++) {
+            if (updatedCvData.experiences[i].description?.toLowerCase().includes(currentLower)) {
+              const escaped = suggestion.current.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+              const regex = new RegExp(escaped, "gi");
+              updatedCvData.experiences[i] = {
+                ...updatedCvData.experiences[i],
+                description: updatedCvData.experiences[i].description.replace(regex, newText),
+              };
+              applied = true;
+              break;
+            }
+          }
+        }
+        if (!applied && updatedCvData.experiences.length > 0) {
+          // Apply to first experience as fallback
+          updatedCvData.experiences[0] = {
+            ...updatedCvData.experiences[0],
+            description: newText,
+          };
+          applied = true;
+        }
+      }
+
+      setCvData(updatedCvData);
       setAppliedSuggestions((prev) => new Set([...prev, index]));
-      toast.success(`Saran #${index + 1} berhasil diterapkan!`);
+      if (applied) {
+        toast.success(`Saran #${index + 1} berhasil diterapkan!`);
+      } else {
+        toast.info(`Saran #${index + 1} ditandai sebagai diterapkan.`);
+      }
     },
-    [],
+    [cvData, highlightSuggestions],
   );
 
   const handleApplyAllSuggestions = useCallback(() => {
-    const allIndices = new Set(highlightSuggestions.map((_, i) => i));
-    setAppliedSuggestions(allIndices);
-    toast.success(`${highlightSuggestions.length} saran berhasil diterapkan!`);
-  }, [highlightSuggestions]);
+    let updatedCvData = { ...cvData };
+    let appliedCount = 0;
+    const newApplied = new Set(appliedSuggestions);
+
+    highlightSuggestions.forEach((suggestion, index) => {
+      if (newApplied.has(index)) return; // Skip already applied
+
+      const suggestedLower = suggestion.suggested.toLowerCase();
+      let applied = false;
+
+      if (suggestedLower.includes("summary") || suggestedLower.includes("ringkasan") || suggestedLower.includes("profil")) {
+        updatedCvData.personal.summary = suggestion.suggested;
+        applied = true;
+      } else if (suggestedLower.includes("headline") || suggestedLower.includes("judul")) {
+        updatedCvData.personal.headline = suggestion.suggested;
+        applied = true;
+      } else if (suggestedLower.includes("experience") || suggestedLower.includes("pengalaman") || suggestedLower.includes("bullet")) {
+        if (suggestion.current) {
+          const currentLower = suggestion.current.toLowerCase();
+          for (let i = 0; i < updatedCvData.experiences.length; i++) {
+            if (updatedCvData.experiences[i].description?.toLowerCase().includes(currentLower)) {
+              const escaped = suggestion.current.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+              const regex = new RegExp(escaped, "gi");
+              updatedCvData.experiences[i] = {
+                ...updatedCvData.experiences[i],
+                description: updatedCvData.experiences[i].description.replace(regex, suggestion.suggested),
+              };
+              applied = true;
+              break;
+            }
+          }
+        }
+        if (!applied && updatedCvData.experiences.length > 0) {
+          updatedCvData.experiences[0] = {
+            ...updatedCvData.experiences[0],
+            description: suggestion.suggested,
+          };
+          applied = true;
+        }
+      }
+
+      if (applied) {
+        newApplied.add(index);
+        appliedCount++;
+      }
+    });
+
+    setCvData(updatedCvData);
+    setAppliedSuggestions(newApplied);
+    toast.success(`${appliedCount} saran berhasil diterapkan!`);
+  }, [cvData, highlightSuggestions, appliedSuggestions]);
 
   return (
     <main className="container-page overflow-x-hidden py-6 sm:py-8 lg:py-10">

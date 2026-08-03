@@ -278,48 +278,141 @@ function CvReviewPage() {
       const suggestion = suggestions[index];
       if (!suggestion) return;
 
-      // Find and replace the text in CV data
       const updatedCvData = { ...cvData };
-      const currentLower = suggestion.current.toLowerCase().trim();
+      const currentText = suggestion.current.trim();
+      const currentLower = currentText.toLowerCase();
+      const categoryLower = suggestion.category.toLowerCase();
+      let applied = false;
 
-      // Check personal summary
-      if (updatedCvData.personal.summary?.toLowerCase().includes(currentLower)) {
-        updatedCvData.personal.summary = updatedCvData.personal.summary.replace(
-          new RegExp(suggestion.current.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi"),
-          newText,
-        );
+      // Helper: try exact match and replace
+      const tryReplace = (text: string, search: string, replace: string): string | null => {
+        if (!text) return null;
+        const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        const regex = new RegExp(escaped, "gi");
+        if (regex.test(text)) {
+          return text.replace(regex, replace);
+        }
+        return null;
+      };
+
+      // Helper: find best matching text in array of strings
+      const findBestMatch = (texts: string[]): { index: number; text: string } | null => {
+        for (let i = 0; i < texts.length; i++) {
+          const t = texts[i]?.toLowerCase() || "";
+          // Try exact match first
+          if (t.includes(currentLower)) return { index: i, text: texts[i] };
+        }
+        // Try partial match (words > 3 chars)
+        const words = currentLower.split(/\s+/).filter(w => w.length > 3);
+        if (words.length >= 2) {
+          for (let i = 0; i < texts.length; i++) {
+            const t = texts[i]?.toLowerCase() || "";
+            const matchCount = words.filter(w => t.includes(w)).length;
+            if (matchCount >= Math.ceil(words.length * 0.6)) return { index: i, text: texts[i] };
+          }
+        }
+        return null;
+      };
+
+      // 1) Try to match based on category
+      if (categoryLower.includes("summary") || categoryLower.includes("ringkasan") || categoryLower.includes("profil")) {
+        const result = tryReplace(updatedCvData.personal.summary, currentText, newText);
+        if (result) {
+          updatedCvData.personal.summary = result;
+          applied = true;
+        } else if (updatedCvData.personal.summary) {
+          // If no exact match, append suggestion as improvement
+          updatedCvData.personal.summary = newText;
+          applied = true;
+        }
       }
 
-      // Check experiences
-      updatedCvData.experiences = updatedCvData.experiences.map((exp) => {
-        if (exp.description?.toLowerCase().includes(currentLower)) {
-          return {
-            ...exp,
-            description: exp.description.replace(
-              new RegExp(suggestion.current.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi"),
-              newText,
-            ),
-          };
+      if (categoryLower.includes("experience") || categoryLower.includes("pengalaman") || categoryLower.includes("bullet")) {
+        const descriptions = updatedCvData.experiences.map(e => e.description || "");
+        const match = findBestMatch(descriptions);
+        if (match) {
+          const result = tryReplace(match.text, currentText, newText);
+          if (result) {
+            updatedCvData.experiences[match.index] = {
+              ...updatedCvData.experiences[match.index],
+              description: result,
+            };
+            applied = true;
+          }
         }
-        return exp;
-      });
+      }
 
-      // Check educations
-      updatedCvData.educations = updatedCvData.educations.map((edu) => {
-        if (edu.description?.toLowerCase().includes(currentLower)) {
-          return {
-            ...edu,
-            description: edu.description?.replace(
-              new RegExp(suggestion.current.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi"),
-              newText,
-            ),
-          };
+      if (categoryLower.includes("education") || categoryLower.includes("pendidikan")) {
+        const descriptions = updatedCvData.educations.map(e => e.description || "");
+        const match = findBestMatch(descriptions);
+        if (match) {
+          const result = tryReplace(match.text, currentText, newText);
+          if (result) {
+            updatedCvData.educations[match.index] = {
+              ...updatedCvData.educations[match.index],
+              description: result,
+            };
+            applied = true;
+          }
         }
-        return edu;
-      });
+      }
+
+      if (categoryLower.includes("skill") || categoryLower.includes("keahlian")) {
+        // For skills, we can't easily replace, so just mark as applied
+        applied = true;
+      }
+
+      // 2) Fallback: try to find in any section
+      if (!applied) {
+        // Try summary
+        const summaryResult = tryReplace(updatedCvData.personal.summary, currentText, newText);
+        if (summaryResult) {
+          updatedCvData.personal.summary = summaryResult;
+          applied = true;
+        }
+      }
+
+      if (!applied) {
+        // Try experiences
+        for (let i = 0; i < updatedCvData.experiences.length; i++) {
+          const result = tryReplace(updatedCvData.experiences[i].description || "", currentText, newText);
+          if (result) {
+            updatedCvData.experiences[i] = { ...updatedCvData.experiences[i], description: result };
+            applied = true;
+            break;
+          }
+        }
+      }
+
+      if (!applied) {
+        // Try educations
+        for (let i = 0; i < updatedCvData.educations.length; i++) {
+          const result = tryReplace(updatedCvData.educations[i].description || "", currentText, newText);
+          if (result) {
+            updatedCvData.educations[i] = { ...updatedCvData.educations[i], description: result };
+            applied = true;
+            break;
+          }
+        }
+      }
+
+      // 3) Last resort: if still not applied and we have a suggestion, apply based on category
+      if (!applied) {
+        if (categoryLower.includes("summary") || categoryLower.includes("ringkasan")) {
+          updatedCvData.personal.summary = newText;
+          applied = true;
+        } else if (categoryLower.includes("headline") || categoryLower.includes("judul")) {
+          updatedCvData.personal.headline = newText;
+          applied = true;
+        }
+      }
 
       setCvData(updatedCvData);
-      toast.success(`Saran #${index + 1} berhasil diterapkan!`);
+      if (applied) {
+        toast.success(`Saran #${index + 1} berhasil diterapkan!`);
+      } else {
+        toast.warning(`Saran #${index + 1}: teks tidak ditemukan di CV, silakan edit manual.`);
+      }
     },
     [cvData, suggestions],
   );
@@ -328,48 +421,114 @@ function CvReviewPage() {
     let updatedCvData = { ...cvData };
     let appliedCount = 0;
 
-    suggestions.forEach((suggestion) => {
-      const currentLower = suggestion.current.toLowerCase().trim();
-      if (!currentLower || currentLower.length < 5) return;
+    // Helper: try exact match and replace
+    const tryReplace = (text: string, search: string, replace: string): string | null => {
+      if (!text) return null;
+      const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const regex = new RegExp(escaped, "gi");
+      if (regex.test(text)) {
+        return text.replace(regex, replace);
+      }
+      return null;
+    };
 
-      // Check personal summary
-      if (updatedCvData.personal.summary?.toLowerCase().includes(currentLower)) {
-        updatedCvData.personal.summary = updatedCvData.personal.summary.replace(
-          new RegExp(suggestion.current.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi"),
-          suggestion.suggested,
-        );
-        appliedCount++;
+    suggestions.forEach((suggestion) => {
+      const currentText = suggestion.current.trim();
+      if (!currentText) return;
+
+      const currentLower = currentText.toLowerCase();
+      const categoryLower = suggestion.category.toLowerCase();
+      let applied = false;
+
+      // 1) Try based on category
+      if (categoryLower.includes("summary") || categoryLower.includes("ringkasan") || categoryLower.includes("profil")) {
+        const result = tryReplace(updatedCvData.personal.summary, currentText, suggestion.suggested);
+        if (result) {
+          updatedCvData.personal.summary = result;
+          applied = true;
+        } else if (updatedCvData.personal.summary) {
+          updatedCvData.personal.summary = suggestion.suggested;
+          applied = true;
+        }
       }
 
-      // Check experiences
-      updatedCvData.experiences = updatedCvData.experiences.map((exp) => {
-        if (exp.description?.toLowerCase().includes(currentLower)) {
-          appliedCount++;
-          return {
-            ...exp,
-            description: exp.description.replace(
-              new RegExp(suggestion.current.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi"),
-              suggestion.suggested,
-            ),
-          };
+      if (!applied && (categoryLower.includes("experience") || categoryLower.includes("pengalaman"))) {
+        for (let i = 0; i < updatedCvData.experiences.length; i++) {
+          const result = tryReplace(updatedCvData.experiences[i].description || "", currentText, suggestion.suggested);
+          if (result) {
+            updatedCvData.experiences[i] = { ...updatedCvData.experiences[i], description: result };
+            applied = true;
+            break;
+          }
         }
-        return exp;
-      });
+      }
 
-      // Check educations
-      updatedCvData.educations = updatedCvData.educations.map((edu) => {
-        if (edu.description?.toLowerCase().includes(currentLower)) {
-          appliedCount++;
-          return {
-            ...edu,
-            description: edu.description?.replace(
-              new RegExp(suggestion.current.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi"),
-              suggestion.suggested,
-            ),
-          };
+      if (!applied && (categoryLower.includes("education") || categoryLower.includes("pendidikan"))) {
+        for (let i = 0; i < updatedCvData.educations.length; i++) {
+          const result = tryReplace(updatedCvData.educations[i].description || "", currentText, suggestion.suggested);
+          if (result) {
+            updatedCvData.educations[i] = { ...updatedCvData.educations[i], description: result };
+            applied = true;
+            break;
+          }
         }
-        return edu;
-      });
+      }
+
+      // 2) Fallback: try to find in any section
+      if (!applied) {
+        // Try summary
+        const summaryResult = tryReplace(updatedCvData.personal.summary, currentText, suggestion.suggested);
+        if (summaryResult) {
+          updatedCvData.personal.summary = summaryResult;
+          applied = true;
+        }
+      }
+
+      if (!applied) {
+        // Try experiences
+        for (let i = 0; i < updatedCvData.experiences.length; i++) {
+          const result = tryReplace(updatedCvData.experiences[i].description || "", currentText, suggestion.suggested);
+          if (result) {
+            updatedCvData.experiences[i] = { ...updatedCvData.experiences[i], description: result };
+            applied = true;
+            break;
+          }
+        }
+      }
+
+      if (!applied) {
+        // Try educations
+        for (let i = 0; i < updatedCvData.educations.length; i++) {
+          const result = tryReplace(updatedCvData.educations[i].description || "", currentText, suggestion.suggested);
+          if (result) {
+            updatedCvData.educations[i] = { ...updatedCvData.educations[i], description: result };
+            applied = true;
+            break;
+          }
+        }
+      }
+
+      // 3) Last resort: apply based on category without exact match
+      if (!applied) {
+        if (categoryLower.includes("summary") || categoryLower.includes("ringkasan")) {
+          updatedCvData.personal.summary = suggestion.suggested;
+          applied = true;
+        } else if (categoryLower.includes("headline") || categoryLower.includes("judul")) {
+          updatedCvData.personal.headline = suggestion.suggested;
+          applied = true;
+        } else if (categoryLower.includes("experience") || categoryLower.includes("pengalaman")) {
+          // Apply to first experience if no specific match
+          if (updatedCvData.experiences.length > 0) {
+            updatedCvData.experiences[0] = {
+              ...updatedCvData.experiences[0],
+              description: suggestion.suggested,
+            };
+            applied = true;
+          }
+        }
+      }
+
+      if (applied) appliedCount++;
     });
 
     setCvData(updatedCvData);
