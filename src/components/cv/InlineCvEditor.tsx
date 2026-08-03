@@ -4,15 +4,21 @@
  * Left:  CvPreview original (clean template, no changes)
  * Right: CvPreview + yellow stabilo highlights injected directly into the
  *        rendered DOM on the exact suggestion text.
- *        Click a highlight → smart popover (flips above/below to avoid clipping).
+ *        Click a highlight → Modal Dialog popup in screen center (never clipped).
  */
 
 import { useState, useCallback, useEffect, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import {
   Check,
   X,
@@ -74,11 +80,9 @@ const HIGHLIGHT_STYLE: Record<Suggestion["priority"], { bg: string; border: stri
 
 /** Remove all previously injected marks from the container */
 function clearHighlights(container: HTMLElement) {
-  // Unwrap every mark: move its text children back to the parent, then delete the mark
   container.querySelectorAll<HTMLElement>("mark.cv-ai-mark").forEach((mark) => {
     const parent = mark.parentNode;
     if (!parent) return;
-    // Remove the badge span first so it doesn't leak as text
     mark.querySelectorAll(".cv-ai-badge").forEach((b) => b.remove());
     while (mark.firstChild) parent.insertBefore(mark.firstChild, mark);
     parent.removeChild(mark);
@@ -92,11 +96,10 @@ function injectHighlight(
   needle: string,
   idx: number,
   priority: Suggestion["priority"],
-  onClick: (idx: number, el: HTMLElement) => void,
+  onClick: (idx: number) => void,
 ) {
   if (!needle || needle.length < 4) return;
 
-  // Collect accepted text nodes (skip script/style/already-marked)
   const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, {
     acceptNode(node) {
       const p = node.parentElement;
@@ -112,7 +115,6 @@ function injectHighlight(
   let n: Node | null;
   while ((n = walker.nextNode())) nodes.push(n as Text);
 
-  // Concatenate all text to find position of needle
   const fullText = nodes.map((n) => n.textContent ?? "").join("");
   const pos = fullText.toLowerCase().indexOf(needle.toLowerCase());
   if (pos === -1) return;
@@ -120,7 +122,6 @@ function injectHighlight(
   const end = pos + needle.length;
   const style = HIGHLIGHT_STYLE[priority];
 
-  // Determine which text-node segments to wrap
   type Seg = { node: Text; start: number; end: number };
   const segs: Seg[] = [];
   let charCount = 0;
@@ -142,14 +143,12 @@ function injectHighlight(
     if (charCount >= end) break;
   }
 
-  // Wrap each segment
   segs.forEach(({ node, start, end: segEnd }, segIdx) => {
     try {
       const range = document.createRange();
       range.setStart(node, start);
       range.setEnd(node, segEnd);
 
-      // Use extractContents + insertNode (more reliable than surroundContents)
       const mark = document.createElement("mark");
       mark.className = "cv-ai-mark";
       mark.dataset.idx = String(idx);
@@ -166,7 +165,6 @@ function injectHighlight(
       mark.appendChild(fragment);
       range.insertNode(mark);
 
-      // Badge ✓ on the last segment only
       if (segIdx === segs.length - 1) {
         const badge = document.createElement("span");
         badge.className = "cv-ai-badge";
@@ -191,7 +189,7 @@ function injectHighlight(
 
       mark.addEventListener("click", (e) => {
         e.stopPropagation();
-        onClick(idx, mark);
+        onClick(idx);
       });
       mark.addEventListener("mouseenter", () => {
         mark.style.filter = "brightness(0.92)";
@@ -203,160 +201,6 @@ function injectHighlight(
       /* skip if range crosses element boundaries */
     }
   });
-}
-
-// ─── Popover component ────────────────────────────────────────────────────────
-
-interface PopoverProps {
-  suggestion: Suggestion;
-  index: number;
-  isEditing: boolean;
-  editText: string;
-  onAccept: (i: number) => void;
-  onReject: (i: number) => void;
-  onEdit: (i: number) => void;
-  onEditTextChange: (t: string) => void;
-  onEditSave: (i: number) => void;
-  onEditCancel: () => void;
-  onClose: () => void;
-}
-
-function SuggestionPopover({
-  suggestion,
-  index,
-  isEditing,
-  editText,
-  onAccept,
-  onReject,
-  onEdit,
-  onEditTextChange,
-  onEditSave,
-  onEditCancel,
-  onClose,
-}: PopoverProps) {
-  const cfg = HIGHLIGHT_STYLE[suggestion.priority];
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.95, y: -4 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.95, y: -4 }}
-      transition={{ duration: 0.14 }}
-      className="w-80 rounded-2xl border-2 border-border bg-card shadow-2xl shadow-black/20 overflow-hidden"
-      onClick={(e) => e.stopPropagation()}
-    >
-      {/* Header */}
-      <div className="flex items-center justify-between px-3 pt-2.5 pb-2 border-b border-border/60 bg-muted/30">
-        <div className="flex items-center gap-1.5">
-          <span
-            className={cn(
-              "text-[10px] font-bold px-1.5 py-0.5 rounded border",
-              cfg.badge,
-            )}
-          >
-            {cfg.label}
-          </span>
-          <span className="text-[10px] text-muted-foreground border border-border px-1.5 py-0.5 rounded bg-background">
-            {suggestion.category}
-          </span>
-        </div>
-        <button
-          onClick={onClose}
-          className="flex h-5 w-5 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-        >
-          <X className="h-3 w-3" />
-        </button>
-      </div>
-
-      <div className="p-3 space-y-2.5">
-        {/* Current (strikethrough) */}
-        <div>
-          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">
-            Teks saat ini:
-          </p>
-          <p className="text-xs text-red-500 dark:text-red-400 line-through decoration-red-300/60 leading-relaxed bg-red-50 dark:bg-red-950/20 px-2 py-1.5 rounded-lg">
-            {suggestion.current}
-          </p>
-        </div>
-
-        {/* Suggested */}
-        <div>
-          <p className="text-[10px] font-bold text-primary uppercase tracking-wider mb-1">
-            Rekomendasi AI:
-          </p>
-          {isEditing ? (
-            <div className="space-y-1.5">
-              <Textarea
-                value={editText}
-                onChange={(e) => onEditTextChange(e.target.value)}
-                className="min-h-[60px] text-xs"
-                autoFocus
-              />
-              <div className="flex gap-1.5">
-                <Button
-                  size="sm"
-                  className="flex-1 gap-1 h-7 text-xs bg-emerald-600 hover:bg-emerald-700"
-                  onClick={() => onEditSave(index)}
-                >
-                  <Check className="h-3 w-3" /> Simpan
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="h-7 text-xs"
-                  onClick={onEditCancel}
-                >
-                  Batal
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <p className="text-xs text-foreground bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg px-2.5 py-2 leading-relaxed">
-              {suggestion.suggested}
-            </p>
-          )}
-        </div>
-
-        {/* Impact */}
-        <div className="flex items-start gap-1.5 text-[10px] text-muted-foreground bg-muted/40 rounded-lg px-2 py-1.5">
-          <Lightbulb className="h-3 w-3 shrink-0 text-amber-500 mt-0.5" />
-          <span className="leading-relaxed">{suggestion.impact}</span>
-        </div>
-
-        {/* Actions */}
-        {!isEditing && (
-          <div className="flex gap-1.5">
-            <Button
-              size="sm"
-              className="flex-1 gap-1.5 h-9 text-xs bg-emerald-600 hover:bg-emerald-700 shadow-sm"
-              onClick={() => onAccept(index)}
-            >
-              <Check className="h-3.5 w-3.5" />
-              Terapkan
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              className="gap-1 h-9 text-xs"
-              onClick={() => onEdit(index)}
-            >
-              <Pencil className="h-3 w-3" />
-              Edit
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-9 px-2.5 text-muted-foreground hover:text-destructive"
-              onClick={() => onReject(index)}
-              title="Abaikan"
-            >
-              <X className="h-3.5 w-3.5" />
-            </Button>
-          </div>
-        )}
-      </div>
-    </motion.div>
-  );
 }
 
 // ─── Main component ───────────────────────────────────────────────────────────
@@ -371,71 +215,41 @@ export function InlineCvEditor({
 }: InlineCvEditorProps) {
   const [appliedIndices, setAppliedIndices] = useState<Set<number>>(new Set());
   const [activeIdx, setActiveIdx] = useState<number | null>(null);
-  const [popoverPos, setPopoverPos] = useState<{ top: number; left: number; flipUp: boolean } | null>(null);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editText, setEditText] = useState("");
 
-  // Ref for the scaled wrapper of the right CvPreview
   const rightWrapperRef = useRef<HTMLDivElement>(null);
 
   // ── Handlers ──────────────────────────────────────────────────────────────
 
-  const closePopover = useCallback(() => {
+  const closeModal = useCallback(() => {
     setActiveIdx(null);
-    setPopoverPos(null);
     setEditingIndex(null);
     setEditText("");
   }, []);
 
-  const handleHighlightClick = useCallback(
-    (idx: number, el: HTMLElement) => {
-      if (activeIdx === idx) {
-        closePopover();
-        return;
-      }
-      const rect = el.getBoundingClientRect();
-      const POPOVER_W = 320;
-      const POPOVER_H = 310;
-      const PAD = 8;
-
-      // Horizontal: clamp so popover never overflows right/left
-      let left = rect.left;
-      if (left + POPOVER_W > window.innerWidth - PAD) {
-        left = window.innerWidth - POPOVER_W - PAD;
-      }
-      if (left < PAD) left = PAD;
-
-      // Vertical: prefer below, flip above if not enough space
-      const spaceBelow = window.innerHeight - rect.bottom - PAD;
-      const flipUp = spaceBelow < POPOVER_H && rect.top > POPOVER_H + PAD;
-      const top = flipUp
-        ? rect.top - POPOVER_H - 6
-        : rect.bottom + 6;
-
-      setPopoverPos({ top, left, flipUp });
-      setActiveIdx(idx);
-      setEditingIndex(null);
-      setEditText("");
-    },
-    [activeIdx, closePopover],
-  );
+  const handleHighlightClick = useCallback((idx: number) => {
+    setActiveIdx(idx);
+    setEditingIndex(null);
+    setEditText("");
+  }, []);
 
   const handleAccept = useCallback(
     (index: number) => {
       const text = editingIndex === index ? editText : suggestions[index].suggested;
       onApplySuggestion(index, text);
       setAppliedIndices((prev) => new Set([...prev, index]));
-      closePopover();
+      closeModal();
     },
-    [closePopover, editText, editingIndex, onApplySuggestion, suggestions],
+    [closeModal, editText, editingIndex, onApplySuggestion, suggestions],
   );
 
   const handleReject = useCallback(
     (index: number) => {
       setAppliedIndices((prev) => new Set([...prev, index]));
-      closePopover();
+      closeModal();
     },
-    [closePopover],
+    [closeModal],
   );
 
   const handleEdit = useCallback(
@@ -449,15 +263,14 @@ export function InlineCvEditor({
   const handleAcceptAll = useCallback(() => {
     onApplyAll();
     setAppliedIndices(new Set(suggestions.map((_, i) => i)));
-    closePopover();
-  }, [closePopover, onApplyAll, suggestions]);
+    closeModal();
+  }, [closeModal, onApplyAll, suggestions]);
 
   // ── Inject highlights into right-panel DOM ────────────────────────────────
   useEffect(() => {
     const wrapper = rightWrapperRef.current;
     if (!wrapper) return;
 
-    // Delay slightly so CvPreview finishes painting
     const timer = setTimeout(() => {
       clearHighlights(wrapper);
       suggestions.forEach((s, idx) => {
@@ -469,25 +282,12 @@ export function InlineCvEditor({
     return () => clearTimeout(timer);
   }, [suggestions, appliedIndices, cvData, handleHighlightClick]);
 
-  // Close popover on outside click
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      const t = e.target as HTMLElement;
-      if (!t.closest("[data-popover-root]") && !t.closest("mark.cv-ai-mark")) {
-        closePopover();
-      }
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [closePopover]);
-
   // ── Derived ───────────────────────────────────────────────────────────────
 
   const appliedCount = appliedIndices.size;
   const totalCount = suggestions.length;
   const pendingCount = totalCount - appliedCount;
 
-  // Shared scale style for both panels
   const scaledStyle: React.CSSProperties = {
     transform: "scale(0.62)",
     transformOrigin: "top center",
@@ -495,7 +295,8 @@ export function InlineCvEditor({
     marginLeft: `${-(100 / 0.62 - 100) / 2}%`,
   };
 
-  // ── Render ────────────────────────────────────────────────────────────────
+  const activeSuggestion = activeIdx !== null ? suggestions[activeIdx] : null;
+  const activeCfg = activeSuggestion ? HIGHLIGHT_STYLE[activeSuggestion.priority] : null;
 
   return (
     <div className="flex h-[calc(100vh-5.5rem)] gap-0 overflow-hidden rounded-2xl border-2 border-border shadow-xl">
@@ -616,7 +417,6 @@ export function InlineCvEditor({
         {/* CV template with DOM-injected highlights */}
         <ScrollArea className="flex-1 px-4 pb-4">
           <div>
-            {/* This div is the target for DOM injection */}
             <div ref={rightWrapperRef} style={scaledStyle}>
               <CvPreview data={cvData} template={templateId} scale={1} />
             </div>
@@ -625,38 +425,120 @@ export function InlineCvEditor({
       </div>
 
       {/* ════════════════════════════════════════════════════════
-          POPOVER (fixed, smart positioning)
+          SUGGESTION MODAL DIALOG (Centered, Never Clipped)
       ════════════════════════════════════════════════════════ */}
-      <AnimatePresence>
-        {activeIdx !== null && popoverPos && suggestions[activeIdx] && (
-          <div
-            data-popover-root
-            style={{
-              position: "fixed",
-              top: popoverPos.top,
-              left: popoverPos.left,
-              zIndex: 9999,
-            }}
-          >
-            <SuggestionPopover
-              suggestion={suggestions[activeIdx]}
-              index={activeIdx}
-              isEditing={editingIndex === activeIdx}
-              editText={editText}
-              onAccept={handleAccept}
-              onReject={handleReject}
-              onEdit={handleEdit}
-              onEditTextChange={setEditText}
-              onEditSave={handleAccept}
-              onEditCancel={() => {
-                setEditingIndex(null);
-                setEditText("");
-              }}
-              onClose={closePopover}
-            />
-          </div>
+      <Dialog open={activeIdx !== null} onOpenChange={(open) => { if (!open) closeModal(); }}>
+        {activeSuggestion && activeCfg && (
+          <DialogContent className="sm:max-w-md rounded-2xl p-0 overflow-hidden border-2 shadow-2xl">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-border/60 bg-muted/30">
+              <div className="flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/15">
+                  <Sparkles className="h-4 w-4 text-primary" />
+                </div>
+                <div>
+                  <DialogTitle className="text-base font-bold">Rekomendasi Perbaikan AI</DialogTitle>
+                  <DialogDescription className="text-xs text-muted-foreground">
+                    Kategori: {activeSuggestion.category}
+                  </DialogDescription>
+                </div>
+              </div>
+              <Badge className={cn("text-xs font-semibold px-2 py-0.5", activeCfg.badge)}>
+                Prioritas {activeCfg.label}
+              </Badge>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-5 space-y-4 max-h-[75vh] overflow-y-auto">
+              {/* Teks Saat Ini */}
+              <div>
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5">
+                  Teks Saat Ini:
+                </p>
+                <div className="text-xs text-red-600 dark:text-red-400 line-through decoration-red-300 leading-relaxed bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/40 p-3 rounded-xl">
+                  {activeSuggestion.current}
+                </div>
+              </div>
+
+              {/* Rekomendasi AI */}
+              <div>
+                <p className="text-xs font-bold text-primary uppercase tracking-wider mb-1.5">
+                  Rekomendasi AI:
+                </p>
+                {editingIndex === activeIdx ? (
+                  <div className="space-y-2">
+                    <Textarea
+                      value={editText}
+                      onChange={(e) => setEditText(e.target.value)}
+                      className="min-h-[80px] text-xs"
+                      autoFocus
+                    />
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        className="flex-1 gap-1 h-8 text-xs bg-emerald-600 hover:bg-emerald-700"
+                        onClick={() => handleAccept(activeIdx!)}
+                      >
+                        <Check className="h-3.5 w-3.5" /> Simpan Perubahan
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8 text-xs"
+                        onClick={() => { setEditingIndex(null); setEditText(""); }}
+                      >
+                        Batal
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-xs text-foreground font-medium bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 p-3 rounded-xl leading-relaxed">
+                    {activeSuggestion.suggested}
+                  </div>
+                )}
+              </div>
+
+              {/* Impact / Alasan */}
+              <div className="flex items-start gap-2 text-xs text-muted-foreground bg-muted/40 border border-border/60 rounded-xl p-3">
+                <Lightbulb className="h-4 w-4 shrink-0 text-amber-500 mt-0.5" />
+                <span className="leading-relaxed">{activeSuggestion.impact}</span>
+              </div>
+            </div>
+
+            {/* Modal Footer / Actions */}
+            {editingIndex !== activeIdx && (
+              <div className="flex items-center gap-2 p-4 border-t border-border bg-muted/20">
+                <Button
+                  size="default"
+                  className="flex-1 gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-md"
+                  onClick={() => handleAccept(activeIdx!)}
+                >
+                  <Check className="h-4 w-4" />
+                  Terapkan Saran Ini
+                </Button>
+                <Button
+                  size="default"
+                  variant="outline"
+                  className="gap-1.5"
+                  onClick={() => handleEdit(activeIdx!)}
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                  Edit Teks
+                </Button>
+                <Button
+                  size="default"
+                  variant="ghost"
+                  className="px-3 text-muted-foreground hover:text-destructive"
+                  onClick={() => handleReject(activeIdx!)}
+                  title="Abaikan saran"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+          </DialogContent>
         )}
-      </AnimatePresence>
+      </Dialog>
     </div>
   );
 }
