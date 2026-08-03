@@ -13,6 +13,8 @@ import { useAuth } from "@/lib/auth-context";
 import { getUserTierConfig } from "@/lib/subscription";
 import { reviewCv, type CvReviewResult } from "@/lib/ai-functions";
 import { CvPreview } from "@/components/cv/CvPreview";
+import { HighlightedCvPreview } from "@/components/cv/HighlightedCvPreview";
+import { SuggestionEditor } from "@/components/cv/SuggestionEditor";
 import { type CvData, type TemplateId, emptyCv } from "@/lib/cv-types";
 import { cn } from "@/lib/utils";
 import {
@@ -23,6 +25,7 @@ import {
   CheckCircle2,
   Clock,
   FileText,
+  Highlighter,
   History,
   Lightbulb,
   Loader2,
@@ -105,6 +108,9 @@ function CvReviewPage() {
   const [reviewHistory, setReviewHistory] = useState<ReviewHistory[]>([]);
   const [selectedHistoryId, setSelectedHistoryId] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
+  const [showHighlights, setShowHighlights] = useState(true);
+  const [activeSuggestionIndex, setActiveSuggestionIndex] = useState<number | null>(null);
+  const [showEditor, setShowEditor] = useState(false);
 
   const scoreColor = (score: number) => {
     if (score >= 80) return "text-emerald-700";
@@ -261,6 +267,119 @@ function CvReviewPage() {
   };
 
   const previewTemplateName = useMemo(() => templateId.replace(/-/g, " "), [templateId]);
+
+  const suggestions = useMemo(() => {
+    if (!result?.review?.suggestions) return [];
+    return result.review.suggestions;
+  }, [result]);
+
+  const handleApplySuggestion = useCallback(
+    (index: number, newText: string) => {
+      const suggestion = suggestions[index];
+      if (!suggestion) return;
+
+      // Find and replace the text in CV data
+      const updatedCvData = { ...cvData };
+      const currentLower = suggestion.current.toLowerCase().trim();
+
+      // Check personal summary
+      if (updatedCvData.personal.summary?.toLowerCase().includes(currentLower)) {
+        updatedCvData.personal.summary = updatedCvData.personal.summary.replace(
+          new RegExp(suggestion.current.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi"),
+          newText,
+        );
+      }
+
+      // Check experiences
+      updatedCvData.experiences = updatedCvData.experiences.map((exp) => {
+        if (exp.description?.toLowerCase().includes(currentLower)) {
+          return {
+            ...exp,
+            description: exp.description.replace(
+              new RegExp(suggestion.current.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi"),
+              newText,
+            ),
+          };
+        }
+        return exp;
+      });
+
+      // Check educations
+      updatedCvData.educations = updatedCvData.educations.map((edu) => {
+        if (edu.description?.toLowerCase().includes(currentLower)) {
+          return {
+            ...edu,
+            description: edu.description?.replace(
+              new RegExp(suggestion.current.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi"),
+              newText,
+            ),
+          };
+        }
+        return edu;
+      });
+
+      setCvData(updatedCvData);
+      toast.success(`Saran #${index + 1} berhasil diterapkan!`);
+    },
+    [cvData, suggestions],
+  );
+
+  const handleApplyAllSuggestions = useCallback(() => {
+    let updatedCvData = { ...cvData };
+    let appliedCount = 0;
+
+    suggestions.forEach((suggestion) => {
+      const currentLower = suggestion.current.toLowerCase().trim();
+      if (!currentLower || currentLower.length < 5) return;
+
+      // Check personal summary
+      if (updatedCvData.personal.summary?.toLowerCase().includes(currentLower)) {
+        updatedCvData.personal.summary = updatedCvData.personal.summary.replace(
+          new RegExp(suggestion.current.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi"),
+          suggestion.suggested,
+        );
+        appliedCount++;
+      }
+
+      // Check experiences
+      updatedCvData.experiences = updatedCvData.experiences.map((exp) => {
+        if (exp.description?.toLowerCase().includes(currentLower)) {
+          appliedCount++;
+          return {
+            ...exp,
+            description: exp.description.replace(
+              new RegExp(suggestion.current.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi"),
+              suggestion.suggested,
+            ),
+          };
+        }
+        return exp;
+      });
+
+      // Check educations
+      updatedCvData.educations = updatedCvData.educations.map((edu) => {
+        if (edu.description?.toLowerCase().includes(currentLower)) {
+          appliedCount++;
+          return {
+            ...edu,
+            description: edu.description?.replace(
+              new RegExp(suggestion.current.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi"),
+              suggestion.suggested,
+            ),
+          };
+        }
+        return edu;
+      });
+    });
+
+    setCvData(updatedCvData);
+    toast.success(`${appliedCount} saran berhasil diterapkan!`);
+  }, [cvData, suggestions]);
+
+  const handleSuggestionHighlightClick = useCallback((index: number) => {
+    setActiveSuggestionIndex(index);
+    setShowEditor(true);
+  }, []);
 
   if (loading) {
     return <CvReviewDetailSkeleton />;
@@ -475,16 +594,48 @@ function CvReviewPage() {
                   width: "210mm",
                 }}
               >
-                <CvPreview data={cvData} template={templateId} />
+                <HighlightedCvPreview
+                  data={cvData}
+                  template={templateId}
+                  suggestions={suggestions}
+                  activeSuggestionIndex={activeSuggestionIndex}
+                  onSuggestionClick={handleSuggestionHighlightClick}
+                  showHighlights={showHighlights}
+                  onToggleHighlights={() => setShowHighlights(!showHighlights)}
+                />
               </div>
             </div>
-            <Button asChild variant="outline" className="mt-4 w-full gap-2">
-              <Link to="/cv/$id" params={{ id: cvId }}>
-                <ArrowLeft className="h-4 w-4" />
-                Edit CV
-              </Link>
-            </Button>
+            <div className="mt-4 flex gap-2">
+              <Button asChild variant="outline" className="flex-1 gap-2">
+                <Link to="/cv/$id" params={{ id: cvId }}>
+                  <ArrowLeft className="h-4 w-4" />
+                  Edit CV
+                </Link>
+              </Button>
+              {suggestions.length > 0 && (
+                <Button
+                  className="flex-1 gap-2"
+                  onClick={() => setShowEditor(!showEditor)}
+                >
+                  <Highlighter className="h-4 w-4" />
+                  {showEditor ? "Tutup Editor" : "Buka Editor"}
+                </Button>
+              )}
+            </div>
           </section>
+
+          {/* Suggestion Editor */}
+          {showEditor && suggestions.length > 0 && (
+            <SuggestionEditor
+              suggestions={suggestions}
+              highlightRegions={[]}
+              activeHighlight={activeSuggestionIndex}
+              onHighlightClick={setActiveSuggestionIndex}
+              onApplySuggestion={handleApplySuggestion}
+              onApplyAll={handleApplyAllSuggestions}
+              onClose={() => setShowEditor(false)}
+            />
+          )}
         </aside>
       </main>
     </div>

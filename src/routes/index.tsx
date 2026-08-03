@@ -13,9 +13,11 @@ import {
   FileSearch,
   FileText,
   Gauge,
+  Highlighter,
   Key,
   LockKeyhole,
   MessageCircle,
+  Pencil,
   Quote,
   RefreshCw,
   Search,
@@ -643,6 +645,204 @@ function LandingPage() {
               <LockKeyhole className="h-3.5 w-3.5" />
               100% Aman & Privasi Terjamin
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* AI Highlight & Apply Suggestion Section */}
+      <section className="py-20 bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 relative overflow-hidden">
+        {/* Decorative elements */}
+        <div className="absolute top-0 left-0 w-full h-full">
+          <div className="absolute top-10 left-10 w-72 h-72 bg-yellow-200/20 rounded-full blur-3xl" />
+          <div className="absolute bottom-10 right-10 w-96 h-96 bg-orange-200/20 rounded-full blur-3xl" />
+        </div>
+
+        <div className="container-page relative z-10">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold bg-gradient-to-r from-yellow-400 to-orange-400 text-white uppercase tracking-wider shadow-lg">
+              <Highlighter className="h-4 w-4" />
+              AI SMART HIGHLIGHT
+            </span>
+            <h2 className="mt-6 font-display text-3xl sm:text-4xl lg:text-5xl font-extrabold text-gray-900 tracking-tight leading-tight">
+              AI tandai, kamu tinggal{}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-600 to-orange-600">
+                terapkan.
+              </span>
+            </h2>
+            <p className="mt-6 text-base sm:text-lg text-gray-600 max-w-2xl mx-auto">
+              Seperti punya mentor HR yang menandai bagian CV yang perlu diubah dengan stabilo kuning. Satu klik, langsung berubah!
+            </p>
+          </div>
+
+          <div className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr] items-start max-w-6xl mx-auto">
+            {/* Left: Interactive Demo Card */}
+            <div className="relative">
+              {/* Floating highlight badges */}
+              <div className="absolute -top-4 -left-2 z-20">
+                <div className="flex items-center gap-2 bg-white rounded-xl px-3 py-2 shadow-lg border border-red-100">
+                  <span className="w-3 h-3 rounded-full bg-red-400 animate-pulse" />
+                  <span className="text-xs font-bold text-red-700">Prioritas Tinggi</span>
+                </div>
+              </div>
+              <div className="absolute -top-4 right-20 z-20">
+                <div className="flex items-center gap-2 bg-white rounded-xl px-3 py-2 shadow-lg border border-yellow-100">
+                  <span className="w-3 h-3 rounded-full bg-yellow-400 animate-pulse" />
+                  <span className="text-xs font-bold text-yellow-700">Prioritas Sedang</span>
+                </div>
+              </div>
+
+              {/* Main CV Preview Card */}
+              <div className="rounded-3xl border-2 border-yellow-200 bg-white p-6 shadow-2xl shadow-yellow-100/50">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-yellow-400 to-orange-400 text-white">
+                      <Highlighter className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-gray-900">CV Preview</h3>
+                      <p className="text-xs text-gray-400">Highlight aktif</p>
+                    </div>
+                  </div>
+                  <Badge className="bg-gradient-to-r from-yellow-400 to-orange-400 text-white border-0">
+                    5 saran ditemukan
+                  </Badge>
+                </div>
+
+                {/* Mock CV Content with Highlights */}
+                <div className="space-y-4 bg-gray-50 rounded-2xl p-5">
+                  {/* Summary with highlight */}
+                  <div>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Ringkasan Profil</p>
+                    <div className="relative">
+                      <p className="text-sm text-gray-700 leading-relaxed">
+                        <span className="bg-yellow-200/70 px-1 rounded border-b-2 border-yellow-400">Bertanggung jawab atas berbagai tugas marketing</span> dan membantu tim dalam berbagai proyek.
+                      </p>
+                      {/* Highlight tooltip */}
+                      <div className="absolute -right-2 -top-2 z-10">
+                        <div className="bg-red-500 text-white text-[9px] font-bold px-2 py-1 rounded-lg shadow-md">
+                          🔴 Perlu diperbaiki
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Experience with highlight */}
+                  <div>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Pengalaman Kerja</p>
+                    <div className="relative">
+                      <p className="text-sm text-gray-700 leading-relaxed">
+                        Marketing Staff • PT Maju Bersama<br />
+                        <span className="bg-yellow-200/70 px-1 rounded border-b-2 border-yellow-400">Menjalankan tugas marketing sehari-hari</span>
+                      </p>
+                      <div className="absolute -right-2 top-6 z-10">
+                        <div className="bg-yellow-500 text-white text-[9px] font-bold px-2 py-1 rounded-lg shadow-md">
+                          🟡 Bisa lebih kuat
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Skills */}
+                  <div>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Keahlian</p>
+                    <div className="flex flex-wrap gap-2">
+                      <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-medium">Digital Marketing</span>
+                      <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-medium">SEO</span>
+                      <span className="px-2 py-1 bg-yellow-100 text-yellow-700 rounded text-xs font-medium border border-yellow-200">Content Writing</span>
+                      <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-medium">Analytics</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Action buttons */}
+                <div className="mt-6 flex gap-3">
+                  <Button className="flex-1 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white shadow-md">
+                    <Zap className="h-4 w-4 mr-2" />
+                    Terapkan Semua Saran
+                  </Button>
+                  <Button variant="outline" className="border-yellow-200 hover:bg-yellow-50">
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            {/* Right: Features List */}
+            <div className="space-y-6">
+              <div className="rounded-2xl bg-white p-6 shadow-lg border border-yellow-100 hover:shadow-xl transition-shadow">
+                <div className="flex gap-4">
+                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-yellow-100 text-yellow-700">
+                    <Target className="h-7 w-7" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-gray-900 text-lg">Highlight Otomatis</h3>
+                    <p className="text-sm text-gray-500 mt-1 leading-relaxed">
+                      AI langsung menandai bagian CV yang perlu diperbaiki dengan warna sesuai prioritas.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-2xl bg-white p-6 shadow-lg border border-orange-100 hover:shadow-xl transition-shadow">
+                <div className="flex gap-4">
+                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-orange-100 text-orange-700">
+                    <Sparkles className="h-7 w-7" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-gray-900 text-lg">Satu Klik Langsung Berubah</h3>
+                    <p className="text-sm text-gray-500 mt-1 leading-relaxed">
+                      Tidak perlu copy-paste. Klik "Terapkan" dan CV langsung diperbarui dengan versi yang lebih baik.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-2xl bg-white p-6 shadow-lg border border-amber-100 hover:shadow-xl transition-shadow">
+                <div className="flex gap-4">
+                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-amber-100 text-amber-700">
+                    <Pencil className="h-7 w-7" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-gray-900 text-lg">Edit Sebelum Terapkan</h3>
+                    <p className="text-sm text-gray-500 mt-1 leading-relaxed">
+                      Bisa edit saran AI sesuai kebutuhan sebelum diterapkan. Kamu tetap punya kendali penuh.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-2xl bg-white p-6 shadow-lg border border-green-100 hover:shadow-xl transition-shadow">
+                <div className="flex gap-4">
+                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-green-100 text-green-700">
+                    <CheckCircle2 className="h-7 w-7" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-gray-900 text-lg">Review & Scoring</h3>
+                    <p className="text-sm text-gray-500 mt-1 leading-relaxed">
+                      Tersedia di fitur CV Review HR dan ATS Scoring. Dua tools, satu workflow sempurna.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* CTA */}
+          <div className="mt-16 text-center">
+            <Button
+              asChild
+              size="lg"
+              className="h-14 px-10 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white font-bold rounded-xl shadow-lg shadow-orange-200/50 text-base"
+            >
+              <Link to="/register">
+                <Highlighter className="mr-2 h-5 w-5" />
+                Coba AI Highlight Sekarang
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Link>
+            </Button>
+            <p className="mt-4 text-sm text-gray-500">
+              Gratis untuk semua pengguna • Tidak perlu kartu kredit
+            </p>
           </div>
         </div>
       </section>

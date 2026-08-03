@@ -7,12 +7,14 @@ import {
   FileSearch,
   FileText,
   GitBranch,
+  Highlighter,
   LayoutDashboard,
   RefreshCw,
   Share2,
   ShieldCheck,
   Sparkles,
   Wrench,
+  Zap,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -36,6 +38,40 @@ export const Route = createFileRoute("/changelog")({
 const changelog = [
   {
     version: APP_VERSION,
+    date: "30 Juli 2026",
+    title: "AI Smart Highlight & Apply Suggestion",
+    summary:
+      "Fitur baru yang memungkinkan AI menandai bagian CV yang perlu diperbaiki dengan highlight berwarna, dan pengguna bisa menerapkan saran AI dengan satu klik langsung ke CV.",
+    highlights: [
+      {
+        icon: Highlighter,
+        type: "Fitur baru",
+        text: "AI Smart Highlight yang secara otomatis menandai teks di CV yang perlu diubah dengan warna sesuai prioritas (merah: tinggi, kuning: sedang, hijau: rendah).",
+      },
+      {
+        icon: Zap,
+        type: "Fitur baru",
+        text: "Suggestion Editor yang memungkinkan pengguna melihat, mengedit, dan menerapkan saran AI langsung ke CV dengan satu klik.",
+      },
+      {
+        icon: Sparkles,
+        type: "Fitur baru",
+        text: "Tombol 'Terapkan Semua Saran' untuk menerapkan semua rekomendasi AI sekaligus tanpa perlu satu per satu.",
+      },
+      {
+        icon: FileText,
+        type: "Peningkatan",
+        text: "Integrasi highlight pada halaman CV Review HR dan ATS Scoring untuk pengalaman review yang lebih visual dan interaktif.",
+      },
+      {
+        icon: LayoutDashboard,
+        type: "Peningkatan",
+        text: "Preview CV dengan overlay highlight yang menunjukkan lokasi saran perbaikan secara visual pada dokumen.",
+      },
+    ],
+  },
+  {
+    version: "v1.7.0-live",
     date: "9 Juli 2026",
     title: "Penambahan Fitur Enhance Foto CV Profesional",
     summary:

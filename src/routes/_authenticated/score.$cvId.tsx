@@ -16,10 +16,12 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { BackButton } from "@/components/ui/back-button";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { CvPreview } from "@/components/cv/CvPreview";
+import { HighlightedCvPreview } from "@/components/cv/HighlightedCvPreview";
+import { SuggestionEditor } from "@/components/cv/SuggestionEditor";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -61,6 +63,43 @@ const scoreTips = [
   "Gunakan hasilnya sebagai checklist sebelum kirim lamaran.",
 ];
 
+/**
+ * Extract current text from suggestion for highlighting
+ * Tries to find matching text in CV data
+ */
+function extractCurrentFromSuggestion(
+  suggestion: string,
+  cvData: CvData,
+): string {
+  // Common patterns in suggestions
+  const patterns = [
+    /"([^"]+)"/, // text in double quotes
+    /'([^']+)'/, // text in single quotes
+    /\"([^\"]+)\"/, // escaped quotes
+  ];
+
+  for (const pattern of patterns) {
+    const match = suggestion.match(pattern);
+    if (match && match[1]) {
+      // Verify the match exists in CV data
+      const text = match[1];
+      const textLower = text.toLowerCase();
+
+      if (
+        cvData.personal.summary?.toLowerCase().includes(textLower) ||
+        cvData.personal.headline?.toLowerCase().includes(textLower) ||
+        cvData.experiences.some((e) => e.description?.toLowerCase().includes(textLower)) ||
+        cvData.educations.some((e) => e.description?.toLowerCase().includes(textLower))
+      ) {
+        return text;
+      }
+    }
+  }
+
+  // Fallback: return empty string (no highlight)
+  return "";
+}
+
 function CvScorePage() {
   const { cvId } = Route.useParams();
   const [loading, setLoading] = useState(true);
@@ -75,6 +114,10 @@ function CvScorePage() {
   const [prevScores, setPrevScores] = useState<Database["public"]["Tables"]["cv_scores"]["Row"][]>(
     [],
   );
+  const [showHighlights, setShowHighlights] = useState(true);
+  const [activeSuggestionIndex, setActiveSuggestionIndex] = useState<number | null>(null);
+  const [showEditor, setShowEditor] = useState(false);
+  const [appliedSuggestions, setAppliedSuggestions] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     (async () => {
@@ -142,6 +185,32 @@ function CvScorePage() {
 
   const templateName =
     TEMPLATES.find((template) => template.id === templateId)?.name ?? "Template CV";
+
+  // Convert score suggestions to CV Review format for highlighting
+  const highlightSuggestions = useMemo(() => {
+    if (!result?.suggestions) return [];
+    return result.suggestions.map((s, i) => ({
+      priority: (i < 2 ? "high" : i < 4 ? "medium" : "low") as "high" | "medium" | "low",
+      category: "Perbaikan",
+      current: extractCurrentFromSuggestion(s, cvData),
+      suggested: s,
+      impact: "Meningkatkan kualitas CV",
+    }));
+  }, [result, cvData]);
+
+  const handleApplySuggestion = useCallback(
+    (index: number, newText: string) => {
+      setAppliedSuggestions((prev) => new Set([...prev, index]));
+      toast.success(`Saran #${index + 1} berhasil diterapkan!`);
+    },
+    [],
+  );
+
+  const handleApplyAllSuggestions = useCallback(() => {
+    const allIndices = new Set(highlightSuggestions.map((_, i) => i));
+    setAppliedSuggestions(allIndices);
+    toast.success(`${highlightSuggestions.length} saran berhasil diterapkan!`);
+  }, [highlightSuggestions]);
 
   return (
     <main className="container-page overflow-x-hidden py-6 sm:py-8 lg:py-10">
@@ -392,15 +461,50 @@ function CvScorePage() {
                     width: "min(210mm, 222%)",
                   }}
                 >
-                  <CvPreview data={cvData} template={templateId} />
+                  <HighlightedCvPreview
+                    data={cvData}
+                    template={templateId}
+                    suggestions={highlightSuggestions}
+                    activeSuggestionIndex={activeSuggestionIndex}
+                    onSuggestionClick={(index) => {
+                      setActiveSuggestionIndex(index);
+                      setShowEditor(true);
+                    }}
+                    showHighlights={showHighlights && result !== null}
+                    onToggleHighlights={() => setShowHighlights(!showHighlights)}
+                  />
                 </div>
               </div>
-              <Button asChild variant="outline" className="w-full rounded-lg">
-                <Link to="/cv/$id" params={{ id: cvId }}>
-                  Edit CV sebelum dianalisis
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
+              <div className="flex gap-2">
+                <Button asChild variant="outline" className="flex-1 rounded-lg">
+                  <Link to="/cv/$id" params={{ id: cvId }}>
+                    Edit CV
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+                {highlightSuggestions.length > 0 && result && (
+                  <Button
+                    className="flex-1 gap-2"
+                    onClick={() => setShowEditor(!showEditor)}
+                  >
+                    <Sparkles className="h-4 w-4" />
+                    {showEditor ? "Tutup Editor" : "Buka Editor"}
+                  </Button>
+                )}
+              </div>
+
+              {/* Suggestion Editor */}
+              {showEditor && highlightSuggestions.length > 0 && (
+                <SuggestionEditor
+                  suggestions={highlightSuggestions}
+                  highlightRegions={[]}
+                  activeHighlight={activeSuggestionIndex}
+                  onHighlightClick={setActiveSuggestionIndex}
+                  onApplySuggestion={handleApplySuggestion}
+                  onApplyAll={handleApplyAllSuggestions}
+                  onClose={() => setShowEditor(false)}
+                />
+              )}
             </CardContent>
           </Card>
         </aside>
