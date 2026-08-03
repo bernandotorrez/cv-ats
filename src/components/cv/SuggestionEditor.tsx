@@ -82,6 +82,13 @@ export function SuggestionEditor({
     setEditingIndex(null);
   };
 
+  const handleApplyAll = () => {
+    onApplyAll();
+    // Mark all suggestions as applied
+    const allIndices = new Set(suggestions.map((_, i) => i));
+    setAppliedIndices(allIndices);
+  };
+
   const handleCopySuggestion = (text: string) => {
     navigator.clipboard.writeText(text);
   };
@@ -228,7 +235,7 @@ export function SuggestionEditor({
           <Button
             variant="outline"
             className="flex-1 gap-2"
-            onClick={onApplyAll}
+            onClick={handleApplyAll}
             disabled={appliedCount === totalSuggestions}
           >
             <Sparkles className="h-4 w-4" />
