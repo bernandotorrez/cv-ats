@@ -91,6 +91,8 @@ interface Suggestion {
   current: string;
   suggested: string;
   impact: string;
+  targetSection?: string;
+  bulletIndex?: number | null;
 }
 
 export function CVReviewPanel({ cvData, cvId, onReviewComplete, className }: CVReviewPanelProps) {

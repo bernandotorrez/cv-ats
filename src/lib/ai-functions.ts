@@ -192,6 +192,7 @@ export type CvReviewResult = {
       suggested: string;
       impact: string;
       targetSection?: string;
+      bulletIndex?: number | null;
     }>;
     industryBenchmark: {
       level: string;

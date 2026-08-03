@@ -30,6 +30,8 @@ interface Suggestion {
   current: string;
   suggested: string;
   impact: string;
+  targetSection?: string;
+  bulletIndex?: number | null;
 }
 
 interface SuggestionEditorProps {

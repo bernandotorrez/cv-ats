@@ -87,6 +87,17 @@ PENDEKATAN REVIEW:
 
 FORMAT REVIEW:
 
+## ⚠️ ATURAN PENTING UNTUK JOB DESCRIPTION:
+- Deskripsi pengalaman kerja (experiences[].description) ditampilkan dengan format [Bullet 0], [Bullet 1], dst untuk setiap bullet point
+- Jika saranmu HANYA untuk SATU bullet point tertentu, WAJIB gunakan field 'bulletIndex' untuk menunjukkan bullet keberapa (0-indexed)
+- JANGAN mengganti seluruh description jika hanya 1-2 bullet point yang perlu diubah
+- Contoh: Jika experiences[0].description punya 5 bullet points dan kamu ingin mengubah bullet ke-3, gunakan:
+  * targetSection: "experiences[0].description"
+  * bulletIndex: 2 (karena 0-indexed, jadi [Bullet 2] = bullet ke-3)
+  * currentText: text exact dari bullet point tersebut (TANPA prefix [Bullet X])
+  * suggestedText: text pengganti untuk bullet point tersebut SAJA (TANPA prefix)
+- PENTING: JANGAN sertakan prefix [Bullet X] di currentText atau suggestedText!
+
 ## 🎯 SKOR KESELURUHAN (0-100)
 Total skor adalah rata-rata tertimbang dari 5 sub-kategori di bawah. SETIAP sub-kategori dinilai 0-100:
 - First Impression (0-100): Apakah CV langsung menarik perhatian rekruter?
@@ -140,7 +151,8 @@ OUTPUT: WAJIB JSON valid ${getLanguageInstruction(lang)} (tanpa markdown wrapper
       "category": "format" | "content" | "achievement" | "writing" | "keyword" | "summary" | "experience" | "headline",
       "currentText": "TEXT EXACT yang ada di CV (WAJIB diisi jika ada)",
       "targetSection": "personal.summary | experiences[N].description | educations[N].description | personal.headline",
-      "suggestedText": "text pengganti yang harus diterapkan",
+      "bulletIndex": number | null (WAJIB diisi jika targetSection adalah experiences[N].description dan hanya 1 bullet point yang diubah, 0-indexed, null jika mengganti seluruh description),
+      "suggestedText": "text pengganti yang harus diterapkan (hanya untuk bullet point tersebut jika bulletIndex diisi)",
       "impact": "dampak jika diubah"
     }
   ],
@@ -244,6 +256,7 @@ ${hrPersonaPrompt}`;
             suggested: s.suggestedText || s.suggested || "",
             impact: s.impact || "",
             targetSection: s.targetSection || "",
+            bulletIndex: s.bulletIndex !== undefined ? s.bulletIndex : null,
           })),
           industryBenchmark: parsed.industryBenchmark || {},
           hrVerdict: parsed.hrVerdict || {},
@@ -293,7 +306,14 @@ function extractCvText(cvData: Record<string, unknown>): string {
       lines.push(
         `   Periode: ${exp.startDate || "-"} - ${exp.current ? "Sekarang" : exp.endDate || "-"}`,
       );
-      if (exp.description) lines.push(`   Deskripsi: ${exp.description}`);
+      if (exp.description) {
+        // Show description with bullet indices for AI to reference
+        const descLines = (exp.description as string).split("\n").filter(line => line.trim() !== "");
+        lines.push(`   Deskripsi (${descLines.length} bullet points):`);
+        descLines.forEach((line, bulletIdx) => {
+          lines.push(`     [Bullet ${bulletIdx}] ${line}`);
+        });
+      }
     });
   }
 

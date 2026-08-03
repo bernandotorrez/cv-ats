@@ -281,18 +281,53 @@ function CvReviewPage() {
       const updatedCvData = JSON.parse(JSON.stringify(cvData)); // Deep clone
       const categoryLower = suggestion.category.toLowerCase();
       const currentText = suggestion.current?.trim() || "";
-      const targetSection = (suggestion as any).targetSection || "";
+      const targetSection = suggestion.targetSection || "";
+      const bulletIndex = suggestion.bulletIndex;
       let applied = false;
 
+      // Helper: replace specific bullet point in description
+      const replaceBulletPoint = (description: string, bulletIdx: number, newBulletText: string): string => {
+        // Split by newline and keep all lines (including empty ones for formatting)
+        const lines = description.split("\n");
+        
+        // Find non-empty lines to determine which bullet to replace
+        let nonEmptyCount = 0;
+        for (let i = 0; i < lines.length; i++) {
+          const trimmed = lines[i].trim();
+          if (trimmed !== "") {
+            if (nonEmptyCount === bulletIdx) {
+              // Preserve bullet prefix if exists (-, •, *, 1., etc.)
+              const bulletMatch = trimmed.match(/^([\-•*\d]+\.?\s*)/);
+              const prefix = bulletMatch ? bulletMatch[1] : "";
+              // Remove old prefix from new text if it already has one
+              let cleanNewText = newBulletText;
+              const newBulletMatch = newBulletText.match(/^([\-•*\d]+\.?\s*)/);
+              if (newBulletMatch) {
+                cleanNewText = newBulletText.substring(newBulletMatch[1].length);
+              }
+              lines[i] = prefix + cleanNewText;
+              break;
+            }
+            nonEmptyCount++;
+          }
+        }
+        return lines.join("\n");
+      };
+
       // Helper: set value by path like "experiences[0].description"
-      const setValueByPath = (obj: any, path: string, value: string): boolean => {
+      const setValueByPath = (obj: any, path: string, value: string, bulletIdx?: number | null): boolean => {
         try {
           const match = path.match(/^(\w+)\[(\d+)\]\.(\w+)$/);
           if (match) {
             const [, arrayName, indexStr, field] = match;
             const idx = parseInt(indexStr);
             if (obj[arrayName] && obj[arrayName][idx]) {
-              obj[arrayName][idx][field] = value;
+              // If bulletIndex is provided and field is description, replace only that bullet
+              if (bulletIdx !== null && bulletIdx !== undefined && field === "description") {
+                obj[arrayName][idx][field] = replaceBulletPoint(obj[arrayName][idx][field] || "", bulletIdx, value);
+              } else {
+                obj[arrayName][idx][field] = value;
+              }
               return true;
             }
           } else if (path.includes(".")) {
@@ -313,7 +348,7 @@ function CvReviewPage() {
 
       // 1) Try targetSection first (most reliable)
       if (targetSection && !applied) {
-        applied = setValueByPath(updatedCvData, targetSection, newText);
+        applied = setValueByPath(updatedCvData, targetSection, newText, bulletIndex);
       }
 
       // 2) Try to find currentText in CV
@@ -333,8 +368,14 @@ function CvReviewPage() {
         // Try experiences
         if (!applied) {
           for (let i = 0; i < updatedCvData.experiences.length; i++) {
-            if (searchIn(updatedCvData.experiences[i].description || "")) {
-              updatedCvData.experiences[i].description = doReplace(updatedCvData.experiences[i].description);
+            const desc = updatedCvData.experiences[i].description || "";
+            if (searchIn(desc)) {
+              // If bulletIndex is provided, replace only that bullet
+              if (bulletIndex !== null && bulletIndex !== undefined) {
+                updatedCvData.experiences[i].description = replaceBulletPoint(desc, bulletIndex, newText);
+              } else {
+                updatedCvData.experiences[i].description = doReplace(desc);
+              }
               applied = true;
               break;
             }
@@ -367,14 +408,22 @@ function CvReviewPage() {
             for (let i = 0; i < updatedCvData.experiences.length; i++) {
               const exp = updatedCvData.experiences[i];
               if (exp.company && currentText.includes(exp.company)) {
-                updatedCvData.experiences[i].description = newText;
+                if (bulletIndex !== null && bulletIndex !== undefined) {
+                  updatedCvData.experiences[i].description = replaceBulletPoint(exp.description || "", bulletIndex, newText);
+                } else {
+                  updatedCvData.experiences[i].description = newText;
+                }
                 applied = true;
                 break;
               }
             }
           }
           if (!applied) {
-            updatedCvData.experiences[0].description = newText;
+            if (bulletIndex !== null && bulletIndex !== undefined) {
+              updatedCvData.experiences[0].description = replaceBulletPoint(updatedCvData.experiences[0].description || "", bulletIndex, newText);
+            } else {
+              updatedCvData.experiences[0].description = newText;
+            }
             applied = true;
           }
         } else {
@@ -410,15 +459,49 @@ function CvReviewPage() {
     const updatedCvData = JSON.parse(JSON.stringify(cvData)); // Deep clone
     let appliedCount = 0;
 
+    // Helper: replace specific bullet point in description
+    const replaceBulletPoint = (description: string, bulletIdx: number, newBulletText: string): string => {
+      // Split by newline and keep all lines (including empty ones for formatting)
+      const lines = description.split("\n");
+      
+      // Find non-empty lines to determine which bullet to replace
+      let nonEmptyCount = 0;
+      for (let i = 0; i < lines.length; i++) {
+        const trimmed = lines[i].trim();
+        if (trimmed !== "") {
+          if (nonEmptyCount === bulletIdx) {
+            // Preserve bullet prefix if exists (-, •, *, 1., etc.)
+            const bulletMatch = trimmed.match(/^([\-•*\d]+\.?\s*)/);
+            const prefix = bulletMatch ? bulletMatch[1] : "";
+            // Remove old prefix from new text if it already has one
+            let cleanNewText = newBulletText;
+            const newBulletMatch = newBulletText.match(/^([\-•*\d]+\.?\s*)/);
+            if (newBulletMatch) {
+              cleanNewText = newBulletText.substring(newBulletMatch[1].length);
+            }
+            lines[i] = prefix + cleanNewText;
+            break;
+          }
+          nonEmptyCount++;
+        }
+      }
+      return lines.join("\n");
+    };
+
     // Helper: set value by path
-    const setValueByPath = (obj: any, path: string, value: string): boolean => {
+    const setValueByPath = (obj: any, path: string, value: string, bulletIdx?: number | null): boolean => {
       try {
         const match = path.match(/^(\w+)\[(\d+)\]\.(\w+)$/);
         if (match) {
           const [, arrayName, indexStr, field] = match;
           const idx = parseInt(indexStr);
           if (obj[arrayName] && obj[arrayName][idx]) {
-            obj[arrayName][idx][field] = value;
+            // If bulletIndex is provided and field is description, replace only that bullet
+            if (bulletIdx !== null && bulletIdx !== undefined && field === "description") {
+              obj[arrayName][idx][field] = replaceBulletPoint(obj[arrayName][idx][field] || "", bulletIdx, value);
+            } else {
+              obj[arrayName][idx][field] = value;
+            }
             return true;
           }
         } else if (path.includes(".")) {
@@ -440,12 +523,13 @@ function CvReviewPage() {
     suggestions.forEach((suggestion) => {
       const categoryLower = suggestion.category.toLowerCase();
       const currentText = suggestion.current?.trim() || "";
-      const targetSection = (suggestion as any).targetSection || "";
+      const targetSection = suggestion.targetSection || "";
+      const bulletIndex = suggestion.bulletIndex;
       let applied = false;
 
       // 1) Try targetSection first
       if (targetSection) {
-        applied = setValueByPath(updatedCvData, targetSection, suggestion.suggested);
+        applied = setValueByPath(updatedCvData, targetSection, suggestion.suggested, bulletIndex);
       }
 
       // 2) Try to find currentText
@@ -463,8 +547,14 @@ function CvReviewPage() {
 
         if (!applied) {
           for (let i = 0; i < updatedCvData.experiences.length; i++) {
-            if (searchIn(updatedCvData.experiences[i].description || "")) {
-              updatedCvData.experiences[i].description = doReplace(updatedCvData.experiences[i].description);
+            const desc = updatedCvData.experiences[i].description || "";
+            if (searchIn(desc)) {
+              // If bulletIndex is provided, replace only that bullet
+              if (bulletIndex !== null && bulletIndex !== undefined) {
+                updatedCvData.experiences[i].description = replaceBulletPoint(desc, bulletIndex, suggestion.suggested);
+              } else {
+                updatedCvData.experiences[i].description = doReplace(desc);
+              }
               applied = true;
               break;
             }
@@ -485,7 +575,11 @@ function CvReviewPage() {
           updatedCvData.personal.headline = suggestion.suggested;
           applied = true;
         } else if (isExperience && updatedCvData.experiences.length > 0) {
-          updatedCvData.experiences[0].description = suggestion.suggested;
+          if (bulletIndex !== null && bulletIndex !== undefined) {
+            updatedCvData.experiences[0].description = replaceBulletPoint(updatedCvData.experiences[0].description || "", bulletIndex, suggestion.suggested);
+          } else {
+            updatedCvData.experiences[0].description = suggestion.suggested;
+          }
           applied = true;
         } else {
           updatedCvData.personal.summary = suggestion.suggested;
