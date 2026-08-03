@@ -129,6 +129,7 @@ type EditorTab = "form" | "preview" | "score"; // mobile tabs
 
 function CvEditorPage() {
   const { id } = Route.useParams();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const search = Route.useSearch() as { guided?: string };
   const [title, setTitle] = useState("CV Baru");
@@ -934,6 +935,7 @@ function CvEditorPage() {
           overallScore={localScore.overallScore}
           breakdown={localScore.breakdown}
           suggestions={localScore.suggestions}
+          onFixWithAi={() => navigate({ to: "/cv-review/$cvId", params: { cvId: id } })}
           compact
           className="w-72 shadow-xl shadow-slate-900/15 border-primary/20"
         />

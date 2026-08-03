@@ -194,6 +194,19 @@ export function EditorToolbar({
             <span className="hidden sm:inline">Upload CV</span>
           </Button>
 
+          {/* Review CV AI */}
+          <Button
+            asChild
+            size="sm"
+            className="h-9 gap-1.5 rounded-xl px-3 text-xs font-semibold shadow-sm bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white border-0"
+            title="Review CV dengan AI HR"
+          >
+            <Link to="/cv-review/$cvId" params={{ cvId: id }}>
+              <Sparkles className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Review CV AI</span>
+            </Link>
+          </Button>
+
           {/* Tools */}
           <Button asChild variant="ghost" size="sm" className="h-9 w-9 rounded-xl p-0">
             <Link to="/tools" search={{ cvId: id }}>
