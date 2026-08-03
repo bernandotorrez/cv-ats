@@ -105,7 +105,12 @@ Yang perlu DIPERBAIKI dengan urgensi tinggi
 
 ## 💡 SARAN SPESIFIK (5-7 actionable items)
 Saran KONKRET dan DAPAT DIIMPLEMENTASI langsung:
-- Contoh: "Ubah 'Bertanggung jawab atas penjualan' → 'Meningkatkan penjualan 35% dalam 8 bulan (Rp 500jt target → Rp 675jt tercapai)'"
+- PRIORITAS: Selalu berikan TEXT EXACT yang ada di CV untuk field 'currentText'
+- Jika tidak ada text exact, gunakan field 'targetSection' untuk menunjukkan lokasi
+- Contoh format yang BENAR:
+  * currentText: "Bertanggung jawab atas penjualan" (text yang ada di CV)
+  * suggestedText: "Meningkatkan penjualan 35% dalam 8 bulan (Rp 500jt target → Rp 675jt tercapai)" (text pengganti)
+  * targetSection: "experiences[0].description" (jika tidak ada text exact)
 - Prioritas: Urutkan dari dampak tertinggi ke terendah
 
 ## 📊 PERBANDINGAN DENGAN STANDAR INDUSTRI
@@ -132,9 +137,10 @@ OUTPUT: WAJIB JSON valid ${getLanguageInstruction(lang)} (tanpa markdown wrapper
   "suggestions": [
     {
       "priority": "high" | "medium" | "low",
-      "category": "format" | "content" | "achievement" | "writing" | "keyword",
-      "current": "kondisi saat ini",
-      "suggested": "rekomendasi perbaikan",
+      "category": "format" | "content" | "achievement" | "writing" | "keyword" | "summary" | "experience" | "headline",
+      "currentText": "TEXT EXACT yang ada di CV (WAJIB diisi jika ada)",
+      "targetSection": "personal.summary | experiences[N].description | educations[N].description | personal.headline",
+      "suggestedText": "text pengganti yang harus diterapkan",
       "impact": "dampak jika diubah"
     }
   ],
@@ -231,7 +237,14 @@ ${hrPersonaPrompt}`;
           },
           strengths: parsed.strengths || [],
           weaknesses: parsed.weaknesses || [],
-          suggestions: parsed.suggestions || [],
+          suggestions: (parsed.suggestions || []).map((s: any) => ({
+            priority: s.priority || "medium",
+            category: s.category || "content",
+            current: s.currentText || s.current || "",
+            suggested: s.suggestedText || s.suggested || "",
+            impact: s.impact || "",
+            targetSection: s.targetSection || "",
+          })),
           industryBenchmark: parsed.industryBenchmark || {},
           hrVerdict: parsed.hrVerdict || {},
           quickWins: parsed.quickWins || [],

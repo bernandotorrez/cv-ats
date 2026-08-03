@@ -281,17 +281,43 @@ function CvReviewPage() {
       const updatedCvData = JSON.parse(JSON.stringify(cvData)); // Deep clone
       const categoryLower = suggestion.category.toLowerCase();
       const currentText = suggestion.current?.trim() || "";
+      const targetSection = (suggestion as any).targetSection || "";
       let applied = false;
 
-      // Simple approach: use category to determine where to apply
-      const isSummary = categoryLower.includes("summary") || categoryLower.includes("ringkasan") || categoryLower.includes("profil") || categoryLower.includes("content");
-      const isExperience = categoryLower.includes("experience") || categoryLower.includes("pengalaman") || categoryLower.includes("bullet") || categoryLower.includes("achievement");
-      const isEducation = categoryLower.includes("education") || categoryLower.includes("pendidikan");
-      const isSkill = categoryLower.includes("skill") || categoryLower.includes("keahlian");
-      const isHeadline = categoryLower.includes("headline") || categoryLower.includes("judul") || categoryLower.includes("title");
+      // Helper: set value by path like "experiences[0].description"
+      const setValueByPath = (obj: any, path: string, value: string): boolean => {
+        try {
+          const match = path.match(/^(\w+)\[(\d+)\]\.(\w+)$/);
+          if (match) {
+            const [, arrayName, indexStr, field] = match;
+            const idx = parseInt(indexStr);
+            if (obj[arrayName] && obj[arrayName][idx]) {
+              obj[arrayName][idx][field] = value;
+              return true;
+            }
+          } else if (path.includes(".")) {
+            const parts = path.split(".");
+            let current = obj;
+            for (let i = 0; i < parts.length - 1; i++) {
+              current = current[parts[i]];
+              if (!current) return false;
+            }
+            current[parts[parts.length - 1]] = value;
+            return true;
+          }
+          return false;
+        } catch {
+          return false;
+        }
+      };
 
-      // If we have currentText, try to find and replace it
-      if (currentText && currentText.length > 10) {
+      // 1) Try targetSection first (most reliable)
+      if (targetSection && !applied) {
+        applied = setValueByPath(updatedCvData, targetSection, newText);
+      }
+
+      // 2) Try to find currentText in CV
+      if (!applied && currentText && currentText.length > 10) {
         const searchIn = (text: string) => text?.toLowerCase().includes(currentText.toLowerCase());
         const doReplace = (text: string) => {
           const escaped = currentText.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -299,15 +325,13 @@ function CvReviewPage() {
         };
 
         // Try summary
-        if (!applied && (isSummary || !isExperience)) {
-          if (searchIn(updatedCvData.personal.summary || "")) {
-            updatedCvData.personal.summary = doReplace(updatedCvData.personal.summary);
-            applied = true;
-          }
+        if (!applied && searchIn(updatedCvData.personal.summary || "")) {
+          updatedCvData.personal.summary = doReplace(updatedCvData.personal.summary);
+          applied = true;
         }
 
         // Try experiences
-        if (!applied && (isExperience || !isSummary)) {
+        if (!applied) {
           for (let i = 0; i < updatedCvData.experiences.length; i++) {
             if (searchIn(updatedCvData.experiences[i].description || "")) {
               updatedCvData.experiences[i].description = doReplace(updatedCvData.experiences[i].description);
@@ -318,33 +342,39 @@ function CvReviewPage() {
         }
 
         // Try headline
-        if (!applied && isHeadline) {
-          if (searchIn(updatedCvData.personal.headline || "")) {
-            updatedCvData.personal.headline = doReplace(updatedCvData.personal.headline);
-            applied = true;
-          }
+        if (!applied && searchIn(updatedCvData.personal.headline || "")) {
+          updatedCvData.personal.headline = doReplace(updatedCvData.personal.headline);
+          applied = true;
         }
       }
 
-      // If no exact match, apply based on category
+      // 3) Fallback: apply based on category
       if (!applied) {
+        const isSummary = categoryLower.includes("summary") || categoryLower.includes("ringkasan") || categoryLower.includes("profil") || categoryLower.includes("content");
+        const isExperience = categoryLower.includes("experience") || categoryLower.includes("pengalaman") || categoryLower.includes("bullet") || categoryLower.includes("achievement");
+        const isHeadline = categoryLower.includes("headline") || categoryLower.includes("judul") || categoryLower.includes("title");
+
         if (isSummary) {
           updatedCvData.personal.summary = newText;
           applied = true;
         } else if (isHeadline) {
           updatedCvData.personal.headline = newText;
           applied = true;
-        } else if (isExperience) {
-          if (updatedCvData.experiences.length > 0) {
-            // Append to first experience description
-            const current = updatedCvData.experiences[0].description || "";
-            updatedCvData.experiences[0].description = current ? `${current}\n${newText}` : newText;
-            applied = true;
+        } else if (isExperience && updatedCvData.experiences.length > 0) {
+          // Find experience to update based on context
+          if (currentText) {
+            // Try to find which experience matches
+            for (let i = 0; i < updatedCvData.experiences.length; i++) {
+              const exp = updatedCvData.experiences[i];
+              if (exp.company && currentText.includes(exp.company)) {
+                updatedCvData.experiences[i].description = newText;
+                applied = true;
+                break;
+              }
+            }
           }
-        } else if (isEducation) {
-          if (updatedCvData.educations.length > 0) {
-            const current = updatedCvData.educations[0].description || "";
-            updatedCvData.educations[0].description = current ? `${current}\n${newText}` : newText;
+          if (!applied) {
+            updatedCvData.experiences[0].description = newText;
             applied = true;
           }
         } else {
@@ -380,33 +410,58 @@ function CvReviewPage() {
     const updatedCvData = JSON.parse(JSON.stringify(cvData)); // Deep clone
     let appliedCount = 0;
 
+    // Helper: set value by path
+    const setValueByPath = (obj: any, path: string, value: string): boolean => {
+      try {
+        const match = path.match(/^(\w+)\[(\d+)\]\.(\w+)$/);
+        if (match) {
+          const [, arrayName, indexStr, field] = match;
+          const idx = parseInt(indexStr);
+          if (obj[arrayName] && obj[arrayName][idx]) {
+            obj[arrayName][idx][field] = value;
+            return true;
+          }
+        } else if (path.includes(".")) {
+          const parts = path.split(".");
+          let current = obj;
+          for (let i = 0; i < parts.length - 1; i++) {
+            current = current[parts[i]];
+            if (!current) return false;
+          }
+          current[parts[parts.length - 1]] = value;
+          return true;
+        }
+        return false;
+      } catch {
+        return false;
+      }
+    };
+
     suggestions.forEach((suggestion) => {
       const categoryLower = suggestion.category.toLowerCase();
       const currentText = suggestion.current?.trim() || "";
+      const targetSection = (suggestion as any).targetSection || "";
       let applied = false;
 
-      const isSummary = categoryLower.includes("summary") || categoryLower.includes("ringkasan") || categoryLower.includes("profil") || categoryLower.includes("content");
-      const isExperience = categoryLower.includes("experience") || categoryLower.includes("pengalaman") || categoryLower.includes("bullet") || categoryLower.includes("achievement");
-      const isHeadline = categoryLower.includes("headline") || categoryLower.includes("judul") || categoryLower.includes("title");
+      // 1) Try targetSection first
+      if (targetSection) {
+        applied = setValueByPath(updatedCvData, targetSection, suggestion.suggested);
+      }
 
-      // If we have currentText, try to find and replace it
-      if (currentText && currentText.length > 10) {
+      // 2) Try to find currentText
+      if (!applied && currentText && currentText.length > 10) {
         const searchIn = (text: string) => text?.toLowerCase().includes(currentText.toLowerCase());
         const doReplace = (text: string) => {
           const escaped = currentText.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
           return text.replace(new RegExp(escaped, "gi"), suggestion.suggested);
         };
 
-        // Try summary
-        if (!applied && isSummary) {
-          if (searchIn(updatedCvData.personal.summary || "")) {
-            updatedCvData.personal.summary = doReplace(updatedCvData.personal.summary);
-            applied = true;
-          }
+        if (searchIn(updatedCvData.personal.summary || "")) {
+          updatedCvData.personal.summary = doReplace(updatedCvData.personal.summary);
+          applied = true;
         }
 
-        // Try experiences
-        if (!applied && isExperience) {
+        if (!applied) {
           for (let i = 0; i < updatedCvData.experiences.length; i++) {
             if (searchIn(updatedCvData.experiences[i].description || "")) {
               updatedCvData.experiences[i].description = doReplace(updatedCvData.experiences[i].description);
@@ -417,22 +472,22 @@ function CvReviewPage() {
         }
       }
 
-      // If no exact match, apply based on category
+      // 3) Fallback based on category
       if (!applied) {
+        const isSummary = categoryLower.includes("summary") || categoryLower.includes("ringkasan") || categoryLower.includes("content");
+        const isExperience = categoryLower.includes("experience") || categoryLower.includes("pengalaman") || categoryLower.includes("achievement");
+        const isHeadline = categoryLower.includes("headline") || categoryLower.includes("judul");
+
         if (isSummary) {
           updatedCvData.personal.summary = suggestion.suggested;
           applied = true;
         } else if (isHeadline) {
           updatedCvData.personal.headline = suggestion.suggested;
           applied = true;
-        } else if (isExperience) {
-          if (updatedCvData.experiences.length > 0) {
-            const current = updatedCvData.experiences[0].description || "";
-            updatedCvData.experiences[0].description = current ? `${current}\n${suggestion.suggested}` : suggestion.suggested;
-            applied = true;
-          }
+        } else if (isExperience && updatedCvData.experiences.length > 0) {
+          updatedCvData.experiences[0].description = suggestion.suggested;
+          applied = true;
         } else {
-          // Default: apply to summary
           updatedCvData.personal.summary = suggestion.suggested;
           applied = true;
         }
