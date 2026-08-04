@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as VerifyEmailRouteImport } from './routes/verify-email'
+import { Route as TryoutCpnsRouteImport } from './routes/tryout-cpns'
 import { Route as TipsInterviewRouteImport } from './routes/tips-interview'
 import { Route as TentangRouteImport } from './routes/tentang'
 import { Route as TemplateRouteImport } from './routes/template'
@@ -41,6 +42,7 @@ import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as ApiHeadersCheckRouteImport } from './routes/api.headers-check'
 import { Route as ApiAiCvReviewRouteImport } from './routes/api/ai-cv-review'
+import { Route as AuthenticatedTryoutRouteImport } from './routes/_authenticated/tryout'
 import { Route as AuthenticatedSimulasiWawancaraRouteImport } from './routes/_authenticated/simulasi-wawancara'
 import { Route as AuthenticatedReferralRouteImport } from './routes/_authenticated/referral'
 import { Route as AuthenticatedLamaranRouteImport } from './routes/_authenticated/lamaran'
@@ -55,20 +57,31 @@ import { Route as AuthenticatedScoreIndexRouteImport } from './routes/_authentic
 import { Route as AuthenticatedCvIndexRouteImport } from './routes/_authenticated/cv.index'
 import { Route as AuthenticatedCvReviewIndexRouteImport } from './routes/_authenticated/cv-review.index'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
+import { Route as AuthenticatedTryoutLeaderboardRouteImport } from './routes/_authenticated/tryout.leaderboard'
+import { Route as AuthenticatedTryoutBeliRouteImport } from './routes/_authenticated/tryout.beli'
+import { Route as AuthenticatedTryoutExamIdRouteImport } from './routes/_authenticated/tryout.$examId'
 import { Route as AuthenticatedSimulasiWawancaraIdRouteImport } from './routes/_authenticated/simulasi-wawancara.$id'
 import { Route as AuthenticatedScoreCvIdRouteImport } from './routes/_authenticated/score.$cvId'
 import { Route as AuthenticatedCvIdRouteImport } from './routes/_authenticated/cv.$id'
 import { Route as AuthenticatedCvReviewCvIdRouteImport } from './routes/_authenticated/cv-review.$cvId'
 import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin/users'
+import { Route as AuthenticatedAdminTryoutRouteImport } from './routes/_authenticated/admin/tryout'
 import { Route as AuthenticatedAdminTemplatesRouteImport } from './routes/_authenticated/admin/templates'
 import { Route as AuthenticatedAdminJobsRouteImport } from './routes/_authenticated/admin/jobs'
+import { Route as AuthenticatedTryoutExamIdUjianRouteImport } from './routes/_authenticated/tryout.$examId.ujian'
 import { Route as AuthenticatedToolsTailorCvIdRouteImport } from './routes/_authenticated/tools.tailor.$cvId'
 import { Route as AuthenticatedToolsKeywordCvIdRouteImport } from './routes/_authenticated/tools.keyword.$cvId'
 import { Route as AuthenticatedToolsCoverLetterCvIdRouteImport } from './routes/_authenticated/tools.cover-letter.$cvId'
+import { Route as AuthenticatedTryoutExamIdHasilAttemptIdRouteImport } from './routes/_authenticated/tryout.$examId.hasil.$attemptId'
 
 const VerifyEmailRoute = VerifyEmailRouteImport.update({
   id: '/verify-email',
   path: '/verify-email',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TryoutCpnsRoute = TryoutCpnsRouteImport.update({
+  id: '/tryout-cpns',
+  path: '/tryout-cpns',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TipsInterviewRoute = TipsInterviewRouteImport.update({
@@ -225,6 +238,11 @@ const ApiAiCvReviewRoute = ApiAiCvReviewRouteImport.update({
   path: '/api/ai-cv-review',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedTryoutRoute = AuthenticatedTryoutRouteImport.update({
+  id: '/tryout',
+  path: '/tryout',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedSimulasiWawancaraRoute =
   AuthenticatedSimulasiWawancaraRouteImport.update({
     id: '/simulasi-wawancara',
@@ -297,6 +315,23 @@ const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const AuthenticatedTryoutLeaderboardRoute =
+  AuthenticatedTryoutLeaderboardRouteImport.update({
+    id: '/leaderboard',
+    path: '/leaderboard',
+    getParentRoute: () => AuthenticatedTryoutRoute,
+  } as any)
+const AuthenticatedTryoutBeliRoute = AuthenticatedTryoutBeliRouteImport.update({
+  id: '/beli',
+  path: '/beli',
+  getParentRoute: () => AuthenticatedTryoutRoute,
+} as any)
+const AuthenticatedTryoutExamIdRoute =
+  AuthenticatedTryoutExamIdRouteImport.update({
+    id: '/$examId',
+    path: '/$examId',
+    getParentRoute: () => AuthenticatedTryoutRoute,
+  } as any)
 const AuthenticatedSimulasiWawancaraIdRoute =
   AuthenticatedSimulasiWawancaraIdRouteImport.update({
     id: '/$id',
@@ -324,6 +359,12 @@ const AuthenticatedAdminUsersRoute = AuthenticatedAdminUsersRouteImport.update({
   path: '/users',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const AuthenticatedAdminTryoutRoute =
+  AuthenticatedAdminTryoutRouteImport.update({
+    id: '/tryout',
+    path: '/tryout',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminTemplatesRoute =
   AuthenticatedAdminTemplatesRouteImport.update({
     id: '/templates',
@@ -335,6 +376,12 @@ const AuthenticatedAdminJobsRoute = AuthenticatedAdminJobsRouteImport.update({
   path: '/jobs',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const AuthenticatedTryoutExamIdUjianRoute =
+  AuthenticatedTryoutExamIdUjianRouteImport.update({
+    id: '/ujian',
+    path: '/ujian',
+    getParentRoute: () => AuthenticatedTryoutExamIdRoute,
+  } as any)
 const AuthenticatedToolsTailorCvIdRoute =
   AuthenticatedToolsTailorCvIdRouteImport.update({
     id: '/tools/tailor/$cvId',
@@ -352,6 +399,12 @@ const AuthenticatedToolsCoverLetterCvIdRoute =
     id: '/tools/cover-letter/$cvId',
     path: '/tools/cover-letter/$cvId',
     getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedTryoutExamIdHasilAttemptIdRoute =
+  AuthenticatedTryoutExamIdHasilAttemptIdRouteImport.update({
+    id: '/hasil/$attemptId',
+    path: '/hasil/$attemptId',
+    getParentRoute: () => AuthenticatedTryoutExamIdRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -373,6 +426,7 @@ export interface FileRoutesByFullPath {
   '/template': typeof TemplateRoute
   '/tentang': typeof TentangRoute
   '/tips-interview': typeof TipsInterviewRouteWithChildren
+  '/tryout-cpns': typeof TryoutCpnsRoute
   '/verify-email': typeof VerifyEmailRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/akun': typeof AuthenticatedAkunRoute
@@ -383,6 +437,7 @@ export interface FileRoutesByFullPath {
   '/lamaran': typeof AuthenticatedLamaranRoute
   '/referral': typeof AuthenticatedReferralRoute
   '/simulasi-wawancara': typeof AuthenticatedSimulasiWawancaraRouteWithChildren
+  '/tryout': typeof AuthenticatedTryoutRouteWithChildren
   '/api/ai-cv-review': typeof ApiAiCvReviewRoute
   '/api/headers-check': typeof ApiHeadersCheckRoute
   '/auth/callback': typeof AuthCallbackRoute
@@ -397,11 +452,15 @@ export interface FileRoutesByFullPath {
   '/tips-interview/$slug': typeof TipsInterviewSlugRoute
   '/admin/jobs': typeof AuthenticatedAdminJobsRoute
   '/admin/templates': typeof AuthenticatedAdminTemplatesRoute
+  '/admin/tryout': typeof AuthenticatedAdminTryoutRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/cv-review/$cvId': typeof AuthenticatedCvReviewCvIdRoute
   '/cv/$id': typeof AuthenticatedCvIdRoute
   '/score/$cvId': typeof AuthenticatedScoreCvIdRoute
   '/simulasi-wawancara/$id': typeof AuthenticatedSimulasiWawancaraIdRoute
+  '/tryout/$examId': typeof AuthenticatedTryoutExamIdRouteWithChildren
+  '/tryout/beli': typeof AuthenticatedTryoutBeliRoute
+  '/tryout/leaderboard': typeof AuthenticatedTryoutLeaderboardRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/cv-review/': typeof AuthenticatedCvReviewIndexRoute
   '/cv/': typeof AuthenticatedCvIndexRoute
@@ -410,6 +469,8 @@ export interface FileRoutesByFullPath {
   '/tools/cover-letter/$cvId': typeof AuthenticatedToolsCoverLetterCvIdRoute
   '/tools/keyword/$cvId': typeof AuthenticatedToolsKeywordCvIdRoute
   '/tools/tailor/$cvId': typeof AuthenticatedToolsTailorCvIdRoute
+  '/tryout/$examId/ujian': typeof AuthenticatedTryoutExamIdUjianRoute
+  '/tryout/$examId/hasil/$attemptId': typeof AuthenticatedTryoutExamIdHasilAttemptIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -430,6 +491,7 @@ export interface FileRoutesByTo {
   '/template': typeof TemplateRoute
   '/tentang': typeof TentangRoute
   '/tips-interview': typeof TipsInterviewRouteWithChildren
+  '/tryout-cpns': typeof TryoutCpnsRoute
   '/verify-email': typeof VerifyEmailRoute
   '/akun': typeof AuthenticatedAkunRoute
   '/analitik': typeof AuthenticatedAnalitikRoute
@@ -439,6 +501,7 @@ export interface FileRoutesByTo {
   '/lamaran': typeof AuthenticatedLamaranRoute
   '/referral': typeof AuthenticatedReferralRoute
   '/simulasi-wawancara': typeof AuthenticatedSimulasiWawancaraRouteWithChildren
+  '/tryout': typeof AuthenticatedTryoutRouteWithChildren
   '/api/ai-cv-review': typeof ApiAiCvReviewRoute
   '/api/headers-check': typeof ApiHeadersCheckRoute
   '/auth/callback': typeof AuthCallbackRoute
@@ -453,11 +516,15 @@ export interface FileRoutesByTo {
   '/tips-interview/$slug': typeof TipsInterviewSlugRoute
   '/admin/jobs': typeof AuthenticatedAdminJobsRoute
   '/admin/templates': typeof AuthenticatedAdminTemplatesRoute
+  '/admin/tryout': typeof AuthenticatedAdminTryoutRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/cv-review/$cvId': typeof AuthenticatedCvReviewCvIdRoute
   '/cv/$id': typeof AuthenticatedCvIdRoute
   '/score/$cvId': typeof AuthenticatedScoreCvIdRoute
   '/simulasi-wawancara/$id': typeof AuthenticatedSimulasiWawancaraIdRoute
+  '/tryout/$examId': typeof AuthenticatedTryoutExamIdRouteWithChildren
+  '/tryout/beli': typeof AuthenticatedTryoutBeliRoute
+  '/tryout/leaderboard': typeof AuthenticatedTryoutLeaderboardRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/cv-review': typeof AuthenticatedCvReviewIndexRoute
   '/cv': typeof AuthenticatedCvIndexRoute
@@ -466,6 +533,8 @@ export interface FileRoutesByTo {
   '/tools/cover-letter/$cvId': typeof AuthenticatedToolsCoverLetterCvIdRoute
   '/tools/keyword/$cvId': typeof AuthenticatedToolsKeywordCvIdRoute
   '/tools/tailor/$cvId': typeof AuthenticatedToolsTailorCvIdRoute
+  '/tryout/$examId/ujian': typeof AuthenticatedTryoutExamIdUjianRoute
+  '/tryout/$examId/hasil/$attemptId': typeof AuthenticatedTryoutExamIdHasilAttemptIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -488,6 +557,7 @@ export interface FileRoutesById {
   '/template': typeof TemplateRoute
   '/tentang': typeof TentangRoute
   '/tips-interview': typeof TipsInterviewRouteWithChildren
+  '/tryout-cpns': typeof TryoutCpnsRoute
   '/verify-email': typeof VerifyEmailRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/akun': typeof AuthenticatedAkunRoute
@@ -498,6 +568,7 @@ export interface FileRoutesById {
   '/_authenticated/lamaran': typeof AuthenticatedLamaranRoute
   '/_authenticated/referral': typeof AuthenticatedReferralRoute
   '/_authenticated/simulasi-wawancara': typeof AuthenticatedSimulasiWawancaraRouteWithChildren
+  '/_authenticated/tryout': typeof AuthenticatedTryoutRouteWithChildren
   '/api/ai-cv-review': typeof ApiAiCvReviewRoute
   '/api/headers-check': typeof ApiHeadersCheckRoute
   '/auth/callback': typeof AuthCallbackRoute
@@ -512,11 +583,15 @@ export interface FileRoutesById {
   '/tips-interview/$slug': typeof TipsInterviewSlugRoute
   '/_authenticated/admin/jobs': typeof AuthenticatedAdminJobsRoute
   '/_authenticated/admin/templates': typeof AuthenticatedAdminTemplatesRoute
+  '/_authenticated/admin/tryout': typeof AuthenticatedAdminTryoutRoute
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
   '/_authenticated/cv-review/$cvId': typeof AuthenticatedCvReviewCvIdRoute
   '/_authenticated/cv/$id': typeof AuthenticatedCvIdRoute
   '/_authenticated/score/$cvId': typeof AuthenticatedScoreCvIdRoute
   '/_authenticated/simulasi-wawancara/$id': typeof AuthenticatedSimulasiWawancaraIdRoute
+  '/_authenticated/tryout/$examId': typeof AuthenticatedTryoutExamIdRouteWithChildren
+  '/_authenticated/tryout/beli': typeof AuthenticatedTryoutBeliRoute
+  '/_authenticated/tryout/leaderboard': typeof AuthenticatedTryoutLeaderboardRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/cv-review/': typeof AuthenticatedCvReviewIndexRoute
   '/_authenticated/cv/': typeof AuthenticatedCvIndexRoute
@@ -525,6 +600,8 @@ export interface FileRoutesById {
   '/_authenticated/tools/cover-letter/$cvId': typeof AuthenticatedToolsCoverLetterCvIdRoute
   '/_authenticated/tools/keyword/$cvId': typeof AuthenticatedToolsKeywordCvIdRoute
   '/_authenticated/tools/tailor/$cvId': typeof AuthenticatedToolsTailorCvIdRoute
+  '/_authenticated/tryout/$examId/ujian': typeof AuthenticatedTryoutExamIdUjianRoute
+  '/_authenticated/tryout/$examId/hasil/$attemptId': typeof AuthenticatedTryoutExamIdHasilAttemptIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -547,6 +624,7 @@ export interface FileRouteTypes {
     | '/template'
     | '/tentang'
     | '/tips-interview'
+    | '/tryout-cpns'
     | '/verify-email'
     | '/admin'
     | '/akun'
@@ -557,6 +635,7 @@ export interface FileRouteTypes {
     | '/lamaran'
     | '/referral'
     | '/simulasi-wawancara'
+    | '/tryout'
     | '/api/ai-cv-review'
     | '/api/headers-check'
     | '/auth/callback'
@@ -571,11 +650,15 @@ export interface FileRouteTypes {
     | '/tips-interview/$slug'
     | '/admin/jobs'
     | '/admin/templates'
+    | '/admin/tryout'
     | '/admin/users'
     | '/cv-review/$cvId'
     | '/cv/$id'
     | '/score/$cvId'
     | '/simulasi-wawancara/$id'
+    | '/tryout/$examId'
+    | '/tryout/beli'
+    | '/tryout/leaderboard'
     | '/admin/'
     | '/cv-review/'
     | '/cv/'
@@ -584,6 +667,8 @@ export interface FileRouteTypes {
     | '/tools/cover-letter/$cvId'
     | '/tools/keyword/$cvId'
     | '/tools/tailor/$cvId'
+    | '/tryout/$examId/ujian'
+    | '/tryout/$examId/hasil/$attemptId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -604,6 +689,7 @@ export interface FileRouteTypes {
     | '/template'
     | '/tentang'
     | '/tips-interview'
+    | '/tryout-cpns'
     | '/verify-email'
     | '/akun'
     | '/analitik'
@@ -613,6 +699,7 @@ export interface FileRouteTypes {
     | '/lamaran'
     | '/referral'
     | '/simulasi-wawancara'
+    | '/tryout'
     | '/api/ai-cv-review'
     | '/api/headers-check'
     | '/auth/callback'
@@ -627,11 +714,15 @@ export interface FileRouteTypes {
     | '/tips-interview/$slug'
     | '/admin/jobs'
     | '/admin/templates'
+    | '/admin/tryout'
     | '/admin/users'
     | '/cv-review/$cvId'
     | '/cv/$id'
     | '/score/$cvId'
     | '/simulasi-wawancara/$id'
+    | '/tryout/$examId'
+    | '/tryout/beli'
+    | '/tryout/leaderboard'
     | '/admin'
     | '/cv-review'
     | '/cv'
@@ -640,6 +731,8 @@ export interface FileRouteTypes {
     | '/tools/cover-letter/$cvId'
     | '/tools/keyword/$cvId'
     | '/tools/tailor/$cvId'
+    | '/tryout/$examId/ujian'
+    | '/tryout/$examId/hasil/$attemptId'
   id:
     | '__root__'
     | '/'
@@ -661,6 +754,7 @@ export interface FileRouteTypes {
     | '/template'
     | '/tentang'
     | '/tips-interview'
+    | '/tryout-cpns'
     | '/verify-email'
     | '/_authenticated/admin'
     | '/_authenticated/akun'
@@ -671,6 +765,7 @@ export interface FileRouteTypes {
     | '/_authenticated/lamaran'
     | '/_authenticated/referral'
     | '/_authenticated/simulasi-wawancara'
+    | '/_authenticated/tryout'
     | '/api/ai-cv-review'
     | '/api/headers-check'
     | '/auth/callback'
@@ -685,11 +780,15 @@ export interface FileRouteTypes {
     | '/tips-interview/$slug'
     | '/_authenticated/admin/jobs'
     | '/_authenticated/admin/templates'
+    | '/_authenticated/admin/tryout'
     | '/_authenticated/admin/users'
     | '/_authenticated/cv-review/$cvId'
     | '/_authenticated/cv/$id'
     | '/_authenticated/score/$cvId'
     | '/_authenticated/simulasi-wawancara/$id'
+    | '/_authenticated/tryout/$examId'
+    | '/_authenticated/tryout/beli'
+    | '/_authenticated/tryout/leaderboard'
     | '/_authenticated/admin/'
     | '/_authenticated/cv-review/'
     | '/_authenticated/cv/'
@@ -698,6 +797,8 @@ export interface FileRouteTypes {
     | '/_authenticated/tools/cover-letter/$cvId'
     | '/_authenticated/tools/keyword/$cvId'
     | '/_authenticated/tools/tailor/$cvId'
+    | '/_authenticated/tryout/$examId/ujian'
+    | '/_authenticated/tryout/$examId/hasil/$attemptId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -720,6 +821,7 @@ export interface RootRouteChildren {
   TemplateRoute: typeof TemplateRoute
   TentangRoute: typeof TentangRoute
   TipsInterviewRoute: typeof TipsInterviewRouteWithChildren
+  TryoutCpnsRoute: typeof TryoutCpnsRoute
   VerifyEmailRoute: typeof VerifyEmailRoute
   ApiAiCvReviewRoute: typeof ApiAiCvReviewRoute
   ApiHeadersCheckRoute: typeof ApiHeadersCheckRoute
@@ -739,6 +841,13 @@ declare module '@tanstack/react-router' {
       path: '/verify-email'
       fullPath: '/verify-email'
       preLoaderRoute: typeof VerifyEmailRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tryout-cpns': {
+      id: '/tryout-cpns'
+      path: '/tryout-cpns'
+      fullPath: '/tryout-cpns'
+      preLoaderRoute: typeof TryoutCpnsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/tips-interview': {
@@ -958,6 +1067,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAiCvReviewRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/tryout': {
+      id: '/_authenticated/tryout'
+      path: '/tryout'
+      fullPath: '/tryout'
+      preLoaderRoute: typeof AuthenticatedTryoutRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/simulasi-wawancara': {
       id: '/_authenticated/simulasi-wawancara'
       path: '/simulasi-wawancara'
@@ -1056,6 +1172,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/tryout/leaderboard': {
+      id: '/_authenticated/tryout/leaderboard'
+      path: '/leaderboard'
+      fullPath: '/tryout/leaderboard'
+      preLoaderRoute: typeof AuthenticatedTryoutLeaderboardRouteImport
+      parentRoute: typeof AuthenticatedTryoutRoute
+    }
+    '/_authenticated/tryout/beli': {
+      id: '/_authenticated/tryout/beli'
+      path: '/beli'
+      fullPath: '/tryout/beli'
+      preLoaderRoute: typeof AuthenticatedTryoutBeliRouteImport
+      parentRoute: typeof AuthenticatedTryoutRoute
+    }
+    '/_authenticated/tryout/$examId': {
+      id: '/_authenticated/tryout/$examId'
+      path: '/$examId'
+      fullPath: '/tryout/$examId'
+      preLoaderRoute: typeof AuthenticatedTryoutExamIdRouteImport
+      parentRoute: typeof AuthenticatedTryoutRoute
+    }
     '/_authenticated/simulasi-wawancara/$id': {
       id: '/_authenticated/simulasi-wawancara/$id'
       path: '/$id'
@@ -1091,6 +1228,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminUsersRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/tryout': {
+      id: '/_authenticated/admin/tryout'
+      path: '/tryout'
+      fullPath: '/admin/tryout'
+      preLoaderRoute: typeof AuthenticatedAdminTryoutRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/templates': {
       id: '/_authenticated/admin/templates'
       path: '/templates'
@@ -1104,6 +1248,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/jobs'
       preLoaderRoute: typeof AuthenticatedAdminJobsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/tryout/$examId/ujian': {
+      id: '/_authenticated/tryout/$examId/ujian'
+      path: '/ujian'
+      fullPath: '/tryout/$examId/ujian'
+      preLoaderRoute: typeof AuthenticatedTryoutExamIdUjianRouteImport
+      parentRoute: typeof AuthenticatedTryoutExamIdRoute
     }
     '/_authenticated/tools/tailor/$cvId': {
       id: '/_authenticated/tools/tailor/$cvId'
@@ -1126,12 +1277,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedToolsCoverLetterCvIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/tryout/$examId/hasil/$attemptId': {
+      id: '/_authenticated/tryout/$examId/hasil/$attemptId'
+      path: '/hasil/$attemptId'
+      fullPath: '/tryout/$examId/hasil/$attemptId'
+      preLoaderRoute: typeof AuthenticatedTryoutExamIdHasilAttemptIdRouteImport
+      parentRoute: typeof AuthenticatedTryoutExamIdRoute
+    }
   }
 }
 
 interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminJobsRoute: typeof AuthenticatedAdminJobsRoute
   AuthenticatedAdminTemplatesRoute: typeof AuthenticatedAdminTemplatesRoute
+  AuthenticatedAdminTryoutRoute: typeof AuthenticatedAdminTryoutRoute
   AuthenticatedAdminUsersRoute: typeof AuthenticatedAdminUsersRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
 }
@@ -1139,6 +1298,7 @@ interface AuthenticatedAdminRouteChildren {
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminJobsRoute: AuthenticatedAdminJobsRoute,
   AuthenticatedAdminTemplatesRoute: AuthenticatedAdminTemplatesRoute,
+  AuthenticatedAdminTryoutRoute: AuthenticatedAdminTryoutRoute,
   AuthenticatedAdminUsersRoute: AuthenticatedAdminUsersRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
 }
@@ -1161,6 +1321,38 @@ const AuthenticatedSimulasiWawancaraRouteWithChildren =
     AuthenticatedSimulasiWawancaraRouteChildren,
   )
 
+interface AuthenticatedTryoutExamIdRouteChildren {
+  AuthenticatedTryoutExamIdUjianRoute: typeof AuthenticatedTryoutExamIdUjianRoute
+  AuthenticatedTryoutExamIdHasilAttemptIdRoute: typeof AuthenticatedTryoutExamIdHasilAttemptIdRoute
+}
+
+const AuthenticatedTryoutExamIdRouteChildren: AuthenticatedTryoutExamIdRouteChildren =
+  {
+    AuthenticatedTryoutExamIdUjianRoute: AuthenticatedTryoutExamIdUjianRoute,
+    AuthenticatedTryoutExamIdHasilAttemptIdRoute:
+      AuthenticatedTryoutExamIdHasilAttemptIdRoute,
+  }
+
+const AuthenticatedTryoutExamIdRouteWithChildren =
+  AuthenticatedTryoutExamIdRoute._addFileChildren(
+    AuthenticatedTryoutExamIdRouteChildren,
+  )
+
+interface AuthenticatedTryoutRouteChildren {
+  AuthenticatedTryoutExamIdRoute: typeof AuthenticatedTryoutExamIdRouteWithChildren
+  AuthenticatedTryoutBeliRoute: typeof AuthenticatedTryoutBeliRoute
+  AuthenticatedTryoutLeaderboardRoute: typeof AuthenticatedTryoutLeaderboardRoute
+}
+
+const AuthenticatedTryoutRouteChildren: AuthenticatedTryoutRouteChildren = {
+  AuthenticatedTryoutExamIdRoute: AuthenticatedTryoutExamIdRouteWithChildren,
+  AuthenticatedTryoutBeliRoute: AuthenticatedTryoutBeliRoute,
+  AuthenticatedTryoutLeaderboardRoute: AuthenticatedTryoutLeaderboardRoute,
+}
+
+const AuthenticatedTryoutRouteWithChildren =
+  AuthenticatedTryoutRoute._addFileChildren(AuthenticatedTryoutRouteChildren)
+
 interface AuthenticatedRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
   AuthenticatedAkunRoute: typeof AuthenticatedAkunRoute
@@ -1171,6 +1363,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedLamaranRoute: typeof AuthenticatedLamaranRoute
   AuthenticatedReferralRoute: typeof AuthenticatedReferralRoute
   AuthenticatedSimulasiWawancaraRoute: typeof AuthenticatedSimulasiWawancaraRouteWithChildren
+  AuthenticatedTryoutRoute: typeof AuthenticatedTryoutRouteWithChildren
   AuthenticatedCvReviewCvIdRoute: typeof AuthenticatedCvReviewCvIdRoute
   AuthenticatedCvIdRoute: typeof AuthenticatedCvIdRoute
   AuthenticatedScoreCvIdRoute: typeof AuthenticatedScoreCvIdRoute
@@ -1194,6 +1387,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedReferralRoute: AuthenticatedReferralRoute,
   AuthenticatedSimulasiWawancaraRoute:
     AuthenticatedSimulasiWawancaraRouteWithChildren,
+  AuthenticatedTryoutRoute: AuthenticatedTryoutRouteWithChildren,
   AuthenticatedCvReviewCvIdRoute: AuthenticatedCvReviewCvIdRoute,
   AuthenticatedCvIdRoute: AuthenticatedCvIdRoute,
   AuthenticatedScoreCvIdRoute: AuthenticatedScoreCvIdRoute,
@@ -1265,6 +1459,7 @@ const rootRouteChildren: RootRouteChildren = {
   TemplateRoute: TemplateRoute,
   TentangRoute: TentangRoute,
   TipsInterviewRoute: TipsInterviewRouteWithChildren,
+  TryoutCpnsRoute: TryoutCpnsRoute,
   VerifyEmailRoute: VerifyEmailRoute,
   ApiAiCvReviewRoute: ApiAiCvReviewRoute,
   ApiHeadersCheckRoute: ApiHeadersCheckRoute,

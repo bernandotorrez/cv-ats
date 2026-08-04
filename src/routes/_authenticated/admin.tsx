@@ -12,6 +12,7 @@ import {
   ArrowLeft,
   Loader2,
   BriefcaseBusiness,
+  Trophy,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -23,6 +24,7 @@ const NAV_ITEMS = [
   { to: "/admin/users" as const, icon: Users, label: "Users" },
   { to: "/admin/templates" as const, icon: Palette, label: "Templates" },
   { to: "/admin/jobs" as const, icon: BriefcaseBusiness, label: "Lowongan" },
+  { to: "/admin/tryout" as const, icon: Trophy, label: "Tryout" },
 ];
 
 function AdminLayout() {
@@ -89,7 +91,7 @@ function AdminLayout() {
                   pathname === item.to && "bg-muted font-medium",
                 )}
               >
-                <Link to={item.to}>
+                <Link to={item.to as never}>
                   <item.icon className="h-4 w-4" />
                   {item.label}
                 </Link>
@@ -107,7 +109,7 @@ function AdminLayout() {
               variant={pathname === item.to ? "default" : "outline"}
               size="sm"
             >
-              <Link to={item.to} className="gap-1">
+              <Link to={item.to as never} className="gap-1">
                 <item.icon className="h-3.5 w-3.5" /> {item.label}
               </Link>
             </Button>

@@ -63,6 +63,7 @@ import {
   Star,
   ArrowRight,
   Check,
+  Trophy,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -710,6 +711,17 @@ function DashboardPage() {
       locked: false,
       gradient: "bg-gradient-to-r from-pink-500 to-rose-500",
     },
+    {
+      icon: Trophy,
+      label: "Tryout SKD",
+      desc: "Latihan simulasi ujian SKD 110 soal (TWK+TIU+TKP) sesuai kisi-kisi BKN. 100 menit, skor real-time.",
+      action: "tryout",
+      badge: "Baru",
+      isNew: true,
+      visible: true,
+      locked: false,
+      gradient: "bg-gradient-to-r from-amber-500 to-orange-500",
+    },
   ];
 
   const CV_PICKER_ACTIONS = [
@@ -739,6 +751,7 @@ function DashboardPage() {
       referral: "/referral",
       analitik: "/analitik",
       admin: "/admin",
+      tryout: "/tryout",
     };
     if (routes[action]) navigate({ to: routes[action] as never });
   };

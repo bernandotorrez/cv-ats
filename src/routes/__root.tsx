@@ -268,6 +268,7 @@ function RootComponent() {
     "/score",
     "/simulasi-wawancara",
     "/tools",
+    "/tryout",
   ];
   const isAuthenticatedRoute = authenticatedRoutePrefixes.some(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),

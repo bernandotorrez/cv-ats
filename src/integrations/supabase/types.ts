@@ -455,6 +455,310 @@ export type Database = {
         };
         Relationships: [];
       };
+      tryout_attempts: {
+        Row: {
+          answers: Json;
+          created_at: string;
+          credit_id: string | null;
+          duration_seconds: number | null;
+          exam_set_id: string;
+          finished_at: string | null;
+          flagged_questions: Json;
+          id: string;
+          pass_overall: boolean;
+          pass_tiu: boolean;
+          pass_tkp: boolean;
+          pass_twk: boolean;
+          score_tiu: number;
+          score_tkp: number;
+          score_total: number;
+          score_twk: number;
+          started_at: string;
+          stats: Json;
+          status: string;
+          user_id: string;
+        };
+        Insert: {
+          answers?: Json;
+          created_at?: string;
+          credit_id?: string | null;
+          duration_seconds?: number | null;
+          exam_set_id: string;
+          finished_at?: string | null;
+          flagged_questions?: Json;
+          id?: string;
+          pass_overall?: boolean;
+          pass_tiu?: boolean;
+          pass_tkp?: boolean;
+          pass_twk?: boolean;
+          score_tiu?: number;
+          score_tkp?: number;
+          score_total?: number;
+          score_twk?: number;
+          started_at?: string;
+          stats?: Json;
+          status?: string;
+          user_id: string;
+        };
+        Update: {
+          answers?: Json;
+          created_at?: string;
+          credit_id?: string | null;
+          duration_seconds?: number | null;
+          exam_set_id?: string;
+          finished_at?: string | null;
+          flagged_questions?: Json;
+          id?: string;
+          pass_overall?: boolean;
+          pass_tiu?: boolean;
+          pass_tkp?: boolean;
+          pass_twk?: boolean;
+          score_tiu?: number;
+          score_tkp?: number;
+          score_total?: number;
+          score_twk?: number;
+          started_at?: string;
+          stats?: Json;
+          status?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "tryout_attempts_credit_id_fkey";
+            columns: ["credit_id"];
+            isOneToOne: false;
+            referencedRelation: "tryout_credits";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "tryout_attempts_exam_set_id_fkey";
+            columns: ["exam_set_id"];
+            isOneToOne: false;
+            referencedRelation: "tryout_exam_sets";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      tryout_credits: {
+        Row: {
+          activated_at: string | null;
+          created_at: string;
+          expired_at: string | null;
+          id: string;
+          package_id: string;
+          payment_method: string | null;
+          payment_ref: string | null;
+          remaining_credits: number;
+          status: string;
+          total_credits: number;
+          used_credits: number;
+          user_id: string;
+        };
+        Insert: {
+          activated_at?: string | null;
+          created_at?: string;
+          expired_at?: string | null;
+          id?: string;
+          package_id: string;
+          payment_method?: string | null;
+          payment_ref?: string | null;
+          remaining_credits?: number;
+          status?: string;
+          total_credits?: number;
+          used_credits?: number;
+          user_id: string;
+        };
+        Update: {
+          activated_at?: string | null;
+          created_at?: string;
+          expired_at?: string | null;
+          id?: string;
+          package_id?: string;
+          payment_method?: string | null;
+          payment_ref?: string | null;
+          remaining_credits?: number;
+          status?: string;
+          total_credits?: number;
+          used_credits?: number;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "tryout_credits_package_id_fkey";
+            columns: ["package_id"];
+            isOneToOne: false;
+            referencedRelation: "tryout_packages";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      tryout_exam_sets: {
+        Row: {
+          created_at: string;
+          description: string | null;
+          duration_minutes: number;
+          id: string;
+          is_active: boolean;
+          is_free_preview: boolean;
+          name: string;
+          passing_grade_tiu: number;
+          passing_grade_tkp: number;
+          passing_grade_twk: number;
+          slug: string;
+          sort_order: number;
+          tiu_count: number;
+          tkp_count: number;
+          total_questions: number;
+          twk_count: number;
+        };
+        Insert: {
+          created_at?: string;
+          description?: string | null;
+          duration_minutes?: number;
+          id?: string;
+          is_active?: boolean;
+          is_free_preview?: boolean;
+          name: string;
+          passing_grade_tiu?: number;
+          passing_grade_tkp?: number;
+          passing_grade_twk?: number;
+          slug: string;
+          sort_order?: number;
+          tiu_count?: number;
+          tkp_count?: number;
+          total_questions?: number;
+          twk_count?: number;
+        };
+        Update: {
+          created_at?: string;
+          description?: string | null;
+          duration_minutes?: number;
+          id?: string;
+          is_active?: boolean;
+          is_free_preview?: boolean;
+          name?: string;
+          passing_grade_tiu?: number;
+          passing_grade_tkp?: number;
+          passing_grade_twk?: number;
+          slug?: string;
+          sort_order?: number;
+          tiu_count?: number;
+          tkp_count?: number;
+          total_questions?: number;
+          twk_count?: number;
+        };
+        Relationships: [];
+      };
+      tryout_packages: {
+        Row: {
+          created_at: string;
+          credits: number;
+          description: string | null;
+          features: Json;
+          has_analytics: boolean;
+          has_leaderboard: boolean;
+          has_pembahasan: boolean;
+          id: string;
+          is_active: boolean;
+          name: string;
+          price: number;
+          slug: string;
+          sort_order: number;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          credits?: number;
+          description?: string | null;
+          features?: Json;
+          has_analytics?: boolean;
+          has_leaderboard?: boolean;
+          has_pembahasan?: boolean;
+          id?: string;
+          is_active?: boolean;
+          name: string;
+          price?: number;
+          slug: string;
+          sort_order?: number;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          credits?: number;
+          description?: string | null;
+          features?: Json;
+          has_analytics?: boolean;
+          has_leaderboard?: boolean;
+          has_pembahasan?: boolean;
+          id?: string;
+          is_active?: boolean;
+          name?: string;
+          price?: number;
+          slug?: string;
+          sort_order?: number;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      tryout_questions: {
+        Row: {
+          category: string | null;
+          correct_answer: string | null;
+          created_at: string;
+          difficulty: string;
+          exam_set_id: string;
+          explanation: string | null;
+          explanation_image_url: string | null;
+          id: string;
+          options: Json;
+          question_image_url: string | null;
+          question_number: number;
+          question_text: string;
+          scores: Json | null;
+          subtest: string;
+        };
+        Insert: {
+          category?: string | null;
+          correct_answer?: string | null;
+          created_at?: string;
+          difficulty?: string;
+          exam_set_id: string;
+          explanation?: string | null;
+          explanation_image_url?: string | null;
+          id?: string;
+          options: Json;
+          question_image_url?: string | null;
+          question_number: number;
+          question_text: string;
+          scores?: Json | null;
+          subtest: string;
+        };
+        Update: {
+          category?: string | null;
+          correct_answer?: string | null;
+          created_at?: string;
+          difficulty?: string;
+          exam_set_id?: string;
+          explanation?: string | null;
+          explanation_image_url?: string | null;
+          id?: string;
+          options?: Json;
+          question_image_url?: string | null;
+          question_number?: number;
+          question_text?: string;
+          scores?: Json | null;
+          subtest?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "tryout_questions_exam_set_id_fkey";
+            columns: ["exam_set_id"];
+            isOneToOne: false;
+            referencedRelation: "tryout_exam_sets";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       user_subscriptions: {
         Row: {
           auto_renew: boolean;
@@ -507,7 +811,33 @@ export type Database = {
       };
     };
     Views: {
-      [_ in never]: never;
+      tryout_leaderboard: {
+        Row: {
+          attempt_id: string;
+          avatar_url: string | null;
+          duration_seconds: number | null;
+          exam_name: string;
+          exam_set_id: string;
+          finished_at: string | null;
+          full_name: string | null;
+          pass_overall: boolean | null;
+          ranking: number;
+          score_tiu: number | null;
+          score_tkp: number | null;
+          score_total: number | null;
+          score_twk: number | null;
+          user_id: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "tryout_attempts_exam_set_id_fkey";
+            columns: ["exam_set_id"];
+            isOneToOne: false;
+            referencedRelation: "tryout_exam_sets";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Functions: {
       generate_share_token: { Args: never; Returns: string };

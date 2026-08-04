@@ -773,46 +773,46 @@ export const Route = createFileRoute('/tryout-cpns')({
 ## 13. Tahapan Implementasi (Roadmap)
 
 ### Phase 1: Foundation (3-4 hari)
-- [ ] Migration: buat semua tabel database
-- [ ] Seed: insert tryout_packages (satuan & lengkap)
-- [ ] Seed: insert 1 exam set + 110 soal sample
-- [ ] RLS policies
-- [ ] TypeScript types (`tryout-types.ts`)
-- [ ] Scoring utility (`tryout-scoring.ts`)
+- [x] Migration: buat semua tabel database
+- [x] Seed: insert tryout_packages (satuan & lengkap)
+- [x] Seed: insert 1 exam set + 110 soal sample
+- [x] RLS policies
+- [x] TypeScript types (`tryout-types.ts`)
+- [x] Scoring utility (`tryout-scoring.ts`)
 
 ### Phase 2: Core Exam Flow (4-5 hari)
-- [ ] Edge function: `tryout-start`
-- [ ] Edge function: `tryout-submit`
-- [ ] Halaman ujian: timer, soal, navigasi, submit
-- [ ] Auto-save jawaban
-- [ ] Auto-submit saat waktu habis
-- [ ] Halaman hasil + skor breakdown
+- [x] Edge function: `tryout-start`
+- [x] Edge function: `tryout-submit`
+- [x] Halaman ujian: timer, soal, navigasi, submit
+- [x] Auto-save jawaban
+- [x] Auto-submit saat waktu habis
+- [x] Halaman hasil + skor breakdown
 
 ### Phase 3: Purchase & Credits (2-3 hari)
-- [ ] Halaman beli kredit
-- [ ] Edge function: `tryout-activate-credit`
-- [ ] Admin panel: aktivasi kredit user
-- [ ] Integrasi Lynk payment links
+- [x] Halaman beli kredit
+- [x] Edge function: `tryout-activate-credit`
+- [x] Admin panel: aktivasi kredit user
+- [ ] Integrasi Lynk payment links (butuh URL Lynk aktual)
 
 ### Phase 4: Landing & SEO (1-2 hari)
-- [ ] Landing page `/tryout-cpns` (publik)
-- [ ] SEO meta tags & structured data
-- [ ] Sitemap update
-- [ ] Dashboard card
+- [x] Landing page `/tryout-cpns` (publik)
+- [x] SEO meta tags & structured data
+- [x] Sitemap update
+- [x] Dashboard card
 
 ### Phase 5: Enhancement (2-3 hari)
-- [ ] Pembahasan soal (paket lengkap)
-- [ ] Leaderboard
-- [ ] Analisis per kategori
-- [ ] Riwayat tryout
-- [ ] Admin: bulk import soal
+- [x] Pembahasan soal (paket lengkap)
+- [x] Leaderboard
+- [x] Analisis per kategori
+- [x] Riwayat tryout
+- [ ] Admin: bulk import soal (belum diimplementasi)
 
 ### Phase 6: Polish & QA (1-2 hari)
-- [ ] Responsive design (mobile-first)
-- [ ] Dark mode support
-- [ ] Edge case testing
-- [ ] Security audit
-- [ ] Knowledge base update
+- [x] Responsive design (mobile-first)
+- [x] Dark mode support
+- [x] Edge case testing (review kode & anti-cheat)
+- [x] Security audit (RLS + server-side scoring + anti-cheat)
+- [x] Knowledge base update
 
 **Estimasi total: ~2-3 minggu**
 

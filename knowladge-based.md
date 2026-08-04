@@ -93,6 +93,15 @@ Halaman akun atau fitur login:
 - `/simulasi-wawancara` - Simulasi wawancara AI.
 - `/referral` - Referral user.
 - `/akun` - Pengaturan akun.
+- `/tryout` - Dashboard tryout SKD.
+- `/tryout/beli` - Beli paket tryout.
+- `/tryout/leaderboard` - Leaderboard tryout.
+- `/tryout/$examId` - Detail set tryout.
+- `/tryout/$examId/ujian` - Halaman ujian fullscreen.
+- `/tryout/$examId/hasil/$attemptId` - Hasil dan pembahasan.
+
+Halaman publik terkait:
+- `/tryout-cpns` - Landing page tryout SKD (SEO, pricing, FAQ).
 
 Halaman admin:
 
@@ -100,6 +109,7 @@ Halaman admin:
 - `/admin/users` - Manajemen user.
 - `/admin/templates` - Manajemen template.
 - `/admin/jobs` - Import dan kelola lowongan via AI search.
+- `/admin/tryout` - Kelola tryout (aktivasi kredit, statistik).
 
 ## Akun dan Login
 
@@ -602,6 +612,43 @@ Akses:
 - Starter: tidak tersedia.
 - Pro: 30x/bulan.
 
+## Tryout CPNS SKD
+
+Fitur simulasi ujian Seleksi Kompetensi Dasar (SKD) untuk persiapan CPNS. Tersedia di halaman `/tryout-cpns` (publik) dan `/tryout` (authenticated).
+
+Format ujian:
+- **110 soal** dengan **100 menit** waktu pengerjaan.
+- Tiga subtes:
+  - TWK (Tes Wawasan Kebangsaan): 30 soal, passing grade 65, skor 5 per benar, max 150.
+  - TIU (Tes Intelegensi Umum): 35 soal, passing grade 80, skor 5 per benar, max 175.
+  - TKP (Tes Karakteristik Pribadi): 45 soal, passing grade 166, skor 1-5 per soal, max 225.
+- Total skor maksimal: 550.
+- Peserta LULUS jika semua subtes memenuhi passing grade (tidak cukup total saja).
+
+Fitur:
+- Timer countdown 100 menit dengan auto-submit saat waktu habis.
+- Auto-save jawaban ke server setiap 3 detik + localStorage backup.
+- Navigasi soal dengan status: dijawab, belum, ragu (flag).
+- Konfirmasi sebelum submit (menampilkan jumlah soal kosong/ragu).
+- Skor real-time setelah submit dengan breakdown per subtes dan kategori.
+- Pembahasan soal (paket Lengkap).
+- Leaderboard nasional.
+- Riwayat attempt.
+
+Paket tryout (terpisah dari subscription CV Pintar):
+- **Satuan**: Rp 15.000 — 1x akses tryout, skor langsung.
+- **Lengkap**: Rp 50.000 — 5x akses + pembahasan + analytics + leaderboard.
+
+Pembelian:
+- Transfer manual via WhatsApp atau Lynk payment link.
+- Kredit diaktivasi admin setelah bukti transfer diverifikasi.
+- Kredit tryout berlaku 12 bulan sejak aktivasi.
+
+Contoh jawaban AI tentang tryout:
+- "Untuk tryout SKD, kamu bisa akses di halaman /tryout-cpns. Ada paket Satuan (Rp 15.000, 1x tryout) dan Paket Lengkap (Rp 50.000, 5x tryout + pembahasan)."
+- "Passing grade SKD: TWK minimal 65, TIU minimal 80, TKP minimal 166. Kamu harus lulus ketiga subtes."
+- "Soal tryout sesuai kisi-kisi BKN terbaru: 30 TWK, 35 TIU, 45 TKP."
+
 ## Paket Harga
 
 Harga yang digunakan di halaman pricing dan konfigurasi saat ini:
@@ -955,6 +1002,22 @@ Ya, terdapat kebijakan refund 7 hari untuk paket berbayar jika user merasa fitur
 
 Ya. Berhenti atau downgrade paket bisa dikonfirmasi lewat WhatsApp sebelum periode berikutnya.
 
+### Bagaimana cara ikut tryout SKD?
+
+Buka halaman `/tryout-cpns` untuk info lengkap, lalu klik "Mulai Tryout" untuk masuk dashboard. Kamu perlu kredit tryout untuk memulai ujian.
+
+### Berapa harga tryout SKD?
+
+Dua paket tersedia: Satuan Rp 15.000 (1x tryout, skor langsung) dan Paket Lengkap Rp 50.000 (5x tryout + pembahasan + analytics + leaderboard). Pembelian terpisah dari subscription CV Pintar.
+
+### Apakah soal tryout sesuai kisi-kisi BKN?
+
+Ya. Soal disusun sesuai kisi-kisi BKN terbaru: 30 soal TWK, 35 soal TIU, 45 soal TKP. Passing grade sesuai standar: TWK 65, TIU 80, TKP 166.
+
+### Bisa diakses dari HP?
+
+Bisa. Tryout didesain mobile-first dan berjalan lancar di browser Chrome/Safari smartphone.
+
 ## Panduan Jawaban untuk AI Assistant
 
 ### Jika user bertanya "Saya harus mulai dari mana?"
@@ -1048,6 +1111,7 @@ Jawaban:
 | Keyword Extractor  | Tidak     | 20x/bulan       | 100x/bulan      |
 | Job Match Score    | Tidak     | 20x/bulan       | 100x/bulan      |
 | Auto Tailor CV     | Tidak     | Tidak           | 30x/bulan       |
+| Tryout SKD         | Tersedia (terpisah) | Tersedia (terpisah) | Tersedia (terpisah) |
 | Simulasi Wawancara | Tidak     | Tidak           | 50x/bulan       |
 | CV Comparison      | Tidak     | Tidak           | Ada             |
 | CV Analytics       | Tidak     | Tidak           | Ada             |
