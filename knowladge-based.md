@@ -795,6 +795,8 @@ Link pembayaran yang digunakan aplikasi:
 
 - Starter: `https://lynk.id/ben-yt-ai/rj687wre6kr0`
 - Pro: `http://lynk.id/ben-yt-ai/zq1y83lq1kek`
+- Tryout Satuan: `https://lynk.id/ben-yt-ai/d6m9o62dgwd5`
+- Tryout Paket: `https://lynk.id/ben-yt-ai/n6rnv6rlj2er`
 
 Jika user butuh bantuan pembayaran:
 

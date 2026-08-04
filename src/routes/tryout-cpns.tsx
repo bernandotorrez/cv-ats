@@ -29,7 +29,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { TryoutPackageCard } from "@/components/tryout/TryoutPackageCard";
 import { supabase } from "@/integrations/supabase/client";
-import type { TryoutPackage } from "@/lib/tryout-types";
+import { getTryoutLynkUrl, type TryoutPackage } from "@/lib/tryout-types";
 
 export const Route = createFileRoute("/tryout-cpns")({
   head: () =>
@@ -198,8 +198,6 @@ function TryoutCpnsLandingPage() {
         if (data) setPackages(data as unknown as TryoutPackage[]);
       });
   }, []);
-
-  const lynkBaseUrl = "https://lynk.id/ben-yt-ai/";
 
   return (
     <div className="bg-white overflow-hidden">
@@ -490,7 +488,7 @@ function TryoutCpnsLandingPage() {
               hasPembahasan={pkg.has_pembahasan}
               hasAnalytics={pkg.has_analytics}
               hasLeaderboard={pkg.has_leaderboard}
-              lynkUrl={`${lynkBaseUrl}tryout-${pkg.slug}`}
+              lynkUrl={getTryoutLynkUrl(pkg.slug)}
             />
           ))}
         </div>

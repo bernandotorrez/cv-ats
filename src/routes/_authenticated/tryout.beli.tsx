@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { TryoutPackageCard } from "@/components/tryout";
 import { supabase } from "@/integrations/supabase/client";
-import type { TryoutPackage } from "@/lib/tryout-types";
+import { getTryoutLynkUrl, type TryoutPackage } from "@/lib/tryout-types";
 import { BackButton } from "@/components/ui/back-button";
 
 export const Route = createFileRoute("/_authenticated/tryout/beli")({
@@ -40,7 +40,6 @@ function TryoutBeliPage() {
       });
   }, []);
 
-  const lynkBaseUrl = "https://lynk.id/ben-yt-ai/";
   const whatsappNumber = "6285190607141";
   const whatsappGeneral = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
     "Halo, saya ingin beli paket tryout SKD di CV Pintar.",
@@ -102,7 +101,7 @@ function TryoutBeliPage() {
                 hasPembahasan={pkg.has_pembahasan}
                 hasAnalytics={pkg.has_analytics}
                 hasLeaderboard={pkg.has_leaderboard}
-                lynkUrl={`${lynkBaseUrl}tryout-${pkg.slug}`}
+                lynkUrl={getTryoutLynkUrl(pkg.slug)}
                 whatsappNumber={whatsappNumber}
               />
             ))}

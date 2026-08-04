@@ -248,3 +248,15 @@ export const SUBTEST_INFO: Record<
     color: "text-emerald-700 bg-emerald-50 border-emerald-200",
   },
 };
+
+/**
+ * Link pembayaran Lynk.id untuk Paket Tryout CPNS
+ */
+export const TRYOUT_LYNK_URLS: Record<string, string> = {
+  satuan: "https://lynk.id/ben-yt-ai/d6m9o62dgwd5",
+  lengkap: "https://lynk.id/ben-yt-ai/n6rnv6rlj2er",
+};
+
+export function getTryoutLynkUrl(slug: string): string {
+  return TRYOUT_LYNK_URLS[slug] || `https://lynk.id/ben-yt-ai/${slug}`;
+}

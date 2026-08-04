@@ -32,8 +32,8 @@ Fitur **Tryout CPNS** adalah simulasi ujian Seleksi Kompetensi Dasar (SKD) CPNS 
 
 ### Lynk Payment Links (Baru)
 ```
-Tryout Satuan : https://lynk.id/ben-yt-ai/<slug-tryout-satuan>
-Tryout Lengkap: https://lynk.id/ben-yt-ai/<slug-tryout-lengkap>
+Tryout Satuan : https://lynk.id/ben-yt-ai/d6m9o62dgwd5
+Tryout Lengkap: https://lynk.id/ben-yt-ai/n6rnv6rlj2er
 ```
 
 ---
@@ -792,7 +792,7 @@ export const Route = createFileRoute('/tryout-cpns')({
 - [x] Halaman beli kredit
 - [x] Edge function: `tryout-activate-credit`
 - [x] Admin panel: aktivasi kredit user
-- [ ] Integrasi Lynk payment links (butuh URL Lynk aktual)
+- [x] Integrasi Lynk payment links (Satuan: d6m9o62dgwd5, Paket: n6rnv6rlj2er)
 
 ### Phase 4: Landing & SEO (1-2 hari)
 - [x] Landing page `/tryout-cpns` (publik)
