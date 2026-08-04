@@ -16,6 +16,9 @@ import {
   Trash2,
   Sparkles,
   Brain,
+  Check,
+  ChevronsUpDown,
+  User,
 } from "lucide-react";
 import { buildSeo } from "@/lib/seo";
 import { Button } from "@/components/ui/button";
@@ -37,6 +40,19 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 
@@ -398,8 +414,8 @@ function ActivateCreditDialog({
   const [submitting, setSubmitting] = useState(false);
   const [packages, setPackages] = useState<Array<{ slug: string; name: string; credits: number }>>([]);
   const [users, setUsers] = useState<UserOption[]>([]);
-  const [userSearch, setUserSearch] = useState("");
   const [loadingUsers, setLoadingUsers] = useState(false);
+  const [comboboxOpen, setComboboxOpen] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -432,15 +448,6 @@ function ActivateCreditDialog({
     const pkg = packages.find((p) => p.slug === packageSlug);
     if (pkg) setCredits(pkg.credits);
   }, [packageSlug, packages]);
-
-  const filteredUsers = users.filter((u) => {
-    if (!userSearch) return true;
-    const q = userSearch.toLowerCase();
-    return (
-      u.email?.toLowerCase().includes(q) ||
-      u.full_name?.toLowerCase().includes(q)
-    );
-  });
 
   const selectedUser = users.find((u) => u.id === selectedUserId);
 
@@ -479,7 +486,6 @@ function ActivateCreditDialog({
 
       toast.success(`Kredit berhasil diaktivasi untuk ${selectedUser.email}`);
       setSelectedUserId("");
-      setUserSearch("");
       setPaymentRef("");
       onSuccess();
     } catch (error) {
@@ -507,42 +513,59 @@ function ActivateCreditDialog({
                 <Loader2 className="h-4 w-4 animate-spin" /> Memuat daftar user...
               </div>
             ) : (
-              <>
-                <Input
-                  id="user-search"
-                  type="text"
-                  value={userSearch}
-                  onChange={(e) => setUserSearch(e.target.value)}
-                  placeholder="Cari nama atau email..."
-                  className="mb-1"
-                />
-                <select
-                  id="email"
-                  value={selectedUserId}
-                  onChange={(e) => setSelectedUserId(e.target.value)}
-                  className="w-full rounded-md border bg-background px-3 py-2 text-sm"
-                  size={6}
+              <Popover open={comboboxOpen} onOpenChange={setComboboxOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    id="email"
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={comboboxOpen}
+                    className="w-full justify-between font-normal"
+                  >
+                    {selectedUser ? (
+                      <span className="flex items-center gap-2">
+                        <User className="h-4 w-4 text-muted-foreground" />
+                        <span className="font-medium">{selectedUser.full_name || "(tanpa nama)"}</span>
+                        <span className="text-muted-foreground">{selectedUser.email}</span>
+                      </span>
+                    ) : (
+                      <span className="text-muted-foreground">Cari dan pilih user...</span>
+                    )}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent
+                  className="w-[--radix-popover-trigger-width] p-0"
+                  align="start"
                 >
-                  <option value="" disabled>
-                    -- Pilih user --
-                  </option>
-                  {filteredUsers.map((u) => (
-                    <option key={u.id} value={u.id}>
-                      {u.full_name || "(tanpa nama)"} — {u.email}
-                    </option>
-                  ))}
-                </select>
-                {filteredUsers.length === 0 && userSearch && (
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Tidak ada user ditemukan.
-                  </p>
-                )}
-                {selectedUser && (
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Terpilih: <span className="font-medium text-foreground">{selectedUser.full_name || "(tanpa nama)"}</span> ({selectedUser.email})
-                  </p>
-                )}
-              </>
+                  <Command>
+                    <CommandInput placeholder="Cari nama atau email..." />
+                    <CommandList>
+                      <CommandEmpty>Tidak ada user ditemukan.</CommandEmpty>
+                      <CommandGroup>
+                        {users.map((u) => (
+                          <CommandItem
+                            key={u.id}
+                            value={`${u.full_name} ${u.email}`}
+                            onSelect={() => {
+                              setSelectedUserId(u.id);
+                              setComboboxOpen(false);
+                            }}
+                          >
+                            <Check
+                              className={"mr-2 h-4 w-4 " + (u.id === selectedUserId ? "opacity-100" : "opacity-0")}
+                            />
+                            <div className="flex flex-col">
+                              <span className="font-medium">{u.full_name || "(tanpa nama)"}</span>
+                              <span className="text-xs text-muted-foreground">{u.email}</span>
+                            </div>
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             )}
           </div>
 
