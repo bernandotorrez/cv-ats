@@ -250,7 +250,7 @@ export function CareerProgress({ user, steps, onCreateCv, onStepClick }: CareerP
                 </span>
               </div>
               <Link
-                to="/tryout-cpns"
+                to="/tryout"
                 className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-amber-300 hover:text-amber-200 transition"
               >
                 Mulai Tryout <ArrowRight className="h-3 w-3" />
