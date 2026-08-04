@@ -47,7 +47,7 @@ type DbSubscriptionRow = {
   tier_id: string;
   status: string;
   date_start: string;
-  date_end: string;
+  date_end: string | null;  // null = never expires (free tier)
   subscription_tiers: {
     slug: string;
     name: string;

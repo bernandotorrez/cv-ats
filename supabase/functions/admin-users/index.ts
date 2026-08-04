@@ -221,8 +221,15 @@ async function updateUser(req: Request, admin: ReturnType<typeof getAdminClient>
   }
 
   const now = new Date();
-  const defaultEnd = new Date(now);
-  defaultEnd.setFullYear(defaultEnd.getFullYear() + (tier === "free" ? 100 : 1));
+  let defaultEnd: Date | null = new Date(now);
+  
+  if (tier === "free") {
+    // Free tier: no expiration (null = never expires, auto-renew)
+    defaultEnd = null;
+  } else {
+    // Paid tiers: expire in 30 days
+    defaultEnd.setDate(defaultEnd.getDate() + 30);
+  }
 
   const { data: activeSub, error: activeSubError } = await admin
     .from("user_subscriptions")
@@ -237,13 +244,12 @@ async function updateUser(req: Request, admin: ReturnType<typeof getAdminClient>
   if (activeSubError) throw activeSubError;
 
   if (activeSub?.id) {
-    const subscriptionUpdate: Record<string, string> = {
+    const subscriptionUpdate: Record<string, string | null> = {
       tier_id: tierData.id,
       status: "active",
+      date_end: defaultEnd ? defaultEnd.toISOString() : null,
+      date_start: now.toISOString(),
     };
-    if (tier === "free") {
-      subscriptionUpdate.date_end = defaultEnd.toISOString();
-    }
 
     const { error: updateSubError } = await admin
       .from("user_subscriptions")
@@ -257,7 +263,7 @@ async function updateUser(req: Request, admin: ReturnType<typeof getAdminClient>
       tier_id: tierData.id,
       status: "active",
       date_start: now.toISOString(),
-      date_end: defaultEnd.toISOString(),
+      date_end: defaultEnd ? defaultEnd.toISOString() : null,
       provider: "manual",
     });
 
