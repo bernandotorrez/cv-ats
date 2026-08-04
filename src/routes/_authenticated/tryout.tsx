@@ -2,7 +2,7 @@
  * /tryout — Dashboard utama tryout user (auth required).
  * Menampilkan kredit, daftar set tryout, dan riwayat.
  */
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, Outlet, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Plus, ArrowRight, Trophy, History, ListChecks } from "lucide-react";
 import { buildSeo } from "@/lib/seo";
@@ -71,6 +71,8 @@ type AttemptRow = {
 function TryoutDashboardPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const isExactTryout = pathname === "/tryout" || pathname === "/tryout/";
   const [loading, setLoading] = useState(true);
   const [credit, setCredit] = useState<TryoutCreditRow | null>(null);
   const [examSets, setExamSets] = useState<ExamSetRow[]>([]);
@@ -145,6 +147,11 @@ function TryoutDashboardPage() {
   }
 
   const hasCredits = (credit?.remaining_credits ?? 0) > 0;
+
+  // Jika ini child route (misal /tryout/beli), render Outlet saja
+  if (!isExactTryout) {
+    return <Outlet />;
+  }
 
   return (
     <div className="container-page space-y-6 py-5 md:py-8">
