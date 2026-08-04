@@ -1,7 +1,7 @@
 /**
  * /tryout/$examId — Detail exam set, tombol mulai, dan info.
  */
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, Outlet, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ArrowLeft, Play, Coins, Loader2, AlertCircle, BookOpen, Trophy } from "lucide-react";
 import { toast } from "sonner";
@@ -49,6 +49,9 @@ function TryoutExamDetailPage() {
   const [examSet, setExamSet] = useState<ExamSetRow | null>(null);
   const [remainingCredits, setRemainingCredits] = useState<number | null>(null);
   const [inProgressAttemptId, setInProgressAttemptId] = useState<string | null>(null);
+
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const isExactMatch = pathname === `/tryout/${examId}` || pathname === `/tryout/${examId}/`;
 
   useEffect(() => {
     void load();
@@ -133,6 +136,10 @@ function TryoutExamDetailPage() {
     } finally {
       setStarting(false);
     }
+  }
+
+  if (!isExactMatch) {
+    return <Outlet />;
   }
 
   if (loading) {
