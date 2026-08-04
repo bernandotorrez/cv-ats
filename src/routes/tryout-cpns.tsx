@@ -15,8 +15,16 @@ import {
   ChevronDown,
   BookOpen,
   Target,
+  CheckCircle2,
+  TrendingUp,
 } from "lucide-react";
 import { buildSeo } from "@/lib/seo";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { TryoutPackageCard } from "@/components/tryout/TryoutPackageCard";
@@ -194,82 +202,179 @@ function TryoutCpnsLandingPage() {
   const lynkBaseUrl = "https://lynk.id/ben-yt-ai/";
 
   return (
-    <div className="bg-gradient-to-b from-background via-background to-muted/30">
-      {/* Hero */}
-      <section className="container-page py-10 sm:py-16">
-        <div className="grid gap-10 lg:grid-cols-2 lg:items-center">
-          <div>
-            <Badge variant="secondary" className="mb-4 gap-1.5 bg-primary/10 text-primary">
-              <Trophy className="h-3 w-3" /> Simulasi SKD Terlengkap
-            </Badge>
-            <h1 className="font-display text-4xl font-bold leading-tight text-foreground sm:text-5xl lg:text-6xl">
-              Tryout SKD <span className="text-primary">Realistis</span> untuk Lulus SKD.
-            </h1>
-            <p className="mt-4 max-w-xl text-base text-muted-foreground sm:text-lg">
-              110 soal sesuai kisi-kisi BKN (TWK + TIU + TKP), timer 100 menit, passing grade
-              sesuai standar, dan pembahasan lengkap di paket premium.
-            </p>
-
-            <div className="mt-6 flex flex-wrap items-center gap-2 text-sm">
-              <span className="flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 font-medium text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400">
-                <Check className="h-3.5 w-3.5" /> 110 soal
+    <div className="bg-white overflow-hidden">
+      {/* Hero Section */}
+      <section className="relative pt-12 pb-24 lg:pt-16 lg:pb-32 bg-gradient-to-b from-green-50/30 to-white">
+        <div className="container-page">
+          <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
+            {/* Left Content */}
+            <div className="flex flex-col items-start text-left max-w-2xl">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-green-50 text-green-700 uppercase tracking-wider mb-4">
+                <Trophy className="h-3.5 w-3.5" /> Simulasi SKD Terlengkap 2026
               </span>
-              <span className="flex items-center gap-1.5 rounded-full bg-sky-50 px-3 py-1 font-medium text-sky-700 dark:bg-sky-950/40 dark:text-sky-400">
-                <Clock className="h-3.5 w-3.5" /> 100 menit
-              </span>
-              <span className="flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 font-medium text-amber-700 dark:bg-amber-950/40 dark:text-amber-400">
-                <Target className="h-3.5 w-3.5" /> Passing grade sesuai BKN
-              </span>
-            </div>
+              <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-gray-900 leading-[1.1]">
+                Tryout SKD Realistis{" "}
+                <span className="text-green-700 block mt-2 sm:inline sm:mt-0">
+                  untuk Lulus CPNS.
+                </span>
+              </h1>
 
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Button asChild size="lg" className="gap-2">
-                <Link to={"/tryout" as never}>
-                  Mulai Tryout
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </Button>
-              <Button asChild size="lg" variant="outline" className="gap-2">
-                <a href="#paket">Lihat Paket Harga</a>
-              </Button>
-            </div>
+              <p className="mt-6 text-base sm:text-lg text-gray-600 leading-relaxed">
+                110 soal sesuai kisi-kisi BKN (30 TWK + 35 TIU + 45 TKP), timer 100 menit, passing grade sesuai standar, dan pembahasan lengkap di paket premium.
+              </p>
 
-            <div className="mt-6 flex items-center gap-2 text-xs text-muted-foreground">
-              <div className="flex">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Star key={i} className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-                ))}
-              </div>
-              <span>Dipercaya ribuan pejuang SKD di Indonesia</span>
-            </div>
-          </div>
-
-          {/* Hero visual */}
-          <div className="relative">
-            <div className="absolute inset-0 -z-10 rounded-3xl bg-gradient-to-br from-primary/20 via-emerald-200/40 to-amber-200/40 blur-2xl" />
-            <div className="rounded-3xl border-2 border-primary/20 bg-card p-6 shadow-xl">
-              <div className="flex items-center justify-between border-b pb-3">
-                <div>
-                  <h3 className="font-bold">Tryout SKD Set 1</h3>
-                  <p className="text-xs text-muted-foreground">110 soal · 100 menit</p>
-                </div>
-                <Badge className="bg-emerald-500">Mulai</Badge>
+              <div className="mt-8 flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+                <Button
+                  asChild
+                  size="lg"
+                  className="h-12 px-8 bg-green-700 hover:bg-green-800 text-white font-semibold rounded-md shadow-md text-base"
+                >
+                  <Link to={"/tryout" as never}>
+                    Mulai Tryout Gratis
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+                <Button
+                  asChild
+                  size="lg"
+                  variant="outline"
+                  className="h-12 px-8 border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold rounded-md text-base"
+                >
+                  <a href="#paket">Lihat Paket Harga</a>
+                </Button>
               </div>
 
-              <div className="mt-4 space-y-3">
-                <ScorePreview label="TWK" score={75} max={150} passing={65} />
-                <ScorePreview label="TIU" score={120} max={175} passing={80} />
-                <ScorePreview label="TKP" score={210} max={225} passing={166} />
+              {/* Bullet checks */}
+              <div className="mt-8 flex flex-wrap gap-x-8 gap-y-3 text-sm text-gray-600 font-medium">
+                <div className="flex items-center gap-2">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-green-100 text-green-700">
+                    <Check className="h-3.5 w-3.5" />
+                  </span>
+                  110 Soal Standar BKN
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-green-100 text-green-700">
+                    <Clock className="h-3.5 w-3.5" />
+                  </span>
+                  Timer 100 Menit
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-green-100 text-green-700">
+                    <Target className="h-3.5 w-3.5" />
+                  </span>
+                  Passing Grade Akurat
+                </div>
               </div>
+            </div>
 
-              <div className="mt-5 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 p-4 text-center text-white">
-                <div className="text-xs font-semibold uppercase tracking-wide opacity-90">
-                  Total Skor (Contoh)
+            {/* Right Hero Image & Badges (Matching Index Style) */}
+            <div className="relative flex justify-center lg:justify-end">
+              <div className="relative w-full max-w-[500px]">
+                <img
+                  src="/images/hero-cpns.webp"
+                  alt="Dua peserta CPNS SKD yang optimis dan lulus"
+                  className="w-full h-auto object-contain drop-shadow-2xl"
+                />
+
+                {/* Floating Card Left: Skor Terakhir & Ranking Nasional (Shifted Outward) */}
+                <div className="absolute -top-10 -left-10 sm:-left-20 lg:-left-28 bg-white rounded-2xl p-4 shadow-xl border border-gray-100 animate-float w-[200px] z-20">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                      SKOR TERAKHIR
+                    </span>
+                    <span className="bg-green-100 text-green-700 text-[9px] font-extrabold px-2 py-0.5 rounded-full">
+                      BAIK
+                    </span>
+                  </div>
+                  <div className="mt-2 flex items-baseline gap-1">
+                    <span className="text-3xl font-black text-green-700">73</span>
+                    <span className="text-xs font-semibold text-gray-400">/ 100</span>
+                  </div>
+                  <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden mt-2 mb-3">
+                    <div className="h-full bg-green-600 rounded-full w-[73%]" />
+                  </div>
+                  <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider block mb-1.5">
+                    RANKING NASIONAL
+                  </span>
+                  <div className="flex items-end gap-1.5 h-7 pt-1">
+                    <div className="flex-1 bg-green-100 rounded-t h-[40%]" />
+                    <div className="flex-1 bg-green-100 rounded-t h-[60%]" />
+                    <div className="flex-1 bg-green-100 rounded-t h-[35%]" />
+                    <div className="flex-1 bg-green-100 rounded-t h-[50%]" />
+                    <div className="flex-1 bg-green-600 rounded-t h-[100%]" />
+                    <div className="flex-1 bg-green-100 rounded-t h-[45%]" />
+                    <div className="flex-1 bg-green-100 rounded-t h-[30%]" />
+                  </div>
                 </div>
-                <div className="mt-1 font-display text-3xl font-bold">
-                  405 <span className="text-base font-medium opacity-80">/ 550</span>
+
+                {/* Floating Card Right: Simulasi CAT (Shifted Outward) */}
+                <div className="absolute -top-6 -right-8 sm:-right-16 lg:-right-24 bg-green-700 text-white rounded-2xl p-4 shadow-xl animate-float-delayed w-[200px] z-20">
+                  <div className="flex items-center gap-2 text-xs font-bold border-b border-green-600/80 pb-2.5 mb-3">
+                    <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-green-600 text-white">
+                      <FileCheck className="h-3.5 w-3.5" />
+                    </div>
+                    <span>Simulasi CAT</span>
+                  </div>
+                  <div className="space-y-3 text-[11px]">
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="flex items-center gap-1 font-semibold text-white">
+                          <CheckCircle2 className="h-3.5 w-3.5 text-white" /> TWK
+                        </span>
+                        <span className="text-[10px] font-semibold text-white">Selesai</span>
+                      </div>
+                      <div className="h-1.5 w-full bg-green-800/80 rounded-full overflow-hidden">
+                        <div className="h-full bg-white w-full rounded-full" />
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="flex items-center gap-1 font-semibold text-white">
+                          <CheckCircle2 className="h-3.5 w-3.5 text-white" /> TIU
+                        </span>
+                        <span className="text-[10px] font-semibold text-white">Selesai</span>
+                      </div>
+                      <div className="h-1.5 w-full bg-green-800/80 rounded-full overflow-hidden">
+                        <div className="h-full bg-white w-full rounded-full" />
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="flex items-center gap-1 font-semibold text-white">
+                          <span className="h-2 w-2 rounded-full bg-white inline-block" /> TKP
+                        </span>
+                        <span className="text-[10px] font-semibold text-white">82%</span>
+                      </div>
+                      <div className="h-1.5 w-full bg-green-800/80 rounded-full overflow-hidden">
+                        <div className="h-full bg-white w-[82%] rounded-full" />
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div className="mt-1 text-xs opacity-90">73.6% · Lulus semua subtes ✓</div>
+
+                {/* Floating Card Bottom-Left: Peluang SKD Meningkat */}
+                <div className="absolute -bottom-8 -left-6 sm:-left-12 bg-white rounded-2xl p-3.5 shadow-xl border border-gray-100 animate-float flex items-center gap-3 max-w-[215px] z-20">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700 font-extrabold">
+                    <TrendingUp className="h-4 w-4" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-xs font-extrabold text-gray-900">Peluang SKD Meningkat</span>
+                    <span className="text-[10px] text-emerald-600 font-semibold">+40% Evaluasi Real-time</span>
+                  </div>
+                </div>
+
+                {/* Floating Card Bottom-Right: Modul Belajar */}
+                <div className="absolute -bottom-8 -right-6 sm:-right-12 bg-white rounded-2xl p-3.5 shadow-xl border border-gray-100 animate-float-delayed flex items-center gap-3 max-w-[200px] z-20">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-600 font-bold">
+                    <BookOpen className="h-4 w-4" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-xs font-extrabold text-gray-900">Modul Belajar</span>
+                    <span className="text-[10px] text-gray-400 font-medium">TIU · TWK · TKP</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -392,13 +497,21 @@ function TryoutCpnsLandingPage() {
       </section>
 
       {/* FAQ */}
-      <section className="container-page py-12">
+      <section className="container-page py-16">
         <div className="mx-auto max-w-3xl">
-          <h2 className="font-display text-3xl font-bold sm:text-4xl text-center">
-            Pertanyaan Umum
-          </h2>
+          <div className="text-center mb-10">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-green-50 text-green-700 uppercase tracking-wider">
+              FAQ
+            </span>
+            <h2 className="mt-3 font-display text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight">
+              Pertanyaan Sering Diajukan
+            </h2>
+            <p className="mt-2 text-sm text-gray-500">
+              Segala hal yang perlu kamu ketahui tentang simulasi tryout SKD CPNS.
+            </p>
+          </div>
 
-          <div className="mt-8 space-y-3">
+          <Accordion type="single" collapsible className="w-full space-y-4">
             {[
               {
                 q: "Apakah soalnya mirip ujian asli?",
@@ -424,56 +537,81 @@ function TryoutCpnsLandingPage() {
                 q: "Bisa diulang untuk set yang sama?",
                 a: "Bisa, selama kamu punya kredit tersisa. Setiap attempt menggunakan 1 kredit.",
               },
-            ].map((item, idx) => {
-              const open = faqOpen === idx;
-              return (
-                <div
-                  key={idx}
-                  className="overflow-hidden rounded-xl border bg-card shadow-sm"
-                >
-                  <button
-                    type="button"
-                    onClick={() => setFaqOpen(open ? null : idx)}
-                    className="flex w-full items-center justify-between px-5 py-4 text-left"
-                  >
-                    <span className="font-semibold text-foreground">{item.q}</span>
-                    <ChevronDown
-                      className={`h-4 w-4 text-muted-foreground transition ${open ? "rotate-180" : ""}`}
-                    />
-                  </button>
-                  {open && (
-                    <div className="border-t px-5 py-4 text-sm text-muted-foreground">
-                      {item.a}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+            ].map((faq, index) => (
+              <AccordionItem
+                key={faq.q}
+                value={`faq-${index}`}
+                className="border border-gray-100 rounded-xl px-5 py-2 bg-white shadow-sm"
+              >
+                <AccordionTrigger className="text-left font-bold text-gray-800 text-sm hover:no-underline hover:text-green-700">
+                  {faq.q}
+                </AccordionTrigger>
+                <AccordionContent className="text-xs md:text-sm leading-relaxed text-gray-500 pt-2 border-t border-gray-50 mt-2">
+                  {faq.a}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
         </div>
       </section>
 
-      {/* Final CTA */}
-      <section className="container-page pb-12">
-        <div className="rounded-3xl bg-gradient-to-br from-primary via-emerald-600 to-emerald-700 p-8 text-center text-white sm:p-12">
-          <Award className="mx-auto mb-4 h-12 w-12" />
-          <h2 className="font-display text-3xl font-bold sm:text-4xl">
-            Siap Lulus SKD?
-          </h2>
-          <p className="mx-auto mt-2 max-w-md text-base opacity-90">
-            Mulai latihan dari sekarang. Setiap tryout membuatmu lebih siap.
-          </p>
-          <Button
-            asChild
-            size="lg"
-            variant="secondary"
-            className="mt-6 gap-2 bg-white text-primary hover:bg-white/90"
-          >
-            <Link to={"/tryout" as never}>
-              Mulai Sekarang
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </Button>
+      {/* Final CTA Banner Section (Matching Index Style) */}
+      <section className="container-page pb-24">
+        <div className="rounded-3xl bg-green-700 px-8 py-12 text-white shadow-2xl relative overflow-hidden flex flex-col lg:flex-row items-center justify-between gap-12">
+          {/* Decorative background element */}
+          <div className="absolute -top-12 -left-12 w-48 h-48 rounded-full bg-green-600/30 blur-2xl" />
+
+          {/* Content */}
+          <div className="relative z-10 flex-1 max-w-2xl text-left">
+            <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight">
+              Siap Lulus SKD? Mulai latihan dari sekarang.
+            </h2>
+            <p className="mt-4 text-base sm:text-lg text-green-100">
+              Setiap tryout membuatmu lebih siap menghadapi ujian asli BKN.
+            </p>
+
+            {/* Checklist */}
+            <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm font-semibold text-green-50">
+              <div className="flex items-center gap-2">
+                <span className="text-white text-xs font-bold">✓</span>
+                110 Soal Standar BKN
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-white text-xs font-bold">✓</span>
+                Timer 100 Menit Realistis
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-white text-xs font-bold">✓</span>
+                Pembahasan Lengkap & Akurat
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-white text-xs font-bold">✓</span>
+                Passing Grade Resmi BKN 2026
+              </div>
+            </div>
+
+            <Button
+              asChild
+              size="lg"
+              className="mt-10 h-12 px-8 bg-yellow-300 hover:bg-yellow-400 text-gray-950 font-extrabold rounded-lg shadow-lg text-base"
+            >
+              <Link to={"/tryout" as never}>
+                Mulai Tryout SKD Sekarang
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
+
+          {/* Right Image */}
+          <div className="relative z-10 w-full max-w-[280px] lg:max-w-[360px] flex justify-center lg:justify-end">
+            <div className="relative w-full">
+              <img
+                src="/images/cta-asn-female.webp"
+                alt="Perempuan ASN tersenyum sukses di depan laptop"
+                className="w-full h-auto rounded-2xl object-cover shadow-2xl border-4 border-white/20"
+              />
+            </div>
+          </div>
         </div>
       </section>
     </div>

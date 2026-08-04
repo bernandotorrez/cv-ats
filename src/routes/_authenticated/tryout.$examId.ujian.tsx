@@ -203,6 +203,13 @@ function TryoutExamPage() {
         const { data: sessionData } = await supabase.auth.getSession();
         const token = sessionData.session?.access_token;
 
+        if (!token) {
+          toast.error("Sesi login Anda telah habis! Silakan buka tab baru, login kembali, lalu tekan Submit lagi di sini.", { duration: 8000 });
+          submittingRef.current = false;
+          setSubmitting(false);
+          return;
+        }
+
         // Flush latest local answers before submit
         const latestAnswers = safeParseLocal(
           `${LOCAL_STORAGE_PREFIX}${attemptId}`,

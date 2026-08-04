@@ -57,15 +57,15 @@ function ScorePreviewBar({ label, score, max, passing }: { label: string; score:
   const pct = (score / max) * 100;
   return (
     <div>
-      <div className="mb-1 flex items-center justify-between text-xs font-medium">
-        <span className="text-white">{label}</span>
-        <span className={passed ? "text-amber-200" : "text-red-300"}>
-          {score} / {max} {passed ? "✓" : ""}
+      <div className="mb-1.5 flex items-center justify-between text-[11px] font-bold uppercase tracking-wider">
+        <span className="text-slate-300">{label}</span>
+        <span className={passed ? "text-emerald-400" : "text-rose-400"}>
+          {score} <span className="text-slate-500">/ {max}</span> {passed && "✓"}
         </span>
       </div>
-      <div className="h-2 overflow-hidden rounded-full bg-white/20">
+      <div className="h-1.5 overflow-hidden rounded-full bg-slate-800/50">
         <div
-          className={`h-full ${passed ? "bg-amber-400" : "bg-red-400"}`}
+          className={`h-full rounded-full transition-all duration-1000 ${passed ? "bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.5)]" : "bg-rose-400"}`}
           style={{ width: `${pct}%` }}
         />
       </div>
@@ -674,27 +674,27 @@ function LandingPage() {
       </section>
 
       {/* AI Highlight & Apply Suggestion Section */}
-      <section className="py-20 bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 relative overflow-hidden">
+      <section className="py-20 bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 relative overflow-hidden">
         {/* Decorative elements */}
         <div className="absolute top-0 left-0 w-full h-full">
-          <div className="absolute top-10 left-10 w-72 h-72 bg-yellow-200/20 rounded-full blur-3xl" />
-          <div className="absolute bottom-10 right-10 w-96 h-96 bg-orange-200/20 rounded-full blur-3xl" />
+          <div className="absolute top-10 left-10 w-72 h-72 bg-green-300/20 rounded-full blur-3xl" />
+          <div className="absolute bottom-10 right-10 w-96 h-96 bg-emerald-300/20 rounded-full blur-3xl" />
         </div>
 
         <div className="container-page relative z-10">
           <div className="text-center max-w-3xl mx-auto mb-16">
-            <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold bg-gradient-to-r from-yellow-400 to-orange-400 text-white uppercase tracking-wider shadow-lg">
+            <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold bg-gradient-to-r from-green-600 to-emerald-600 text-white uppercase tracking-wider shadow-lg">
               <Highlighter className="h-4 w-4" />
               AI SMART HIGHLIGHT
             </span>
             <h2 className="mt-6 font-display text-3xl sm:text-4xl lg:text-5xl font-extrabold text-gray-900 tracking-tight leading-tight">
-              AI tandai, kamu tinggal{}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-600 to-orange-600">
+              AI tandai, kamu tinggal{" "}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-emerald-600">
                 terapkan.
               </span>
             </h2>
             <p className="mt-6 text-base sm:text-lg text-gray-600 max-w-2xl mx-auto">
-              Seperti punya mentor HR yang menandai bagian CV yang perlu diubah dengan stabilo kuning. Satu klik, langsung berubah!
+              Seperti punya mentor HR yang menandai bagian CV yang perlu diubah dengan stabilo hijau. Satu klik, langsung berubah!
             </p>
           </div>
 
@@ -709,17 +709,17 @@ function LandingPage() {
                 </div>
               </div>
               <div className="absolute -top-4 right-20 z-20">
-                <div className="flex items-center gap-2 bg-white rounded-xl px-3 py-2 shadow-lg border border-yellow-100">
-                  <span className="w-3 h-3 rounded-full bg-yellow-400 animate-pulse" />
-                  <span className="text-xs font-bold text-yellow-700">Prioritas Sedang</span>
+                <div className="flex items-center gap-2 bg-white rounded-xl px-3 py-2 shadow-lg border border-amber-100">
+                  <span className="w-3 h-3 rounded-full bg-amber-400 animate-pulse" />
+                  <span className="text-xs font-bold text-amber-700">Prioritas Sedang</span>
                 </div>
               </div>
 
               {/* Main CV Preview Card */}
-              <div className="rounded-3xl border-2 border-yellow-200 bg-white p-6 shadow-2xl shadow-yellow-100/50">
+              <div className="rounded-3xl border-2 border-green-200 bg-white p-6 shadow-2xl shadow-green-100/50">
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-yellow-400 to-orange-400 text-white">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-green-500 to-emerald-500 text-white">
                       <Highlighter className="h-5 w-5" />
                     </div>
                     <div>
@@ -727,7 +727,7 @@ function LandingPage() {
                       <p className="text-xs text-gray-400">Highlight aktif</p>
                     </div>
                   </div>
-                  <Badge className="bg-gradient-to-r from-yellow-400 to-orange-400 text-white border-0">
+                  <Badge className="bg-gradient-to-r from-green-500 to-emerald-500 text-white border-0">
                     5 saran ditemukan
                   </Badge>
                 </div>
@@ -739,7 +739,7 @@ function LandingPage() {
                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Ringkasan Profil</p>
                     <div className="relative">
                       <p className="text-sm text-gray-700 leading-relaxed">
-                        <span className="bg-yellow-200/70 px-1 rounded border-b-2 border-yellow-400">Bertanggung jawab atas berbagai tugas marketing</span> dan membantu tim dalam berbagai proyek.
+                        <span className="bg-red-100 px-1 rounded border-b-2 border-red-300">Bertanggung jawab atas berbagai tugas marketing</span> dan membantu tim dalam berbagai proyek.
                       </p>
                       {/* Highlight tooltip */}
                       <div className="absolute -right-2 -top-2 z-10">
@@ -756,10 +756,10 @@ function LandingPage() {
                     <div className="relative">
                       <p className="text-sm text-gray-700 leading-relaxed">
                         Marketing Staff • PT Maju Bersama<br />
-                        <span className="bg-yellow-200/70 px-1 rounded border-b-2 border-yellow-400">Menjalankan tugas marketing sehari-hari</span>
+                        <span className="bg-amber-100 px-1 rounded border-b-2 border-amber-300">Menjalankan tugas marketing sehari-hari</span>
                       </p>
                       <div className="absolute -right-2 top-6 z-10">
-                        <div className="bg-yellow-500 text-white text-[9px] font-bold px-2 py-1 rounded-lg shadow-md">
+                        <div className="bg-amber-500 text-white text-[9px] font-bold px-2 py-1 rounded-lg shadow-md">
                           🟡 Bisa lebih kuat
                         </div>
                       </div>
@@ -772,7 +772,7 @@ function LandingPage() {
                     <div className="flex flex-wrap gap-2">
                       <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-medium">Digital Marketing</span>
                       <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-medium">SEO</span>
-                      <span className="px-2 py-1 bg-yellow-100 text-yellow-700 rounded text-xs font-medium border border-yellow-200">Content Writing</span>
+                      <span className="px-2 py-1 bg-amber-100 text-amber-700 rounded text-xs font-medium border border-amber-200">Content Writing</span>
                       <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-medium">Analytics</span>
                     </div>
                   </div>
@@ -780,11 +780,11 @@ function LandingPage() {
 
                 {/* Action buttons */}
                 <div className="mt-6 flex gap-3">
-                  <Button className="flex-1 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white shadow-md">
+                  <Button className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-md">
                     <Zap className="h-4 w-4 mr-2" />
                     Terapkan Semua Saran
                   </Button>
-                  <Button variant="outline" className="border-yellow-200 hover:bg-yellow-50">
+                  <Button variant="outline" className="border-green-200 hover:bg-green-50 text-green-700">
                     <Pencil className="h-4 w-4" />
                   </Button>
                 </div>
@@ -793,9 +793,9 @@ function LandingPage() {
 
             {/* Right: Features List */}
             <div className="space-y-6">
-              <div className="rounded-2xl bg-white p-6 shadow-lg border border-yellow-100 hover:shadow-xl transition-shadow">
+              <div className="rounded-2xl bg-white p-6 shadow-lg border border-green-100 hover:shadow-xl transition-shadow">
                 <div className="flex gap-4">
-                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-yellow-100 text-yellow-700">
+                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-green-100 text-green-700">
                     <Target className="h-7 w-7" />
                   </div>
                   <div>
@@ -807,9 +807,9 @@ function LandingPage() {
                 </div>
               </div>
 
-              <div className="rounded-2xl bg-white p-6 shadow-lg border border-orange-100 hover:shadow-xl transition-shadow">
+              <div className="rounded-2xl bg-white p-6 shadow-lg border border-emerald-100 hover:shadow-xl transition-shadow">
                 <div className="flex gap-4">
-                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-orange-100 text-orange-700">
+                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700">
                     <Sparkles className="h-7 w-7" />
                   </div>
                   <div>
@@ -821,9 +821,9 @@ function LandingPage() {
                 </div>
               </div>
 
-              <div className="rounded-2xl bg-white p-6 shadow-lg border border-amber-100 hover:shadow-xl transition-shadow">
+              <div className="rounded-2xl bg-white p-6 shadow-lg border border-teal-100 hover:shadow-xl transition-shadow">
                 <div className="flex gap-4">
-                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-amber-100 text-amber-700">
+                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-teal-100 text-teal-700">
                     <Pencil className="h-7 w-7" />
                   </div>
                   <div>
@@ -835,9 +835,9 @@ function LandingPage() {
                 </div>
               </div>
 
-              <div className="rounded-2xl bg-white p-6 shadow-lg border border-green-100 hover:shadow-xl transition-shadow">
+              <div className="rounded-2xl bg-white p-6 shadow-lg border border-green-200 hover:shadow-xl transition-shadow">
                 <div className="flex gap-4">
-                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-green-100 text-green-700">
+                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-green-50 text-green-600">
                     <CheckCircle2 className="h-7 w-7" />
                   </div>
                   <div>
@@ -856,7 +856,7 @@ function LandingPage() {
             <Button
               asChild
               size="lg"
-              className="h-14 px-10 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white font-bold rounded-xl shadow-lg shadow-orange-200/50 text-base"
+              className="h-14 px-10 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold rounded-xl shadow-lg shadow-green-200/50 text-base"
             >
               <Link to="/register">
                 <Highlighter className="mr-2 h-5 w-5" />
@@ -872,41 +872,51 @@ function LandingPage() {
       </section>
 
       {/* Tryout CPNS Highlight Section */}
-      <section className="py-16 bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-800 text-white relative overflow-hidden">
+      <section className="relative overflow-hidden bg-slate-950 py-20 text-white border-y border-white/5">
         <div className="absolute inset-0">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-amber-400/10 rounded-full blur-3xl" />
-          <div className="absolute bottom-0 left-0 w-80 h-80 bg-emerald-400/20 rounded-full blur-3xl" />
+          {/* Glowing orbs */}
+          <div className="absolute -top-[20%] -right-[10%] h-[500px] w-[500px] rounded-full bg-emerald-500/20 blur-[120px]" />
+          <div className="absolute -bottom-[20%] -left-[10%] h-[400px] w-[400px] rounded-full bg-blue-600/20 blur-[100px]" />
+          {/* Grid pattern overlay */}
+          <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center opacity-10 [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))]" />
         </div>
         <div className="container-page relative z-10">
-          <div className="grid gap-10 lg:grid-cols-2 lg:items-center">
+          <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
             <div>
-              <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold bg-white/20 text-white uppercase tracking-wider backdrop-blur-sm">
-                <Trophy className="h-4 w-4 text-amber-300" />
+              <span className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-emerald-400 backdrop-blur-md">
+                <Sparkles className="h-3.5 w-3.5" />
                 NEW 2026
               </span>
-              <h2 className="mt-5 font-display text-3xl sm:text-4xl font-extrabold tracking-tight leading-tight">
+              <h2 className="mt-6 font-display text-4xl font-extrabold leading-[1.1] tracking-tight sm:text-5xl lg:text-6xl">
                 Tryout CPNS SKD
-                <span className="block text-amber-300">110 Soal Realistis</span>
+                <span className="mt-2 block bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
+                  110 Soal Realistis
+                </span>
               </h2>
-              <p className="mt-4 text-base sm:text-lg text-emerald-100 max-w-xl">
-                Simulasi ujian SKD sesuai kisi-kisi BKN: 30 TWK, 35 TIU, 45 TKP. Timer 100 menit, skor real-time, passing grade sesuai standar.
+              <p className="mt-6 max-w-xl text-base text-slate-400 sm:text-lg leading-relaxed">
+                Simulasi ujian SKD sesuai kisi-kisi resmi BKN. <strong className="text-slate-200">30 TWK, 35 TIU, 45 TKP</strong>. Lengkap dengan timer 100 menit, skor real-time, dan passing grade akurat.
               </p>
-              <div className="mt-6 flex flex-wrap items-center gap-3">
-                <span className="flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-sm font-medium backdrop-blur-sm">
-                  <Clock className="h-4 w-4 text-amber-300" /> 100 menit
-                </span>
-                <span className="flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-sm font-medium backdrop-blur-sm">
-                  <FileText className="h-4 w-4 text-amber-300" /> 110 soal
-                </span>
-                <span className="flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-sm font-medium backdrop-blur-sm">
-                  <Zap className="h-4 w-4 text-amber-300" /> Skor instan
-                </span>
+              
+              <div className="mt-8 flex flex-wrap items-center gap-3">
+                <div className="flex items-center gap-2 rounded-xl border border-white/5 bg-white/5 px-4 py-2.5 backdrop-blur-sm">
+                  <Clock className="h-4 w-4 text-emerald-400" /> 
+                  <span className="text-sm font-semibold text-slate-200">100 menit</span>
+                </div>
+                <div className="flex items-center gap-2 rounded-xl border border-white/5 bg-white/5 px-4 py-2.5 backdrop-blur-sm">
+                  <FileText className="h-4 w-4 text-emerald-400" /> 
+                  <span className="text-sm font-semibold text-slate-200">110 soal</span>
+                </div>
+                <div className="flex items-center gap-2 rounded-xl border border-white/5 bg-white/5 px-4 py-2.5 backdrop-blur-sm">
+                  <Zap className="h-4 w-4 text-emerald-400" /> 
+                  <span className="text-sm font-semibold text-slate-200">Skor instan</span>
+                </div>
               </div>
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+
+              <div className="mt-10 flex flex-col gap-4 sm:flex-row">
                 <Button
                   asChild
                   size="lg"
-                  className="bg-white text-emerald-700 hover:bg-white/90 font-bold gap-2"
+                  className="h-14 gap-2 rounded-xl bg-emerald-500 px-8 text-base font-bold text-slate-950 transition-all hover:scale-[1.02] hover:bg-emerald-400 hover:shadow-[0_0_20px_rgba(52,211,153,0.3)]"
                 >
                   <Link to="/tryout-cpns">
                     Mulai Tryout
@@ -917,7 +927,7 @@ function LandingPage() {
                   asChild
                   size="lg"
                   variant="outline"
-                  className="border-white/30 text-white hover:bg-white/10 gap-2"
+                  className="h-14 gap-2 rounded-xl border-slate-700 bg-slate-800/50 px-8 text-base text-slate-200 backdrop-blur-sm transition-all hover:bg-slate-800 hover:text-white"
                 >
                   <Link to="/tryout-cpns">
                     Info Lengkap & Harga
@@ -925,21 +935,40 @@ function LandingPage() {
                 </Button>
               </div>
             </div>
-            <div className="hidden lg:block">
-              <div className="rounded-2xl border-2 border-white/20 bg-white/10 backdrop-blur-sm p-6 shadow-2xl">
-                <div className="flex items-center gap-2 mb-4">
-                  <Trophy className="h-5 w-5 text-amber-300" />
-                  <span className="font-display text-lg font-bold">Contoh Hasil</span>
+            
+            <div className="hidden lg:block relative">
+              <div className="absolute -inset-1 rounded-3xl bg-gradient-to-b from-emerald-500/20 to-transparent opacity-50 blur-xl" />
+              <div className="relative rounded-3xl border border-white/10 bg-slate-900/80 p-8 shadow-2xl backdrop-blur-xl">
+                <div className="mb-6 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-400">
+                      <Trophy className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <h3 className="font-display text-lg font-bold text-white">Contoh Hasil</h3>
+                      <p className="text-xs text-slate-400">Analitik Skor Real-time</p>
+                    </div>
+                  </div>
                 </div>
-                <div className="space-y-3">
-                  <ScorePreviewBar label="TWK" score={75} max={150} passing={65} />
-                  <ScorePreviewBar label="TIU" score={120} max={175} passing={80} />
-                  <ScorePreviewBar label="TKP" score={210} max={225} passing={166} />
+                
+                <div className="space-y-4">
+                  <ScorePreviewBar label="Tes Wawasan Kebangsaan (TWK)" score={75} max={150} passing={65} />
+                  <ScorePreviewBar label="Tes Intelegensia Umum (TIU)" score={120} max={175} passing={80} />
+                  <ScorePreviewBar label="Tes Karakteristik Pribadi (TKP)" score={210} max={225} passing={166} />
                 </div>
-                <div className="mt-5 rounded-xl bg-gradient-to-r from-amber-400 to-orange-400 p-4 text-center">
-                  <div className="text-xs font-semibold uppercase tracking-wide text-white/80">Total Skor</div>
-                  <div className="mt-1 font-display text-3xl font-bold text-white">405 <span className="text-base font-medium text-white/80">/ 550</span></div>
-                  <div className="mt-1 text-xs font-medium text-white/90">Lulus semua subtes ✓</div>
+                
+                <div className="mt-8 relative overflow-hidden rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-5 text-center">
+                  <div className="absolute -right-4 -top-4 h-16 w-16 rounded-full bg-emerald-500/30 blur-2xl" />
+                  <div className="absolute -bottom-4 -left-4 h-16 w-16 rounded-full bg-cyan-500/20 blur-2xl" />
+                  <div className="relative z-10">
+                    <div className="text-[10px] font-bold uppercase tracking-widest text-emerald-400/80">Total Skor</div>
+                    <div className="mt-1 font-display text-4xl font-extrabold text-white">
+                      405 <span className="text-lg font-medium text-slate-400">/ 550</span>
+                    </div>
+                    <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-semibold text-emerald-300">
+                      <CheckCircle2 className="h-3 w-3" /> Lulus Passing Grade
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

@@ -130,7 +130,7 @@ function TryoutDashboardPage() {
       .from("tryout_attempts")
       .select("*, exam_sets:tryout_exam_sets(id, slug, name)")
       .eq("user_id", user.id)
-      .in("status", ["completed", "timed_out"])
+      .in("status", ["in_progress", "completed", "timed_out"])
       .order("created_at", { ascending: false })
       .limit(10);
     setAttempts((attemptsData as AttemptRow[]) || []);
@@ -248,18 +248,17 @@ function TryoutDashboardPage() {
                       <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
                         {es.description || `${es.total_questions} soal · ${es.duration_minutes} menit`}
                       </p>
-                      <div className="mt-4 flex items-center justify-between">
+                      <div className="mt-4 flex flex-col items-start gap-2.5 sm:flex-row sm:items-center sm:justify-between">
+                        <p className="text-[10px] text-muted-foreground/70 leading-tight">
+                          Klik <b>Lihat Detail</b> untuk memulai tryout.
+                        </p>
                         <Button
                           size="sm"
                           disabled={!hasCredits && !lastAttempt?.id}
                           onClick={() => navigate({ to: "/tryout/$examId" as never, params: { examId: es.id } as never })}
-                          className="gap-1.5"
+                          className="gap-1.5 w-full sm:w-auto"
                         >
-                          {lastAttempt?.pass_overall
-                            ? "Coba Lagi"
-                            : lastAttempt?.id
-                              ? "Lihat Hasil"
-                              : "Mulai Tryout"}
+                          Lihat Detail
                           <ArrowRight className="h-3.5 w-3.5" />
                         </Button>
                       </div>
