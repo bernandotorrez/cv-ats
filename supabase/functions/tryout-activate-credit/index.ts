@@ -60,25 +60,12 @@ Deno.serve(async (req: Request) => {
 
     // 2. Lookup user_id dari email jika perlu
     if (!targetUserId && email) {
-      const { data: profile } = await admin
-        .from("profiles")
-        .select("id")
-        .eq("id", (
-          await admin.auth.admin.listUsers({ page: 1, perPage: 1 })
-        ).users.find((u) => u.email?.toLowerCase() === email)?.id || "00000000-0000-0000-0000-000000000000")
-        .maybeSingle();
-
-      // Fallback: cari via listUsers (untuk demo; production bisa pakai admin.auth.getUserByEmail jika ada)
-      if (profile) {
-        targetUserId = profile.id;
-      } else {
-        // Coba listUsers paginated (max 1000)
-        const found = await findUserByEmail(admin, email);
-        if (!found) {
-          return json(req, { error: `User dengan email ${email} tidak ditemukan.` }, 404);
-        }
-        targetUserId = found;
+      // Cari via listUsers paginated
+      const found = await findUserByEmail(admin, email);
+      if (!found) {
+        return json(req, { error: `User dengan email ${email} tidak ditemukan.` }, 404);
       }
+      targetUserId = found;
     }
 
     // 3. Lookup package

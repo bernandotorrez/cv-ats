@@ -379,6 +379,8 @@ function StatCard({
   );
 }
 
+type UserOption = { id: string; email: string; full_name: string };
+
 function ActivateCreditDialog({
   open,
   onOpenChange,
@@ -388,13 +390,16 @@ function ActivateCreditDialog({
   onOpenChange: (v: boolean) => void;
   onSuccess: () => void;
 }) {
-  const [email, setEmail] = useState("");
+  const [selectedUserId, setSelectedUserId] = useState("");
   const [packageSlug, setPackageSlug] = useState("satuan");
   const [paymentMethod, setPaymentMethod] = useState<"manual" | "lynk" | "transfer">("manual");
   const [paymentRef, setPaymentRef] = useState("");
   const [credits, setCredits] = useState<number>(1);
   const [submitting, setSubmitting] = useState(false);
   const [packages, setPackages] = useState<Array<{ slug: string; name: string; credits: number }>>([]);
+  const [users, setUsers] = useState<UserOption[]>([]);
+  const [userSearch, setUserSearch] = useState("");
+  const [loadingUsers, setLoadingUsers] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -404,6 +409,22 @@ function ActivateCreditDialog({
         .eq("is_active", true)
         .order("sort_order", { ascending: true })
         .then(({ data }) => setPackages(data || []));
+
+      // Fetch users for dropdown
+      setLoadingUsers(true);
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      supabase.auth.getSession().then(({ data: sessionData }) => {
+        const token = sessionData.session?.access_token;
+        fetch(`${supabaseUrl}/functions/v1/admin-users?perPage=1000`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.users) setUsers(data.users);
+          })
+          .catch(() => {})
+          .finally(() => setLoadingUsers(false));
+      });
     }
   }, [open]);
 
@@ -412,9 +433,24 @@ function ActivateCreditDialog({
     if (pkg) setCredits(pkg.credits);
   }, [packageSlug, packages]);
 
+  const filteredUsers = users.filter((u) => {
+    if (!userSearch) return true;
+    const q = userSearch.toLowerCase();
+    return (
+      u.email?.toLowerCase().includes(q) ||
+      u.full_name?.toLowerCase().includes(q)
+    );
+  });
+
+  const selectedUser = users.find((u) => u.id === selectedUserId);
+
   async function handleActivate() {
-    if (!email.trim()) {
-      toast.error("Email wajib diisi");
+    if (!selectedUserId) {
+      toast.error("Pilih user terlebih dahulu");
+      return;
+    }
+    if (!selectedUser?.email) {
+      toast.error("Email user tidak ditemukan");
       return;
     }
     setSubmitting(true);
@@ -430,7 +466,7 @@ function ActivateCreditDialog({
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          user_email: email.trim(),
+          user_email: selectedUser.email,
           package_slug: packageSlug,
           credits,
           payment_method: paymentMethod,
@@ -441,8 +477,9 @@ function ActivateCreditDialog({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Gagal aktivasi");
 
-      toast.success(`Kredit berhasil diaktivasi untuk ${email}`);
-      setEmail("");
+      toast.success(`Kredit berhasil diaktivasi untuk ${selectedUser.email}`);
+      setSelectedUserId("");
+      setUserSearch("");
       setPaymentRef("");
       onSuccess();
     } catch (error) {
@@ -464,14 +501,49 @@ function ActivateCreditDialog({
 
         <div className="space-y-3">
           <div>
-            <Label htmlFor="email">Email User</Label>
-            <Input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="user@example.com"
-            />
+            <Label htmlFor="email">User</Label>
+            {loadingUsers ? (
+              <div className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" /> Memuat daftar user...
+              </div>
+            ) : (
+              <>
+                <Input
+                  id="user-search"
+                  type="text"
+                  value={userSearch}
+                  onChange={(e) => setUserSearch(e.target.value)}
+                  placeholder="Cari nama atau email..."
+                  className="mb-1"
+                />
+                <select
+                  id="email"
+                  value={selectedUserId}
+                  onChange={(e) => setSelectedUserId(e.target.value)}
+                  className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+                  size={6}
+                >
+                  <option value="" disabled>
+                    -- Pilih user --
+                  </option>
+                  {filteredUsers.map((u) => (
+                    <option key={u.id} value={u.id}>
+                      {u.full_name || "(tanpa nama)"} — {u.email}
+                    </option>
+                  ))}
+                </select>
+                {filteredUsers.length === 0 && userSearch && (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Tidak ada user ditemukan.
+                  </p>
+                )}
+                {selectedUser && (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Terpilih: <span className="font-medium text-foreground">{selectedUser.full_name || "(tanpa nama)"}</span> ({selectedUser.email})
+                  </p>
+                )}
+              </>
+            )}
           </div>
 
           <div>
