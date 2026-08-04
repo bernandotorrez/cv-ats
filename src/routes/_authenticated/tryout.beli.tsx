@@ -41,7 +41,7 @@ function TryoutBeliPage() {
   }, []);
 
   const lynkBaseUrl = "https://lynk.id/ben-yt-ai/";
-  const whatsappNumber = "6281234567890";
+  const whatsappNumber = "6285190607141";
   const whatsappGeneral = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
     "Halo, saya ingin beli paket tryout SKD di CV Pintar.",
   )}`;

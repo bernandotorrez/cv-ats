@@ -34,7 +34,7 @@ export function TryoutPackageCard({
   hasAnalytics = false,
   hasLeaderboard = false,
   lynkUrl,
-  whatsappNumber = "6281234567890",
+  whatsappNumber = "6285190607141",
 }: Props) {
   const formattedPrice = new Intl.NumberFormat("id-ID", {
     style: "currency",
