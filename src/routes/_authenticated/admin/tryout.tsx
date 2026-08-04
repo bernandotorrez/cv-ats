@@ -14,6 +14,8 @@ import {
   Send,
   Plus,
   Trash2,
+  Sparkles,
+  Brain,
 } from "lucide-react";
 import { buildSeo } from "@/lib/seo";
 import { Button } from "@/components/ui/button";
@@ -205,6 +207,9 @@ function AdminTryoutPage() {
           <TabsTrigger value="sets">
             <FileCheck className="mr-1.5 h-4 w-4" /> Exam Set
           </TabsTrigger>
+          <TabsTrigger value="generate">
+            <Sparkles className="mr-1.5 h-4 w-4" /> Generate AI
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="credits" className="space-y-4">
@@ -327,6 +332,10 @@ function AdminTryoutPage() {
               ))}
             </div>
           )}
+        </TabsContent>
+
+        <TabsContent value="generate" className="space-y-4">
+          <GenerateSoalPanel examSets={examSets} />
         </TabsContent>
       </Tabs>
 
@@ -530,5 +539,129 @@ function ActivateCreditDialog({
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function GenerateSoalPanel({
+  examSets,
+}: {
+  examSets: Array<{ id: string; slug: string; name: string }>;
+}) {
+  const [examSetId, setExamSetId] = useState("");
+  const [subtest, setSubtest] = useState<"twk" | "tiu" | "tkp">("twk");
+  const [count, setCount] = useState(10);
+  const [category, setCategory] = useState("");
+  const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">("medium");
+  const [generating, setGenerating] = useState(false);
+  const [result, setResult] = useState<any>(null);
+
+  useEffect(() => {
+    if (examSets.length > 0 && !examSetId) setExamSetId(examSets[0].id);
+  }, [examSets]);
+
+  async function handleGenerate() {
+    if (!examSetId) { toast.error("Pilih exam set"); return; }
+    setGenerating(true);
+    setResult(null);
+    try {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      const res = await fetch(`${supabaseUrl}/functions/v1/tryout-generate-questions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ exam_set_id: examSetId, subtest, count, category: category || undefined, difficulty }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setResult(data);
+      toast.success(`${data.generated} soal ${subtest.toUpperCase()} berhasil di-generate!`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Gagal generate soal");
+    } finally {
+      setGenerating(false);
+    }
+  }
+
+  const subtestCategories: Record<string, string[]> = {
+    twk: ["Pancasila", "UUD 1945", "NKRI", "Bhinneka Tunggal Ika", "Peristiwa Bersejarah"],
+    tiu: ["Verbal", "Numerik", "Figural", "Logis"],
+    tkp: ["Pelayanan Publik", "Jejaring Kerja", "Profesionalisme", "Integritas"],
+  };
+
+  return (
+    <div className="rounded-2xl border bg-card p-4 shadow-sm sm:p-5">
+      <div className="mb-4 flex items-center gap-2">
+        <Brain className="h-5 w-5 text-primary" />
+        <h3 className="font-display text-lg font-bold">Generate Soal dengan AI</h3>
+      </div>
+      <p className="mb-5 text-sm text-muted-foreground">
+        Gunakan AI untuk membuat soal tryout baru. Soal akan langsung tersimpan ke database.
+      </p>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div>
+          <Label>Exam Set</Label>
+          <select value={examSetId} onChange={(e) => setExamSetId(e.target.value)} className="w-full rounded-md border bg-background px-3 py-2 text-sm">
+            {examSets.map((es) => (
+              <option key={es.id} value={es.id}>{es.name}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <Label>Subtes</Label>
+          <select value={subtest} onChange={(e) => { setSubtest(e.target.value as any); setCategory(""); }} className="w-full rounded-md border bg-background px-3 py-2 text-sm">
+            <option value="twk">TWK - Tes Wawasan Kebangsaan</option>
+            <option value="tiu">TIU - Tes Intelegensi Umum</option>
+            <option value="tkp">TKP - Tes Karakteristik Pribadi</option>
+          </select>
+        </div>
+        <div>
+          <Label>Jumlah Soal</Label>
+          <Input type="number" min={1} max={45} value={count} onChange={(e) => setCount(Number(e.target.value))} />
+        </div>
+        <div>
+          <Label>Tingkat Kesulitan</Label>
+          <select value={difficulty} onChange={(e) => setDifficulty(e.target.value as any)} className="w-full rounded-md border bg-background px-3 py-2 text-sm">
+            <option value="easy">Mudah</option>
+            <option value="medium">Sedang</option>
+            <option value="hard">Sulit</option>
+          </select>
+        </div>
+        <div className="sm:col-span-2">
+          <Label>Kategori (opsional)</Label>
+          <div className="mb-2 flex flex-wrap gap-1.5">
+            {subtestCategories[subtest]?.map((cat) => (
+              <button key={cat} type="button" onClick={() => setCategory(cat === category ? "" : cat)} className={`rounded-full px-3 py-1 text-xs font-medium transition ${category === cat ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/70"}`}>
+                {cat}
+              </button>
+            ))}
+          </div>
+          <Input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Atau ketik kategori sendiri..." />
+        </div>
+      </div>
+
+      <Button onClick={handleGenerate} disabled={generating} className="mt-5 w-full gap-2">
+        {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+        {generating ? "Menggenerate..." : `Generate ${count} Soal ${subtest.toUpperCase()}`}
+      </Button>
+
+      {result && (
+        <div className="mt-5 rounded-xl border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-800 dark:bg-emerald-950/40">
+          <h4 className="font-bold text-emerald-700 dark:text-emerald-400">✓ Berhasil!</h4>
+          <p className="mt-1 text-sm text-emerald-800 dark:text-emerald-300">
+            {result.generated} soal berhasil di-generate dan disimpan ke database.
+          </p>
+          {result.questions && (
+            <div className="mt-3 space-y-1">
+              {result.questions.slice(0, 3).map((q: any) => (
+                <p key={q.id} className="line-clamp-1 text-xs text-muted-foreground">{q.question_number}. {q.question_text}</p>
+              ))}
+              {result.questions.length > 3 && <p className="text-xs text-muted-foreground">...dan {result.questions.length - 3} soal lainnya</p>}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
