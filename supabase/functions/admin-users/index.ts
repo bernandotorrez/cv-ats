@@ -183,10 +183,7 @@ async function updateUser(req: Request, admin: ReturnType<typeof getAdminClient>
   const quota_upload_cv =
     typeof body.quota_upload_cv === "number" ? body.quota_upload_cv : undefined;
 
-  // SECURITY: Prevent self-escalation — admin cannot modify their own role/tier
-  if (userId === requesterId) {
-    throw new Error("Tidak dapat mengubah data diri sendiri. Minta admin lain untuk melakukannya.");
-  }
+  // Admin can update their own profile (including tryout credits, tier, etc.)
 
   // SECURITY: Validate upper bounds for quota values
   const MAX_QUOTA_PRO_PHOTO = 100;
