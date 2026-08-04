@@ -63,7 +63,7 @@ function TryoutResultPage() {
       const { data: sessionData } = await supabase.auth.getSession();
       const token = sessionData.session?.access_token;
 
-      const res = await fetch(`${supabaseUrl}/functions/v1/tryout-submit`, {
+      const res = await fetch(`${supabaseUrl}/functions/v1/tryout-result`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -101,6 +101,15 @@ function TryoutResultPage() {
           .eq("exam_set_id", examId)
           .order("question_number", { ascending: true });
         setQuestions((qs as unknown as TryoutQuestionFull[]) || []);
+
+        if ((att as any).credit_id) {
+          const { data: credit } = await supabase
+            .from("tryout_credits")
+            .select("tryout_packages!inner(has_pembahasan)")
+            .eq("id", (att as any).credit_id)
+            .maybeSingle();
+          setHasPembahasan(!!(credit as any)?.tryout_packages?.has_pembahasan);
+        }
       }
     } finally {
       setLoading(false);
