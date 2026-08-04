@@ -176,9 +176,18 @@ const TIER_LIMITS: Record<Tier, TierLimits> = {
 /**
  * Fetch the full tier config from the database including feature flags.
  * Falls back to hardcoded TIER_LIMITS if DB query fails.
+ * Automatically checks subscription expiration and downgrades if needed.
  */
 export async function getUserTierConfig(userId: string): Promise<TierLimits> {
   try {
+    // First check and handle subscription expiration
+    const { tier } = await checkAndHandleSubscription(userId);
+    
+    // If downgraded to free, return free limits
+    if (tier === "free") {
+      return TIER_LIMITS.free;
+    }
+
     const { data } = await supabase
       .from("user_subscriptions")
       .select(
@@ -247,20 +256,13 @@ export async function getUserTierConfig(userId: string): Promise<TierLimits> {
 /**
  * Get the current user's tier slug from their active subscription.
  * Falls back to "free" if no subscription found.
+ * Automatically checks subscription expiration.
  */
 export async function getUserTier(userId: string): Promise<Tier> {
   try {
-    const { data } = await supabase
-      .from("user_subscriptions")
-      .select("subscription_tiers!inner(slug)")
-      .eq("user_id", userId)
-      .eq("status", "active")
-      .single();
-
-    if (data) {
-      const tier = data.subscription_tiers?.slug as Tier;
-      if (tier && TIER_LIMITS[tier]) return tier;
-    }
+    // Use checkAndHandleSubscription to auto-check expiration
+    const { tier } = await checkAndHandleSubscription(userId);
+    return tier;
   } catch {
     // Fall through to free
   }
@@ -307,6 +309,150 @@ export async function checkUsageLimit(
   const max = limits[feature];
   if (max === null) return { atLimit: false, current: currentUsage, max: null };
   return { atLimit: currentUsage >= max, current: currentUsage, max };
+}
+
+/**
+ * Check subscription status and handle expiration.
+ * Returns the current tier after checking expiration.
+ * If paid subscription is expired, auto-downgrades to free.
+ */
+export async function checkAndHandleSubscription(userId: string): Promise<{
+  tier: Tier;
+  isExpired: boolean;
+  daysRemaining: number | null;
+  dateEnd: string | null;
+}> {
+  try {
+    const { data: subscription } = await supabase
+      .from("user_subscriptions")
+      .select("id, tier_id, status, date_start, date_end, subscription_tiers!inner(slug)")
+      .eq("user_id", userId)
+      .eq("status", "active")
+      .single();
+
+    if (!subscription) {
+      // No active subscription, create free subscription
+      await createFreeSubscription(userId);
+      return { tier: "free", isExpired: false, daysRemaining: null, dateEnd: null };
+    }
+
+    const tierSlug = (subscription.subscription_tiers?.slug as Tier) || "free";
+
+    // Free tier never expires
+    if (tierSlug === "free" || !subscription.date_end) {
+      return { tier: tierSlug, isExpired: false, daysRemaining: null, dateEnd: subscription.date_end };
+    }
+
+    // Check if paid subscription is expired
+    const now = new Date();
+    const endDate = new Date(subscription.date_end);
+    const isExpired = endDate <= now;
+
+    if (isExpired) {
+      // Auto-downgrade to free tier
+      await downgradeToFree(userId, subscription.id);
+      return { tier: "free", isExpired: true, daysRemaining: 0, dateEnd: null };
+    }
+
+    // Calculate remaining days
+    const daysRemaining = Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+
+    return { tier: tierSlug, isExpired: false, daysRemaining, dateEnd: subscription.date_end };
+  } catch {
+    // On error, return free tier as fallback
+    return { tier: "free", isExpired: false, daysRemaining: null, dateEnd: null };
+  }
+}
+
+/**
+ * Get remaining days for current subscription.
+ * Returns null for free tier (never expires).
+ */
+export async function getSubscriptionRemainingDays(userId: string): Promise<number | null> {
+  try {
+    const { data: subscription } = await supabase
+      .from("user_subscriptions")
+      .select("date_end, subscription_tiers!inner(slug)")
+      .eq("user_id", userId)
+      .eq("status", "active")
+      .single();
+
+    if (!subscription?.date_end) return null; // Free tier or no end date
+
+    const tierSlug = subscription.subscription_tiers?.slug;
+    if (tierSlug === "free") return null; // Free tier never expires
+
+    const now = new Date();
+    const endDate = new Date(subscription.date_end);
+    const daysRemaining = Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+
+    return Math.max(0, daysRemaining);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Downgrade user to free tier when paid subscription expires.
+ */
+async function downgradeToFree(userId: string, currentSubId: string): Promise<void> {
+  // Mark current subscription as expired
+  await supabase
+    .from("user_subscriptions")
+    .update({ status: "expired" })
+    .eq("id", currentSubId);
+
+  // Create new free subscription
+  await createFreeSubscription(userId);
+}
+
+/**
+ * Create a free tier subscription for user.
+ */
+async function createFreeSubscription(userId: string): Promise<void> {
+  // Get free tier ID
+  const { data: freeTier } = await supabase
+    .from("subscription_tiers")
+    .select("id")
+    .eq("slug", "free")
+    .single();
+
+  if (!freeTier) return;
+
+  await supabase
+    .from("user_subscriptions")
+    .insert({
+      user_id: userId,
+      tier_id: freeTier.id,
+      status: "active",
+      date_start: new Date().toISOString(),
+      date_end: null, // Free tier never expires
+      provider: "auto_downgrade",
+    });
+}
+
+/**
+ * Check if subscription is expiring soon (within 7 days).
+ * Returns warning message if expiring, null otherwise.
+ */
+export async function checkExpiringWarning(userId: string): Promise<string | null> {
+  const daysRemaining = await getSubscriptionRemainingDays(userId);
+  
+  if (daysRemaining === null) return null; // Free tier
+  
+  if (daysRemaining <= 0) {
+    return "Subscription Anda telah berakhir. Upgrade untuk melanjutkan fitur premium.";
+  }
+  
+  if (daysRemaining <= 3) {
+    return `Subscription Anda berakhir dalam ${daysRemaining} hari. Perpanjang sekarang untuk menghindari gangguan.`;
+  }
+  
+  if (daysRemaining <= 7) {
+    return `Subscription Anda berakhir dalam ${daysRemaining} hari.`;
+  }
+  
+  return null;
 }
 
 export { TIER_LIMITS };
