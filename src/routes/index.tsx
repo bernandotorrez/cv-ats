@@ -32,6 +32,8 @@ import {
   Zap,
   ArrowDown,
   UserRound,
+  Trophy,
+  Clock,
 } from "lucide-react";
 
 import {
@@ -49,6 +51,28 @@ import { AtsVsCreative } from "@/components/home/AtsVsCreative";
 import { ThreeSteps } from "@/components/home/ThreeSteps";
 import { AnalysisFeatures } from "@/components/home/AnalysisFeatures";
 import { SeoContent } from "@/components/home/SeoContent";
+
+function ScorePreviewBar({ label, score, max, passing }: { label: string; score: number; max: number; passing: number }) {
+  const passed = score >= passing;
+  const pct = (score / max) * 100;
+  return (
+    <div>
+      <div className="mb-1 flex items-center justify-between text-xs font-medium">
+        <span className="text-white">{label}</span>
+        <span className={passed ? "text-amber-200" : "text-red-300"}>
+          {score} / {max} {passed ? "✓" : ""}
+        </span>
+      </div>
+      <div className="h-2 overflow-hidden rounded-full bg-white/20">
+        <div
+          className={`h-full ${passed ? "bg-amber-400" : "bg-red-400"}`}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
 
 export const Route = createFileRoute("/")({
   head: () =>
@@ -843,6 +867,82 @@ function LandingPage() {
             <p className="mt-4 text-sm text-gray-500">
               Gratis untuk semua pengguna • Tidak perlu kartu kredit
             </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Tryout CPNS Highlight Section */}
+      <section className="py-16 bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-800 text-white relative overflow-hidden">
+        <div className="absolute inset-0">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-amber-400/10 rounded-full blur-3xl" />
+          <div className="absolute bottom-0 left-0 w-80 h-80 bg-emerald-400/20 rounded-full blur-3xl" />
+        </div>
+        <div className="container-page relative z-10">
+          <div className="grid gap-10 lg:grid-cols-2 lg:items-center">
+            <div>
+              <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold bg-white/20 text-white uppercase tracking-wider backdrop-blur-sm">
+                <Trophy className="h-4 w-4 text-amber-300" />
+                NEW 2026
+              </span>
+              <h2 className="mt-5 font-display text-3xl sm:text-4xl font-extrabold tracking-tight leading-tight">
+                Tryout CPNS SKD
+                <span className="block text-amber-300">110 Soal Realistis</span>
+              </h2>
+              <p className="mt-4 text-base sm:text-lg text-emerald-100 max-w-xl">
+                Simulasi ujian SKD sesuai kisi-kisi BKN: 30 TWK, 35 TIU, 45 TKP. Timer 100 menit, skor real-time, passing grade sesuai standar.
+              </p>
+              <div className="mt-6 flex flex-wrap items-center gap-3">
+                <span className="flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-sm font-medium backdrop-blur-sm">
+                  <Clock className="h-4 w-4 text-amber-300" /> 100 menit
+                </span>
+                <span className="flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-sm font-medium backdrop-blur-sm">
+                  <FileText className="h-4 w-4 text-amber-300" /> 110 soal
+                </span>
+                <span className="flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-sm font-medium backdrop-blur-sm">
+                  <Zap className="h-4 w-4 text-amber-300" /> Skor instan
+                </span>
+              </div>
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                <Button
+                  asChild
+                  size="lg"
+                  className="bg-white text-emerald-700 hover:bg-white/90 font-bold gap-2"
+                >
+                  <Link to="/tryout-cpns">
+                    Mulai Tryout
+                    <ArrowRight className="h-5 w-5" />
+                  </Link>
+                </Button>
+                <Button
+                  asChild
+                  size="lg"
+                  variant="outline"
+                  className="border-white/30 text-white hover:bg-white/10 gap-2"
+                >
+                  <Link to="/tryout-cpns">
+                    Info Lengkap & Harga
+                  </Link>
+                </Button>
+              </div>
+            </div>
+            <div className="hidden lg:block">
+              <div className="rounded-2xl border-2 border-white/20 bg-white/10 backdrop-blur-sm p-6 shadow-2xl">
+                <div className="flex items-center gap-2 mb-4">
+                  <Trophy className="h-5 w-5 text-amber-300" />
+                  <span className="font-display text-lg font-bold">Contoh Hasil</span>
+                </div>
+                <div className="space-y-3">
+                  <ScorePreviewBar label="TWK" score={75} max={150} passing={65} />
+                  <ScorePreviewBar label="TIU" score={120} max={175} passing={80} />
+                  <ScorePreviewBar label="TKP" score={210} max={225} passing={166} />
+                </div>
+                <div className="mt-5 rounded-xl bg-gradient-to-r from-amber-400 to-orange-400 p-4 text-center">
+                  <div className="text-xs font-semibold uppercase tracking-wide text-white/80">Total Skor</div>
+                  <div className="mt-1 font-display text-3xl font-bold text-white">405 <span className="text-base font-medium text-white/80">/ 550</span></div>
+                  <div className="mt-1 text-xs font-medium text-white/90">Lulus semua subtes ✓</div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>

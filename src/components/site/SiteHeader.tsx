@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Menu, FileText, X, LayoutDashboard, ShieldCheck } from "lucide-react";
+import { Menu, FileText, X, LayoutDashboard, ShieldCheck, Trophy } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-context";
@@ -10,6 +10,7 @@ const nav = [
   { to: "/fitur", label: "Fitur" },
   { to: "/template", label: "Template" },
   { to: "/lowongan", label: "Lowongan" },
+  { to: "/tryout-cpns", label: "Tryout CPNS", badge: "2026" },
   { to: "/private-coaching", label: "Private Mentoring" },
   { to: "/harga", label: "Harga" },
   { to: "/panduan-cv-ats", label: "Panduan" },
@@ -69,12 +70,23 @@ export function SiteHeader() {
             <Link
               key={item.to}
               to={item.to}
-              className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              className={cn(
+                "rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
+                "badge" in item && item.badge && "relative",
+              )}
               activeProps={{
                 className: "rounded-md px-3 py-2 text-sm font-medium text-foreground bg-muted",
               }}
             >
-              {item.label}
+              <span className="flex items-center gap-1.5">
+                {"badge" in item && item.badge && <Trophy className="h-3.5 w-3.5 text-amber-500" />}
+                {item.label}
+                {"badge" in item && item.badge && (
+                  <span className="rounded-full bg-gradient-to-r from-amber-400 to-orange-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                    {item.badge}
+                  </span>
+                )}
+              </span>
             </Link>
           ))}
         </nav>
@@ -142,7 +154,15 @@ export function SiteHeader() {
                 onClick={() => setOpen(false)}
                 className="rounded-md px-3 py-2 text-sm font-medium text-foreground hover:bg-muted"
               >
-                {item.label}
+                <span className="flex items-center gap-1.5">
+                  {"badge" in item && item.badge && <Trophy className="h-3.5 w-3.5 text-amber-500" />}
+                  {item.label}
+                  {"badge" in item && item.badge && (
+                    <span className="rounded-full bg-gradient-to-r from-amber-400 to-orange-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                      {item.badge}
+                    </span>
+                  )}
+                </span>
               </Link>
             ))}
             <div className="mt-2 flex flex-col gap-2">
