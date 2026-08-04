@@ -29,6 +29,8 @@ type AdminUsersPageRow = {
   upload_cv_end_date?: string | null;
   quota_pro_photo?: number;
   quota_upload_cv?: number;
+  tryout_credits?: number;
+  tryout_used?: number;
 };
 
 type UpdateUserRequest = {
@@ -38,6 +40,7 @@ type UpdateUserRequest = {
   has_upload_cv?: boolean;
   quota_pro_photo?: number;
   quota_upload_cv?: number;
+  tryout_credits?: number;
 };
 
 const VALID_TIERS = new Set(["free", "starter", "pro"]);
@@ -309,6 +312,64 @@ async function updateUser(req: Request, admin: ReturnType<typeof getAdminClient>
     .eq("id", userId);
   if (profileUpdateError) throw profileUpdateError;
 
+  // Handle tryout credits
+  const tryoutCredits = typeof body.tryout_credits === "number" ? body.tryout_credits : undefined;
+  let tryoutCreditsResult = null;
+
+  if (tryoutCredits !== undefined) {
+    if (!Number.isInteger(tryoutCredits) || tryoutCredits < 0 || tryoutCredits > 100) {
+      throw new Error("Kuota Tryout harus antara 0-100");
+    }
+
+    // Get the tryout package "satuan" for credit reference
+    const { data: tryoutPackage } = await admin
+      .from("tryout_packages")
+      .select("id")
+      .eq("slug", "satuan")
+      .maybeSingle();
+
+    if (tryoutPackage) {
+      // Check if user has existing tryout credits
+      const { data: existingCredits } = await admin
+        .from("tryout_credits")
+        .select("id, total_credits, used_credits")
+        .eq("user_id", userId)
+        .eq("status", "active")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (existingCredits) {
+        // Update existing credits - set total_credits to new value, preserve used_credits
+        const newUsed = Math.min(existingCredits.used_credits, tryoutCredits);
+        const { error: updateCreditsError } = await admin
+          .from("tryout_credits")
+          .update({
+            total_credits: tryoutCredits,
+            used_credits: newUsed,
+          })
+          .eq("id", existingCredits.id);
+        if (updateCreditsError) throw updateCreditsError;
+        tryoutCreditsResult = { total: tryoutCredits, used: newUsed, remaining: tryoutCredits - newUsed };
+      } else if (tryoutCredits > 0) {
+        // Create new credits
+        const { error: insertCreditsError } = await admin
+          .from("tryout_credits")
+          .insert({
+            user_id: userId,
+            package_id: tryoutPackage.id,
+            total_credits: tryoutCredits,
+            used_credits: 0,
+            payment_method: "manual",
+            status: "active",
+            activated_at: new Date().toISOString(),
+          });
+        if (insertCreditsError) throw insertCreditsError;
+        tryoutCreditsResult = { total: tryoutCredits, used: 0, remaining: tryoutCredits };
+      }
+    }
+  }
+
   return {
     ok: true,
     userId,
@@ -318,17 +379,18 @@ async function updateUser(req: Request, admin: ReturnType<typeof getAdminClient>
     upload_cv_end_date: endDateIso,
     quota_pro_photo,
     quota_upload_cv,
+    tryout_credits: tryoutCreditsResult,
   };
 }
 
 async function buildUserRows(admin: ReturnType<typeof getAdminClient>, authUsers: AuthUser[]) {
   const userIds = authUsers.map((user) => user.id);
 
-  const [profiles, roles, subs, cvs, aiUsage] = await Promise.all([
+  const [profiles, roles, subs, cvs, aiUsage, tryoutCreditsData] = await Promise.all([
     userIds.length
       ? admin
           .from("profiles")
-          .select("id, full_name, created_at, has_upload_cv, upload_cv_end_date, quota_pro_photo")
+          .select("id, full_name, created_at, has_upload_cv, upload_cv_end_date, quota_pro_photo, quota_upload_cv")
           .in("id", userIds)
       : Promise.resolve({ data: [] }),
     userIds.length
@@ -351,6 +413,13 @@ async function buildUserRows(admin: ReturnType<typeof getAdminClient>, authUsers
           .in("user_id", userIds)
           .gte("created_at", getMonthStartIso())
       : Promise.resolve({ data: [] }),
+    userIds.length
+      ? admin
+          .from("tryout_credits")
+          .select("user_id, total_credits, used_credits")
+          .in("user_id", userIds)
+          .eq("status", "active")
+      : Promise.resolve({ data: [] }),
   ]);
 
   const profileMap = new Map(
@@ -372,10 +441,20 @@ async function buildUserRows(admin: ReturnType<typeof getAdminClient>, authUsers
   const cvCountMap = countByUser(cvs.data || []);
   const aiCountMap = countByUser(aiUsage.data || []);
 
+  // Process tryout credits - aggregate per user
+  const tryoutCreditsMap: Record<string, { total: number; used: number }> = {};
+  for (const tc of tryoutCreditsData.data || []) {
+    const uid = tc.user_id;
+    if (!tryoutCreditsMap[uid]) tryoutCreditsMap[uid] = { total: 0, used: 0 };
+    tryoutCreditsMap[uid].total += tc.total_credits || 0;
+    tryoutCreditsMap[uid].used += tc.used_credits || 0;
+  }
+
   return authUsers.map((user) => {
     const profile = profileMap.get(user.id);
     const sub = subMap.get(user.id);
     const metadataName = user.user_metadata?.full_name || user.user_metadata?.name;
+    const tc = tryoutCreditsMap[user.id];
 
     const now = new Date();
     let isUnlocked = profile?.has_upload_cv || false;
@@ -395,6 +474,9 @@ async function buildUserRows(admin: ReturnType<typeof getAdminClient>, authUsers
       has_upload_cv: isUnlocked,
       upload_cv_end_date: profile?.upload_cv_end_date || null,
       quota_pro_photo: profile?.quota_pro_photo || 0,
+      quota_upload_cv: profile?.quota_upload_cv || 0,
+      tryout_credits: tc?.total || 0,
+      tryout_used: tc?.used || 0,
       created_at: profile?.created_at || user.created_at || "",
       auth_created_at: user.created_at || "",
       last_sign_in_at: user.last_sign_in_at || null,

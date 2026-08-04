@@ -38,6 +38,7 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
+  Trophy,
 } from "lucide-react";
 
 // ─── Security: Pagination Constants ──────────────────────────────────────────────
@@ -80,6 +81,8 @@ interface UserRow {
   has_upload_cv?: boolean;
   quota_pro_photo?: number;
   quota_upload_cv?: number;
+  tryout_credits?: number;
+  tryout_used?: number;
 }
 
 interface PaginationState {
@@ -111,6 +114,7 @@ function AdminUsersPage() {
   const [editHasUploadCv, setEditHasUploadCv] = useState(false);
   const [editQuotaProPhoto, setEditQuotaProPhoto] = useState(0);
   const [editQuotaUploadCv, setEditQuotaUploadCv] = useState(0);
+  const [editTryoutCredits, setEditTryoutCredits] = useState(0);
   const [saving, setSaving] = useState(false);
   const [pagination, setPagination] = useState<PaginationState>({
     page: 1,
@@ -195,6 +199,7 @@ function AdminUsersPage() {
     setEditHasUploadCv(u.has_upload_cv || false);
     setEditQuotaProPhoto(u.quota_pro_photo || 0);
     setEditQuotaUploadCv(u.quota_upload_cv || 0);
+    setEditTryoutCredits(u.tryout_credits || 0);
   };
 
   const handleSaveEdit = async () => {
@@ -224,6 +229,7 @@ function AdminUsersPage() {
         has_upload_cv: editHasUploadCv,
         quota_pro_photo: editQuotaProPhoto,
         quota_upload_cv: editQuotaUploadCv,
+        tryout_credits: editTryoutCredits,
       }),
     });
 
@@ -358,6 +364,12 @@ function AdminUsersPage() {
                     {u.quota_pro_photo !== undefined && u.quota_pro_photo > 0 && (
                       <span className="text-muted-foreground">
                         Kuota Pro Photo: {u.quota_pro_photo}
+                      </span>
+                    )}
+                    {u.tryout_credits !== undefined && u.tryout_credits > 0 && (
+                      <span className="flex items-center gap-1 text-amber-600 font-medium">
+                        <Trophy className="h-3 w-3" />
+                        Tryout: {u.tryout_used || 0}/{u.tryout_credits} kredit
                       </span>
                     )}
                   </div>
@@ -581,6 +593,51 @@ function AdminUsersPage() {
                   </Button>
                   <span className="text-sm text-muted-foreground ml-2">Kuota</span>
                 </div>
+              </div>
+
+              <div className="flex flex-col space-y-1.5 py-2">
+                <Label htmlFor="quota-tryout" className="text-sm font-medium flex items-center gap-2">
+                  <Trophy className="h-4 w-4 text-amber-500" />
+                  Kredit Tryout SKD
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  Jumlah kredit tryout yang dimiliki user. User tidak bisa mengubah ini sendiri.
+                </p>
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => setEditTryoutCredits(Math.max(0, editTryoutCredits - 1))}
+                  >
+                    <span className="font-bold">-</span>
+                  </Button>
+                  <Input
+                    id="quota-tryout"
+                    type="number"
+                    min="0"
+                    max="100"
+                    value={editTryoutCredits}
+                    onChange={(e) => setEditTryoutCredits(parseInt(e.target.value) || 0)}
+                    className="w-20 text-center"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => setEditTryoutCredits(editTryoutCredits + 1)}
+                  >
+                    <span className="font-bold">+</span>
+                  </Button>
+                  <span className="text-sm text-muted-foreground ml-2">Kredit</span>
+                </div>
+                {editUser && (
+                  <p className="text-xs text-muted-foreground">
+                    Terpakai: {editUser.tryout_used || 0} | Sisa: {(editUser.tryout_credits || 0) - (editUser.tryout_used || 0)}
+                  </p>
+                )}
               </div>
 
               <div className="flex justify-end gap-2 pt-2">

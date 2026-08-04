@@ -21,7 +21,7 @@ const staticPaths: {
   { path: "/kontak", priority: "0.4", changefreq: "monthly", lastmod: "2026-04-15" },
   { path: "/kebijakan-privasi", priority: "0.4", changefreq: "yearly", lastmod: "2026-04-01" },
   { path: "/syarat-ketentuan", priority: "0.4", changefreq: "yearly", lastmod: "2026-04-01" },
-  { path: "/tryout-cpns", priority: "0.9", changefreq: "monthly", lastmod: "2026-08-04" },
+  { path: "/tryout-cpns", priority: "1.0", changefreq: "weekly", lastmod: "2026-08-04" },
 ];
 
 // Mirror of content from tips-interview.$slug.tsx

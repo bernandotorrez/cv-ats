@@ -26,47 +26,110 @@ import type { TryoutPackage } from "@/lib/tryout-types";
 export const Route = createFileRoute("/tryout-cpns")({
   head: () =>
     buildSeo({
-      title: "Tryout SKD Online 2026 - Simulasi Ujian SKD Realistis | CV Pintar",
+      title: "Tryout CPNS SKD Online 2026 Gratis - 110 Soal TWK TIU TKP + Pembahasan | CV Pintar",
       description:
-        "Latihan soal SKD online gratis dan berbayar: 110 soal TWK, TIU, TKP sesuai kisi-kisi BKN. Timer 100 menit, skor real-time, pembahasan lengkap, dan leaderboard nasional.",
+        "Tryout CPNS SKD 2026 online: 110 soal sesuai kisi-kisi BKN (TWK 30, TIU 35, TKP 45), timer 100 menit, passing grade resmi, skor instan, pembahasan lengkap. Mulai dari Rp 15.000.",
       path: "/tryout-cpns",
       keywords:
-        "tryout SKD, tryout cpns, simulasi SKD, latihan SKD, soal TWK TIU TKP, passing grade, cpns 2026",
+        "tryout cpns 2026, tryout SKD online, simulasi SKD CPNS, latihan soal SKD, soal TWK TIU TKP, tryout SKD gratis, passing grade SKD, pembahasan SKD CPNS, simulasi ujian CPNS online, tryout cpns terbaru, bank soal CPNS, kisi-kisi SKD BKN 2026",
       jsonLd: [
+        // BreadcrumbList
         {
           "@context": "https://schema.org",
-          "@type": "Product",
-          name: "Tryout SKD Online",
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            {
+              "@type": "ListItem",
+              position: 1,
+              name: "Beranda",
+              item: "https://cvpintar.web.id",
+            },
+            {
+              "@type": "ListItem",
+              position: 2,
+              name: "Tryout CPNS SKD 2026",
+              item: "https://cvpintar.web.id/tryout-cpns",
+            },
+          ],
+        },
+        // Course schema
+        {
+          "@context": "https://schema.org",
+          "@type": "Course",
+          name: "Tryout Simulasi SKD CPNS 2026 Online",
           description:
-            "Simulasi ujian SKD lengkap dengan 110 soal, timer 100 menit, dan pembahasan.",
-          brand: { "@type": "Brand", name: "CV Pintar" },
+            "Simulasi ujian Seleksi Kompetensi Dasar (SKD) CPNS dengan 110 soal (TWK, TIU, TKP), timer 100 menit, passing grade sesuai BKN, pembahasan lengkap, dan leaderboard nasional.",
+          provider: {
+            "@type": "Organization",
+            name: "CV Pintar",
+            url: "https://cvpintar.web.id",
+          },
+          educationalLevel: "Professional",
+          teaches: "Seleksi Kompetensi Dasar CPNS",
+          timeRequired: "PT100M",
+          numberOfCredits: 110,
+          isAccessibleForFree: false,
           offers: [
             {
               "@type": "Offer",
               name: "Tryout Satuan",
               price: "15000",
               priceCurrency: "IDR",
+              category: "Satuan",
               availability: "https://schema.org/InStock",
+              url: "https://cvpintar.web.id/tryout-cpns",
             },
             {
               "@type": "Offer",
-              name: "Paket Lengkap",
+              name: "Paket Lengkap 5x Tryout",
               price: "50000",
               priceCurrency: "IDR",
+              category: "Lengkap",
               availability: "https://schema.org/InStock",
+              url: "https://cvpintar.web.id/tryout-cpns",
             },
           ],
+          hasCourseInstance: {
+            "@type": "CourseInstance",
+            courseMode: "online",
+            courseWorkload: "PT100M",
+          },
         },
+        // FAQPage schema
         {
           "@context": "https://schema.org",
           "@type": "FAQPage",
           mainEntity: [
             {
               "@type": "Question",
-              name: "Apakah soal tryout sesuai kisi-kisi resmi?",
+              name: "Apa itu Tryout SKD CPNS?",
               acceptedAnswer: {
                 "@type": "Answer",
-                text: "Ya, soal disusun mengikuti kisi-kisi BKN terbaru dengan komposisi 30 TWK, 35 TIU, dan 45 TKP.",
+                text: "Tryout SKD CPNS adalah simulasi ujian Seleksi Kompetensi Dasar yang terdiri dari 110 soal (TWK 30, TIU 35, TKP 45) dengan waktu 100 menit, sesuai format ujian asli dari BKN.",
+              },
+            },
+            {
+              "@type": "Question",
+              name: "Berapa passing grade SKD CPNS 2026?",
+              acceptedAnswer: {
+                "@type": "Answer",
+                text: "Passing grade SKD: TWK minimal 65, TIU minimal 80, TKP minimal 166. Peserta harus memenuhi passing grade ketiga subtes untuk dinyatakan lulus.",
+              },
+            },
+            {
+              "@type": "Question",
+              name: "Apakah soal tryout sesuai kisi-kisi BKN?",
+              acceptedAnswer: {
+                "@type": "Answer",
+                text: "Ya, soal disusun mengikuti kisi-kisi BKN terbaru dengan komposisi 30 soal TWK, 35 soal TIU, dan 45 soal TKP.",
+              },
+            },
+            {
+              "@type": "Question",
+              name: "Berapa harga tryout SKD?",
+              acceptedAnswer: {
+                "@type": "Answer",
+                text: "Tersedia 2 paket: Tryout Satuan Rp 15.000 (1x tryout) dan Paket Lengkap Rp 50.000 (5x tryout + pembahasan + leaderboard).",
               },
             },
             {
@@ -74,18 +137,39 @@ export const Route = createFileRoute("/tryout-cpns")({
               name: "Bisa diakses lewat HP?",
               acceptedAnswer: {
                 "@type": "Answer",
-                text: "Bisa. Tryout didesain mobile-first dan berjalan lancar di smartphone Android maupun iOS.",
+                text: "Bisa. Tryout didesain mobile-first dan berjalan lancar di smartphone Android dan iOS menggunakan browser Chrome atau Safari.",
               },
             },
             {
               "@type": "Question",
-              name: "Berapa passing grade SKD?",
+              name: "Apakah ada pembahasan soal?",
               acceptedAnswer: {
                 "@type": "Answer",
-                text: "TWK minimal 65, TIU minimal 80, TKP minimal 166. Kamu harus lulus ketiga subtes.",
+                text: "Ya, pembahasan lengkap tersedia di Paket Lengkap. Setiap soal dilengkapi penjelasan mengapa jawaban tersebut benar.",
               },
             },
           ],
+        },
+        // WebPage schema
+        {
+          "@context": "https://schema.org",
+          "@type": "WebPage",
+          name: "Tryout CPNS SKD Online 2026",
+          description:
+            "Halaman utama Tryout SKD CPNS 2026 di CV Pintar. Latihan soal SKD online dengan 110 soal, timer 100 menit, dan pembahasan.",
+          url: "https://cvpintar.web.id/tryout-cpns",
+          inLanguage: "id-ID",
+          isPartOf: {
+            "@type": "WebSite",
+            name: "CV Pintar",
+            url: "https://cvpintar.web.id",
+          },
+          about: {
+            "@type": "Thing",
+            name: "Tryout SKD CPNS",
+          },
+          datePublished: "2026-08-04",
+          dateModified: "2026-08-04",
         },
       ],
     }),
