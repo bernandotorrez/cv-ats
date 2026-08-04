@@ -100,13 +100,24 @@ export function QuestionCard({
 
       {/* Options */}
       <div className="space-y-2">
-        {question.options.map((opt) => {
-          const selected = selectedAnswer === opt.key;
+        {question.options.map((opt: any, index: number) => {
+          const isStringOpt = typeof opt === "string";
+          // Asumsi format string: "A. Teks opsi..."
+          const parsedKey = isStringOpt ? opt.split(".")[0].trim() : opt.key;
+          const parsedText = isStringOpt 
+            ? opt.substring(opt.indexOf(".") + 1).trim() 
+            : opt.text;
+          
+          const fallbackKey = String.fromCharCode(65 + index); // A, B, C, D, E fallback
+          const finalKey = parsedKey || fallbackKey;
+          const finalText = parsedText || opt;
+
+          const selected = selectedAnswer === finalKey;
           return (
             <button
-              key={opt.key}
+              key={finalKey}
               type="button"
-              onClick={() => onAnswer(opt.key)}
+              onClick={() => onAnswer(finalKey)}
               className={cn(
                 "group flex w-full items-start gap-2.5 rounded-xl border-2 p-3 text-left transition sm:gap-3 sm:p-3.5",
                 selected
@@ -122,10 +133,10 @@ export function QuestionCard({
                     : "border-border bg-background text-foreground group-hover:border-primary",
                 )}
               >
-                {opt.key}
+                {finalKey}
               </span>
               <span className="flex-1 pt-1 text-sm leading-relaxed sm:pt-1.5 sm:text-base">
-                {opt.text}
+                {finalText}
               </span>
             </button>
           );
@@ -186,21 +197,31 @@ export function QuestionResultCard({
       />
 
       <div className="space-y-2">
-        {question.options.map((opt) => {
-          const isUserChoice = userAnswer === opt.key;
-          const isCorrectAnswer = question.correct_answer === opt.key;
+        {question.options.map((opt: any, index: number) => {
+          const isStringOpt = typeof opt === "string";
+          const parsedKey = isStringOpt ? opt.split(".")[0].trim() : opt.key;
+          const parsedText = isStringOpt 
+            ? opt.substring(opt.indexOf(".") + 1).trim() 
+            : opt.text;
+          
+          const fallbackKey = String.fromCharCode(65 + index);
+          const finalKey = parsedKey || fallbackKey;
+          const finalText = parsedText || opt;
+
+          const isUserChoice = userAnswer === finalKey;
+          const isCorrectAnswer = question.correct_answer === finalKey;
           const isTkpQuestion = question.subtest === "tkp";
 
           let isHighest = false;
           if (isTkpQuestion && question.scores) {
             const maxScore = Math.max(...Object.values(question.scores));
-            const optScore = question.scores[opt.key];
+            const optScore = question.scores[finalKey];
             isHighest = optScore === maxScore;
           }
 
           return (
             <div
-              key={opt.key}
+              key={finalKey}
               className={cn(
                 "flex items-start gap-2.5 rounded-xl border-2 p-3 text-sm transition sm:gap-3 sm:p-3.5 sm:text-base",
                 isCorrectAnswer
@@ -220,13 +241,13 @@ export function QuestionResultCard({
                       : "border-border bg-background text-foreground",
                 )}
               >
-                {opt.key}
+                {finalKey}
               </span>
               <div className="flex-1">
-                <span className="block leading-relaxed">{opt.text}</span>
-                {isTkpQuestion && question.scores && question.scores[opt.key] !== undefined && (
+                <span className="block leading-relaxed">{finalText}</span>
+                {isTkpQuestion && question.scores && question.scores[finalKey] !== undefined && (
                   <span className="mt-1 inline-block text-[10px] font-medium text-muted-foreground">
-                    Skor: {question.scores[opt.key]}
+                    Skor: {question.scores[finalKey]}
                   </span>
                 )}
               </div>
