@@ -69,7 +69,7 @@ export function LeaderboardTable({
           <div
             key={`${entry.user_id}-${entry.exam_set_id}`}
             className={cn(
-              "flex items-center gap-2.5 rounded-xl border bg-card p-2.5 transition sm:gap-3 sm:p-3 md:p-4",
+              "flex items-center gap-2.5 rounded-2xl border bg-card p-3 transition hover:border-primary/40 hover:shadow-md sm:gap-3 sm:p-4",
               isCurrentUser
                 ? "border-primary bg-primary/5 ring-1 ring-primary/30 dark:bg-primary/10"
                 : "border-border",
@@ -78,11 +78,17 @@ export function LeaderboardTable({
             {/* Rank */}
             <div className="flex w-10 shrink-0 items-center justify-center sm:w-12">
               {entry.ranking === 1 ? (
-                <Trophy className="h-5 w-5 text-amber-500 sm:h-6 sm:w-6" />
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-500/10 text-amber-500">
+                  <Trophy className="h-5 w-5" />
+                </div>
               ) : entry.ranking === 2 ? (
-                <Medal className="h-5 w-5 text-slate-400 sm:h-6 sm:w-6" />
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-400/10 text-slate-500 dark:text-slate-400">
+                  <Medal className="h-5 w-5" />
+                </div>
               ) : entry.ranking === 3 ? (
-                <Award className="h-5 w-5 text-orange-600 sm:h-6 sm:w-6" />
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-600/10 text-orange-600">
+                  <Award className="h-5 w-5" />
+                </div>
               ) : (
                 <span className="font-display text-base font-bold text-muted-foreground sm:text-lg">
                   #{entry.ranking}
@@ -90,55 +96,65 @@ export function LeaderboardTable({
               )}
             </div>
 
-            {/* Avatar + Name */}
-            <Avatar className="h-8 w-8 shrink-0 sm:h-9 sm:w-9">
+            {/* Avatar + Info */}
+            <Avatar className="h-10 w-10 shrink-0 border-2 border-background shadow-sm sm:h-11 sm:w-11">
               <AvatarImage src={entry.avatar_url || ""} alt={entry.full_name || ""} />
-              <AvatarFallback>
-                <User className="h-4 w-4" />
+              <AvatarFallback className="bg-muted">
+                <User className="h-5 w-5 text-muted-foreground" />
               </AvatarFallback>
             </Avatar>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5">
-                <span className="truncate text-xs font-semibold text-foreground sm:text-sm">
+            
+            <div className="min-w-0 flex-1 pl-1">
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="truncate text-xs font-bold text-foreground sm:text-sm">
                   {entry.full_name || "User CV Pintar"}
                 </span>
                 {isCurrentUser && (
-                  <span className="rounded-md bg-primary/15 px-1.5 py-0.5 text-[10px] font-bold text-primary">
+                  <span className="rounded-md bg-primary/15 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-primary">
                     Kamu
                   </span>
                 )}
                 {entry.pass_overall && (
-                  <span className="hidden rounded-md bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 sm:inline">
+                  <span className="rounded-md bg-emerald-100 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400">
                     LULUS
                   </span>
                 )}
               </div>
-              <div className="text-[10px] text-muted-foreground sm:text-[11px]">
-                {formatDuration(entry.duration_seconds)}
-                {entry.finished_at && (
-                  <span className="ml-2">
-                    {new Date(entry.finished_at).toLocaleDateString("id-ID", {
-                      day: "numeric",
-                      month: "short",
-                    })}
-                  </span>
-                )}
+              
+              <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] text-muted-foreground sm:text-[11px]">
+                <div className="flex items-center gap-1">
+                  <span className="font-medium text-foreground">TWK</span> {entry.score_twk}
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="font-medium text-foreground">TIU</span> {entry.score_tiu}
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="font-medium text-foreground">TKP</span> {entry.score_tkp}
+                </div>
               </div>
-            </div>
-
-            {/* Score breakdown — hidden on mobile */}
-            <div className="hidden text-right text-[11px] sm:block">
-              <div className="font-bold text-foreground">
-                TWK {entry.score_twk} · TIU {entry.score_tiu} · TKP {entry.score_tkp}
+              
+              <div className="mt-1 flex items-center gap-1.5 text-[9px] text-muted-foreground/80 sm:text-[10px]">
+                <span>{formatDuration(entry.duration_seconds)}</span>
+                {entry.finished_at && (
+                  <>
+                    <span>•</span>
+                    <span>
+                      {new Date(entry.finished_at).toLocaleDateString("id-ID", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric"
+                      })}
+                    </span>
+                  </>
+                )}
               </div>
             </div>
 
             {/* Total score */}
             <div className="shrink-0 text-right">
-              <div className="font-display text-lg font-bold text-primary sm:text-xl">
+              <div className="font-display text-xl font-black text-primary sm:text-2xl drop-shadow-sm">
                 {entry.score_total}
               </div>
-              <div className="text-[10px] text-muted-foreground">/ 550</div>
             </div>
           </div>
         );

@@ -158,39 +158,40 @@ function TryoutDashboardPage() {
       <BackButton />
 
       {/* Hero */}
-      <section className="overflow-hidden rounded-2xl border bg-card shadow-sm">
-        <div className="grid gap-5 p-5 sm:p-6 lg:grid-cols-[1.5fr_1fr] lg:items-center">
+      <section className="relative overflow-hidden rounded-3xl border bg-card shadow-sm">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/5"></div>
+        <div className="relative z-10 grid gap-6 p-6 sm:p-8 lg:grid-cols-[1.5fr_1fr] lg:items-center">
           <div>
-            <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-primary ring-1 ring-primary/20">
               <Trophy className="h-3.5 w-3.5" />
-              Tryout SKD
+              Tryout SKD CPNS
             </div>
-            <h1 className="font-display text-2xl font-bold sm:text-3xl">
+            <h1 className="font-display text-3xl font-extrabold tracking-tight sm:text-4xl">
               Halo, {user?.user_metadata?.full_name?.split(" ")[0] || "Pejuang SKD"}! 👋
             </h1>
-            <p className="mt-1 max-w-2xl text-sm leading-6 text-muted-foreground">
+            <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
               Simulasi ujian SKD yang realistis. Mulai tryout, cek skor, dan
-              bersaing di leaderboard.
+              bersaing di leaderboard untuk persiapan maksimal.
             </p>
           </div>
-          <div className="flex flex-col gap-2 sm:flex-row lg:justify-end">
-            <Button asChild variant="outline" size="sm" className="gap-1.5">
+          <div className="flex flex-col gap-3 sm:flex-row lg:flex-col lg:justify-end xl:flex-row">
+            <Button asChild variant="outline" size="sm" className="h-10 gap-2 rounded-xl px-5">
               <Link to={"/tryout-cpns" as never}>
-                Info Lengkap <ArrowRight className="h-3.5 w-3.5" />
+                Info Lengkap <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
-            <Button asChild size="sm" className="gap-1.5">
+            <Button asChild size="sm" className="h-10 gap-2 rounded-xl bg-gradient-to-r from-primary to-primary/80 px-5 text-primary-foreground shadow-md transition-all hover:scale-[1.02] hover:from-primary/90 hover:to-primary">
               <Link to={"/tryout/beli" as never}>
-                <Plus className="h-3.5 w-3.5" /> Beli Kredit
+                <Plus className="h-4 w-4" /> Beli Kredit
               </Link>
             </Button>
           </div>
         </div>
       </section>
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+      <div className="grid gap-6 lg:grid-cols-[1fr_320px] xl:grid-cols-[1fr_340px]">
         {/* Main */}
-        <div className="space-y-6 min-w-0">
+        <div className="space-y-8 min-w-0">
           {/* Exam Sets */}
           <section>
             <div className="mb-3 flex items-center justify-between">
