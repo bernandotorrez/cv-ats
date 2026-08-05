@@ -67,6 +67,34 @@ const scoreTips = [
  * Extract current text from suggestion for highlighting
  * Tries to find matching text in CV data
  */
+function normalizeCvData(raw: unknown): CvData {
+  if (!raw || typeof raw !== "object") return emptyCv;
+  const r = raw as Record<string, unknown>;
+  const personal = (r.personal && typeof r.personal === "object") ? (r.personal as Record<string, unknown>) : {};
+
+  return {
+    personal: {
+      fullName: String(personal.fullName || ""),
+      headline: String(personal.headline || ""),
+      email: String(personal.email || ""),
+      phone: String(personal.phone || ""),
+      location: String(personal.location || ""),
+      website: String(personal.website || ""),
+      linkedin: String(personal.linkedin || ""),
+      summary: String(personal.summary || ""),
+      summaryAlign: (personal.summaryAlign as any) || "left",
+      photoUrl: personal.photoUrl ? String(personal.photoUrl) : undefined,
+    },
+    experiences: Array.isArray(r.experiences) ? r.experiences : [],
+    educations: Array.isArray(r.educations) ? r.educations : [],
+    skills: Array.isArray(r.skills) ? r.skills : [],
+    languages: Array.isArray(r.languages) ? r.languages : [],
+    certificates: Array.isArray(r.certificates) ? r.certificates : [],
+    internships: Array.isArray(r.internships) ? r.internships : [],
+    organizations: Array.isArray(r.organizations) ? r.organizations : [],
+  };
+}
+
 function extractCurrentFromSuggestion(
   suggestion: string,
   cvData: CvData,
@@ -86,10 +114,10 @@ function extractCurrentFromSuggestion(
       const textLower = text.toLowerCase();
 
       if (
-        cvData.personal.summary?.toLowerCase().includes(textLower) ||
-        cvData.personal.headline?.toLowerCase().includes(textLower) ||
-        cvData.experiences.some((e) => e.description?.toLowerCase().includes(textLower)) ||
-        cvData.educations.some((e) => e.description?.toLowerCase().includes(textLower))
+        cvData.personal?.summary?.toLowerCase().includes(textLower) ||
+        cvData.personal?.headline?.toLowerCase().includes(textLower) ||
+        (cvData.experiences || []).some((e) => e.description?.toLowerCase().includes(textLower)) ||
+        (cvData.educations || []).some((e) => e.description?.toLowerCase().includes(textLower))
       ) {
         return text;
       }
@@ -103,6 +131,7 @@ function extractCurrentFromSuggestion(
 function CvScorePage() {
   const { cvId } = Route.useParams();
   const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
   const [scoring, setScoring] = useState(false);
   const [cvData, setCvData] = useState<CvData>(emptyCv);
   const [cvTitle, setCvTitle] = useState("");
@@ -121,17 +150,19 @@ function CvScorePage() {
 
   useEffect(() => {
     (async () => {
+      setLoading(true);
+      setNotFound(false);
       const { data: row, error } = await supabase.from("cvs").select("*").eq("id", cvId).single();
 
-      if (error) {
-        toast.error(error.message);
+      if (error || !row) {
+        setNotFound(true);
         setLoading(false);
         return;
       }
 
-      setCvTitle(row.title);
-      setTemplateId(row.template_id as TemplateId);
-      const data = { ...emptyCv, ...(row.data as unknown as CvData) };
+      setCvTitle(row.title || "CV Tanpa Judul");
+      setTemplateId((row.template_id as TemplateId) || "jakarta");
+      const data = normalizeCvData(row.data);
       setCvData(data);
       setTargetRole(data.personal.headline || "");
 
@@ -183,6 +214,33 @@ function CvScorePage() {
 
   if (loading) return <ScorePageSkeleton />;
 
+  if (notFound) {
+    return (
+      <main className="container-page py-12">
+        <div className="mb-6">
+          <BackButton />
+        </div>
+        <Card className="mx-auto max-w-xl border-border bg-card p-8 text-center">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-destructive/10 text-destructive">
+            <AlertCircle className="h-7 w-7" />
+          </div>
+          <h1 className="font-display text-2xl font-bold text-foreground">CV Tidak Ditemukan</h1>
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">
+            Dokumen CV yang ingin kamu analisis tidak ditemukan atau sudah dihapus.
+          </p>
+          <div className="mt-6 flex justify-center gap-3">
+            <Button asChild>
+              <Link to="/score">Kembali ke Daftar Skor</Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link to="/cv">Lihat Semua CV</Link>
+            </Button>
+          </div>
+        </Card>
+      </main>
+    );
+  }
+
   const templateName =
     TEMPLATES.find((template) => template.id === templateId)?.name ?? "Template CV";
 
@@ -203,7 +261,7 @@ function CvScorePage() {
       const suggestion = highlightSuggestions[index];
       if (!suggestion) return;
 
-      const updatedCvData = JSON.parse(JSON.stringify(cvData)); // Deep clone
+      const updatedCvData = normalizeCvData(cvData);
       const suggestedLower = suggestion.suggested.toLowerCase();
       let applied = false;
 
@@ -218,7 +276,7 @@ function CvScorePage() {
       } else if (isHeadline) {
         updatedCvData.personal.headline = newText;
         applied = true;
-      } else if (isExperience) {
+      } else if (isExperience && updatedCvData.experiences.length > 0) {
         // Try to find matching experience by current text
         if (suggestion.current) {
           const currentLower = suggestion.current.toLowerCase();
@@ -248,7 +306,7 @@ function CvScorePage() {
       try {
         await supabase
           .from("cvs")
-          .update({ data: updatedCvData })
+          .update({ data: updatedCvData as unknown as Database["public"]["Tables"]["cvs"]["Update"]["data"] })
           .eq("id", cvId);
       } catch (err) {
         console.warn("Gagal menyimpan ke database:", err);
@@ -260,7 +318,7 @@ function CvScorePage() {
   );
 
   const handleApplyAllSuggestions = useCallback(async () => {
-    const updatedCvData = JSON.parse(JSON.stringify(cvData)); // Deep clone
+    const updatedCvData = normalizeCvData(cvData);
     let appliedCount = 0;
     const newApplied = new Set(appliedSuggestions);
 
@@ -280,7 +338,7 @@ function CvScorePage() {
       } else if (isHeadline) {
         updatedCvData.personal.headline = suggestion.suggested;
         applied = true;
-      } else if (isExperience) {
+      } else if (isExperience && updatedCvData.experiences.length > 0) {
         if (suggestion.current) {
           const currentLower = suggestion.current.toLowerCase();
           for (let i = 0; i < updatedCvData.experiences.length; i++) {
@@ -314,7 +372,7 @@ function CvScorePage() {
     try {
       await supabase
         .from("cvs")
-        .update({ data: updatedCvData })
+        .update({ data: updatedCvData as any })
         .eq("id", cvId);
     } catch (err) {
       console.warn("Gagal menyimpan ke database:", err);

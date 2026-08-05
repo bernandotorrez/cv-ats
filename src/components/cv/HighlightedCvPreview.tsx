@@ -61,14 +61,14 @@ export function HighlightedCvPreview({
       if (!currentLower || currentLower.length < 5) return;
 
       // Check personal summary
-      if (data.personal.summary?.toLowerCase().includes(currentLower)) {
+      if (data?.personal?.summary?.toLowerCase().includes(currentLower)) {
         const key = "personal-summary";
         if (!map.has(key)) map.set(key, []);
         map.get(key)!.push(index);
       }
 
       // Check experiences
-      data.experiences.forEach((exp, expIndex) => {
+      (data?.experiences || []).forEach((exp, expIndex) => {
         if (exp.description?.toLowerCase().includes(currentLower)) {
           const key = `experience-${expIndex}`;
           if (!map.has(key)) map.set(key, []);
@@ -77,7 +77,7 @@ export function HighlightedCvPreview({
       });
 
       // Check educations
-      data.educations.forEach((edu, eduIndex) => {
+      (data?.educations || []).forEach((edu, eduIndex) => {
         if (edu.description?.toLowerCase().includes(currentLower)) {
           const key = `education-${eduIndex}`;
           if (!map.has(key)) map.set(key, []);

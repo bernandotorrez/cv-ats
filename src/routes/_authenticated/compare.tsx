@@ -17,6 +17,14 @@ interface CvRow {
   updated_at: string;
 }
 
+interface CvVersion {
+  id: string;
+  title: string;
+  template_id: string;
+  data: CvData;
+  updated_at: string;
+}
+
 export const Route = createFileRoute("/_authenticated/compare")({
   head: () =>
     buildSeo({

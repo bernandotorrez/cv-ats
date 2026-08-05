@@ -48,7 +48,7 @@ export const Route = createFileRoute("/_authenticated/admin/users")({
   beforeLoad: async () => {
     const { data: sessionData } = await supabase.auth.getSession();
     if (!sessionData.session) {
-      throw redirect({ to: "/login" });
+      throw redirect({ to: "/login", search: {} as any });
     }
     const { data } = await supabase
       .rpc("has_role", { _user_id: sessionData.session.user.id, _role: "admin" });

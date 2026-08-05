@@ -46,6 +46,7 @@ import {
   MessageSquare,
   RefreshCw,
   Download,
+  Trophy,
 } from "lucide-react";
 
 interface CVReviewPanelProps {
@@ -55,12 +56,7 @@ interface CVReviewPanelProps {
   className?: string;
 }
 
-interface CVReviewResult {
-  reviewer: {
-    name: string;
-    title: string;
-    experience: string;
-  };
+export interface CVReviewResult {
   scores: {
     overall: number;
     firstImpression: number;
@@ -69,23 +65,19 @@ interface CVReviewResult {
     achievement: number;
     presentation: number;
   };
+  summary: string;
   strengths: string[];
   weaknesses: string[];
-  suggestions: Suggestion[];
-  industryBenchmark: {
-    level?: string;
-    comparison?: string;
-    percentile?: string;
-  };
-  hrVerdict: {
-    verdict?: string;
-    reason?: string;
-    nextSteps?: string[];
-  };
-  quickWins: string[];
+  recommendations: Array<{
+    category: string;
+    priority: "high" | "medium" | "low";
+    current: string;
+    suggested: string;
+    impact: string;
+  }>;
 }
 
-interface Suggestion {
+interface HighlightSuggestion {
   priority: "high" | "medium" | "low";
   category: string;
   current: string;
@@ -96,7 +88,7 @@ interface Suggestion {
 }
 
 export function CVReviewPanel({ cvData, cvId, onReviewComplete, className }: CVReviewPanelProps) {
-  const { user, tier } = useAuth();
+  const { user, session } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [reviewResult, setReviewResult] = useState<CVReviewResult | null>(null);
@@ -104,8 +96,7 @@ export function CVReviewPanel({ cvData, cvId, onReviewComplete, className }: CVR
   const [targetRole, setTargetRole] = useState("");
   const [jobDescription, setJobDescription] = useState("");
 
-  const canAccess = tier === "starter" || tier === "pro";
-  const isStarter = tier === "starter";
+  const canAccess = true;
 
   const handleReview = async () => {
     if (!user) {
@@ -122,7 +113,7 @@ export function CVReviewPanel({ cvData, cvId, onReviewComplete, className }: CVR
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${user.session?.access_token}`,
+          Authorization: `Bearer ${session?.access_token}`,
         },
         body: JSON.stringify({
           cvData,

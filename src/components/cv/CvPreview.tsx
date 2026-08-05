@@ -45,10 +45,10 @@ function formatCvDescriptions(data: CvData): CvData {
   };
   return {
     ...data,
-    experiences: data.experiences.map((e) => ({ ...e, description: normalizeDesc(e.description) })),
-    educations: data.educations.map((e) => ({
+    experiences: (data?.experiences || []).map((e) => ({ ...e, description: normalizeDesc(e?.description) })),
+    educations: (data?.educations || []).map((e) => ({
       ...e,
-      description: e.description ? normalizeDesc(e.description) : e.description,
+      description: e?.description ? normalizeDesc(e.description) : e?.description,
     })),
   };
 }

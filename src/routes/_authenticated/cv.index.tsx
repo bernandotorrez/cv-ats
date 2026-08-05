@@ -115,7 +115,7 @@ function CvListPage() {
       .single();
 
     if ((data?.subscription_tiers as any)?.template_access_detail) {
-      setAllowedTemplates((data.subscription_tiers as any).template_access_detail);
+      setAllowedTemplates((data?.subscription_tiers as any).template_access_detail);
     } else if ((data?.subscription_tiers as any)?.template_access_detail === null) {
       setAllowedTemplates(null);
     } else {

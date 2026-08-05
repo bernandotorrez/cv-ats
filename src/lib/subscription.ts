@@ -212,7 +212,7 @@ export async function getUserTierConfig(userId: string): Promise<TierLimits> {
       .single();
 
     if (data?.subscription_tiers) {
-      const t = data.subscription_tiers;
+      const t = data.subscription_tiers as any;
       const slug = (t.slug as Tier) || "free";
       const base = TIER_LIMITS[slug] || TIER_LIMITS.free;
 
@@ -426,7 +426,7 @@ async function createFreeSubscription(userId: string): Promise<void> {
       tier_id: freeTier.id,
       status: "active",
       date_start: new Date().toISOString(),
-      date_end: null, // Free tier never expires
+      date_end: null as any, // Free tier never expires
       provider: "auto_downgrade",
     });
 }

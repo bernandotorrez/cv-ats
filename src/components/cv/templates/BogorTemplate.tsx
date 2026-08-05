@@ -168,7 +168,7 @@ export function BogorTemplate({ data, showHeader = true, sectionOrder, language 
         if (!personal.summary) return null;
         return (
           <div key="personal" style={{ marginBottom: 20 }}>
-            {renderMainHeading(t(language, "summary") || "Profil")}
+            {renderMainHeading(t(language, "profileSummary"))}
             <p
               style={{
                 fontSize: "9.5pt",
@@ -187,7 +187,7 @@ export function BogorTemplate({ data, showHeader = true, sectionOrder, language 
         if (experiences.length > 0) {
           return (
             <div key="experience" style={{ marginBottom: 20 }}>
-              {renderMainHeading(t(language, "experience"))}
+              {renderMainHeading(t(language, "workExperience"))}
               <div style={{ paddingLeft: 16 }}>
                 {experiences.map((exp) => (
                   <div key={exp.id} style={{ marginBottom: 16 }}>
