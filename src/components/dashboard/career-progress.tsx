@@ -94,8 +94,8 @@ export function CareerProgress({ user, steps, onCreateCv, onStepClick }: CareerP
   return (
     <section className="rounded-2xl border bg-card shadow-sm overflow-hidden">
       <div className="px-4 py-5 sm:px-6 lg:px-8">
-        {/* 4-column grid on desktop */}
-        <div className="grid gap-6 lg:grid-cols-[1fr_auto_1fr_1fr] lg:items-center">
+        {/* 4-column grid on desktop, responsive stack/grid on mobile & tablet */}
+        <div className="grid gap-6 lg:grid-cols-[1.2fr_auto_1fr] xl:grid-cols-[1.2fr_auto_1fr_1fr] lg:items-stretch">
           {/* ── Left: Greeting + CTAs ── */}
           <div className="min-w-0">
             {/* Green greeting badge */}
@@ -202,59 +202,74 @@ export function CareerProgress({ user, steps, onCreateCv, onStepClick }: CareerP
             </div>
           </div>
 
-          {/* ── Right: Motivational Card ── */}
-          <div className="hidden lg:block">
-            <div className="rounded-2xl bg-amber-50 border border-amber-200 p-5">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-xl">{isComplete ? "🏆" : isOnFire ? "🔥" : "💪"}</span>
-                <h3 className="font-display font-bold text-sm text-foreground">
-                  {isComplete ? "Lengkap!" : isOnFire ? "Keren!" : "Semangat!"}
-                </h3>
+          {/* ── Motivational Card (xl screen only) ── */}
+          <div className="hidden xl:block">
+            <div className="rounded-2xl bg-amber-50 border border-amber-200 p-5 h-full flex flex-col justify-between">
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-xl">{isComplete ? "🏆" : isOnFire ? "🔥" : "💪"}</span>
+                  <h3 className="font-display font-bold text-sm text-foreground">
+                    {isComplete ? "Lengkap!" : isOnFire ? "Keren!" : "Semangat!"}
+                  </h3>
+                </div>
+                <p className="text-lg font-bold text-foreground leading-tight">
+                  {isComplete
+                    ? "Profil kariermu sudah lengkap!"
+                    : isOnFire
+                      ? "Kamu sedang on track!"
+                      : "Yuk mulai langkah pertama!"}
+                </p>
+                <p className="mt-2 text-xs text-muted-foreground leading-relaxed">
+                  {isComplete
+                    ? "Perbarui CV secara rutin agar tetap relevan."
+                    : isOnFire
+                      ? "Pertahankan momentum ini dan selesaikan langkah berikutnya."
+                      : "Lengkapi CV terbaikmu dan mulai perjalanan kariermu."}
+                </p>
               </div>
-              <p className="text-lg font-bold text-foreground leading-tight">
-                {isComplete
-                  ? "Profil kariermu sudah lengkap!"
-                  : isOnFire
-                    ? "Kamu sedang on track!"
-                    : "Yuk mulai langkah pertama!"}
-              </p>
-              <p className="mt-2 text-xs text-muted-foreground leading-relaxed">
-                {isComplete
-                  ? "Perbarui CV secara rutin agar tetap relevan."
-                  : isOnFire
-                    ? "Pertahankan momentum ini dan selesaikan langkah berikutnya."
-                    : "Lengkapi CV terbaikmu dan mulai perjalanan kariermu."}
-              </p>
             </div>
           </div>
 
-          {/* ── Far Right: Tryout CPNS Highlight ── */}
-          <div className="hidden lg:block">
-            <div className="rounded-2xl bg-gradient-to-br from-emerald-600 to-teal-700 border border-emerald-500 p-5 text-white">
-              <div className="flex items-center gap-2 mb-2">
-                <Trophy className="h-5 w-5 text-amber-300" />
-                <h3 className="font-display font-bold text-sm">Tryout CPNS 2026</h3>
+          {/* ── Tryout CPNS Highlight (Visible on all devices: smartphone, tablet, desktop) ── */}
+          <div className="w-full min-w-0">
+            <div className="rounded-2xl bg-gradient-to-br from-emerald-600 via-teal-700 to-emerald-800 border border-emerald-500/40 p-4 sm:p-5 text-white shadow-sm relative overflow-hidden flex flex-col justify-between h-full">
+              {/* Decorative background blur */}
+              <div className="absolute -right-6 -bottom-6 w-24 h-24 bg-white/10 rounded-full blur-xl pointer-events-none" />
+
+              <div>
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-400/20 px-2 py-0.5 text-[11px] font-bold text-amber-300 border border-amber-300/30 shrink-0">
+                    <Trophy className="h-3 w-3 text-amber-300" /> Realistis BKN
+                  </span>
+                  <span className="text-[11px] font-medium text-emerald-100/80">Tryout CPNS 2026</span>
+                </div>
+                <h3 className="font-display font-bold text-base sm:text-lg text-white leading-tight">
+                  Simulasi Ujian SKD 110 Soal
+                </h3>
+                <p className="mt-1 text-xs text-emerald-100/90 leading-relaxed">
+                  TWK · TIU · TKP dengan timer 100 menit & passing grade standar BKN.
+                </p>
               </div>
-              <p className="text-base font-bold leading-tight">
-                110 Soal SKD
-              </p>
-              <p className="mt-1 text-xs text-emerald-100 leading-relaxed">
-                TWK · TIU · TKP — Passing grade sesuai BKN
-              </p>
-              <div className="mt-3 flex items-center gap-2 text-xs">
-                <span className="flex items-center gap-1 bg-white/15 rounded-full px-2 py-0.5">
-                  <Clock className="h-3 w-3" /> 100 menit
-                </span>
-                <span className="flex items-center gap-1 bg-white/15 rounded-full px-2 py-0.5">
-                  Rp 15rb
-                </span>
+
+              <div className="mt-4 pt-3 border-t border-white/15 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2 text-xs">
+                  <span className="flex items-center gap-1 bg-white/15 backdrop-blur-sm rounded-md px-2 py-1 font-medium text-white text-[11px]">
+                    <Clock className="h-3 w-3 text-amber-300" /> 100 Min
+                  </span>
+                  <span className="hidden xs:flex items-center gap-1 bg-white/15 backdrop-blur-sm rounded-md px-2 py-1 font-medium text-amber-200 text-[11px]">
+                    110 Soal
+                  </span>
+                </div>
+                <Button
+                  asChild
+                  size="sm"
+                  className="bg-amber-400 hover:bg-amber-500 text-gray-950 font-bold shadow-sm h-8 px-3.5 text-xs shrink-0"
+                >
+                  <Link to="/tryout" className="gap-1.5">
+                    Mulai Tryout <ArrowRight className="h-3 w-3" />
+                  </Link>
+                </Button>
               </div>
-              <Link
-                to="/tryout"
-                className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-amber-300 hover:text-amber-200 transition"
-              >
-                Mulai Tryout <ArrowRight className="h-3 w-3" />
-              </Link>
             </div>
           </div>
         </div>

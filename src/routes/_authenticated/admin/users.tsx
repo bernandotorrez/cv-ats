@@ -462,7 +462,7 @@ function AdminUsersPage() {
           if (!v) setEditUser(null);
         }}
       >
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md w-[95vw] sm:w-full p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle>Edit User</DialogTitle>
             <DialogDescription>Ubah tier subscription dan role untuk user ini.</DialogDescription>
@@ -640,12 +640,12 @@ function AdminUsersPage() {
                 )}
               </div>
 
-              <div className="flex justify-end gap-2 pt-2">
+              <div className="flex justify-end gap-2 pt-3 pb-1 bg-background border-t mt-4 sticky bottom-0 z-10">
                 <Button variant="outline" onClick={() => setEditUser(null)}>
                   Batal
                 </Button>
                 <Button onClick={handleSaveEdit} disabled={saving}>
-                  {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                  {saving ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
                   Simpan
                 </Button>
               </div>
