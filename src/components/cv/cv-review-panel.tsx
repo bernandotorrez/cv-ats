@@ -57,6 +57,11 @@ interface CVReviewPanelProps {
 }
 
 export interface CVReviewResult {
+  reviewer?: {
+    name: string;
+    title: string;
+    experience: string;
+  };
   scores: {
     overall: number;
     firstImpression: number;
@@ -65,16 +70,28 @@ export interface CVReviewResult {
     achievement: number;
     presentation: number;
   };
-  summary: string;
+  summary?: string;
   strengths: string[];
   weaknesses: string[];
-  recommendations: Array<{
+  suggestions?: HighlightSuggestion[];
+  recommendations?: Array<{
     category: string;
     priority: "high" | "medium" | "low";
     current: string;
     suggested: string;
     impact: string;
   }>;
+  industryBenchmark?: {
+    level?: string;
+    comparison?: string;
+    percentile?: string;
+  };
+  hrVerdict?: {
+    verdict?: string;
+    reason?: string;
+    nextSteps?: string[];
+  };
+  quickWins?: string[];
 }
 
 interface HighlightSuggestion {
@@ -97,6 +114,7 @@ export function CVReviewPanel({ cvData, cvId, onReviewComplete, className }: CVR
   const [jobDescription, setJobDescription] = useState("");
 
   const canAccess = true;
+  const isStarter = false;
 
   const handleReview = async () => {
     if (!user) {

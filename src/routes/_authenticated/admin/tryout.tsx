@@ -170,10 +170,19 @@ function AdminTryoutPage() {
       // ignore
     }
 
-    const mergedCredits: CreditRow[] = (creditsData || []).map((c) => {
+    const mergedCredits: CreditRow[] = ((creditsData as any) || []).map((c: any) => {
       const userInfo = userEmailMap.get(c.user_id);
       return {
-        ...c,
+        id: c.id,
+        user_id: c.user_id,
+        package_id: c.package_id,
+        total_credits: c.total_credits,
+        used_credits: c.used_credits,
+        remaining_credits: c.remaining_credits,
+        status: c.status,
+        payment_method: c.payment_method,
+        payment_ref: c.payment_ref,
+        created_at: c.created_at,
         email: userInfo?.email || null,
         role: userInfo?.role || roleMap.get(c.user_id) || "user",
         profiles: c.profiles || (userInfo?.full_name ? { full_name: userInfo.full_name } : null),
