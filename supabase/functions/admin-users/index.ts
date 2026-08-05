@@ -85,14 +85,34 @@ Deno.serve(async (req: Request) => {
     const sortOrder = sort === "asc" ? "asc" : "desc";
 
     if (perPage > 100) {
-      const { data: authData, error: authError } = await admin.auth.admin.listUsers({
-        page,
-        perPage: Math.min(perPage, 1000),
-      });
+      let allAuthUsers: AuthUser[] = [];
+      let currentPage = 1;
+      let hasMore = true;
 
-      if (!authError && authData?.users) {
-        const authUsers = authData.users as AuthUser[];
-        const users = await buildUserRows(admin, authUsers);
+      while (hasMore && allAuthUsers.length < 5000) {
+        const { data: authData, error: authError } = await admin.auth.admin.listUsers({
+          page: currentPage,
+          perPage: 1000,
+        });
+
+        if (authError || !authData?.users || authData.users.length === 0) {
+          hasMore = false;
+        } else {
+          allAuthUsers.push(...(authData.users as AuthUser[]));
+          const totalInAuth = authData.total || 0;
+          if (
+            (totalInAuth > 0 && allAuthUsers.length >= totalInAuth) ||
+            authData.users.length < 50
+          ) {
+            hasMore = false;
+          } else {
+            currentPage++;
+          }
+        }
+      }
+
+      if (allAuthUsers.length > 0) {
+        const users = await buildUserRows(admin, allAuthUsers);
 
         let filteredUsers = users;
         if (search) {
@@ -109,8 +129,8 @@ Deno.serve(async (req: Request) => {
           users: filteredUsers,
           page,
           perPage,
-          total: authData.total || users.length,
-          totalPages: Math.ceil((authData.total || users.length) / perPage),
+          total: users.length,
+          totalPages: 1,
         });
       }
     }
