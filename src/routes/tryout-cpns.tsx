@@ -200,7 +200,6 @@ function TryoutCpnsLandingPage() {
   }, []);
 
   return (
-  return (
     <div className="w-full max-w-full overflow-x-hidden bg-white">
       {/* Hero Section */}
       <section className="relative pt-6 pb-12 sm:pt-12 sm:pb-24 lg:pt-16 lg:pb-28 bg-gradient-to-b from-green-50/40 via-white to-white overflow-hidden">
