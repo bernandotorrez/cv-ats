@@ -90,7 +90,8 @@ type CreditRow = {
   payment_ref: string | null;
   created_at: string;
   profiles?: { full_name: string | null } | null;
-  auth?: { email: string | null } | null;
+  email?: string | null;
+  role?: string | null;
 };
 
 type ExamSetRow = {
@@ -134,8 +135,52 @@ function AdminTryoutPage() {
         "id, user_id, package_id, total_credits, used_credits, remaining_credits, status, payment_method, payment_ref, created_at, profiles(full_name)",
       )
       .order("created_at", { ascending: false })
-      .limit(50);
-    setCredits((creditsData as unknown as CreditRow[]) || []);
+      .limit(100);
+
+    const userIds = Array.from(new Set((creditsData || []).map((c) => c.user_id)));
+
+    let roleMap = new Map<string, string>();
+    if (userIds.length > 0) {
+      const { data: rolesData } = await supabase
+        .from("user_roles")
+        .select("user_id, role")
+        .in("user_id", userIds);
+      if (rolesData) {
+        rolesData.forEach((r) => roleMap.set(r.user_id, r.role));
+      }
+    }
+
+    let userEmailMap = new Map<string, { email: string; full_name: string; role: string }>();
+    try {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (token) {
+        const res = await fetch(`${supabaseUrl}/functions/v1/admin-users?perPage=1000`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const json = await res.json();
+        if (json.users) {
+          json.users.forEach((u: { id: string; email: string; full_name: string; role: string }) => {
+            userEmailMap.set(u.id, u);
+          });
+        }
+      }
+    } catch {
+      // ignore
+    }
+
+    const mergedCredits: CreditRow[] = (creditsData || []).map((c) => {
+      const userInfo = userEmailMap.get(c.user_id);
+      return {
+        ...c,
+        email: userInfo?.email || null,
+        role: userInfo?.role || roleMap.get(c.user_id) || "user",
+        profiles: c.profiles || (userInfo?.full_name ? { full_name: userInfo.full_name } : null),
+      };
+    });
+
+    setCredits(mergedCredits);
 
     // Exam sets
     const { data: setsData } = await supabase
@@ -184,7 +229,10 @@ function AdminTryoutPage() {
     if (!q) return true;
     return (
       c.profiles?.full_name?.toLowerCase().includes(q) ||
-      c.payment_ref?.toLowerCase().includes(q)
+      c.email?.toLowerCase().includes(q) ||
+      c.payment_ref?.toLowerCase().includes(q) ||
+      c.role?.toLowerCase().includes(q) ||
+      c.user_id.toLowerCase().includes(q)
     );
   });
 
@@ -269,11 +317,16 @@ function AdminTryoutPage() {
                     filteredCredits.map((c) => (
                       <tr key={c.id} className="border-b last:border-0 hover:bg-muted/20">
                         <td className="px-4 py-3">
-                          <div className="font-medium text-foreground">
-                            {c.profiles?.full_name || "(tanpa nama)"}
+                          <div className="flex flex-wrap items-center gap-1.5 font-medium text-foreground">
+                            <span>{c.profiles?.full_name || "(tanpa nama)"}</span>
+                            {c.role === "admin" && (
+                              <Badge variant="outline" className="gap-1 border-amber-500/40 bg-amber-500/10 px-1.5 py-0 text-[10px] text-amber-600 dark:text-amber-400">
+                                <Shield className="h-3 w-3" /> Admin
+                              </Badge>
+                            )}
                           </div>
                           <div className="text-[11px] text-muted-foreground">
-                            {c.user_id.slice(0, 8)}...
+                            {c.email ? c.email : `${c.user_id.slice(0, 8)}...`}
                           </div>
                         </td>
                         <td className="px-4 py-3">
@@ -395,7 +448,7 @@ function StatCard({
   );
 }
 
-type UserOption = { id: string; email: string; full_name: string };
+type UserOption = { id: string; email: string; full_name: string; role?: string };
 
 function ActivateCreditDialog({
   open,
@@ -523,10 +576,15 @@ function ActivateCreditDialog({
                     className="w-full justify-between font-normal"
                   >
                     {selectedUser ? (
-                      <span className="flex items-center gap-2">
-                        <User className="h-4 w-4 text-muted-foreground" />
+                      <span className="flex items-center gap-2 overflow-hidden text-ellipsis">
+                        <User className="h-4 w-4 shrink-0 text-muted-foreground" />
                         <span className="font-medium">{selectedUser.full_name || "(tanpa nama)"}</span>
-                        <span className="text-muted-foreground">{selectedUser.email}</span>
+                        {selectedUser.role === "admin" && (
+                          <Badge variant="outline" className="gap-1 border-amber-500/40 bg-amber-500/10 px-1.5 py-0 text-[10px] text-amber-600 shrink-0 dark:text-amber-400">
+                            <Shield className="h-2.5 w-2.5" /> Admin
+                          </Badge>
+                        )}
+                        <span className="text-muted-foreground truncate">{selectedUser.email}</span>
                       </span>
                     ) : (
                       <span className="text-muted-foreground">Cari dan pilih user...</span>
@@ -539,14 +597,14 @@ function ActivateCreditDialog({
                   align="start"
                 >
                   <Command>
-                    <CommandInput placeholder="Cari nama atau email..." />
+                    <CommandInput placeholder="Cari nama, email, atau admin..." />
                     <CommandList>
                       <CommandEmpty>Tidak ada user ditemukan.</CommandEmpty>
                       <CommandGroup>
                         {users.map((u) => (
                           <CommandItem
                             key={u.id}
-                            value={`${u.full_name} ${u.email}`}
+                            value={`${u.full_name} ${u.email} ${u.role === "admin" ? "admin" : ""}`}
                             onSelect={() => {
                               setSelectedUserId(u.id);
                               setComboboxOpen(false);
@@ -556,7 +614,14 @@ function ActivateCreditDialog({
                               className={"mr-2 h-4 w-4 " + (u.id === selectedUserId ? "opacity-100" : "opacity-0")}
                             />
                             <div className="flex flex-col">
-                              <span className="font-medium">{u.full_name || "(tanpa nama)"}</span>
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-medium">{u.full_name || "(tanpa nama)"}</span>
+                                {u.role === "admin" && (
+                                  <Badge variant="outline" className="gap-1 border-amber-500/40 bg-amber-500/10 px-1.5 py-0 text-[10px] text-amber-600 dark:text-amber-400">
+                                    <Shield className="h-2.5 w-2.5" /> Admin
+                                  </Badge>
+                                )}
+                              </div>
                               <span className="text-xs text-muted-foreground">{u.email}</span>
                             </div>
                           </CommandItem>
