@@ -202,30 +202,30 @@ function TryoutCpnsLandingPage() {
   return (
     <div className="bg-white overflow-hidden">
       {/* Hero Section */}
-      <section className="relative pt-12 pb-24 lg:pt-16 lg:pb-32 bg-gradient-to-b from-green-50/30 to-white">
+      <section className="relative pt-8 pb-14 sm:pt-12 sm:pb-24 lg:pt-16 lg:pb-32 bg-gradient-to-b from-green-50/30 to-white">
         <div className="container-page">
-          <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
+          <div className="grid gap-8 sm:gap-12 lg:grid-cols-2 lg:items-center">
             {/* Left Content */}
             <div className="flex flex-col items-start text-left max-w-2xl">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-green-50 text-green-700 uppercase tracking-wider mb-4">
-                <Trophy className="h-3.5 w-3.5" /> Simulasi SKD Terlengkap 2026
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-green-50 text-green-700 uppercase tracking-wider mb-3 sm:mb-4 max-w-full">
+                <Trophy className="h-3.5 w-3.5 shrink-0" /> Simulasi SKD Terlengkap 2026
               </span>
-              <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-gray-900 leading-[1.1]">
+              <h1 className="font-display text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-gray-900 leading-[1.15]">
                 Tryout SKD Realistis{" "}
-                <span className="text-green-700 block mt-2 sm:inline sm:mt-0">
+                <span className="text-green-700 block sm:inline">
                   untuk Lulus CPNS.
                 </span>
               </h1>
 
-              <p className="mt-6 text-base sm:text-lg text-gray-600 leading-relaxed">
+              <p className="mt-4 sm:mt-6 text-sm sm:text-lg text-gray-600 leading-relaxed">
                 110 soal sesuai kisi-kisi BKN (30 TWK + 35 TIU + 45 TKP), timer 100 menit, passing grade sesuai standar, dan pembahasan lengkap di paket premium.
               </p>
 
-              <div className="mt-8 flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+              <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto">
                 <Button
                   asChild
                   size="lg"
-                  className="h-12 px-8 bg-green-700 hover:bg-green-800 text-white font-semibold rounded-md shadow-md text-base"
+                  className="w-full sm:w-auto h-12 px-6 sm:px-8 bg-green-700 hover:bg-green-800 text-white font-semibold rounded-md shadow-md text-sm sm:text-base"
                 >
                   <Link to={"/tryout" as never}>
                     Mulai Tryout Gratis
@@ -236,28 +236,28 @@ function TryoutCpnsLandingPage() {
                   asChild
                   size="lg"
                   variant="outline"
-                  className="h-12 px-8 border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold rounded-md text-base"
+                  className="w-full sm:w-auto h-12 px-6 sm:px-8 border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold rounded-md text-sm sm:text-base"
                 >
                   <a href="#paket">Lihat Paket Harga</a>
                 </Button>
               </div>
 
               {/* Bullet checks */}
-              <div className="mt-8 flex flex-wrap gap-x-8 gap-y-3 text-sm text-gray-600 font-medium">
+              <div className="mt-6 sm:mt-8 flex flex-wrap gap-x-6 sm:gap-x-8 gap-y-2.5 text-xs sm:text-sm text-gray-600 font-medium">
                 <div className="flex items-center gap-2">
-                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-green-100 text-green-700">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-700">
                     <Check className="h-3.5 w-3.5" />
                   </span>
                   110 Soal Standar BKN
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-green-100 text-green-700">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-700">
                     <Clock className="h-3.5 w-3.5" />
                   </span>
                   Timer 100 Menit
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-green-100 text-green-700">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-700">
                     <Target className="h-3.5 w-3.5" />
                   </span>
                   Passing Grade Akurat
@@ -265,8 +265,8 @@ function TryoutCpnsLandingPage() {
               </div>
             </div>
 
-            {/* Right Hero Image & Badges (Matching Index Style) */}
-            <div className="relative flex justify-center lg:justify-end">
+            {/* Right Hero Image & Badges */}
+            <div className="relative flex flex-col items-center lg:items-end">
               <div className="relative w-full max-w-[500px]">
                 <img
                   src="/images/hero-cpns.webp"
@@ -274,8 +274,8 @@ function TryoutCpnsLandingPage() {
                   className="w-full h-auto object-contain drop-shadow-2xl"
                 />
 
-                {/* Floating Card Left: Skor Terakhir & Ranking Nasional (Responsive Mobile) */}
-                <div className="absolute -top-8 left-0 sm:-left-20 lg:-left-28 bg-white rounded-2xl p-3 sm:p-4 shadow-xl border border-gray-100 animate-float w-[170px] sm:w-[200px] z-20 scale-90 sm:scale-100 origin-top-left">
+                {/* Floating Card Left: Skor Terakhir & Ranking (Tablet & Desktop) */}
+                <div className="hidden sm:block absolute -top-8 -left-10 lg:-left-24 bg-white rounded-2xl p-3 sm:p-4 shadow-xl border border-gray-100 animate-float w-[180px] sm:w-[200px] z-20">
                   <div className="flex items-center justify-between">
                     <span className="text-[9px] sm:text-[10px] font-bold text-gray-400 uppercase tracking-wider">
                       SKOR TERAKHIR
@@ -305,8 +305,8 @@ function TryoutCpnsLandingPage() {
                   </div>
                 </div>
 
-                {/* Floating Card Right: Simulasi CAT (Responsive Mobile) */}
-                <div className="absolute -top-6 right-0 sm:-right-16 lg:-right-24 bg-green-700 text-white rounded-2xl p-3 sm:p-4 shadow-xl animate-float-delayed w-[170px] sm:w-[200px] z-20 scale-90 sm:scale-100 origin-top-right">
+                {/* Floating Card Right: Simulasi CAT (Tablet & Desktop) */}
+                <div className="hidden sm:block absolute -top-6 -right-10 lg:-right-20 bg-green-700 text-white rounded-2xl p-3 sm:p-4 shadow-xl animate-float-delayed w-[180px] sm:w-[200px] z-20">
                   <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-bold border-b border-green-600/80 pb-2 mb-2.5">
                     <div className="flex h-5 sm:h-6 w-5 sm:w-6 items-center justify-center rounded-lg bg-green-600 text-white">
                       <FileCheck className="h-3 sm:h-3.5 w-3 sm:w-3.5" />
@@ -352,8 +352,8 @@ function TryoutCpnsLandingPage() {
                   </div>
                 </div>
 
-                {/* Floating Card Bottom-Left: Peluang SKD Meningkat (Responsive Mobile) */}
-                <div className="absolute -bottom-6 left-0 sm:-left-12 bg-white rounded-2xl p-2.5 sm:p-3.5 shadow-xl border border-gray-100 animate-float flex items-center gap-2 sm:gap-3 max-w-[170px] sm:max-w-[215px] z-20 scale-90 sm:scale-100 origin-bottom-left">
+                {/* Floating Card Bottom-Left (Tablet & Desktop) */}
+                <div className="hidden sm:flex absolute -bottom-6 -left-8 bg-white rounded-2xl p-2.5 sm:p-3.5 shadow-xl border border-gray-100 animate-float items-center gap-2 sm:gap-3 max-w-[215px] z-20">
                   <div className="flex h-8 sm:h-9 w-8 sm:w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700 font-extrabold">
                     <TrendingUp className="h-3.5 sm:h-4 w-3.5 sm:w-4" />
                   </div>
@@ -363,8 +363,8 @@ function TryoutCpnsLandingPage() {
                   </div>
                 </div>
 
-                {/* Floating Card Bottom-Right: Modul Belajar (Responsive Mobile) */}
-                <div className="absolute -bottom-6 right-0 sm:-right-12 bg-white rounded-2xl p-2.5 sm:p-3.5 shadow-xl border border-gray-100 animate-float-delayed flex items-center gap-2 sm:gap-3 max-w-[160px] sm:max-w-[200px] z-20 scale-90 sm:scale-100 origin-bottom-right">
+                {/* Floating Card Bottom-Right (Tablet & Desktop) */}
+                <div className="hidden sm:flex absolute -bottom-6 -right-8 bg-white rounded-2xl p-2.5 sm:p-3.5 shadow-xl border border-gray-100 animate-float-delayed items-center gap-2 sm:gap-3 max-w-[200px] z-20">
                   <div className="flex h-8 sm:h-9 w-8 sm:w-9 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-600 font-bold">
                     <BookOpen className="h-3.5 sm:h-4 w-3.5 sm:w-4" />
                   </div>
@@ -374,23 +374,66 @@ function TryoutCpnsLandingPage() {
                   </div>
                 </div>
               </div>
+
+              {/* Mobile Feature Badges (Rendered cleanly below image on mobile screens < sm) */}
+              <div className="mt-4 grid grid-cols-2 gap-2.5 w-full sm:hidden">
+                <div className="bg-white rounded-xl p-3 border border-gray-100 shadow-sm flex items-center gap-2.5">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-green-100 text-green-700 font-extrabold text-xs">
+                    <Trophy className="h-4 w-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-xs font-bold text-gray-900 truncate">Skor 73 / 100</div>
+                    <div className="text-[10px] text-green-700 font-semibold truncate">Rank Top 10%</div>
+                  </div>
+                </div>
+
+                <div className="bg-green-700 text-white rounded-xl p-3 shadow-sm flex items-center gap-2.5">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-green-600 text-white">
+                    <FileCheck className="h-4 w-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-xs font-bold truncate">Simulasi CAT</div>
+                    <div className="text-[10px] text-green-100 font-medium truncate">110 Soal BKN</div>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-xl p-3 border border-gray-100 shadow-sm flex items-center gap-2.5">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700">
+                    <TrendingUp className="h-4 w-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-xs font-bold text-gray-900 truncate">Evaluasi Realtime</div>
+                    <div className="text-[10px] text-emerald-600 font-semibold truncate">+40% Lolos SKD</div>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-xl p-3 border border-gray-100 shadow-sm flex items-center gap-2.5">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-blue-600">
+                    <BookOpen className="h-4 w-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-xs font-bold text-gray-900 truncate">Modul Belajar</div>
+                    <div className="text-[10px] text-gray-500 truncate">TIU · TWK · TKP</div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
       {/* Features */}
-      <section className="container-page py-12">
+      <section className="container-page py-8 sm:py-12">
         <div className="text-center">
-          <h2 className="font-display text-3xl font-bold sm:text-4xl">
+          <h2 className="font-display text-2xl sm:text-4xl font-bold">
             Kenapa Tryout di CV Pintar?
           </h2>
-          <p className="mx-auto mt-2 max-w-xl text-muted-foreground">
+          <p className="mx-auto mt-2 max-w-xl text-sm sm:text-base text-muted-foreground">
             Dirancang untuk persiapan SKD yang realistis, terukur, dan terarah.
           </p>
         </div>
 
-        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-8 sm:mt-10 grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
           <FeatureCard
             icon={Clock}
             color="amber"
@@ -419,16 +462,16 @@ function TryoutCpnsLandingPage() {
       </section>
 
       {/* Format Ujian */}
-      <section className="container-page py-12">
-        <div className="rounded-3xl border bg-card p-6 sm:p-10">
-          <div className="mb-8 flex items-center gap-2">
-            <BookOpen className="h-5 w-5 text-primary" />
-            <h2 className="font-display text-2xl font-bold sm:text-3xl">
+      <section className="container-page py-8 sm:py-12">
+        <div className="rounded-2xl sm:rounded-3xl border bg-card p-4 sm:p-10">
+          <div className="mb-6 sm:mb-8 flex items-center gap-2">
+            <BookOpen className="h-5 w-5 text-primary shrink-0" />
+            <h2 className="font-display text-xl sm:text-3xl font-bold">
               Format Ujian SKD
             </h2>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-3">
             <SubtestInfo
               label="TWK"
               fullName="Tes Wawasan Kebangsaan"
@@ -455,7 +498,7 @@ function TryoutCpnsLandingPage() {
             />
           </div>
 
-          <div className="mt-8 rounded-2xl border-2 border-dashed border-amber-300 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/40 p-5 text-sm">
+          <div className="mt-6 sm:mt-8 rounded-xl sm:rounded-2xl border-2 border-dashed border-amber-300 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/40 p-4 sm:p-5 text-xs sm:text-sm">
             <div className="font-bold text-amber-900 dark:text-amber-400">⚠️ Penting</div>
             <p className="mt-1 text-amber-800">
               Kamu harus lulus <strong>ketiga subtes</strong> untuk dinyatakan LULUS. Total skor
@@ -466,15 +509,15 @@ function TryoutCpnsLandingPage() {
       </section>
 
       {/* Pricing */}
-      <section id="paket" className="container-page py-12">
+      <section id="paket" className="container-page py-8 sm:py-12">
         <div className="text-center">
-          <h2 className="font-display text-3xl font-bold sm:text-4xl">Pilih Paket Tryout</h2>
-          <p className="mx-auto mt-2 max-w-xl text-muted-foreground">
+          <h2 className="font-display text-2xl sm:text-4xl font-bold">Pilih Paket Tryout</h2>
+          <p className="mx-auto mt-2 max-w-xl text-sm sm:text-base text-muted-foreground">
             Mulai dari 1x tryout sampai paket lengkap dengan pembahasan + leaderboard.
           </p>
         </div>
 
-        <div className="mx-auto mt-10 grid max-w-4xl gap-6 md:grid-cols-2">
+        <div className="mx-auto mt-8 sm:mt-10 grid grid-cols-1 max-w-4xl gap-6 md:grid-cols-2">
           {packages.map((pkg) => (
             <TryoutPackageCard
               key={pkg.id}
@@ -495,21 +538,21 @@ function TryoutCpnsLandingPage() {
       </section>
 
       {/* FAQ */}
-      <section className="container-page py-16">
+      <section className="container-page py-10 sm:py-16">
         <div className="mx-auto max-w-3xl">
-          <div className="text-center mb-10">
+          <div className="text-center mb-8 sm:mb-10">
             <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-green-50 text-green-700 uppercase tracking-wider">
               FAQ
             </span>
-            <h2 className="mt-3 font-display text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight">
+            <h2 className="mt-3 font-display text-2xl sm:text-4xl font-extrabold text-gray-900 tracking-tight">
               Pertanyaan Sering Diajukan
             </h2>
-            <p className="mt-2 text-sm text-gray-500">
+            <p className="mt-2 text-xs sm:text-sm text-gray-500">
               Segala hal yang perlu kamu ketahui tentang simulasi tryout SKD CPNS.
             </p>
           </div>
 
-          <Accordion type="single" collapsible className="w-full space-y-4">
+          <Accordion type="single" collapsible className="w-full space-y-3 sm:space-y-4">
             {[
               {
                 q: "Apakah soalnya mirip ujian asli?",
@@ -539,9 +582,9 @@ function TryoutCpnsLandingPage() {
               <AccordionItem
                 key={faq.q}
                 value={`faq-${index}`}
-                className="border border-gray-100 rounded-xl px-5 py-2 bg-white shadow-sm"
+                className="border border-gray-100 rounded-xl px-4 sm:px-5 py-1.5 sm:py-2 bg-white shadow-sm"
               >
-                <AccordionTrigger className="text-left font-bold text-gray-800 text-sm hover:no-underline hover:text-green-700">
+                <AccordionTrigger className="text-left font-bold text-gray-800 text-xs sm:text-sm hover:no-underline hover:text-green-700">
                   {faq.q}
                 </AccordionTrigger>
                 <AccordionContent className="text-xs md:text-sm leading-relaxed text-gray-500 pt-2 border-t border-gray-50 mt-2">
@@ -553,23 +596,23 @@ function TryoutCpnsLandingPage() {
         </div>
       </section>
 
-      {/* Final CTA Banner Section (Matching Index Style) */}
-      <section className="container-page pb-24">
-        <div className="rounded-3xl bg-green-700 px-8 py-12 text-white shadow-2xl relative overflow-hidden flex flex-col lg:flex-row items-center justify-between gap-12">
+      {/* Final CTA Banner Section */}
+      <section className="container-page pb-16 sm:pb-24">
+        <div className="rounded-2xl sm:rounded-3xl bg-green-700 px-5 sm:px-8 py-8 sm:py-12 text-white shadow-2xl relative overflow-hidden flex flex-col lg:flex-row items-center justify-between gap-8 lg:gap-12">
           {/* Decorative background element */}
-          <div className="absolute -top-12 -left-12 w-48 h-48 rounded-full bg-green-600/30 blur-2xl" />
+          <div className="absolute -top-12 -left-12 w-48 h-48 rounded-full bg-green-600/30 blur-2xl pointer-events-none" />
 
           {/* Content */}
           <div className="relative z-10 flex-1 max-w-2xl text-left">
-            <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight">
+            <h2 className="font-display text-2xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight">
               Siap Lulus SKD? Mulai latihan dari sekarang.
             </h2>
-            <p className="mt-4 text-base sm:text-lg text-green-100">
+            <p className="mt-3 sm:mt-4 text-sm sm:text-lg text-green-100">
               Setiap tryout membuatmu lebih siap menghadapi ujian asli BKN.
             </p>
 
             {/* Checklist */}
-            <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm font-semibold text-green-50">
+            <div className="mt-6 sm:mt-8 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs sm:text-sm font-semibold text-green-50">
               <div className="flex items-center gap-2">
                 <span className="text-white text-xs font-bold">✓</span>
                 110 Soal Standar BKN
@@ -591,7 +634,7 @@ function TryoutCpnsLandingPage() {
             <Button
               asChild
               size="lg"
-              className="mt-10 h-12 px-8 bg-yellow-300 hover:bg-yellow-400 text-gray-950 font-extrabold rounded-lg shadow-lg text-base"
+              className="w-full sm:w-auto mt-6 sm:mt-10 h-12 px-6 sm:px-8 bg-yellow-300 hover:bg-yellow-400 text-gray-950 font-extrabold rounded-lg shadow-lg text-sm sm:text-base"
             >
               <Link to={"/tryout" as never}>
                 Mulai Tryout SKD Sekarang
@@ -601,7 +644,7 @@ function TryoutCpnsLandingPage() {
           </div>
 
           {/* Right Image */}
-          <div className="relative z-10 w-full max-w-[280px] lg:max-w-[360px] flex justify-center lg:justify-end">
+          <div className="relative z-10 w-full max-w-[240px] sm:max-w-[280px] lg:max-w-[360px] flex justify-center lg:justify-end">
             <div className="relative w-full">
               <img
                 src="/images/cta-asn-female.webp"
