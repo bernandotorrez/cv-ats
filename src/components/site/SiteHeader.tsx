@@ -65,20 +65,20 @@ export function SiteHeader() {
           </span>
         </Link>
 
-        <nav aria-label="Navigasi utama" className="hidden items-center gap-1 md:flex">
+        <nav aria-label="Navigasi utama" className="hidden items-center gap-0.5 lg:flex">
           {nav.map((item) => (
             <Link
               key={item.to}
               to={item.to}
               className={cn(
-                "rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
+                "rounded-md px-2 py-1.5 text-xs lg:text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
                 "badge" in item && item.badge && "relative",
               )}
               activeProps={{
-                className: "rounded-md px-3 py-2 text-sm font-medium text-foreground bg-muted",
+                className: "rounded-md px-2 py-1.5 text-xs lg:text-sm font-medium text-foreground bg-muted",
               }}
             >
-              <span className="flex items-center gap-1.5">
+              <span className="flex items-center gap-1">
                 {"badge" in item && item.badge && <Trophy className="h-3.5 w-3.5 text-amber-500" />}
                 {item.label}
                 {"badge" in item && item.badge && (
@@ -91,7 +91,7 @@ export function SiteHeader() {
           ))}
         </nav>
 
-        <div className="hidden items-center gap-2 md:flex">
+        <div className="hidden items-center gap-1.5 lg:flex">
           {user ? (
             <>
               {admin && (
@@ -138,14 +138,14 @@ export function SiteHeader() {
           onClick={() => setOpen((v) => !v)}
           aria-label={open ? "Tutup menu" : "Buka menu"}
           aria-expanded={open}
-          className="inline-flex h-10 w-10 items-center justify-center rounded-md text-foreground hover:bg-muted md:hidden"
+          className="inline-flex h-10 w-10 items-center justify-center rounded-md text-foreground hover:bg-muted lg:hidden"
         >
           {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
       </div>
 
       {open && (
-        <div className="border-t border-border/60 bg-background md:hidden">
+        <div className="border-t border-border/60 bg-background lg:hidden">
           <nav aria-label="Navigasi mobile" className="container-page flex flex-col gap-1 py-3">
             {nav.map((item) => (
               <Link
