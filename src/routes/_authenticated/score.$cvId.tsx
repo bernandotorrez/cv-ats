@@ -212,38 +212,6 @@ function CvScorePage() {
     }
   };
 
-  if (loading) return <ScorePageSkeleton />;
-
-  if (notFound) {
-    return (
-      <main className="container-page py-12">
-        <div className="mb-6">
-          <BackButton />
-        </div>
-        <Card className="mx-auto max-w-xl border-border bg-card p-8 text-center">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-destructive/10 text-destructive">
-            <AlertCircle className="h-7 w-7" />
-          </div>
-          <h1 className="font-display text-2xl font-bold text-foreground">CV Tidak Ditemukan</h1>
-          <p className="mt-2 text-sm leading-6 text-muted-foreground">
-            Dokumen CV yang ingin kamu analisis tidak ditemukan atau sudah dihapus.
-          </p>
-          <div className="mt-6 flex justify-center gap-3">
-            <Button asChild>
-              <Link to="/score">Kembali ke Daftar Skor</Link>
-            </Button>
-            <Button asChild variant="outline">
-              <Link to="/cv">Lihat Semua CV</Link>
-            </Button>
-          </div>
-        </Card>
-      </main>
-    );
-  }
-
-  const templateName =
-    TEMPLATES.find((template) => template.id === templateId)?.name ?? "Template CV";
-
   // Convert score suggestions to CV Review format for highlighting
   const highlightSuggestions = useMemo(() => {
     if (!result?.suggestions) return [];
@@ -380,6 +348,38 @@ function CvScorePage() {
 
     toast.success(`${appliedCount} saran berhasil diterapkan dan disimpan!`);
   }, [cvData, cvId, highlightSuggestions, appliedSuggestions]);
+
+  if (loading) return <ScorePageSkeleton />;
+
+  if (notFound) {
+    return (
+      <main className="container-page py-12">
+        <div className="mb-6">
+          <BackButton />
+        </div>
+        <Card className="mx-auto max-w-xl border-border bg-card p-8 text-center">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-destructive/10 text-destructive">
+            <AlertCircle className="h-7 w-7" />
+          </div>
+          <h1 className="font-display text-2xl font-bold text-foreground">CV Tidak Ditemukan</h1>
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">
+            Dokumen CV yang ingin kamu analisis tidak ditemukan atau sudah dihapus.
+          </p>
+          <div className="mt-6 flex justify-center gap-3">
+            <Button asChild>
+              <Link to="/score">Kembali ke Daftar Skor</Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link to="/cv">Lihat Semua CV</Link>
+            </Button>
+          </div>
+        </Card>
+      </main>
+    );
+  }
+
+  const templateName =
+    TEMPLATES.find((template) => template.id === templateId)?.name ?? "Template CV";
 
   return (
     <main className="container-page overflow-x-hidden py-6 sm:py-8 lg:py-10">
