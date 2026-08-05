@@ -602,18 +602,21 @@ function ActivateCreditDialog({
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent
-                  className="w-[--radix-popover-trigger-width] p-0"
+                  className="w-[--radix-popover-trigger-width] p-0 z-[60]"
                   align="start"
                 >
                   <Command>
                     <CommandInput placeholder="Cari nama, email, atau admin..." />
-                    <CommandList>
+                    <CommandList
+                      className="max-h-60 overflow-y-auto overscroll-contain"
+                      onWheel={(e) => e.stopPropagation()}
+                    >
                       <CommandEmpty>Tidak ada user ditemukan.</CommandEmpty>
                       <CommandGroup>
                         {users.map((u) => (
                           <CommandItem
                             key={u.id}
-                            value={`${u.full_name} ${u.email} ${u.role === "admin" ? "admin" : ""}`}
+                            value={`${u.full_name || ""} ${u.email || ""} ${u.role === "admin" ? "admin" : ""} ${u.id}`}
                             onSelect={() => {
                               setSelectedUserId(u.id);
                               setComboboxOpen(false);

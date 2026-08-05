@@ -78,11 +78,42 @@ Deno.serve(async (req: Request) => {
 
     const url = new URL(req.url);
     const page = clampNumber(Number(url.searchParams.get("page") || "1"), 1, 10000);
-    const perPage = clampNumber(Number(url.searchParams.get("perPage") || "10"), 1, 100);
+    const perPage = clampNumber(Number(url.searchParams.get("perPage") || "10"), 1, 1000);
     const search = (url.searchParams.get("search") || "").trim().toLowerCase();
     const tier = (url.searchParams.get("tier") || "all").trim().toLowerCase();
     const sort = (url.searchParams.get("sort") || "desc").trim().toLowerCase();
     const sortOrder = sort === "asc" ? "asc" : "desc";
+
+    if (perPage > 100) {
+      const { data: authData, error: authError } = await admin.auth.admin.listUsers({
+        page,
+        perPage: Math.min(perPage, 1000),
+      });
+
+      if (!authError && authData?.users) {
+        const authUsers = authData.users as AuthUser[];
+        const users = await buildUserRows(admin, authUsers);
+
+        let filteredUsers = users;
+        if (search) {
+          filteredUsers = users.filter(
+            (u) =>
+              u.email?.toLowerCase().includes(search) ||
+              u.full_name?.toLowerCase().includes(search) ||
+              u.id.toLowerCase().includes(search) ||
+              u.role?.toLowerCase().includes(search),
+          );
+        }
+
+        return json(req, {
+          users: filteredUsers,
+          page,
+          perPage,
+          total: authData.total || users.length,
+          totalPages: Math.ceil((authData.total || users.length) / perPage),
+        });
+      }
+    }
 
     const { data, error } = await admin.rpc("admin_list_users_page", {
       search_text: search,
