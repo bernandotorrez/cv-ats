@@ -266,35 +266,35 @@ function TryoutCpnsLandingPage() {
             </div>
 
             {/* Right Hero Image & Badges */}
-            <div className="relative flex flex-col items-center justify-center lg:items-end w-full overflow-x-clip py-2 sm:py-4">
-              <div className="relative w-full max-w-[460px] mx-auto lg:mr-0 px-1 sm:px-0">
+            <div className="relative flex flex-col items-center justify-center lg:items-end w-full py-4 sm:py-6 px-2 sm:px-6 md:px-8 overflow-visible">
+              <div className="relative w-full max-w-[340px] sm:max-w-[380px] md:max-w-[400px] lg:max-w-[425px] mx-auto lg:mr-2 my-2 sm:my-4">
                 <img
                   src="/images/hero-cpns.webp"
                   alt="Dua peserta CPNS SKD yang optimis dan lulus"
                   className="w-full h-auto object-contain drop-shadow-xl"
                 />
 
-                {/* Floating Card Left: Skor Terakhir & Ranking (Tablet & Desktop) */}
-                <div className="hidden sm:block absolute -top-4 -left-4 lg:-left-12 bg-white/95 backdrop-blur-sm rounded-2xl p-3 sm:p-4 shadow-xl border border-gray-100 animate-float w-[170px] sm:w-[190px] z-20">
+                {/* Floating Card Left: Skor Terakhir & Ranking (Tablet MD & Desktop) */}
+                <div className="hidden md:block absolute -top-3 left-0 md:-left-4 lg:-left-6 bg-white/95 backdrop-blur-sm rounded-2xl p-2.5 sm:p-3.5 shadow-xl border border-gray-100/90 animate-float w-[155px] md:w-[175px] z-20">
                   <div className="flex items-center justify-between">
-                    <span className="text-[9px] sm:text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                    <span className="text-[8px] sm:text-[9px] font-bold text-gray-400 uppercase tracking-wider">
                       SKOR TERAKHIR
                     </span>
-                    <span className="bg-green-100 text-green-700 text-[8px] sm:text-[9px] font-extrabold px-1.5 sm:px-2 py-0.5 rounded-full">
+                    <span className="bg-green-100 text-green-700 text-[8px] sm:text-[9px] font-extrabold px-1.5 py-0.5 rounded-full">
                       BAIK
                     </span>
                   </div>
-                  <div className="mt-1 flex items-baseline gap-1">
-                    <span className="text-2xl sm:text-3xl font-black text-green-700">73</span>
-                    <span className="text-[10px] sm:text-xs font-semibold text-gray-400">/ 100</span>
+                  <div className="mt-0.5 flex items-baseline gap-1">
+                    <span className="text-xl sm:text-2xl font-black text-green-700">73</span>
+                    <span className="text-[9px] sm:text-[10px] font-semibold text-gray-400">/ 100</span>
                   </div>
-                  <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden mt-1.5 mb-2">
+                  <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden mt-1 mb-1.5">
                     <div className="h-full bg-green-600 rounded-full w-[73%]" />
                   </div>
                   <span className="text-[8px] sm:text-[9px] font-bold text-gray-400 uppercase tracking-wider block mb-1">
                     RANKING NASIONAL
                   </span>
-                  <div className="flex items-end gap-1 h-5 sm:h-6 pt-0.5">
+                  <div className="flex items-end gap-1 h-4 sm:h-5 pt-0.5">
                     <div className="flex-1 bg-green-100 rounded-t h-[40%]" />
                     <div className="flex-1 bg-green-100 rounded-t h-[60%]" />
                     <div className="flex-1 bg-green-100 rounded-t h-[35%]" />
@@ -305,21 +305,21 @@ function TryoutCpnsLandingPage() {
                   </div>
                 </div>
 
-                {/* Floating Card Right: Simulasi CAT (Tablet & Desktop) */}
-                <div className="hidden sm:block absolute -top-4 right-0 lg:-right-4 bg-green-700 text-white rounded-2xl p-3 sm:p-4 shadow-xl animate-float-delayed w-[170px] sm:w-[190px] z-20">
-                  <div className="flex items-center gap-1.5 text-[11px] sm:text-xs font-bold border-b border-green-600/80 pb-2 mb-2">
-                    <div className="flex h-5 w-5 items-center justify-center rounded-lg bg-green-600 text-white shrink-0">
-                      <FileCheck className="h-3 w-3" />
+                {/* Floating Card Right: Simulasi CAT (Tablet MD & Desktop) */}
+                <div className="hidden md:block absolute -top-3 right-0 md:-right-3 lg:-right-4 bg-green-700 text-white rounded-2xl p-2.5 sm:p-3.5 shadow-xl animate-float-delayed w-[155px] md:w-[175px] z-20">
+                  <div className="flex items-center gap-1.5 text-[10px] sm:text-xs font-bold border-b border-green-600/80 pb-1.5 mb-1.5">
+                    <div className="flex h-4 sm:h-5 w-4 sm:w-5 items-center justify-center rounded-lg bg-green-600 text-white shrink-0">
+                      <FileCheck className="h-2.5 sm:h-3 w-2.5 sm:w-3" />
                     </div>
-                    <span>Simulasi CAT</span>
+                    <span className="truncate">Simulasi CAT</span>
                   </div>
-                  <div className="space-y-2 text-[10px] sm:text-[11px]">
+                  <div className="space-y-1.5 text-[9px] sm:text-[10px]">
                     <div>
                       <div className="flex items-center justify-between mb-0.5">
                         <span className="flex items-center gap-1 font-semibold text-white">
-                          <CheckCircle2 className="h-3 w-3 text-white shrink-0" /> TWK
+                          <CheckCircle2 className="h-2.5 sm:h-3 w-2.5 sm:w-3 text-white shrink-0" /> TWK
                         </span>
-                        <span className="text-[9px] font-semibold text-white">Selesai</span>
+                        <span className="text-[8px] sm:text-[9px] font-semibold text-white">Selesai</span>
                       </div>
                       <div className="h-1 w-full bg-green-800/80 rounded-full overflow-hidden">
                         <div className="h-full bg-white w-full rounded-full" />
@@ -329,9 +329,9 @@ function TryoutCpnsLandingPage() {
                     <div>
                       <div className="flex items-center justify-between mb-0.5">
                         <span className="flex items-center gap-1 font-semibold text-white">
-                          <CheckCircle2 className="h-3 w-3 text-white shrink-0" /> TIU
+                          <CheckCircle2 className="h-2.5 sm:h-3 w-2.5 sm:w-3 text-white shrink-0" /> TIU
                         </span>
-                        <span className="text-[9px] font-semibold text-white">Selesai</span>
+                        <span className="text-[8px] sm:text-[9px] font-semibold text-white">Selesai</span>
                       </div>
                       <div className="h-1 w-full bg-green-800/80 rounded-full overflow-hidden">
                         <div className="h-full bg-white w-full rounded-full" />
@@ -341,9 +341,9 @@ function TryoutCpnsLandingPage() {
                     <div>
                       <div className="flex items-center justify-between mb-0.5">
                         <span className="flex items-center gap-1 font-semibold text-white">
-                          <span className="h-1.5 w-1.5 rounded-full bg-white inline-block shrink-0" /> TKP
+                          <span className="h-1 sm:h-1.5 w-1 sm:w-1.5 rounded-full bg-white inline-block shrink-0" /> TKP
                         </span>
-                        <span className="text-[9px] font-semibold text-white">82%</span>
+                        <span className="text-[8px] sm:text-[9px] font-semibold text-white">82%</span>
                       </div>
                       <div className="h-1 w-full bg-green-800/80 rounded-full overflow-hidden">
                         <div className="h-full bg-white w-[82%] rounded-full" />
@@ -352,31 +352,31 @@ function TryoutCpnsLandingPage() {
                   </div>
                 </div>
 
-                {/* Floating Card Bottom-Left (Tablet & Desktop) */}
-                <div className="hidden sm:flex absolute -bottom-4 -left-2 lg:-left-8 bg-white/95 backdrop-blur-sm rounded-xl p-2.5 sm:p-3 shadow-xl border border-gray-100 animate-float items-center gap-2 max-w-[190px] z-20">
-                  <div className="flex h-7 sm:h-8 w-7 sm:w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700 font-extrabold">
+                {/* Floating Card Bottom-Left (Tablet MD & Desktop) */}
+                <div className="hidden md:flex absolute -bottom-3 left-0 md:-left-3 lg:-left-5 bg-white/95 backdrop-blur-sm rounded-xl p-2 sm:p-2.5 shadow-xl border border-gray-100/90 animate-float items-center gap-2 max-w-[155px] md:max-w-[170px] z-20">
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700 font-extrabold">
                     <TrendingUp className="h-3.5 w-3.5" />
                   </div>
                   <div className="flex flex-col min-w-0">
-                    <span className="text-[11px] font-extrabold text-gray-900 leading-tight truncate">Peluang SKD</span>
-                    <span className="text-[9px] text-emerald-600 font-semibold truncate">+40% Evaluasi</span>
+                    <span className="text-[10px] sm:text-[11px] font-extrabold text-gray-900 leading-tight truncate">Peluang SKD</span>
+                    <span className="text-[8px] sm:text-[9px] text-emerald-600 font-semibold truncate">+40% Evaluasi</span>
                   </div>
                 </div>
 
-                {/* Floating Card Bottom-Right (Tablet & Desktop) */}
-                <div className="hidden sm:flex absolute -bottom-4 right-0 lg:-right-4 bg-white/95 backdrop-blur-sm rounded-xl p-2.5 sm:p-3 shadow-xl border border-gray-100 animate-float-delayed items-center gap-2 max-w-[180px] z-20">
-                  <div className="flex h-7 sm:h-8 w-7 sm:w-8 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-blue-600 font-bold">
+                {/* Floating Card Bottom-Right (Tablet MD & Desktop) */}
+                <div className="hidden md:flex absolute -bottom-3 right-0 md:-right-3 lg:-right-4 bg-white/95 backdrop-blur-sm rounded-xl p-2 sm:p-2.5 shadow-xl border border-gray-100/90 animate-float-delayed items-center gap-2 max-w-[155px] md:max-w-[170px] z-20">
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-blue-600 font-bold">
                     <BookOpen className="h-3.5 w-3.5" />
                   </div>
                   <div className="flex flex-col min-w-0">
-                    <span className="text-[11px] font-extrabold text-gray-900 leading-tight truncate">Modul Belajar</span>
-                    <span className="text-[9px] text-gray-400 font-medium truncate">TIU · TWK · TKP</span>
+                    <span className="text-[10px] sm:text-[11px] font-extrabold text-gray-900 leading-tight truncate">Modul Belajar</span>
+                    <span className="text-[8px] sm:text-[9px] text-gray-400 font-medium truncate">TIU · TWK · TKP</span>
                   </div>
                 </div>
               </div>
 
-              {/* Mobile Feature Badges (< sm screens) */}
-              <div className="mt-4 grid grid-cols-2 gap-2 w-full sm:hidden">
+              {/* Mobile Feature Badges (< md screens) */}
+              <div className="mt-4 grid grid-cols-2 gap-2 w-full md:hidden">
                 <div className="bg-white rounded-xl p-2.5 border border-gray-100 shadow-sm flex items-center gap-2">
                   <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-green-100 text-green-700 font-extrabold text-xs">
                     <Trophy className="h-3.5 w-3.5" />
