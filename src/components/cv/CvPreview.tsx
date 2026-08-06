@@ -156,12 +156,11 @@ export function CvPreview({
         {renderTemplate()}
         {showWatermark && (
           <div
-            className="cv-preview-watermark text-xs text-gray-400 pointer-events-none"
+            className="cv-preview-watermark text-sm font-medium text-gray-500 pointer-events-none"
             style={{
-              marginTop: "10mm",
-              fontSize: "8pt",
-              color: "#ccc",
+              marginTop: "16px",
               textAlign: "center",
+              width: "100%",
             }}
           >
             {t(language, "watermark")}
@@ -228,12 +227,11 @@ export function MultiPageCvPreview({
             {renderTemplateById(template, pageData, index === 0, language)}
             {showWatermark && index === pages.length - 1 && (
               <div
-                className="cv-preview-watermark text-xs text-gray-400 pointer-events-none"
+                className="cv-preview-watermark text-sm font-medium text-gray-500 pointer-events-none"
                 style={{
-                  marginTop: "10mm",
-                  fontSize: "8pt",
-                  color: "#ccc",
+                  marginTop: "16px",
                   textAlign: "center",
+                  width: "100%",
                 }}
               >
                 {t(language, "watermark")}

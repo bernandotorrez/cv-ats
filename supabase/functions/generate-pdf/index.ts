@@ -303,8 +303,9 @@ function generateSurabayaHtml(
     left: 0;
     right: 0;
     text-align: center;
-    font-size: 7pt;
-    color: #d1d5db;
+    font-size: 9pt;
+    font-weight: 500;
+    color: #9ca3af;
   }
   @media print {
     body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -319,25 +320,23 @@ function generateSurabayaHtml(
   </div>
   
   <div class="content">
-    ${
-      personal.summary
-        ? `
+    ${personal.summary
+      ? `
       <div class="section">
         <div class="section-title">Ringkasan Profesional</div>
         <div class="item-desc">${escapeHtml(personal.summary)}</div>
       </div>
     `
-        : ""
+      : ""
     }
     
-    ${
-      experiences.length > 0
-        ? `
+    ${experiences.length > 0
+      ? `
       <div class="section">
         <div class="section-title">Pengalaman Kerja</div>
         ${experiences
-          .map(
-            (e: Record<string, unknown>) => `
+        .map(
+          (e: Record<string, unknown>) => `
           <div class="item">
             <div class="item-header">
               <div>
@@ -349,21 +348,20 @@ function generateSurabayaHtml(
             ${e.description ? `<div class="item-desc">${escapeHtml(e.description as string).replace(/\n/g, "<br>")}</div>` : ""}
           </div>
         `,
-          )
-          .join("")}
+        )
+        .join("")}
       </div>
     `
-        : ""
+      : ""
     }
     
-    ${
-      educations.length > 0
-        ? `
+    ${educations.length > 0
+      ? `
       <div class="section">
         <div class="section-title">Pendidikan</div>
         ${educations
-          .map(
-            (ed: Record<string, unknown>) => `
+        .map(
+          (ed: Record<string, unknown>) => `
           <div class="item">
             <div class="item-header">
               <div>
@@ -375,61 +373,58 @@ function generateSurabayaHtml(
             ${ed.description ? `<div class="item-desc">${escapeHtml(ed.description as string)}</div>` : ""}
           </div>
         `,
-          )
-          .join("")}
+        )
+        .join("")}
       </div>
     `
-        : ""
+      : ""
     }
     
-    ${
-      skills.length > 0
-        ? `
+    ${skills.length > 0
+      ? `
       <div class="section">
         <div class="section-title">Keahlian</div>
         <div class="skills-grid">
           ${skills
-            .map(
-              (s: { name: string; level?: string }) => `
+        .map(
+          (s: { name: string; level?: string }) => `
             <div class="skill-item">${escapeHtml(s.name)}${s.level ? ` <span style="color: #6b7280;">(${s.level})</span>` : ""}</div>
           `,
-            )
-            .join("")}
+        )
+        .join("")}
         </div>
       </div>
     `
-        : ""
+      : ""
     }
     
-    ${
-      languages.length > 0
-        ? `
+    ${languages.length > 0
+      ? `
       <div class="section">
         <div class="section-title">Bahasa</div>
         <div>${languages.map((l: Record<string, string>) => `${escapeHtml(l.name)} (${escapeHtml(l.level)})`).join(" • ")}</div>
       </div>
     `
-        : ""
+      : ""
     }
     
-    ${
-      certificates.length > 0
-        ? `
+    ${certificates.length > 0
+      ? `
       <div class="section">
         <div class="section-title">Sertifikat</div>
         ${certificates
-          .map(
-            (c: Record<string, string>) => `
+        .map(
+          (c: Record<string, string>) => `
           <div class="item">
             <div class="item-title">${escapeHtml(c.name)}</div>
             <div class="item-subtitle">${escapeHtml(c.issuer)} • ${escapeHtml(c.date)}</div>
           </div>
         `,
-          )
-          .join("")}
+        )
+        .join("")}
       </div>
     `
-        : ""
+      : ""
     }
   </div>
   
@@ -593,8 +588,9 @@ function generateJakartaHtml(
     left: 0;
     right: 0;
     text-align: center;
-    font-size: 7pt;
-    color: #ccc;
+    font-size: 8.5pt;
+    font-weight: 500;
+    color: #9ca3af;
   }
   @media print {
     body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }

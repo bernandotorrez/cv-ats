@@ -670,9 +670,9 @@ Fitur dan kuota:
 
 - 1 CV aktif.
 - 2 template basic.
-- 5x saran AI per bulan.
+- 1x saran AI per bulan.
 - 1x scoring per bulan.
-- 5x perbaiki teks per bulan.
+- 1x perbaiki teks per bulan.
 - 10x guided mode per bulan.
 - 5x AI chat per bulan.
 - 1x download CV.
