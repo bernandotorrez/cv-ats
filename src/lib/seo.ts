@@ -72,4 +72,16 @@ export function buildSeo({
   return { meta, links, scripts };
 }
 
+// For section hub routes that have detail child routes (e.g. `/blog` + `/blog/$slug`).
+// TanStack Router merges parent + child `head` output, so if the parent emits a
+// canonical/hreflang/og:url it gets concatenated with the child's — producing two
+// conflicting <link rel="canonical"> tags in the final HTML. Google then distrusts
+// the page and shows it as "Crawled - currently not indexed".
+// This helper suppresses the parent head entirely when a child (detail) page is active.
+export function buildSectionHead(seo: SeoInput, currentPath: string) {
+  const isHub = currentPath === seo.path || currentPath === `${seo.path}/`;
+  if (!isHub) return { meta: [], links: [], scripts: [] };
+  return buildSeo(seo);
+}
+
 export { SITE_URL };

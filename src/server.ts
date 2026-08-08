@@ -68,8 +68,10 @@ async function normalizeCatastrophicSsrResponse(response: Response): Promise<Res
 }
 
 const FILE_EXTENSION_REWRITES: Record<string, string> = {
+  // NOTE: robots.txt is intentionally NOT here — the static public/robots.txt
+  // is served directly by the platform (Vercel static assets take precedence
+  // over the serverless function), so a dynamic route would be dead code.
   "/sitemap.xml": "/sitemap/xml",
-  "/robots.txt": "/robots/txt",
 };
 
 export default {

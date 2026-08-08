@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { buildSeo } from "@/lib/seo";
+import { buildSectionHead } from "@/lib/seo";
 import { PageHero } from "@/components/site/PageHero";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -46,14 +46,17 @@ const posts = [
 
 export const Route = createFileRoute("/blog")({
   pendingComponent: BlogLoading,
-  head: () =>
-    buildSeo({
-      title: "Blog — CV Pintar",
-      description:
-        "Artikel terbaru tentang karier, lamaran kerja, dan pengembangan profesional di Indonesia.",
-      path: "/blog",
-      keywords: "blog karier indonesia, tips cv, panduan lamaran kerja",
-    }),
+  head: ({ matches }) =>
+    buildSectionHead(
+      {
+        title: "Blog — CV Pintar",
+        description:
+          "Artikel terbaru tentang karier, lamaran kerja, dan pengembangan profesional di Indonesia.",
+        path: "/blog",
+        keywords: "blog karier indonesia, tips cv, panduan lamaran kerja",
+      },
+      matches[matches.length - 1].pathname,
+    ),
   component: BlogHubPage,
 });
 

@@ -1,9 +1,21 @@
 User-agent: *
 Allow: /
+Disallow: /api/
 Disallow: /dashboard
 Disallow: /cv
 Disallow: /akun
-Disallow: /_authenticated/
 Disallow: /admin/
+Disallow: /analitik
+Disallow: /compare
+Disallow: /cv-review
+Disallow: /job-match
+Disallow: /lamaran
+Disallow: /portfolio/
+Disallow: /referral
+Disallow: /score
+Disallow: /share/
+Disallow: /simulasi-wawancara
+Disallow: /tools
+Disallow: /tryout/
 
 Sitemap: https://cvpintar.web.id/sitemap.xml

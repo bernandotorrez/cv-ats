@@ -30,7 +30,7 @@ import { ArticleCardSkeleton } from "@/components/ui/skeleton-loading";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { buildSeo } from "@/lib/seo";
+import { buildSectionHead } from "@/lib/seo";
 
 type IconName =
   | "GraduationCap"
@@ -121,15 +121,18 @@ const perPage = 6;
 
 export const Route = createFileRoute("/tips-interview")({
   pendingComponent: TipsLoading,
-  head: () =>
-    buildSeo({
-      title: "Tips Interview Kerja - CV Pintar",
-      description:
-        "Kumpulan tips interview kerja: HR, technical, behavioral, negosiasi gaji, dan strategi untuk fresh graduate sampai senior.",
-      path: "/tips-interview",
-      keywords:
-        "tips interview kerja, persiapan interview, pertanyaan hr, interview technical, negosiasi gaji",
-    }),
+  head: ({ matches }) =>
+    buildSectionHead(
+      {
+        title: "Tips Interview Kerja - CV Pintar",
+        description:
+          "Kumpulan tips interview kerja: HR, technical, behavioral, negosiasi gaji, dan strategi untuk fresh graduate sampai senior.",
+        path: "/tips-interview",
+        keywords:
+          "tips interview kerja, persiapan interview, pertanyaan hr, interview technical, negosiasi gaji",
+      },
+      matches[matches.length - 1].pathname,
+    ),
   component: TipsHubPage,
 });
 

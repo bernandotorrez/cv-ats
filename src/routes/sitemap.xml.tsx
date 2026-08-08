@@ -2,26 +2,29 @@ import { createFileRoute } from "@tanstack/react-router";
 
 const SITE_URL = "https://cvpintar.web.id";
 
+// Fresh lastmod so Google re-crawls after each deploy; computed at request time.
+const lastmodNow = () => new Date().toISOString().slice(0, 10);
+
 const staticPaths: {
   path: string;
   priority: string;
   changefreq: "weekly" | "monthly" | "yearly";
-  lastmod: string;
 }[] = [
-  { path: "/", priority: "1.0", changefreq: "weekly", lastmod: "2026-05-10" },
-  { path: "/fitur", priority: "0.8", changefreq: "monthly", lastmod: "2026-05-01" },
-  { path: "/template", priority: "0.9", changefreq: "weekly", lastmod: "2026-05-08" },
-  { path: "/harga", priority: "0.8", changefreq: "monthly", lastmod: "2026-05-01" },
-  { path: "/panduan-cv-ats", priority: "0.7", changefreq: "monthly", lastmod: "2026-05-05" },
-  { path: "/tips-interview", priority: "0.7", changefreq: "weekly", lastmod: "2026-05-10" },
-  { path: "/blog", priority: "0.7", changefreq: "weekly", lastmod: "2026-05-10" },
-  { path: "/lowongan", priority: "0.8", changefreq: "weekly", lastmod: "2026-05-12" },
-  { path: "/tentang", priority: "0.5", changefreq: "monthly", lastmod: "2026-04-15" },
-  { path: "/changelog", priority: "0.4", changefreq: "monthly", lastmod: "2026-06-01" },
-  { path: "/kontak", priority: "0.4", changefreq: "monthly", lastmod: "2026-04-15" },
-  { path: "/kebijakan-privasi", priority: "0.4", changefreq: "yearly", lastmod: "2026-04-01" },
-  { path: "/syarat-ketentuan", priority: "0.4", changefreq: "yearly", lastmod: "2026-04-01" },
-  { path: "/tryout-cpns", priority: "1.0", changefreq: "weekly", lastmod: "2026-08-04" },
+  { path: "/", priority: "1.0", changefreq: "weekly" },
+  { path: "/fitur", priority: "0.8", changefreq: "monthly" },
+  { path: "/template", priority: "0.9", changefreq: "weekly" },
+  { path: "/harga", priority: "0.8", changefreq: "monthly" },
+  { path: "/panduan-cv-ats", priority: "0.7", changefreq: "monthly" },
+  { path: "/tips-interview", priority: "0.7", changefreq: "weekly" },
+  { path: "/blog", priority: "0.7", changefreq: "weekly" },
+  { path: "/lowongan", priority: "0.8", changefreq: "weekly" },
+  { path: "/tentang", priority: "0.5", changefreq: "monthly" },
+  { path: "/changelog", priority: "0.4", changefreq: "monthly" },
+  { path: "/kontak", priority: "0.4", changefreq: "monthly" },
+  { path: "/private-coaching", priority: "0.5", changefreq: "monthly" },
+  { path: "/kebijakan-privasi", priority: "0.4", changefreq: "yearly" },
+  { path: "/syarat-ketentuan", priority: "0.4", changefreq: "yearly" },
+  { path: "/tryout-cpns", priority: "1.0", changefreq: "weekly" },
 ];
 
 // Mirror of content from tips-interview.$slug.tsx
@@ -47,6 +50,7 @@ export const Route = createFileRoute("/sitemap/xml")({
     handlers: {
       GET: async () => {
         const urls: { loc: string; priority: string; changefreq: string; lastmod: string }[] = [];
+        const lastmod = lastmodNow();
 
         // Static pages
         for (const s of staticPaths) {
@@ -54,7 +58,7 @@ export const Route = createFileRoute("/sitemap/xml")({
             loc: `${SITE_URL}${s.path}`,
             priority: s.priority,
             changefreq: s.changefreq,
-            lastmod: s.lastmod,
+            lastmod,
           });
         }
 

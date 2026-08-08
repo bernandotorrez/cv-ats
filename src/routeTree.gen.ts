@@ -34,7 +34,6 @@ import { Route as TipsInterviewSlugRouteImport } from './routes/tips-interview.$
 import { Route as SitemapXmlRouteImport } from './routes/sitemap.xml'
 import { Route as ShareTokenRouteImport } from './routes/share.$token'
 import { Route as SecurityTxtRouteImport } from './routes/security.txt'
-import { Route as RobotsTxtRouteImport } from './routes/robots.txt'
 import { Route as PortfolioTokenRouteImport } from './routes/portfolio.$token'
 import { Route as ManifestWebmanifestRouteImport } from './routes/manifest.webmanifest'
 import { Route as LowonganSlugRouteImport } from './routes/lowongan.$slug'
@@ -196,11 +195,6 @@ const ShareTokenRoute = ShareTokenRouteImport.update({
 const SecurityTxtRoute = SecurityTxtRouteImport.update({
   id: '/security/txt',
   path: '/security/txt',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RobotsTxtRoute = RobotsTxtRouteImport.update({
-  id: '/robots/txt',
-  path: '/robots/txt',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PortfolioTokenRoute = PortfolioTokenRouteImport.update({
@@ -445,7 +439,6 @@ export interface FileRoutesByFullPath {
   '/lowongan/$slug': typeof LowonganSlugRoute
   '/manifest/webmanifest': typeof ManifestWebmanifestRoute
   '/portfolio/$token': typeof PortfolioTokenRoute
-  '/robots/txt': typeof RobotsTxtRoute
   '/security/txt': typeof SecurityTxtRoute
   '/share/$token': typeof ShareTokenRoute
   '/sitemap/xml': typeof SitemapXmlRoute
@@ -509,7 +502,6 @@ export interface FileRoutesByTo {
   '/lowongan/$slug': typeof LowonganSlugRoute
   '/manifest/webmanifest': typeof ManifestWebmanifestRoute
   '/portfolio/$token': typeof PortfolioTokenRoute
-  '/robots/txt': typeof RobotsTxtRoute
   '/security/txt': typeof SecurityTxtRoute
   '/share/$token': typeof ShareTokenRoute
   '/sitemap/xml': typeof SitemapXmlRoute
@@ -576,7 +568,6 @@ export interface FileRoutesById {
   '/lowongan/$slug': typeof LowonganSlugRoute
   '/manifest/webmanifest': typeof ManifestWebmanifestRoute
   '/portfolio/$token': typeof PortfolioTokenRoute
-  '/robots/txt': typeof RobotsTxtRoute
   '/security/txt': typeof SecurityTxtRoute
   '/share/$token': typeof ShareTokenRoute
   '/sitemap/xml': typeof SitemapXmlRoute
@@ -643,7 +634,6 @@ export interface FileRouteTypes {
     | '/lowongan/$slug'
     | '/manifest/webmanifest'
     | '/portfolio/$token'
-    | '/robots/txt'
     | '/security/txt'
     | '/share/$token'
     | '/sitemap/xml'
@@ -707,7 +697,6 @@ export interface FileRouteTypes {
     | '/lowongan/$slug'
     | '/manifest/webmanifest'
     | '/portfolio/$token'
-    | '/robots/txt'
     | '/security/txt'
     | '/share/$token'
     | '/sitemap/xml'
@@ -773,7 +762,6 @@ export interface FileRouteTypes {
     | '/lowongan/$slug'
     | '/manifest/webmanifest'
     | '/portfolio/$token'
-    | '/robots/txt'
     | '/security/txt'
     | '/share/$token'
     | '/sitemap/xml'
@@ -828,7 +816,6 @@ export interface RootRouteChildren {
   AuthCallbackRoute: typeof AuthCallbackRoute
   ManifestWebmanifestRoute: typeof ManifestWebmanifestRoute
   PortfolioTokenRoute: typeof PortfolioTokenRoute
-  RobotsTxtRoute: typeof RobotsTxtRoute
   SecurityTxtRoute: typeof SecurityTxtRoute
   ShareTokenRoute: typeof ShareTokenRoute
   SitemapXmlRoute: typeof SitemapXmlRoute
@@ -1009,13 +996,6 @@ declare module '@tanstack/react-router' {
       path: '/security/txt'
       fullPath: '/security/txt'
       preLoaderRoute: typeof SecurityTxtRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/robots/txt': {
-      id: '/robots/txt'
-      path: '/robots/txt'
-      fullPath: '/robots/txt'
-      preLoaderRoute: typeof RobotsTxtRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/portfolio/$token': {
@@ -1466,7 +1446,6 @@ const rootRouteChildren: RootRouteChildren = {
   AuthCallbackRoute: AuthCallbackRoute,
   ManifestWebmanifestRoute: ManifestWebmanifestRoute,
   PortfolioTokenRoute: PortfolioTokenRoute,
-  RobotsTxtRoute: RobotsTxtRoute,
   SecurityTxtRoute: SecurityTxtRoute,
   ShareTokenRoute: ShareTokenRoute,
   SitemapXmlRoute: SitemapXmlRoute,

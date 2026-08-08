@@ -1,7 +1,7 @@
 import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { buildSeo } from "@/lib/seo";
+import { buildSectionHead } from "@/lib/seo";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -59,14 +59,17 @@ import {
 } from "lucide-react";
 
 export const Route = createFileRoute("/lowongan")({
-  head: () =>
-    buildSeo({
-      title: "Lowongan Pekerjaan - CV Pintar",
-      description:
-        "Temukan lowongan kerja terbaru, filter peluang yang relevan, dan siapkan CV ATS sebelum melamar.",
-      path: "/lowongan",
-      keywords: "lowongan kerja, loker, job indonesia, cari kerja, lowongan terbaru",
-    }),
+  head: ({ matches }) =>
+    buildSectionHead(
+      {
+        title: "Lowongan Pekerjaan - CV Pintar",
+        description:
+          "Temukan lowongan kerja terbaru, filter peluang yang relevan, dan siapkan CV ATS sebelum melamar.",
+        path: "/lowongan",
+        keywords: "lowongan kerja, loker, job indonesia, cari kerja, lowongan terbaru",
+      },
+      matches[matches.length - 1].pathname,
+    ),
   component: LowonganRoute,
 });
 
