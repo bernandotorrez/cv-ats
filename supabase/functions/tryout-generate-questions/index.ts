@@ -9,6 +9,13 @@
  * - count: number (1-45, default 10)
  * - category: string (opsional, misal "Pancasila", "Numerik", "Pelayanan Publik")
  * - difficulty: 'easy' | 'medium' | 'hard' (default 'medium')
+ *
+ * Catatan:
+ * - Penomoran soal GLOBAL per set (bukan per subtes) agar TIU/TKP tidak bentrok,
+ *   mengikuti konvensi set: TWK 1..30, TIU 31..65, TKP 66..110.
+ * - Prompt AI diberi daftar soal yang sudah ada (set ini + set lain) supaya
+ *   setiap set punya soal yang berbeda.
+ * - Setelah insert, total_questions pada exam set disinkronkan ke jumlah aktual.
  */
 
 import { corsHeaders } from "../_shared/cors.ts";
@@ -73,17 +80,38 @@ Deno.serve(async (req: Request) => {
       return json(req, { error: "Exam set tidak ditemukan." }, 404);
     }
 
-    // Cek nomor soal terakhir yang sudah ada
+    // Cek nomor soal terakhir yang sudah ada (GLOBAL per set, supaya antar subtes tidak bentrok)
     const { data: lastQ } = await admin
       .from("tryout_questions")
       .select("question_number")
       .eq("exam_set_id", examSetId)
-      .eq("subtest", subtest)
       .order("question_number", { ascending: false })
       .limit(1)
       .maybeSingle();
 
     const startNumber = lastQ ? lastQ.question_number + 1 : 1;
+
+    // Kumpulkan soal yang sudah ada (set ini + set lain) agar AI tidak mengulang pertanyaan
+    const [sameSetRes, otherSetsRes] = await Promise.all([
+      admin
+        .from("tryout_questions")
+        .select("question_text")
+        .eq("exam_set_id", examSetId)
+        .limit(60),
+      admin
+        .from("tryout_questions")
+        .select("question_text")
+        .neq("exam_set_id", examSetId)
+        .limit(120),
+    ]);
+
+    const dontRepeat = [
+      ...(sameSetRes.data || []),
+      ...(otherSetsRes.data || []),
+    ]
+      .map((q: any) => String(q.question_text || "").replace(/<[^>]+>/g, " ").trim())
+      .filter(Boolean)
+      .slice(0, 150);
 
     // Generate soal via AI
     const aiKey = Deno.env.get("AI_API_KEY");
@@ -91,7 +119,7 @@ Deno.serve(async (req: Request) => {
       return json(req, { error: "AI_API_KEY tidak dikonfigurasi." }, 500);
     }
 
-    const prompt = buildPrompt(subtest, count, category, difficulty, startNumber);
+    const prompt = buildPrompt(subtest, count, category, difficulty, startNumber, dontRepeat);
 
     const res = await fetch(AI_GATEWAY_URL, {
       method: "POST",
@@ -102,7 +130,7 @@ Deno.serve(async (req: Request) => {
       body: JSON.stringify({
         model: AI_MODEL,
         temperature: 0.7,
-        max_tokens: 4096,
+        max_tokens: 8192,
         response_format: { type: "json_object" },
         messages: [
           {
@@ -153,6 +181,18 @@ Deno.serve(async (req: Request) => {
       return json(req, { error: `Gagal menyimpan soal: ${insertErr.message}` }, 500);
     }
 
+    // Sinkronkan total_questions pada exam set dengan jumlah aktual
+    const { count: actualCount } = await admin
+      .from("tryout_questions")
+      .select("id", { count: "exact", head: true })
+      .eq("exam_set_id", examSetId);
+    if (typeof actualCount === "number") {
+      await admin
+        .from("tryout_exam_sets")
+        .update({ total_questions: actualCount })
+        .eq("id", examSetId);
+    }
+
     return json(req, {
       success: true,
       generated: inserted?.length || 0,
@@ -180,6 +220,7 @@ function buildPrompt(
   category: string,
   difficulty: string,
   startNumber: number,
+  dontRepeat: string[] = [],
 ): string {
   const categoryHint = category ? `kategori "${category}"` : `berbagai kategori relevan`;
   const difficultyDesc =
@@ -188,6 +229,16 @@ function buildPrompt(
       : difficulty === "hard"
         ? "sulit (butuh pemahaman mendalam)"
         : "sedang (standar ujian SKD asli)";
+
+  // Instruksi anti-duplikat: hindari soal yang sudah ada di set lain / set ini
+  const avoidLines =
+    dontRepeat.length > 0
+      ? [
+          "",
+          "JANGAN membuat soal yang sama atau sangat mirip dengan soal-soal yang sudah ada berikut ini:",
+          ...dontRepeat.map((t) => `- ${t.slice(0, 120)}`),
+        ].join("\n")
+      : "";
 
   if (subtest === "tkp") {
     return [
@@ -203,11 +254,12 @@ function buildPrompt(
       "- category: sub-kategori soal",
       "",
       "ATURAN PENTING:",
-      "- Jangan buat soal yang sama atau sangat mirip.",
+      "- Jangan buat soal yang sama atau sangat mirip (periksa daftar soal yang sudah ada di bawah).",
       "- Setiap soal harus punya 1 jawaban terbaik (skor 5) dan 1 terburuk (skor 1).",
       "- Pilihan harus realistis dan relevan dengan konteks ASN Indonesia.",
       "",
       `Nomor soal mulai dari ${startNumber}.`,
+      avoidLines,
       "",
       'Output JSON: {"questions": [{question_number, question_text, options:[{key,text}], scores:{A:5,B:4,...}, explanation, category}]}',
     ].join("\n");
@@ -230,8 +282,10 @@ function buildPrompt(
       "- Soal harus faktual dan jawaban benar harus akurat.",
       "- Jangan buat soal yang ambigu atau bisa diperdebatkan.",
       "- Pilihan salah harus plausible tapi jelas salah.",
+      "- Jangan buat soal yang sama atau mirip dengan soal yang sudah ada (lihat daftar di bawah).",
       "",
       `Nomor soal mulai dari ${startNumber}.`,
+      avoidLines,
       "",
       'Output JSON: {"questions": [{question_number, question_text, options:[{key,text}], correct_answer, explanation, category}]}',
     ].join("\n");
@@ -255,8 +309,10 @@ function buildPrompt(
     "- Untuk soal verbal, pastikan sinonim/antonim/analogi akurat.",
     "- Untuk soal figural, deskripsikan pola dengan jelas (karena tidak ada gambar).",
     "- Pilihan salah harus plausible.",
+    "- Jangan buat soal yang sama atau mirip dengan soal yang sudah ada (lihat daftar di bawah).",
     "",
     `Nomor soal mulai dari ${startNumber}.`,
+    avoidLines,
     "",
     'Output JSON: {"questions": [{question_number, question_text, options:[{key,text}], correct_answer, explanation, category}]}',
   ].join("\n");
