@@ -55,7 +55,7 @@ Deno.serve(async (req: Request) => {
           Authorization: `Bearer ${AI_API_KEY}`,
         },
         body: JSON.stringify({
-          model: "gemini/gemini-2.5-flash",
+          model: "gemini/gemini-3.1-flash-lite",
           messages: [
             {
               role: "user",
