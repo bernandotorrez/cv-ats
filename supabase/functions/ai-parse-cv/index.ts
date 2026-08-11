@@ -156,7 +156,8 @@ PENTING:
           content: `CV TEXT:\n\n${cvText}\n\nParse CV ini menjadi JSON terstruktur sesuai format yang dijelaskan.`,
         },
       ],
-      { temperature: 0.2, maxTokens: 4000, jsonMode: true },
+      // Upload CV otomatis: tetap pakai Gemini (OCR multimodal butuh model ini)
+      { model: "gemini/gemini-3.1-flash-lite", temperature: 0.2, maxTokens: 4000, jsonMode: true },
       lang,
     );
 

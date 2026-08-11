@@ -1,7 +1,7 @@
 /**
  * tryout-generate-questions — Generate soal tryout SKD menggunakan AI.
  *
- * Admin only. Menggunakan AI gateway yang sama dengan fitur lain (sumopod + gemini).
+ * Admin only. Menggunakan AI gateway yang sama dengan fitur lain (sumopod + qwen).
  *
  * Body:
  * - exam_set_id: UUID (wajib)
@@ -22,7 +22,7 @@ import { corsHeaders } from "../_shared/cors.ts";
 import { getAdminClient, getUserId } from "../_shared/ai-common.ts";
 
 const AI_GATEWAY_URL = "https://ai.sumopod.com/v1/chat/completions";
-const AI_MODEL = "gemini/gemini-3.1-flash-lite";
+const AI_MODEL = "qwen3.7-flash-2026-07-15";
 
 type GenerateBody = {
   exam_set_id?: string;
