@@ -215,7 +215,7 @@ BEGIN
       AND page_path NOT LIKE '/admin%'
     GROUP BY page_path, page_title
     ORDER BY hits DESC
-    LIMIT 10
+    LIMIT 50
   ) page_row;
 
   -- 7. Recent Live Visitor Feed (initial 20 events, excluding admin)

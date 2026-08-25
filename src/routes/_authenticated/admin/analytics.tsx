@@ -224,10 +224,19 @@ function generateSeedAnalytics(days: number): AnalyticsData {
 
   const topPages: TopPageItem[] = [
     { path: "/", title: "Beranda (Landing Page)", hits: 43, percentage: 84 },
-    { path: "/template", title: "Katalog Template CV ATS", hits: 6, percentage: 12 },
-    { path: "/harga", title: "Daftar Harga & Paket Pro", hits: 4, percentage: 8 },
-    { path: "/tryout-cpns", title: "Tryout CPNS & BUMN", hits: 3, percentage: 6 },
-    { path: "/kontak", title: "Kontak & Bantuan WhatsApp", hits: 2, percentage: 4 },
+    { path: "/template", title: "Katalog Template CV ATS", hits: 18, percentage: 35 },
+    { path: "/harga", title: "Daftar Harga & Paket Pro", hits: 14, percentage: 27 },
+    { path: "/tryout-cpns", title: "Tryout CPNS & BUMN", hits: 12, percentage: 24 },
+    { path: "/fitur", title: "Fitur Unggulan CV ATS", hits: 9, percentage: 18 },
+    { path: "/kontak", title: "Kontak & Bantuan WhatsApp", hits: 7, percentage: 14 },
+    { path: "/panduan-cv-ats", title: "Panduan CV ATS Friendly", hits: 6, percentage: 12 },
+    { path: "/tips-interview", title: "Tips Wawancara Kerja", hits: 5, percentage: 10 },
+    { path: "/faq", title: "Pertanyaan Umum (FAQ)", hits: 4, percentage: 8 },
+    { path: "/blog/tips-cv-lulus-ats", title: "Blog: 7 Tips CV Lolos Screening ATS", hits: 4, percentage: 8 },
+    { path: "/blog/perbedaan-cv-kreatif-dan-ats", title: "Blog: Perbedaan CV Kreatif vs ATS", hits: 3, percentage: 6 },
+    { path: "/tentang-kami", title: "Tentang CV Pintar", hits: 2, percentage: 4 },
+    { path: "/kebijakan-privasi", title: "Kebijakan Privasi", hits: 2, percentage: 4 },
+    { path: "/syarat-ketentuan", title: "Syarat & Ketentuan Layanan", hits: 1, percentage: 2 },
   ];
 
   // Initial 20 recent events for page 1
@@ -273,12 +282,16 @@ function formatTimeAgo(dateString: string): string {
 }
 
 const FEED_PAGE_SIZE = 20;
+const TOP_PAGES_PAGE_SIZE = 5;
 
 function AdminAnalyticsPage() {
   const [timeRange, setTimeRange] = useState<TimeRange>("7d");
   const [chartTab, setChartTab] = useState<ChartTab>("traffic");
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<AnalyticsData>(() => generateSeedAnalytics(7));
+
+  // Top pages pagination state (5 items per batch)
+  const [topPagesLimit, setTopPagesLimit] = useState(TOP_PAGES_PAGE_SIZE);
 
   // Live feed pagination states (20 items per page)
   const [feedEvents, setFeedEvents] = useState<RecentEventItem[]>(() =>
@@ -518,6 +531,11 @@ function AdminAnalyticsPage() {
     } finally {
       setLoadingMoreFeed(false);
     }
+  };
+
+  // Load more top pages (pagination: 5 items per click)
+  const handleLoadMoreTopPages = () => {
+    setTopPagesLimit((prev) => prev + TOP_PAGES_PAGE_SIZE);
   };
 
   // Export to CSV Functionality
@@ -1095,7 +1113,7 @@ function AdminAnalyticsPage() {
 
       {/* ─── Grid Row 2: Halaman Terpopuler & Aktivitas Terkini (Live Feed) ── */}
       <div className="grid gap-4 lg:grid-cols-2">
-        {/* Card 1: Halaman Paling Sering Dikunjungi */}
+        {/* Card 1: Halaman Paling Sering Dikunjungi (with Pagination) */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2 sm:pb-3">
             <div>
@@ -1103,39 +1121,68 @@ function AdminAnalyticsPage() {
                 Halaman Paling Sering Dikunjungi
               </CardTitle>
             </div>
-            <span className="text-[10px] font-medium text-muted-foreground sm:text-[11px]">
-              Top Pages by Hits
-            </span>
+            <Badge variant="outline" className="gap-1.5 border-emerald-500/30 text-[10px] text-emerald-700 dark:text-emerald-400 sm:text-xs">
+              <FileText className="h-3 w-3" />
+              Top Pages ({Math.min(topPagesLimit, data.top_pages.length)}/{data.top_pages.length})
+            </Badge>
           </CardHeader>
-          <CardContent className="space-y-2.5 pt-1 sm:space-y-3">
-            {data.top_pages.map((page, index) => (
-              <div
-                key={page.path}
-                className="rounded-xl border p-3 transition-colors hover:bg-muted/30 sm:p-3.5"
-              >
-                <div className="flex items-start justify-between gap-2.5">
-                  <div className="flex items-start gap-2.5 min-w-0">
-                    <div className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-emerald-700 text-white text-[11px] font-bold font-display sm:h-7 sm:w-7 sm:text-xs">
-                      {index + 1}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="font-semibold text-xs sm:text-sm truncate">{page.title}</p>
-                      <p className="text-[11px] text-muted-foreground font-mono truncate">{page.path}</p>
-                    </div>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <p className="font-display text-xs font-bold sm:text-sm">{page.hits}</p>
-                    <p className="text-[10px] text-muted-foreground sm:text-[11px]">{page.percentage}%</p>
-                  </div>
-                </div>
-                <div className="mt-2.5 sm:mt-3">
-                  <Progress
-                    value={page.percentage}
-                    className="h-1.5 bg-muted [&>div]:bg-emerald-700 dark:[&>div]:bg-emerald-500"
-                  />
-                </div>
+          <CardContent className="space-y-2.5 pt-1 max-h-[520px] overflow-y-auto pr-1">
+            {data.top_pages.length === 0 ? (
+              <div className="py-12 text-center text-xs text-muted-foreground">
+                Belum ada data kunjungan halaman tercatat.
               </div>
-            ))}
+            ) : (
+              <>
+                {data.top_pages.slice(0, topPagesLimit).map((page, index) => (
+                  <div
+                    key={page.path}
+                    className="rounded-xl border p-3 transition-colors hover:bg-muted/30 sm:p-3.5"
+                  >
+                    <div className="flex items-start justify-between gap-2.5">
+                      <div className="flex items-start gap-2.5 min-w-0">
+                        <div className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-emerald-700 text-white text-[11px] font-bold font-display sm:h-7 sm:w-7 sm:text-xs">
+                          {index + 1}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-semibold text-xs sm:text-sm truncate">{page.title}</p>
+                          <p className="text-[11px] text-muted-foreground font-mono truncate">{page.path}</p>
+                        </div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className="font-display text-xs font-bold sm:text-sm">{page.hits} hits</p>
+                        <p className="text-[10px] text-muted-foreground sm:text-[11px]">{page.percentage}%</p>
+                      </div>
+                    </div>
+                    <div className="mt-2.5 sm:mt-3">
+                      <Progress
+                        value={page.percentage}
+                        className="h-1.5 bg-muted [&>div]:bg-emerald-700 dark:[&>div]:bg-emerald-500"
+                      />
+                    </div>
+                  </div>
+                ))}
+
+                {/* Pagination Controls / Load More Button */}
+                <div className="pt-2">
+                  {topPagesLimit < data.top_pages.length ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleLoadMoreTopPages}
+                      className="w-full gap-1.5 border-dashed text-xs font-medium hover:bg-emerald-500/10 hover:text-emerald-700 dark:hover:text-emerald-400"
+                    >
+                      <ChevronDown className="h-3.5 w-3.5" />
+                      Muat Lebih Banyak ({TOP_PAGES_PAGE_SIZE} data)
+                    </Button>
+                  ) : (
+                    <p className="py-2 text-center text-[11px] text-muted-foreground flex items-center justify-center gap-1.5">
+                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                      <span>Semua halaman terpopuler telah dimuat ({data.top_pages.length} data)</span>
+                    </p>
+                  )}
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
 
