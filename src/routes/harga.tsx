@@ -653,6 +653,7 @@ function PricingCard({ tier }: { tier: (typeof tiers)[number] }) {
             asChild
             size="lg"
             variant={tier.ctaVariant}
+            data-analytics-event="click_pricing_free"
             className={`mt-6 h-12 w-full text-base ${featured ? "shadow-sm" : ""}`}
           >
             <Link to="/register">
@@ -666,6 +667,7 @@ function PricingCard({ tier }: { tier: (typeof tiers)[number] }) {
               asChild
               size="lg"
               variant={tier.ctaVariant}
+              data-analytics-event={`click_pricing_${tier.name.toLowerCase()}`}
               className={`mt-6 h-12 w-full text-base ${featured ? "shadow-sm" : ""}`}
             >
               <a href={getUpgradeUrl(tier.name)} target="_blank" rel="noreferrer">

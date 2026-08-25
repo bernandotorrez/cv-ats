@@ -67,6 +67,7 @@ import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAdminTryoutRouteImport } from './routes/_authenticated/admin/tryout'
 import { Route as AuthenticatedAdminTemplatesRouteImport } from './routes/_authenticated/admin/templates'
 import { Route as AuthenticatedAdminJobsRouteImport } from './routes/_authenticated/admin/jobs'
+import { Route as AuthenticatedAdminAnalyticsRouteImport } from './routes/_authenticated/admin/analytics'
 import { Route as AuthenticatedTryoutExamIdUjianRouteImport } from './routes/_authenticated/tryout.$examId.ujian'
 import { Route as AuthenticatedToolsTailorCvIdRouteImport } from './routes/_authenticated/tools.tailor.$cvId'
 import { Route as AuthenticatedToolsKeywordCvIdRouteImport } from './routes/_authenticated/tools.keyword.$cvId'
@@ -370,6 +371,12 @@ const AuthenticatedAdminJobsRoute = AuthenticatedAdminJobsRouteImport.update({
   path: '/jobs',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const AuthenticatedAdminAnalyticsRoute =
+  AuthenticatedAdminAnalyticsRouteImport.update({
+    id: '/analytics',
+    path: '/analytics',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedTryoutExamIdUjianRoute =
   AuthenticatedTryoutExamIdUjianRouteImport.update({
     id: '/ujian',
@@ -443,6 +450,7 @@ export interface FileRoutesByFullPath {
   '/share/$token': typeof ShareTokenRoute
   '/sitemap/xml': typeof SitemapXmlRoute
   '/tips-interview/$slug': typeof TipsInterviewSlugRoute
+  '/admin/analytics': typeof AuthenticatedAdminAnalyticsRoute
   '/admin/jobs': typeof AuthenticatedAdminJobsRoute
   '/admin/templates': typeof AuthenticatedAdminTemplatesRoute
   '/admin/tryout': typeof AuthenticatedAdminTryoutRoute
@@ -506,6 +514,7 @@ export interface FileRoutesByTo {
   '/share/$token': typeof ShareTokenRoute
   '/sitemap/xml': typeof SitemapXmlRoute
   '/tips-interview/$slug': typeof TipsInterviewSlugRoute
+  '/admin/analytics': typeof AuthenticatedAdminAnalyticsRoute
   '/admin/jobs': typeof AuthenticatedAdminJobsRoute
   '/admin/templates': typeof AuthenticatedAdminTemplatesRoute
   '/admin/tryout': typeof AuthenticatedAdminTryoutRoute
@@ -572,6 +581,7 @@ export interface FileRoutesById {
   '/share/$token': typeof ShareTokenRoute
   '/sitemap/xml': typeof SitemapXmlRoute
   '/tips-interview/$slug': typeof TipsInterviewSlugRoute
+  '/_authenticated/admin/analytics': typeof AuthenticatedAdminAnalyticsRoute
   '/_authenticated/admin/jobs': typeof AuthenticatedAdminJobsRoute
   '/_authenticated/admin/templates': typeof AuthenticatedAdminTemplatesRoute
   '/_authenticated/admin/tryout': typeof AuthenticatedAdminTryoutRoute
@@ -638,6 +648,7 @@ export interface FileRouteTypes {
     | '/share/$token'
     | '/sitemap/xml'
     | '/tips-interview/$slug'
+    | '/admin/analytics'
     | '/admin/jobs'
     | '/admin/templates'
     | '/admin/tryout'
@@ -701,6 +712,7 @@ export interface FileRouteTypes {
     | '/share/$token'
     | '/sitemap/xml'
     | '/tips-interview/$slug'
+    | '/admin/analytics'
     | '/admin/jobs'
     | '/admin/templates'
     | '/admin/tryout'
@@ -766,6 +778,7 @@ export interface FileRouteTypes {
     | '/share/$token'
     | '/sitemap/xml'
     | '/tips-interview/$slug'
+    | '/_authenticated/admin/analytics'
     | '/_authenticated/admin/jobs'
     | '/_authenticated/admin/templates'
     | '/_authenticated/admin/tryout'
@@ -1229,6 +1242,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminJobsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/analytics': {
+      id: '/_authenticated/admin/analytics'
+      path: '/analytics'
+      fullPath: '/admin/analytics'
+      preLoaderRoute: typeof AuthenticatedAdminAnalyticsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/tryout/$examId/ujian': {
       id: '/_authenticated/tryout/$examId/ujian'
       path: '/ujian'
@@ -1268,6 +1288,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedAdminRouteChildren {
+  AuthenticatedAdminAnalyticsRoute: typeof AuthenticatedAdminAnalyticsRoute
   AuthenticatedAdminJobsRoute: typeof AuthenticatedAdminJobsRoute
   AuthenticatedAdminTemplatesRoute: typeof AuthenticatedAdminTemplatesRoute
   AuthenticatedAdminTryoutRoute: typeof AuthenticatedAdminTryoutRoute
@@ -1276,6 +1297,7 @@ interface AuthenticatedAdminRouteChildren {
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
+  AuthenticatedAdminAnalyticsRoute: AuthenticatedAdminAnalyticsRoute,
   AuthenticatedAdminJobsRoute: AuthenticatedAdminJobsRoute,
   AuthenticatedAdminTemplatesRoute: AuthenticatedAdminTemplatesRoute,
   AuthenticatedAdminTryoutRoute: AuthenticatedAdminTryoutRoute,

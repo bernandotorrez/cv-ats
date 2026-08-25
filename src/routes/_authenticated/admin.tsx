@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import {
   Shield,
   LayoutDashboard,
+  BarChart3,
   Users,
   Palette,
   ArrowLeft,
@@ -21,6 +22,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
 
 const NAV_ITEMS = [
   { to: "/admin" as const, icon: LayoutDashboard, label: "Dashboard" },
+  { to: "/admin/analytics" as const, icon: BarChart3, label: "Analitik Pengunjung" },
   { to: "/admin/users" as const, icon: Users, label: "Users" },
   { to: "/admin/templates" as const, icon: Palette, label: "Templates" },
   { to: "/admin/jobs" as const, icon: BriefcaseBusiness, label: "Lowongan" },

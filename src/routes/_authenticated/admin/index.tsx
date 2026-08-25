@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   Activity,
   ArrowRight,
+  BarChart3,
   BriefcaseBusiness,
   Crown,
   FileText,
@@ -207,6 +208,13 @@ function AdminDashboard() {
   ];
 
   const actions = [
+    {
+      to: "/admin/analytics" as const,
+      icon: BarChart3,
+      title: "Analitik Pengunjung",
+      text: "Pantau trafik, pengunjung unik, perangkat & konversi.",
+      cta: "Lihat analitik",
+    },
     {
       to: "/admin/users" as const,
       icon: Users,

@@ -95,10 +95,25 @@ export function BenixCsWidget({ disabled = false, hidden = false }: BenixCsWidge
     document.body.appendChild(script);
     retryInit();
 
+    const handleWidgetClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (target?.closest?.(BENIX_WIDGET_SELECTORS)) {
+        import("@/lib/analytics").then(({ trackEvent }) => {
+          trackEvent({
+            eventName: "click_whatsapp",
+            metadata: { source: "benix_cs_widget" },
+          });
+        });
+      }
+    };
+
+    document.addEventListener("click", handleWidgetClick, { passive: true });
+
     return () => {
       cancelled = true;
       retryTimeouts.forEach((timeoutId) => window.clearTimeout(timeoutId));
       script.onload = null;
+      document.removeEventListener("click", handleWidgetClick);
     };
   }, [disabled, hidden]);
 

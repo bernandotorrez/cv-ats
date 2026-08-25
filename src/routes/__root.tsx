@@ -234,6 +234,70 @@ function ScrollToTop() {
   return null;
 }
 
+import { trackPageView, trackEvent, trackSessionHeartbeat } from "@/lib/analytics";
+
+function VisitorAnalyticsTracker() {
+  const { location } = useRouterState();
+
+  useEffect(() => {
+    // Record page view on path change
+    trackPageView(location.pathname, document.title);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    // Track session duration milestones (15s, 45s, 90s, 180s, 300s)
+    const startTime = Date.now();
+    const intervals = [15, 45, 90, 180, 300];
+    const timers = intervals.map((sec) =>
+      window.setTimeout(() => {
+        const elapsed = Math.round((Date.now() - startTime) / 1000);
+        trackSessionHeartbeat(elapsed);
+      }, sec * 1000),
+    );
+
+    return () => {
+      timers.forEach((t) => clearTimeout(t));
+    };
+  }, [location.pathname]);
+
+  useEffect(() => {
+    const handleGlobalClick = (e: MouseEvent) => {
+      const target = (e.target as HTMLElement)?.closest?.(
+        "[data-analytics-event], a[href*='wa.me'], a[href*='whatsapp']",
+      );
+      if (!target) return;
+
+      const eventAttr = target.getAttribute("data-analytics-event");
+      const href = target.getAttribute("href") || "";
+
+      if (eventAttr) {
+        trackEvent({
+          eventName: eventAttr,
+          metadata: {
+            text: target.textContent?.trim().slice(0, 50),
+            id: target.id || undefined,
+          },
+        });
+      } else if (href.includes("wa.me") || href.includes("whatsapp")) {
+        trackEvent({
+          eventName: "click_whatsapp",
+          metadata: {
+            href: href.slice(0, 100),
+            text: target.textContent?.trim().slice(0, 50),
+          },
+        });
+      }
+    };
+
+    document.addEventListener("click", handleGlobalClick, { passive: true });
+    return () => {
+      document.removeEventListener("click", handleGlobalClick);
+    };
+  }, []);
+
+  return null;
+}
+
 function RootShell({ children }: { children: React.ReactNode }) {
   return (
     <html lang="id">
@@ -279,6 +343,7 @@ function RootComponent() {
       <AuthProvider>
         <CanonicalUpdater />
         <ScrollToTop />
+        <VisitorAnalyticsTracker />
         <a href="#main" className="skip-link">
           Lewati ke konten utama
         </a>

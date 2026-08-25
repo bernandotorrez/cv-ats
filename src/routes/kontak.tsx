@@ -146,6 +146,7 @@ function KontakPage() {
             <a
               key={channel.label}
               href={channel.href}
+              data-analytics-event={channel.label.toLowerCase().includes("whatsapp") ? "click_whatsapp" : "click_email"}
               target={channel.href.startsWith("http") ? "_blank" : undefined}
               rel={channel.href.startsWith("http") ? "noreferrer" : undefined}
               className="group rounded-xl border border-border bg-card p-5 transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:p-6"
