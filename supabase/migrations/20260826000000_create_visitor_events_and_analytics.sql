@@ -218,7 +218,7 @@ BEGIN
     LIMIT 10
   ) page_row;
 
-  -- 7. Recent Live Visitor Feed (latest 35 events, excluding admin)
+  -- 7. Recent Live Visitor Feed (initial 20 events, excluding admin)
   SELECT COALESCE(jsonb_agg(feed_row), '[]'::jsonb)
   INTO v_recent_events
   FROM (
@@ -237,7 +237,7 @@ BEGIN
     FROM public.visitor_events
     WHERE page_path NOT LIKE '/admin%'
     ORDER BY created_at DESC
-    LIMIT 35
+    LIMIT 20
   ) feed_row;
 
   -- Combine into comprehensive JSON response

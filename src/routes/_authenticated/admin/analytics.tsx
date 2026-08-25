@@ -40,6 +40,7 @@ import {
   Layers,
   MapPin,
   Laptop,
+  ChevronDown,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/analytics")({
@@ -120,6 +121,55 @@ interface AnalyticsData {
   recent_events: RecentEventItem[];
 }
 
+// Helper to generate additional batches of realistic seed activity
+function generateSeedEventsBatch(offset: number, count: number): RecentEventItem[] {
+  const events: RecentEventItem[] = [];
+  const now = Date.now();
+  const samplePages = [
+    { path: "/", title: "Beranda (Landing Page)" },
+    { path: "/template", title: "Katalog Template CV ATS" },
+    { path: "/harga", title: "Daftar Harga & Paket Pro" },
+    { path: "/tryout-cpns", title: "Tryout CPNS & BUMN" },
+    { path: "/fitur", title: "Fitur Unggulan CV ATS" },
+    { path: "/kontak", title: "Kontak & Bantuan WhatsApp" },
+    { path: "/panduan-cv-ats", title: "Panduan CV ATS Friendly" },
+    { path: "/tips-interview", title: "Tips Wawancara Kerja" },
+  ];
+  const sampleActions = ["page_view", "session_ping", "click_whatsapp", "cv_create_start", "ats_scan"];
+  const devices = [
+    { type: "Desktop", browser: "Chrome", os: "macOS" },
+    { type: "Desktop", browser: "Edge", os: "Windows" },
+    { type: "Mobile", browser: "Safari", os: "iOS" },
+    { type: "Mobile", browser: "Chrome", os: "Android" },
+    { type: "Tablet", browser: "Safari", os: "iOS" },
+  ];
+
+  for (let i = 0; i < count; i++) {
+    const index = offset + i;
+    const page = samplePages[index % samplePages.length];
+    const action = sampleActions[index % sampleActions.length];
+    const dev = devices[index % devices.length];
+    const minutesAgo = (index + 1) * 3 + Math.floor(Math.random() * 5);
+    const duration = action === "session_ping" ? 45 + ((index * 17) % 180) : 0;
+
+    events.push({
+      id: `seed-ev-${index + 1}`,
+      visitor_id: `vis-${(index % 12) + 1}`,
+      session_id: `ses-${(index % 12) + 1}`,
+      event_name: action,
+      page_path: page.path,
+      page_title: page.title,
+      device_type: dev.type,
+      browser: dev.browser,
+      os: dev.os,
+      duration_seconds: duration,
+      created_at: new Date(now - minutesAgo * 60 * 1000).toISOString(),
+    });
+  }
+
+  return events;
+}
+
 // Generate realistic initial dataset matching the reference layout
 function generateSeedAnalytics(days: number): AnalyticsData {
   const dailyStats: DailyStat[] = [];
@@ -180,138 +230,8 @@ function generateSeedAnalytics(days: number): AnalyticsData {
     { path: "/kontak", title: "Kontak & Bantuan WhatsApp", hits: 2, percentage: 4 },
   ];
 
-  const recentEvents: RecentEventItem[] = [
-    {
-      id: "ev-1",
-      visitor_id: "vis-1",
-      session_id: "ses-1",
-      event_name: "page_view",
-      page_path: "/",
-      page_title: "Beranda (Landing Page)",
-      device_type: "Desktop",
-      browser: "Chrome",
-      os: "macOS",
-      duration_seconds: 0,
-      created_at: new Date(Date.now() - 15 * 1000).toISOString(),
-    },
-    {
-      id: "ev-2",
-      visitor_id: "vis-2",
-      session_id: "ses-2",
-      event_name: "session_ping",
-      page_path: "/",
-      page_title: "Beranda (Landing Page)",
-      device_type: "Desktop",
-      browser: "Firefox",
-      os: "macOS",
-      duration_seconds: 92,
-      created_at: new Date(Date.now() - 34 * 1000).toISOString(),
-    },
-    {
-      id: "ev-3",
-      visitor_id: "vis-3",
-      session_id: "ses-3",
-      event_name: "page_view",
-      page_path: "/",
-      page_title: "Beranda (Landing Page)",
-      device_type: "Desktop",
-      browser: "Firefox",
-      os: "macOS",
-      duration_seconds: 0,
-      created_at: new Date(Date.now() - 60 * 1000).toISOString(),
-    },
-    {
-      id: "ev-4",
-      visitor_id: "vis-4",
-      session_id: "ses-4",
-      event_name: "session_ping",
-      page_path: "/template",
-      page_title: "Katalog Semua Tipe Template",
-      device_type: "Desktop",
-      browser: "Firefox",
-      os: "macOS",
-      duration_seconds: 76,
-      created_at: new Date(Date.now() - 75 * 1000).toISOString(),
-    },
-    {
-      id: "ev-5",
-      visitor_id: "vis-5",
-      session_id: "ses-5",
-      event_name: "page_view",
-      page_path: "/template",
-      page_title: "Katalog Semua Tipe Template",
-      device_type: "Desktop",
-      browser: "Firefox",
-      os: "macOS",
-      duration_seconds: 0,
-      created_at: new Date(Date.now() - 85 * 1000).toISOString(),
-    },
-    {
-      id: "ev-6",
-      visitor_id: "vis-6",
-      session_id: "ses-6",
-      event_name: "session_ping",
-      page_path: "/",
-      page_title: "Beranda (Landing Page)",
-      device_type: "Desktop",
-      browser: "Firefox",
-      os: "macOS",
-      duration_seconds: 147,
-      created_at: new Date(Date.now() - 95 * 1000).toISOString(),
-    },
-    {
-      id: "ev-7",
-      visitor_id: "vis-7",
-      session_id: "ses-7",
-      event_name: "page_view",
-      page_path: "/",
-      page_title: "Beranda (Landing Page)",
-      device_type: "Tablet",
-      browser: "Chrome",
-      os: "Windows",
-      duration_seconds: 0,
-      created_at: new Date(Date.now() - 120 * 1000).toISOString(),
-    },
-    {
-      id: "ev-8",
-      visitor_id: "vis-8",
-      session_id: "ses-8",
-      event_name: "page_view",
-      page_path: "/",
-      page_title: "Beranda (Landing Page)",
-      device_type: "Tablet",
-      browser: "Chrome",
-      os: "Windows",
-      duration_seconds: 0,
-      created_at: new Date(Date.now() - 35 * 60 * 1000).toISOString(),
-    },
-    {
-      id: "ev-9",
-      visitor_id: "vis-9",
-      session_id: "ses-9",
-      event_name: "click_whatsapp",
-      page_path: "/kontak",
-      page_title: "Kontak & Support WhatsApp",
-      device_type: "Mobile",
-      browser: "Safari",
-      os: "iOS",
-      duration_seconds: 0,
-      created_at: new Date(Date.now() - 55 * 60 * 1000).toISOString(),
-    },
-    {
-      id: "ev-10",
-      visitor_id: "vis-10",
-      session_id: "ses-10",
-      event_name: "page_view",
-      page_path: "/",
-      page_title: "Beranda (Landing Page)",
-      device_type: "Mobile",
-      browser: "Safari",
-      os: "iOS",
-      duration_seconds: 0,
-      created_at: new Date(Date.now() - 120 * 60 * 1000).toISOString(),
-    },
-  ];
+  // Initial 20 recent events for page 1
+  const recentEvents = generateSeedEventsBatch(0, 20);
 
   return {
     total_pageviews: Math.max(totalPageviews, 51),
@@ -352,11 +272,20 @@ function formatTimeAgo(dateString: string): string {
   return `${diffInDays} hari lalu`;
 }
 
+const FEED_PAGE_SIZE = 20;
+
 function AdminAnalyticsPage() {
   const [timeRange, setTimeRange] = useState<TimeRange>("7d");
   const [chartTab, setChartTab] = useState<ChartTab>("traffic");
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<AnalyticsData>(() => generateSeedAnalytics(7));
+
+  // Live feed pagination states (20 items per page)
+  const [feedEvents, setFeedEvents] = useState<RecentEventItem[]>(() =>
+    generateSeedAnalytics(7).recent_events.slice(0, FEED_PAGE_SIZE),
+  );
+  const [loadingMoreFeed, setLoadingMoreFeed] = useState(false);
+  const [hasMoreFeed, setHasMoreFeed] = useState(true);
 
   const daysCount = useMemo(() => {
     switch (timeRange) {
@@ -504,9 +433,7 @@ function AdminAnalyticsPage() {
             percentage: Math.round((info.hits / totalHits) * 100),
           }))
           .sort((a, b) => b.hits - a.hits)
-          .slice(0, 8);
-
-        setData({
+        const nextData = {
           total_pageviews: pageviews,
           unique_visitors: uniqueVisitorIds,
           whatsapp_clicks: waClicks,
@@ -519,17 +446,26 @@ function AdminAnalyticsPage() {
           devices,
           sources,
           top_pages: topPages.length > 0 ? topPages : generateSeedAnalytics(daysCount).top_pages,
-          recent_events: dbEvents.slice(0, 30),
-        });
+          recent_events: dbEvents.slice(0, FEED_PAGE_SIZE),
+        };
+        setData(nextData);
+        setFeedEvents(dbEvents.slice(0, FEED_PAGE_SIZE));
+        setHasMoreFeed(dbEvents.length >= FEED_PAGE_SIZE);
         setLoading(false);
         return;
       }
 
       // 3. Fallback to rich seed data
-      setData(generateSeedAnalytics(daysCount));
+      const seedRes = generateSeedAnalytics(daysCount);
+      setData(seedRes);
+      setFeedEvents(seedRes.recent_events.slice(0, FEED_PAGE_SIZE));
+      setHasMoreFeed(true);
     } catch (err) {
       console.warn("[Analytics] Loading error, fallback:", err);
-      setData(generateSeedAnalytics(daysCount));
+      const seedRes = generateSeedAnalytics(daysCount);
+      setData(seedRes);
+      setFeedEvents(seedRes.recent_events.slice(0, FEED_PAGE_SIZE));
+      setHasMoreFeed(true);
     } finally {
       setLoading(false);
     }
@@ -538,6 +474,51 @@ function AdminAnalyticsPage() {
   useEffect(() => {
     void loadAnalytics();
   }, [loadAnalytics]);
+
+  // Load more recent activity events (pagination: 20 data per click)
+  const handleLoadMoreFeed = async () => {
+    if (loadingMoreFeed) return;
+    setLoadingMoreFeed(true);
+
+    try {
+      const from = feedEvents.length;
+      const to = from + FEED_PAGE_SIZE - 1;
+
+      const { data: rawEvents, error } = await (supabase as any)
+        .from("visitor_events")
+        .select("*")
+        .not("page_path", "like", "/admin%")
+        .order("created_at", { ascending: false })
+        .range(from, to);
+
+      const dbEvents = (rawEvents || []).filter(
+        (e: any) => e.page_path && !e.page_path.startsWith("/admin"),
+      );
+
+      if (!error && dbEvents && dbEvents.length > 0) {
+        setFeedEvents((prev) => [...prev, ...dbEvents]);
+        if (dbEvents.length < FEED_PAGE_SIZE) {
+          setHasMoreFeed(false);
+        }
+      } else {
+        // Fallback for seed / offline mode
+        const moreSeeds = generateSeedEventsBatch(from, FEED_PAGE_SIZE);
+        if (moreSeeds.length > 0) {
+          setFeedEvents((prev) => [...prev, ...moreSeeds]);
+          if (from + moreSeeds.length >= 80) {
+            setHasMoreFeed(false);
+          }
+        } else {
+          setHasMoreFeed(false);
+        }
+      }
+    } catch (err) {
+      console.warn("[Analytics] Gagal memuat lebih banyak feed:", err);
+      setHasMoreFeed(false);
+    } finally {
+      setLoadingMoreFeed(false);
+    }
+  };
 
   // Export to CSV Functionality
   const handleExportCsv = () => {
@@ -1158,7 +1139,7 @@ function AdminAnalyticsPage() {
           </CardContent>
         </Card>
 
-        {/* Card 2: Aktivitas Pengunjung Terkini (Live Feed) */}
+        {/* Card 2: Aktivitas Pengunjung Terkini (Live Feed with Pagination) */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2 sm:pb-3">
             <div className="flex items-center gap-2">
@@ -1171,48 +1152,79 @@ function AdminAnalyticsPage() {
               </CardTitle>
             </div>
             <Badge variant="outline" className="gap-1 border-emerald-500/30 text-[10px] text-emerald-700 dark:text-emerald-400 sm:text-xs">
-              Live Feed
+              Live Feed ({feedEvents.length})
             </Badge>
           </CardHeader>
-          <CardContent className="space-y-2.5 pt-1 max-h-[460px] overflow-y-auto pr-1">
-            {data.recent_events.length === 0 ? (
+          <CardContent className="space-y-2.5 pt-1 max-h-[520px] overflow-y-auto pr-1">
+            {feedEvents.length === 0 ? (
               <div className="py-12 text-center text-xs text-muted-foreground">
                 Belum ada aktivitas pengunjung tercatat.
               </div>
             ) : (
-              data.recent_events.map((ev) => {
-                const actionInfo = formatEventAction(ev.event_name, ev.duration_seconds);
-                const ActionIcon = actionInfo.icon;
-                const deviceStr = `${ev.device_type || "Desktop"} (${ev.os || "macOS"} ${ev.browser || "Chrome"})`;
+              <>
+                {feedEvents.map((ev) => {
+                  const actionInfo = formatEventAction(ev.event_name, ev.duration_seconds);
+                  const ActionIcon = actionInfo.icon;
+                  const deviceStr = `${ev.device_type || "Desktop"} (${ev.os || "macOS"} ${ev.browser || "Chrome"})`;
 
-                return (
-                  <div
-                    key={ev.id}
-                    className="flex flex-col gap-1.5 rounded-xl border p-2.5 text-xs transition-colors hover:bg-muted/30 sm:p-3"
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="font-semibold text-foreground truncate max-w-[190px] sm:max-w-[280px]">
-                        {ev.page_title || ev.page_path}
-                      </p>
-                      <span className="text-[10px] text-muted-foreground shrink-0 sm:text-[11px]">
-                        {formatTimeAgo(ev.created_at)}
-                      </span>
-                    </div>
+                  return (
+                    <div
+                      key={ev.id}
+                      className="flex flex-col gap-1.5 rounded-xl border p-2.5 text-xs transition-colors hover:bg-muted/30 sm:p-3"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="font-semibold text-foreground truncate max-w-[190px] sm:max-w-[280px]">
+                          {ev.page_title || ev.page_path}
+                        </p>
+                        <span className="text-[10px] text-muted-foreground shrink-0 sm:text-[11px]">
+                          {formatTimeAgo(ev.created_at)}
+                        </span>
+                      </div>
 
-                    <div className="flex items-center gap-1.5 text-[11px] font-medium sm:text-xs">
-                      <ActionIcon className={`h-3.5 w-3.5 shrink-0 ${actionInfo.color}`} />
-                      <span className={actionInfo.color}>{actionInfo.label}</span>
-                    </div>
+                      <div className="flex items-center gap-1.5 text-[11px] font-medium sm:text-xs">
+                        <ActionIcon className={`h-3.5 w-3.5 shrink-0 ${actionInfo.color}`} />
+                        <span className={actionInfo.color}>{actionInfo.label}</span>
+                      </div>
 
-                    <div className="flex items-center justify-between pt-1 text-[10px] text-muted-foreground border-t border-border/40 sm:text-[11px]">
-                      <span className="truncate">{deviceStr}</span>
-                      <span className="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-400 font-medium shrink-0">
-                        📍 Pengunjung Web
-                      </span>
+                      <div className="flex items-center justify-between pt-1 text-[10px] text-muted-foreground border-t border-border/40 sm:text-[11px]">
+                        <span className="truncate">{deviceStr}</span>
+                        <span className="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-400 font-medium shrink-0">
+                          📍 Pengunjung Web
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                );
-              })
+                  );
+                })}
+
+                {/* Pagination Controls / Load More Button */}
+                <div className="pt-2">
+                  {hasMoreFeed ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={loadingMoreFeed}
+                      onClick={handleLoadMoreFeed}
+                      className="w-full gap-1.5 border-dashed text-xs font-medium hover:bg-emerald-500/10 hover:text-emerald-700 dark:hover:text-emerald-400"
+                    >
+                      {loadingMoreFeed ? (
+                        <>
+                          <RotateCw className="h-3.5 w-3.5 animate-spin" />
+                          Memuat data aktivitas...
+                        </>
+                      ) : (
+                        <>
+                          <ChevronDown className="h-3.5 w-3.5" />
+                          Muat Lebih Banyak (20 data)
+                        </>
+                      )}
+                    </Button>
+                  ) : (
+                    <p className="py-2 text-center text-[11px] text-muted-foreground">
+                      ✓ Semua aktivitas terbaru telah dimuat ({feedEvents.length} data)
+                    </p>
+                  )}
+                </div>
+              </>
             )}
           </CardContent>
         </Card>
