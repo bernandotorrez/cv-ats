@@ -1151,7 +1151,8 @@ function AdminAnalyticsPage() {
                 Aktivitas Pengunjung Terkini
               </CardTitle>
             </div>
-            <Badge variant="outline" className="gap-1 border-emerald-500/30 text-[10px] text-emerald-700 dark:text-emerald-400 sm:text-xs">
+            <Badge variant="outline" className="gap-1.5 border-emerald-500/30 text-[10px] text-emerald-700 dark:text-emerald-400 sm:text-xs">
+              <Activity className="h-3 w-3" />
               Live Feed ({feedEvents.length})
             </Badge>
           </CardHeader>
@@ -1189,7 +1190,8 @@ function AdminAnalyticsPage() {
                       <div className="flex items-center justify-between pt-1 text-[10px] text-muted-foreground border-t border-border/40 sm:text-[11px]">
                         <span className="truncate">{deviceStr}</span>
                         <span className="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-400 font-medium shrink-0">
-                          📍 Pengunjung Web
+                          <Globe className="h-3 w-3 shrink-0" />
+                          <span>Pengunjung Web</span>
                         </span>
                       </div>
                     </div>
@@ -1219,8 +1221,9 @@ function AdminAnalyticsPage() {
                       )}
                     </Button>
                   ) : (
-                    <p className="py-2 text-center text-[11px] text-muted-foreground">
-                      ✓ Semua aktivitas terbaru telah dimuat ({feedEvents.length} data)
+                    <p className="py-2 text-center text-[11px] text-muted-foreground flex items-center justify-center gap-1.5">
+                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                      <span>Semua aktivitas terbaru telah dimuat ({feedEvents.length} data)</span>
                     </p>
                   )}
                 </div>
