@@ -234,17 +234,20 @@ function ScrollToTop() {
   return null;
 }
 
-import { trackPageView, trackEvent, trackSessionHeartbeat } from "@/lib/analytics";
+import { trackPageView, trackEvent, trackSessionHeartbeat, isAdminPath } from "@/lib/analytics";
 
 function VisitorAnalyticsTracker() {
   const { location } = useRouterState();
+  const isAdmin = isAdminPath(location.pathname);
 
   useEffect(() => {
-    // Record page view on path change
+    if (isAdmin) return;
+    // Record page view on path change (excluding admin)
     trackPageView(location.pathname, document.title);
-  }, [location.pathname]);
+  }, [location.pathname, isAdmin]);
 
   useEffect(() => {
+    if (isAdmin) return;
     // Track session duration milestones (15s, 45s, 90s, 180s, 300s)
     const startTime = Date.now();
     const intervals = [15, 45, 90, 180, 300];
@@ -258,10 +261,12 @@ function VisitorAnalyticsTracker() {
     return () => {
       timers.forEach((t) => clearTimeout(t));
     };
-  }, [location.pathname]);
+  }, [location.pathname, isAdmin]);
 
   useEffect(() => {
     const handleGlobalClick = (e: MouseEvent) => {
+      if (isAdminPath(window.location.pathname)) return;
+
       const target = (e.target as HTMLElement)?.closest?.(
         "[data-analytics-event], a[href*='wa.me'], a[href*='whatsapp']",
       );

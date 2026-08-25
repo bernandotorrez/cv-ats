@@ -85,7 +85,7 @@ BEGIN
   v_duration_interval := p_end_date - p_start_date;
   v_prev_start_date := p_start_date - v_duration_interval;
 
-  -- 1. KPI Current Period
+  -- 1. KPI Current Period (excluding admin pages)
   SELECT
     COALESCE(COUNT(*) FILTER (WHERE event_name = 'page_view'), 0),
     COALESCE(COUNT(DISTINCT visitor_id), 0),
@@ -99,9 +99,10 @@ BEGIN
     v_feature_conversions,
     v_avg_duration_seconds
   FROM public.visitor_events
-  WHERE created_at >= p_start_date AND created_at <= p_end_date;
+  WHERE created_at >= p_start_date AND created_at <= p_end_date
+    AND page_path NOT LIKE '/admin%';
 
-  -- 2. KPI Previous Period (for trend percentages)
+  -- 2. KPI Previous Period (for trend percentages, excluding admin)
   SELECT
     COALESCE(COUNT(*) FILTER (WHERE event_name = 'page_view'), 0),
     COALESCE(COUNT(DISTINCT visitor_id), 0)
@@ -109,7 +110,8 @@ BEGIN
     v_prev_pageviews,
     v_prev_unique_visitors
   FROM public.visitor_events
-  WHERE created_at >= v_prev_start_date AND created_at < p_start_date;
+  WHERE created_at >= v_prev_start_date AND created_at < p_start_date
+    AND page_path NOT LIKE '/admin%';
 
   IF v_prev_pageviews > 0 THEN
     v_pageviews_growth := ROUND(((v_total_pageviews - v_prev_pageviews)::NUMERIC / v_prev_pageviews::NUMERIC) * 100, 1);
@@ -130,7 +132,7 @@ BEGIN
     v_conversion_rate := 0;
   END IF;
 
-  -- 3. Daily Stats for Chart
+  -- 3. Daily Stats for Chart (excluding admin)
   SELECT COALESCE(jsonb_agg(d_row), '[]'::jsonb)
   INTO v_daily_stats
   FROM (
@@ -148,11 +150,12 @@ BEGIN
     ) AS series_date
     LEFT JOIN public.visitor_events e
       ON date_trunc('day', e.created_at) = series_date
+      AND e.page_path NOT LIKE '/admin%'
     GROUP BY series_date
     ORDER BY series_date ASC
   ) d_row;
 
-  -- 4. Device Breakdown
+  -- 4. Device Breakdown (excluding admin)
   SELECT COALESCE(jsonb_agg(dev_row), '[]'::jsonb)
   INTO v_devices
   FROM (
@@ -170,11 +173,12 @@ BEGIN
     FROM public.visitor_events
     WHERE created_at >= p_start_date AND created_at <= p_end_date
       AND event_name = 'page_view'
+      AND page_path NOT LIKE '/admin%'
     GROUP BY 1
     ORDER BY count DESC
   ) dev_row;
 
-  -- 5. Traffic Inflow Sources
+  -- 5. Traffic Inflow Sources (excluding admin)
   SELECT COALESCE(jsonb_agg(src_row), '[]'::jsonb)
   INTO v_sources
   FROM (
@@ -188,11 +192,12 @@ BEGIN
     FROM public.visitor_events
     WHERE created_at >= p_start_date AND created_at <= p_end_date
       AND event_name = 'page_view'
+      AND page_path NOT LIKE '/admin%'
     GROUP BY 1
     ORDER BY count DESC
   ) src_row;
 
-  -- 6. Top Visited Pages
+  -- 6. Top Visited Pages (excluding admin)
   SELECT COALESCE(jsonb_agg(page_row), '[]'::jsonb)
   INTO v_top_pages
   FROM (
@@ -207,12 +212,13 @@ BEGIN
     FROM public.visitor_events
     WHERE created_at >= p_start_date AND created_at <= p_end_date
       AND event_name = 'page_view'
+      AND page_path NOT LIKE '/admin%'
     GROUP BY page_path, page_title
     ORDER BY hits DESC
     LIMIT 10
   ) page_row;
 
-  -- 7. Recent Live Visitor Feed (latest 30 events)
+  -- 7. Recent Live Visitor Feed (latest 35 events, excluding admin)
   SELECT COALESCE(jsonb_agg(feed_row), '[]'::jsonb)
   INTO v_recent_events
   FROM (
@@ -229,6 +235,7 @@ BEGIN
       duration_seconds,
       created_at
     FROM public.visitor_events
+    WHERE page_path NOT LIKE '/admin%'
     ORDER BY created_at DESC
     LIMIT 35
   ) feed_row;

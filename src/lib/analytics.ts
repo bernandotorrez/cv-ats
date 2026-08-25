@@ -223,12 +223,20 @@ export function getHumanPageTitle(path: string, fallbackTitle?: string): string 
   return path;
 }
 
+/**
+ * Check if the path is an internal admin route (which must not be tracked)
+ */
+export function isAdminPath(path: string): boolean {
+  const clean = (path || "").toLowerCase();
+  return clean === "/admin" || clean.startsWith("/admin/") || clean.startsWith("/api/admin");
+}
+
 // Memory cache to prevent duplicate pageview within 2 seconds for exact same path
 let lastLoggedPath = "";
 let lastLoggedTime = 0;
 
 /**
- * Track page view event
+ * Track page view event (automatically ignores /admin routes)
  */
 export async function trackPageView(
   pathname?: string,
@@ -238,6 +246,10 @@ export async function trackPageView(
   if (typeof window === "undefined") return;
 
   const currentPath = pathname || window.location.pathname;
+  if (isAdminPath(currentPath)) {
+    return;
+  }
+
   const now = Date.now();
 
   // Deduplicate rapid consecutive triggers
@@ -259,15 +271,19 @@ export async function trackPageView(
 }
 
 /**
- * Generic event tracker
+ * Generic event tracker (automatically ignores events triggered on /admin)
  */
 export async function trackEvent(payload: AnalyticsEventPayload): Promise<void> {
   if (typeof window === "undefined") return;
 
   try {
+    const currentPath = payload.pagePath || window.location.pathname;
+    if (isAdminPath(currentPath) || payload.eventName.startsWith("admin_")) {
+      return;
+    }
+
     const visitorId = getVisitorId();
     const sessionId = getSessionId();
-    const currentPath = payload.pagePath || window.location.pathname;
     const currentTitle = payload.pageTitle || getHumanPageTitle(currentPath, document.title);
     const deviceType = getDeviceType();
     const browser = getBrowserName();
@@ -321,6 +337,7 @@ export async function trackEvent(payload: AnalyticsEventPayload): Promise<void> 
  */
 export async function trackSessionHeartbeat(durationSeconds: number): Promise<void> {
   if (typeof window === "undefined" || durationSeconds <= 0) return;
+  if (isAdminPath(window.location.pathname)) return;
 
   await trackEvent({
     eventName: "session_ping",
