@@ -123,6 +123,13 @@ interface AnalyticsData {
 
 
 
+function getLocalDateKey(d: Date): string {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 // Initialize clean empty analytics state
 function getEmptyAnalytics(days: number): AnalyticsData {
   const dailyStats: DailyStat[] = [];
@@ -136,7 +143,7 @@ function getEmptyAnalytics(days: number): AnalyticsData {
     d.setDate(now.getDate() - i);
     const day = d.getDate();
     const month = idMonths[d.getMonth()];
-    const dateStr = d.toISOString().split("T")[0];
+    const dateStr = getLocalDateKey(d);
 
     dailyStats.push({
       date: dateStr,
@@ -287,7 +294,7 @@ function AdminAnalyticsPage() {
         for (let i = daysCount - 1; i >= 0; i--) {
           const d = new Date();
           d.setDate(endDate.getDate() - i);
-          const dateStr = d.toISOString().split("T")[0];
+          const dateStr = getLocalDateKey(d);
           const formatted = `${d.getDate()} ${idMonths[d.getMonth()]}`;
           dayMap.set(dateStr, {
             date: dateStr,
@@ -301,12 +308,13 @@ function AdminAnalyticsPage() {
 
         const visitorsByDay = new Map<string, Set<string>>();
         dbEvents.forEach((ev: any) => {
-          const dStr = ev.created_at.split("T")[0];
+          const evDate = new Date(ev.created_at);
+          const dStr = getLocalDateKey(evDate);
           if (!dayMap.has(dStr)) return;
           const stat = dayMap.get(dStr)!;
           if (ev.event_name === "page_view") stat.pageviews += 1;
-          if (["click_whatsapp", "whatsapp_click"].includes(ev.event_name)) stat.whatsapp_clicks += 1;
-          if (["cv_create_start", "click_cta", "click_tryout", "ats_scan"].includes(ev.event_name)) stat.conversions += 1;
+          if (["click_whatsapp", "whatsapp_click", "chat_whatsapp"].includes(ev.event_name)) stat.whatsapp_clicks += 1;
+          if (["cv_create_start", "click_cta", "click_tryout", "ats_scan", "click_feature"].includes(ev.event_name)) stat.conversions += 1;
 
           if (!visitorsByDay.has(dStr)) visitorsByDay.set(dStr, new Set());
           visitorsByDay.get(dStr)!.add(ev.visitor_id);

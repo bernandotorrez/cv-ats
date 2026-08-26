@@ -214,24 +214,24 @@ BEGIN
     v_conversion_rate := 0;
   END IF;
 
-  -- 3. Daily Stats for Chart (excluding admin)
+  -- 3. Daily Stats for Chart (grouped by date in Asia/Jakarta timezone, excluding admin)
   SELECT COALESCE(jsonb_agg(d_row), '[]'::jsonb)
   INTO v_daily_stats
   FROM (
     SELECT
-      to_char(date_trunc('day', series_date), 'YYYY-MM-DD') AS date,
+      to_char(series_date, 'YYYY-MM-DD') AS date,
       to_char(series_date, 'DD Mon') AS formatted_date,
       COALESCE(COUNT(e.id) FILTER (WHERE e.event_name = 'page_view'), 0) AS pageviews,
       COALESCE(COUNT(DISTINCT e.visitor_id), 0) AS unique_visitors,
       COALESCE(COUNT(e.id) FILTER (WHERE e.event_name IN ('click_whatsapp', 'whatsapp_click', 'chat_whatsapp')), 0) AS whatsapp_clicks,
       COALESCE(COUNT(e.id) FILTER (WHERE e.event_name IN ('cv_create_start', 'click_cta', 'click_tryout', 'ats_scan', 'click_feature')), 0) AS conversions
     FROM generate_series(
-      date_trunc('day', p_start_date),
-      date_trunc('day', p_end_date),
+      (p_start_date AT TIME ZONE 'Asia/Jakarta')::date,
+      (p_end_date AT TIME ZONE 'Asia/Jakarta')::date,
       INTERVAL '1 day'
     ) AS series_date
     LEFT JOIN public.visitor_events e
-      ON date_trunc('day', e.created_at) = series_date
+      ON (e.created_at AT TIME ZONE 'Asia/Jakarta')::date = series_date::date
       AND e.page_path NOT LIKE '/admin%'
     GROUP BY series_date
     ORDER BY series_date ASC
