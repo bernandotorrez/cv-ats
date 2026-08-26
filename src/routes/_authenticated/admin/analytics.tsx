@@ -318,10 +318,11 @@ function AdminAnalyticsPage() {
   const loadAnalytics = useCallback(async () => {
     setLoading(true);
     const startDate = new Date();
-    startDate.setDate(startDate.getDate() - (daysCount === 1 ? 1 : daysCount));
+    startDate.setDate(startDate.getDate() - (daysCount === 1 ? 0 : daysCount - 1));
     startDate.setHours(0, 0, 0, 0);
 
     const endDate = new Date();
+    endDate.setHours(23, 59, 59, 999);
 
     try {
       // 1. Try Supabase RPC aggregation function
@@ -331,12 +332,15 @@ function AdminAnalyticsPage() {
       });
 
       if (!rpcError && rpcData && typeof rpcData === "object" && rpcData.total_pageviews !== undefined) {
-        // If DB has data, use it!
-        if (Number(rpcData.total_pageviews) > 0 || Number(rpcData.unique_visitors) > 0) {
-          setData(rpcData as AnalyticsData);
-          setLoading(false);
-          return;
-        }
+        setData(rpcData as AnalyticsData);
+        setFeedEvents((rpcData.recent_events || []).slice(0, FEED_PAGE_SIZE));
+        setHasMoreFeed((rpcData.recent_events || []).length >= FEED_PAGE_SIZE);
+        setLoading(false);
+        return;
+      }
+
+      if (rpcError) {
+        console.warn("[Analytics] get_visitor_analytics RPC error, trying direct query fallback:", rpcError);
       }
 
       // 2. Direct table query fallback (excluding admin pages)
@@ -347,11 +351,11 @@ function AdminAnalyticsPage() {
         .lte("created_at", endDate.toISOString())
         .order("created_at", { ascending: false });
 
-      const dbEvents = (rawEvents || []).filter(
-        (e: any) => e.page_path && !e.page_path.startsWith("/admin"),
-      );
+      if (!tableError && Array.isArray(rawEvents)) {
+        const dbEvents = rawEvents.filter(
+          (e: any) => e.page_path && !e.page_path.startsWith("/admin"),
+        );
 
-      if (!tableError && dbEvents && dbEvents.length > 0) {
         const pageviews = dbEvents.filter((e: any) => e.event_name === "page_view").length;
         const uniqueVisitorIds = new Set(dbEvents.map((e: any) => e.visitor_id)).size;
         const waClicks = dbEvents.filter((e: any) =>
@@ -408,11 +412,11 @@ function AdminAnalyticsPage() {
           else deviceCounts["Desktop / Laptop"] += 1;
         });
 
-        const totalDev = Object.values(deviceCounts).reduce((a, b) => a + b, 0) || 1;
+        const totalDev = Object.values(deviceCounts).reduce((a, b) => a + b, 0) || (pageviews > 0 ? pageviews : 1);
         const devices: BreakdownItem[] = Object.entries(deviceCounts).map(([name, count]) => ({
           name,
           count,
-          percentage: Math.round((count / totalDev) * 100),
+          percentage: totalDev > 0 ? Math.round((count / totalDev) * 100) : 0,
         }));
 
         // Source breakdown
@@ -421,11 +425,11 @@ function AdminAnalyticsPage() {
           const src = ev.referrer_channel || "Direct / Akses Langsung";
           sourceCounts[src] = (sourceCounts[src] || 0) + 1;
         });
-        const totalSrc = Object.values(sourceCounts).reduce((a, b) => a + b, 0) || 1;
+        const totalSrc = Object.values(sourceCounts).reduce((a, b) => a + b, 0) || (pageviews > 0 ? pageviews : 1);
         const sources: BreakdownItem[] = Object.entries(sourceCounts).map(([name, count]) => ({
           name,
           count,
-          percentage: Math.round((count / totalSrc) * 100),
+          percentage: totalSrc > 0 ? Math.round((count / totalSrc) * 100) : 0,
         }));
 
         // Top pages (excluding /admin)
@@ -445,8 +449,9 @@ function AdminAnalyticsPage() {
             hits: info.hits,
             percentage: Math.round((info.hits / totalHits) * 100),
           }))
-          .sort((a, b) => b.hits - a.hits)
-        const nextData = {
+          .sort((a, b) => b.hits - a.hits);
+
+        const realData: AnalyticsData = {
           total_pageviews: pageviews,
           unique_visitors: uniqueVisitorIds,
           whatsapp_clicks: waClicks,
@@ -458,17 +463,18 @@ function AdminAnalyticsPage() {
           daily_stats: Array.from(dayMap.values()),
           devices,
           sources,
-          top_pages: topPages.length > 0 ? topPages : generateSeedAnalytics(daysCount).top_pages,
+          top_pages: topPages,
           recent_events: dbEvents.slice(0, FEED_PAGE_SIZE),
         };
-        setData(nextData);
+
+        setData(realData);
         setFeedEvents(dbEvents.slice(0, FEED_PAGE_SIZE));
         setHasMoreFeed(dbEvents.length >= FEED_PAGE_SIZE);
         setLoading(false);
         return;
       }
 
-      // 3. Fallback to rich seed data
+      // 3. Fallback to rich seed data ONLY if both fail
       const seedRes = generateSeedAnalytics(daysCount);
       setData(seedRes);
       setFeedEvents(seedRes.recent_events.slice(0, FEED_PAGE_SIZE));

@@ -34,7 +34,7 @@ DROP POLICY IF EXISTS "Allow public insert visitor_events" ON public.visitor_eve
 CREATE POLICY "Allow public insert visitor_events"
   ON public.visitor_events
   FOR INSERT
-  TO anon, authenticated
+  TO anon, authenticated, public
   WITH CHECK (true);
 
 -- Allow only admins to select analytics data directly
@@ -43,12 +43,90 @@ CREATE POLICY "Allow admin select visitor_events"
   ON public.visitor_events
   FOR SELECT
   TO authenticated
-  USING (public.has_role(auth.uid(), 'admin'));
+  USING (
+    public.has_role(auth.uid(), 'admin')
+    OR EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role = 'admin')
+  );
+
+-- Table-level grants for anon and authenticated
+GRANT ALL ON public.visitor_events TO postgres, service_role;
+GRANT INSERT ON public.visitor_events TO anon, authenticated, public;
+GRANT SELECT ON public.visitor_events TO authenticated, service_role;
+
+-- Bulletproof RPC to record visitor events from client without RLS issues
+CREATE OR REPLACE FUNCTION public.log_visitor_event(
+  p_visitor_id TEXT,
+  p_session_id TEXT,
+  p_event_name TEXT,
+  p_page_path TEXT,
+  p_page_title TEXT DEFAULT NULL,
+  p_referrer TEXT DEFAULT NULL,
+  p_referrer_channel TEXT DEFAULT NULL,
+  p_device_type TEXT DEFAULT NULL,
+  p_browser TEXT DEFAULT NULL,
+  p_os TEXT DEFAULT NULL,
+  p_duration_seconds INTEGER DEFAULT 0,
+  p_metadata JSONB DEFAULT '{}'::jsonb
+)
+RETURNS UUID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_new_id UUID;
+  v_user_id UUID;
+BEGIN
+  -- Do not track internal admin paths
+  IF p_page_path LIKE '/admin%' OR p_page_path LIKE '/api/admin%' THEN
+    RETURN NULL;
+  END IF;
+
+  v_user_id := auth.uid();
+
+  INSERT INTO public.visitor_events (
+    visitor_id,
+    session_id,
+    event_name,
+    page_path,
+    page_title,
+    referrer,
+    referrer_channel,
+    device_type,
+    browser,
+    os,
+    duration_seconds,
+    user_id,
+    metadata,
+    created_at
+  ) VALUES (
+    p_visitor_id,
+    p_session_id,
+    p_event_name,
+    p_page_path,
+    COALESCE(p_page_title, p_page_path),
+    p_referrer,
+    COALESCE(p_referrer_channel, 'Direct / Akses Langsung'),
+    COALESCE(p_device_type, 'desktop'),
+    COALESCE(p_browser, 'Other'),
+    COALESCE(p_os, 'Other'),
+    COALESCE(p_duration_seconds, 0),
+    v_user_id,
+    COALESCE(p_metadata, '{}'::jsonb),
+    now()
+  )
+  RETURNING id INTO v_new_id;
+
+  RETURN v_new_id;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.log_visitor_event TO anon, authenticated, public, service_role;
 
 -- Stored function for analytics dashboard aggregation
 CREATE OR REPLACE FUNCTION public.get_visitor_analytics(
   p_start_date TIMESTAMPTZ DEFAULT (now() - INTERVAL '30 days'),
-  p_end_date TIMESTAMPTZ DEFAULT now()
+  p_end_date TIMESTAMPTZ DEFAULT (now() + INTERVAL '1 day')
 )
 RETURNS JSONB
 LANGUAGE plpgsql
@@ -77,7 +155,11 @@ DECLARE
   v_duration_interval INTERVAL;
 BEGIN
   -- Security check: only admins can run this
-  v_is_admin := public.has_role(auth.uid(), 'admin');
+  v_is_admin := auth.uid() IS NOT NULL AND (
+    public.has_role(auth.uid(), 'admin')
+    OR EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role = 'admin')
+  );
+
   IF NOT v_is_admin THEN
     RAISE EXCEPTION 'Akses ditolak: Hanya admin yang dapat melihat analitik pengunjung.';
   END IF;
@@ -260,3 +342,5 @@ BEGIN
   RETURN v_result;
 END;
 $$;
+
+GRANT EXECUTE ON FUNCTION public.get_visitor_analytics(TIMESTAMPTZ, TIMESTAMPTZ) TO authenticated, service_role, anon;

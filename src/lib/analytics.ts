@@ -5,10 +5,13 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
-// Storage Keys
+// Storage Keys & in-memory fallbacks for private window mode
 const VISITOR_ID_KEY = "cvp_visitor_id";
 const SESSION_ID_KEY = "cvp_session_id";
 const FIRST_VISIT_KEY = "cvp_first_visit";
+
+let memoryVisitorId = "";
+let memorySessionId = "";
 
 export interface AnalyticsEventPayload {
   eventName: string;
@@ -40,13 +43,19 @@ export function getVisitorId(): string {
   try {
     let id = localStorage.getItem(VISITOR_ID_KEY);
     if (!id) {
-      id = generateUuid();
-      localStorage.setItem(VISITOR_ID_KEY, id);
-      localStorage.setItem(FIRST_VISIT_KEY, new Date().toISOString());
+      if (!memoryVisitorId) memoryVisitorId = generateUuid();
+      id = memoryVisitorId;
+      try {
+        localStorage.setItem(VISITOR_ID_KEY, id);
+        localStorage.setItem(FIRST_VISIT_KEY, new Date().toISOString());
+      } catch {
+        // Storage restricted in private browsing mode
+      }
     }
     return id;
   } catch {
-    return generateUuid();
+    if (!memoryVisitorId) memoryVisitorId = generateUuid();
+    return memoryVisitorId;
   }
 }
 
@@ -58,12 +67,18 @@ export function getSessionId(): string {
   try {
     let id = sessionStorage.getItem(SESSION_ID_KEY);
     if (!id) {
-      id = generateUuid();
-      sessionStorage.setItem(SESSION_ID_KEY, id);
+      if (!memorySessionId) memorySessionId = generateUuid();
+      id = memorySessionId;
+      try {
+        sessionStorage.setItem(SESSION_ID_KEY, id);
+      } catch {
+        // Storage restricted in private browsing mode
+      }
     }
     return id;
   } catch {
-    return generateUuid();
+    if (!memorySessionId) memorySessionId = generateUuid();
+    return memorySessionId;
   }
 }
 
@@ -231,7 +246,7 @@ export function isAdminPath(path: string): boolean {
   return clean === "/admin" || clean.startsWith("/admin/") || clean.startsWith("/api/admin");
 }
 
-// Memory cache to prevent duplicate pageview within 2 seconds for exact same path
+// Memory cache to prevent duplicate pageview within 500ms for exact same path
 let lastLoggedPath = "";
 let lastLoggedTime = 0;
 
@@ -252,8 +267,8 @@ export async function trackPageView(
 
   const now = Date.now();
 
-  // Deduplicate rapid consecutive triggers
-  if (currentPath === lastLoggedPath && now - lastLoggedTime < 2000) {
+  // Deduplicate rapid consecutive triggers within 500ms
+  if (currentPath === lastLoggedPath && now - lastLoggedTime < 500) {
     return;
   }
 
@@ -295,12 +310,14 @@ export async function trackEvent(payload: AnalyticsEventPayload): Promise<void> 
     let userId: string | null = null;
     try {
       const { data } = await supabase.auth.getSession();
-      userId = data?.session?.user?.id || null;
+      if (data?.session?.user?.id) {
+        userId = data.session.user.id;
+      }
     } catch {
       // ignore auth check error
     }
 
-    const row = {
+    const row: Record<string, any> = {
       visitor_id: visitorId,
       session_id: sessionId,
       event_name: payload.eventName,
@@ -312,19 +329,39 @@ export async function trackEvent(payload: AnalyticsEventPayload): Promise<void> 
       browser,
       os,
       duration_seconds: payload.durationSeconds || 0,
-      user_id: userId,
       metadata: payload.metadata || {},
     };
 
-    // Insert into supabase asynchronously without blocking caller
-    void (supabase as any)
+    if (userId) {
+      row.user_id = userId;
+    }
+
+    // 1. Try direct Supabase insert
+    const { error: insertError } = await (supabase as any)
       .from("visitor_events")
-      .insert(row)
-      .then(({ error }: { error: any }) => {
-        if (error && import.meta.env.DEV) {
-          console.warn("[Analytics] Tracking insert warning:", error.message);
-        }
+      .insert(row);
+
+    if (insertError) {
+      // 2. Fallback to SECURITY DEFINER RPC
+      const { error: rpcError } = await (supabase as any).rpc("log_visitor_event", {
+        p_visitor_id: visitorId,
+        p_session_id: sessionId,
+        p_event_name: payload.eventName,
+        p_page_path: currentPath,
+        p_page_title: currentTitle,
+        p_referrer: referrer.slice(0, 500),
+        p_referrer_channel: referrerChannel,
+        p_device_type: deviceType,
+        p_browser: browser,
+        p_os: os,
+        p_duration_seconds: payload.durationSeconds || 0,
+        p_metadata: payload.metadata || {},
       });
+
+      if (rpcError && import.meta.env.DEV) {
+        console.warn("[Analytics] Track event failed:", insertError.message || rpcError.message);
+      }
+    }
   } catch (err) {
     if (import.meta.env.DEV) {
       console.warn("[Analytics] Failed to dispatch tracking event:", err);
