@@ -121,57 +121,10 @@ interface AnalyticsData {
   recent_events: RecentEventItem[];
 }
 
-// Helper to generate additional batches of realistic seed activity
-function generateSeedEventsBatch(offset: number, count: number): RecentEventItem[] {
-  const events: RecentEventItem[] = [];
-  const now = Date.now();
-  const samplePages = [
-    { path: "/", title: "Beranda (Landing Page)" },
-    { path: "/template", title: "Katalog Template CV ATS" },
-    { path: "/harga", title: "Daftar Harga & Paket Pro" },
-    { path: "/tryout-cpns", title: "Tryout CPNS & BUMN" },
-    { path: "/fitur", title: "Fitur Unggulan CV ATS" },
-    { path: "/kontak", title: "Kontak & Bantuan WhatsApp" },
-    { path: "/panduan-cv-ats", title: "Panduan CV ATS Friendly" },
-    { path: "/tips-interview", title: "Tips Wawancara Kerja" },
-  ];
-  const sampleActions = ["page_view", "session_ping", "click_whatsapp", "cv_create_start", "ats_scan"];
-  const devices = [
-    { type: "Desktop", browser: "Chrome", os: "macOS" },
-    { type: "Desktop", browser: "Edge", os: "Windows" },
-    { type: "Mobile", browser: "Safari", os: "iOS" },
-    { type: "Mobile", browser: "Chrome", os: "Android" },
-    { type: "Tablet", browser: "Safari", os: "iOS" },
-  ];
 
-  for (let i = 0; i < count; i++) {
-    const index = offset + i;
-    const page = samplePages[index % samplePages.length];
-    const action = sampleActions[index % sampleActions.length];
-    const dev = devices[index % devices.length];
-    const minutesAgo = (index + 1) * 3 + Math.floor(Math.random() * 5);
-    const duration = action === "session_ping" ? 45 + ((index * 17) % 180) : 0;
 
-    events.push({
-      id: `seed-ev-${index + 1}`,
-      visitor_id: `vis-${(index % 12) + 1}`,
-      session_id: `ses-${(index % 12) + 1}`,
-      event_name: action,
-      page_path: page.path,
-      page_title: page.title,
-      device_type: dev.type,
-      browser: dev.browser,
-      os: dev.os,
-      duration_seconds: duration,
-      created_at: new Date(now - minutesAgo * 60 * 1000).toISOString(),
-    });
-  }
-
-  return events;
-}
-
-// Generate realistic initial dataset matching the reference layout
-function generateSeedAnalytics(days: number): AnalyticsData {
+// Initialize clean empty analytics state
+function getEmptyAnalytics(days: number): AnalyticsData {
   const dailyStats: DailyStat[] = [];
   const now = new Date();
 
@@ -185,77 +138,40 @@ function generateSeedAnalytics(days: number): AnalyticsData {
     const month = idMonths[d.getMonth()];
     const dateStr = d.toISOString().split("T")[0];
 
-    // Curve that peaks on recent days like in the user screenshot
-    const isRecent = i === 0;
-    const isYesterday = i === 1;
-    const baseViews = isRecent ? 42 : isYesterday ? 14 : Math.floor(Math.random() * 4) + 2;
-    const baseVisitors = isRecent ? 19 : isYesterday ? 7 : Math.floor(Math.random() * 3) + 1;
-    const wa = isRecent ? 2 : Math.random() > 0.7 ? 1 : 0;
-    const conv = isRecent ? 4 : Math.random() > 0.6 ? 1 : 0;
-
     dailyStats.push({
       date: dateStr,
       formatted_date: `${day} ${month}`,
-      pageviews: baseViews,
-      unique_visitors: baseVisitors,
-      whatsapp_clicks: wa,
-      conversions: conv,
+      pageviews: 0,
+      unique_visitors: 0,
+      whatsapp_clicks: 0,
+      conversions: 0,
     });
   }
 
-  const totalPageviews = dailyStats.reduce((acc, d) => acc + d.pageviews, 0);
-  const uniqueVisitors = dailyStats.reduce((acc, d) => acc + d.unique_visitors, 0);
-  const whatsappClicks = dailyStats.reduce((acc, d) => acc + d.whatsapp_clicks, 0);
-  const conversions = dailyStats.reduce((acc, d) => acc + d.conversions, 0);
-  const convRate = uniqueVisitors > 0 ? Number((((whatsappClicks + conversions) / uniqueVisitors) * 100).toFixed(1)) : 27.3;
-
-  const devices: BreakdownItem[] = [
-    { name: "Desktop / Laptop", count: Math.round(totalPageviews * 0.62), percentage: 62 },
-    { name: "Mobile (Smartphone)", count: Math.round(totalPageviews * 0.28), percentage: 28 },
-    { name: "Tablet / iPad", count: Math.round(totalPageviews * 0.1), percentage: 10 },
-  ];
-
-  const sources: BreakdownItem[] = [
-    { name: "Website Eksternal", count: 48, percentage: 59 },
-    { name: "Direct / Akses Langsung", count: 34, percentage: 41 },
-    { name: "Google Search", count: 18, percentage: 22 },
-    { name: "Social Media", count: 11, percentage: 14 },
-  ];
-
-  const topPages: TopPageItem[] = [
-    { path: "/", title: "Beranda (Landing Page)", hits: 43, percentage: 84 },
-    { path: "/template", title: "Katalog Template CV ATS", hits: 18, percentage: 35 },
-    { path: "/harga", title: "Daftar Harga & Paket Pro", hits: 14, percentage: 27 },
-    { path: "/tryout-cpns", title: "Tryout CPNS & BUMN", hits: 12, percentage: 24 },
-    { path: "/fitur", title: "Fitur Unggulan CV ATS", hits: 9, percentage: 18 },
-    { path: "/kontak", title: "Kontak & Bantuan WhatsApp", hits: 7, percentage: 14 },
-    { path: "/panduan-cv-ats", title: "Panduan CV ATS Friendly", hits: 6, percentage: 12 },
-    { path: "/tips-interview", title: "Tips Wawancara Kerja", hits: 5, percentage: 10 },
-    { path: "/faq", title: "Pertanyaan Umum (FAQ)", hits: 4, percentage: 8 },
-    { path: "/blog/tips-cv-lulus-ats", title: "Blog: 7 Tips CV Lolos Screening ATS", hits: 4, percentage: 8 },
-    { path: "/blog/perbedaan-cv-kreatif-dan-ats", title: "Blog: Perbedaan CV Kreatif vs ATS", hits: 3, percentage: 6 },
-    { path: "/tentang-kami", title: "Tentang CV Pintar", hits: 2, percentage: 4 },
-    { path: "/kebijakan-privasi", title: "Kebijakan Privasi", hits: 2, percentage: 4 },
-    { path: "/syarat-ketentuan", title: "Syarat & Ketentuan Layanan", hits: 1, percentage: 2 },
-  ];
-
-  // Initial 20 recent events for page 1
-  const recentEvents = generateSeedEventsBatch(0, 20);
-
   return {
-    total_pageviews: Math.max(totalPageviews, 51),
-    unique_visitors: Math.max(uniqueVisitors, 22),
-    whatsapp_clicks: Math.max(whatsappClicks, 2),
-    feature_conversions: Math.max(conversions, 4),
-    conversion_rate: convRate,
-    avg_duration_seconds: 332, // 5m 32s
-    pageviews_growth: 18.4,
-    visitors_growth: 12.0,
+    total_pageviews: 0,
+    unique_visitors: 0,
+    whatsapp_clicks: 0,
+    feature_conversions: 0,
+    conversion_rate: 0,
+    avg_duration_seconds: 0,
+    pageviews_growth: 0,
+    visitors_growth: 0,
     daily_stats: dailyStats,
-    devices,
-    sources,
-    top_pages: topPages,
-    recent_events: recentEvents,
+    devices: [
+      { name: "Desktop / Laptop", count: 0, percentage: 0 },
+      { name: "Mobile (Smartphone)", count: 0, percentage: 0 },
+      { name: "Tablet / iPad", count: 0, percentage: 0 },
+    ],
+    sources: [
+      { name: "Direct / Akses Langsung", count: 0, percentage: 0 },
+      { name: "Website Eksternal", count: 0, percentage: 0 },
+      { name: "Google / Search Engine", count: 0, percentage: 0 },
+      { name: "Social Media", count: 0, percentage: 0 },
+      { name: "WhatsApp", count: 0, percentage: 0 },
+    ],
+    top_pages: [],
+    recent_events: [],
   };
 }
 
@@ -268,6 +184,7 @@ function formatDuration(seconds: number): string {
 }
 
 function formatTimeAgo(dateString: string): string {
+  if (!dateString) return "Baru saja";
   const date = new Date(dateString);
   const now = new Date();
   const diffInSeconds = Math.max(1, Math.floor((now.getTime() - date.getTime()) / 1000));
@@ -288,17 +205,15 @@ function AdminAnalyticsPage() {
   const [timeRange, setTimeRange] = useState<TimeRange>("7d");
   const [chartTab, setChartTab] = useState<ChartTab>("traffic");
   const [loading, setLoading] = useState(true);
-  const [data, setData] = useState<AnalyticsData>(() => generateSeedAnalytics(7));
+  const [data, setData] = useState<AnalyticsData>(() => getEmptyAnalytics(7));
 
   // Top pages pagination state (5 items per batch)
   const [topPagesLimit, setTopPagesLimit] = useState(TOP_PAGES_PAGE_SIZE);
 
   // Live feed pagination states (20 items per page)
-  const [feedEvents, setFeedEvents] = useState<RecentEventItem[]>(() =>
-    generateSeedAnalytics(7).recent_events.slice(0, FEED_PAGE_SIZE),
-  );
+  const [feedEvents, setFeedEvents] = useState<RecentEventItem[]>([]);
   const [loadingMoreFeed, setLoadingMoreFeed] = useState(false);
-  const [hasMoreFeed, setHasMoreFeed] = useState(true);
+  const [hasMoreFeed, setHasMoreFeed] = useState(false);
 
   const daysCount = useMemo(() => {
     switch (timeRange) {
@@ -474,17 +389,17 @@ function AdminAnalyticsPage() {
         return;
       }
 
-      // 3. Fallback to rich seed data ONLY if both fail
-      const seedRes = generateSeedAnalytics(daysCount);
-      setData(seedRes);
-      setFeedEvents(seedRes.recent_events.slice(0, FEED_PAGE_SIZE));
-      setHasMoreFeed(true);
+      // 3. Fallback to clean empty state ONLY if both RPC and direct query fail
+      const emptyRes = getEmptyAnalytics(daysCount);
+      setData(emptyRes);
+      setFeedEvents([]);
+      setHasMoreFeed(false);
     } catch (err) {
       console.warn("[Analytics] Loading error, fallback:", err);
-      const seedRes = generateSeedAnalytics(daysCount);
-      setData(seedRes);
-      setFeedEvents(seedRes.recent_events.slice(0, FEED_PAGE_SIZE));
-      setHasMoreFeed(true);
+      const emptyRes = getEmptyAnalytics(daysCount);
+      setData(emptyRes);
+      setFeedEvents([]);
+      setHasMoreFeed(false);
     } finally {
       setLoading(false);
     }
@@ -520,16 +435,7 @@ function AdminAnalyticsPage() {
           setHasMoreFeed(false);
         }
       } else {
-        // Fallback for seed / offline mode
-        const moreSeeds = generateSeedEventsBatch(from, FEED_PAGE_SIZE);
-        if (moreSeeds.length > 0) {
-          setFeedEvents((prev) => [...prev, ...moreSeeds]);
-          if (from + moreSeeds.length >= 80) {
-            setHasMoreFeed(false);
-          }
-        } else {
-          setHasMoreFeed(false);
-        }
+        setHasMoreFeed(false);
       }
     } catch (err) {
       console.warn("[Analytics] Gagal memuat lebih banyak feed:", err);
