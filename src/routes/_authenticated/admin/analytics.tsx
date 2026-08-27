@@ -219,6 +219,7 @@ function AdminAnalyticsPage() {
 
   // Live feed pagination states (20 items per page)
   const [feedEvents, setFeedEvents] = useState<RecentEventItem[]>([]);
+  const [totalFeedCount, setTotalFeedCount] = useState<number>(0);
   const [loadingMoreFeed, setLoadingMoreFeed] = useState(false);
   const [hasMoreFeed, setHasMoreFeed] = useState(false);
 
@@ -247,6 +248,16 @@ function AdminAnalyticsPage() {
     endDate.setHours(23, 59, 59, 999);
 
     try {
+      // 0. Fetch total visitor events count for pagination
+      const { count: totalEvents } = await (supabase as any)
+        .from("visitor_events")
+        .select("id", { count: "exact", head: true })
+        .not("page_path", "like", "/admin%");
+
+      if (typeof totalEvents === "number") {
+        setTotalFeedCount(totalEvents);
+      }
+
       // 1. Try Supabase RPC aggregation function
       const { data: rpcData, error: rpcError } = await (supabase as any).rpc("get_visitor_analytics", {
         p_start_date: startDate.toISOString(),
@@ -254,9 +265,29 @@ function AdminAnalyticsPage() {
       });
 
       if (!rpcError && rpcData && typeof rpcData === "object" && rpcData.total_pageviews !== undefined) {
-        setData(rpcData as AnalyticsData);
-        setFeedEvents((rpcData.recent_events || []).slice(0, FEED_PAGE_SIZE));
-        setHasMoreFeed((rpcData.recent_events || []).length >= FEED_PAGE_SIZE);
+        const normalizedData: AnalyticsData = {
+          ...rpcData,
+          total_pageviews: Number(rpcData.total_pageviews || 0),
+          unique_visitors: Number(rpcData.unique_visitors || 0),
+          whatsapp_clicks: Number(rpcData.whatsapp_clicks || 0),
+          feature_conversions: Number(rpcData.feature_conversions || 0),
+          conversion_rate: Number(rpcData.conversion_rate || 0),
+          pageviews_growth: Number(rpcData.pageviews_growth || 0),
+          visitors_growth: Number(rpcData.visitors_growth || 0),
+          daily_stats: (rpcData.daily_stats || []).map((s: any) => ({
+            date: String(s.date || ""),
+            formatted_date: String(s.formatted_date || s.date || ""),
+            pageviews: Number(s.pageviews || 0),
+            unique_visitors: Number(s.unique_visitors || 0),
+            whatsapp_clicks: Number(s.whatsapp_clicks || 0),
+            conversions: Number(s.conversions || 0),
+          })),
+        };
+        setData(normalizedData);
+        const events = rpcData.recent_events || [];
+        setFeedEvents(events.slice(0, FEED_PAGE_SIZE));
+        const total = typeof totalEvents === "number" ? totalEvents : events.length;
+        setHasMoreFeed(total > FEED_PAGE_SIZE);
         setLoading(false);
         return;
       }
@@ -392,7 +423,8 @@ function AdminAnalyticsPage() {
 
         setData(realData);
         setFeedEvents(dbEvents.slice(0, FEED_PAGE_SIZE));
-        setHasMoreFeed(dbEvents.length >= FEED_PAGE_SIZE);
+        const total = totalFeedCount > 0 ? totalFeedCount : dbEvents.length;
+        setHasMoreFeed(total > FEED_PAGE_SIZE);
         setLoading(false);
         return;
       }
@@ -411,7 +443,7 @@ function AdminAnalyticsPage() {
     } finally {
       setLoading(false);
     }
-  }, [daysCount]);
+  }, [daysCount, totalFeedCount]);
 
   useEffect(() => {
     void loadAnalytics();
@@ -438,10 +470,11 @@ function AdminAnalyticsPage() {
       );
 
       if (!error && dbEvents && dbEvents.length > 0) {
-        setFeedEvents((prev) => [...prev, ...dbEvents]);
-        if (dbEvents.length < FEED_PAGE_SIZE) {
-          setHasMoreFeed(false);
-        }
+        setFeedEvents((prev) => {
+          const next = [...prev, ...dbEvents];
+          setHasMoreFeed(totalFeedCount > 0 ? next.length < totalFeedCount : dbEvents.length >= FEED_PAGE_SIZE);
+          return next;
+        });
       } else {
         setHasMoreFeed(false);
       }
@@ -804,7 +837,7 @@ function AdminAnalyticsPage() {
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={data.daily_stats}
-                margin={{ top: 10, right: 5, left: -25, bottom: 0 }}
+                margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
                 barGap={4}
               >
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.6} />
@@ -822,7 +855,7 @@ function AdminAnalyticsPage() {
                   allowDecimals={false}
                 />
                 <RechartsTooltip
-                  content={({ active, payload, label }) => {
+                  content={({ active, payload }) => {
                     if (!active || !payload || !payload.length) return null;
                     const item = payload[0]?.payload as DailyStat;
                     if (!item) return null;
@@ -835,27 +868,27 @@ function AdminAnalyticsPage() {
                         <div className="mt-1.5 space-y-1 text-xs font-medium">
                           <div className="flex items-center justify-between gap-3">
                             <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
-                              <span className="h-2 w-2 rounded-full bg-[#184828]" />
+                              <span className="h-2 w-2 rounded-full bg-emerald-500" />
                               Total Kunjungan:
                             </span>
                             <span className="font-bold">{item.pageviews}</span>
                           </div>
                           <div className="flex items-center justify-between gap-3">
-                            <span className="flex items-center gap-1.5 text-amber-600 dark:text-amber-300">
-                              <span className="h-2 w-2 rounded-full bg-[#c2af84]" />
+                            <span className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400">
+                              <span className="h-2 w-2 rounded-full bg-blue-500" />
                               Pengunjung Unik:
                             </span>
                             <span className="font-bold">{item.unique_visitors}</span>
                           </div>
                           <div className="flex items-center justify-between gap-3">
-                            <span className="flex items-center gap-1.5 text-green-600">
+                            <span className="flex items-center gap-1.5 text-green-600 dark:text-green-400">
                               <span className="h-2 w-2 rounded-full bg-green-500" />
                               Klik WhatsApp:
                             </span>
                             <span className="font-bold">{item.whatsapp_clicks}</span>
                           </div>
                           <div className="flex items-center justify-between gap-3">
-                            <span className="flex items-center gap-1.5 text-violet-600">
+                            <span className="flex items-center gap-1.5 text-violet-600 dark:text-violet-400">
                               <span className="h-2 w-2 rounded-full bg-violet-500" />
                               Konversi Fitur:
                             </span>
@@ -872,16 +905,20 @@ function AdminAnalyticsPage() {
                     <Bar
                       dataKey="pageviews"
                       name="Total Kunjungan (Pageviews)"
-                      fill="#184828"
+                      fill="#10b981"
                       radius={[4, 4, 0, 0]}
                       maxBarSize={28}
+                      minPointSize={2}
+                      isAnimationActive={false}
                     />
                     <Bar
                       dataKey="unique_visitors"
                       name="Pengunjung Unik (Unique)"
-                      fill="#c2af84"
+                      fill="#3b82f6"
                       radius={[4, 4, 0, 0]}
                       maxBarSize={28}
+                      minPointSize={2}
+                      isAnimationActive={false}
                     />
                   </>
                 )}
@@ -893,6 +930,8 @@ function AdminAnalyticsPage() {
                     fill="#16a34a"
                     radius={[4, 4, 0, 0]}
                     maxBarSize={36}
+                    minPointSize={2}
+                    isAnimationActive={false}
                   />
                 )}
 
@@ -903,6 +942,8 @@ function AdminAnalyticsPage() {
                     fill="#8b5cf6"
                     radius={[4, 4, 0, 0]}
                     maxBarSize={36}
+                    minPointSize={2}
+                    isAnimationActive={false}
                   />
                 )}
               </BarChart>
@@ -914,24 +955,24 @@ function AdminAnalyticsPage() {
             {chartTab === "traffic" && (
               <>
                 <div className="flex items-center gap-1.5">
-                  <span className="h-2.5 w-2.5 rounded-sm bg-[#184828]" />
+                  <span className="h-2.5 w-2.5 rounded-sm bg-emerald-500" />
                   <span>Total Kunjungan (Pageviews)</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <span className="h-2.5 w-2.5 rounded-sm bg-[#c2af84]" />
+                  <span className="h-2.5 w-2.5 rounded-sm bg-blue-500" />
                   <span>Pengunjung Unik (Unique)</span>
                 </div>
               </>
             )}
             {chartTab === "whatsapp" && (
               <div className="flex items-center gap-1.5">
-                <span className="h-2.5 w-2.5 rounded-sm bg-[#16a34a]" />
+                <span className="h-2.5 w-2.5 rounded-sm bg-green-500" />
                 <span>Klik WhatsApp & Interaksi CS</span>
               </div>
             )}
             {chartTab === "conversions" && (
               <div className="flex items-center gap-1.5">
-                <span className="h-2.5 w-2.5 rounded-sm bg-[#8b5cf6]" />
+                <span className="h-2.5 w-2.5 rounded-sm bg-violet-500" />
                 <span>Interaksi Buat CV, Cek ATS & Tryout</span>
               </div>
             )}
@@ -1114,13 +1155,18 @@ function AdminAnalyticsPage() {
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
                 <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
               </span>
-              <CardTitle className="font-display text-sm font-bold sm:text-base">
-                Aktivitas Pengunjung Terkini
-              </CardTitle>
+              <div>
+                <CardTitle className="font-display text-sm font-bold sm:text-base">
+                  Aktivitas Pengunjung Terkini
+                </CardTitle>
+                <CardDescription className="text-[11px] sm:text-xs">
+                  {feedEvents.length} dari {totalFeedCount > 0 ? totalFeedCount : feedEvents.length} aktivitas
+                </CardDescription>
+              </div>
             </div>
-            <Badge variant="outline" className="gap-1.5 border-emerald-500/30 text-[10px] text-emerald-700 dark:text-emerald-400 sm:text-xs">
+            <Badge variant="outline" className="gap-1.5 border-emerald-500/30 text-[10px] text-emerald-700 dark:text-emerald-400 sm:text-xs font-semibold">
               <Activity className="h-3 w-3" />
-              Live Feed ({feedEvents.length})
+              {feedEvents.length} dari {totalFeedCount > 0 ? totalFeedCount : feedEvents.length}
             </Badge>
           </CardHeader>
           <CardContent className="space-y-2.5 pt-1 max-h-[520px] overflow-y-auto pr-1">
@@ -1183,14 +1229,14 @@ function AdminAnalyticsPage() {
                       ) : (
                         <>
                           <ChevronDown className="h-3.5 w-3.5" />
-                          Muat Lebih Banyak (20 data)
+                          Muat Lebih Banyak ({feedEvents.length} dari {totalFeedCount > 0 ? totalFeedCount : feedEvents.length})
                         </>
                       )}
                     </Button>
                   ) : (
                     <p className="py-2 text-center text-[11px] text-muted-foreground flex items-center justify-center gap-1.5">
                       <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                      <span>Semua aktivitas terbaru telah dimuat ({feedEvents.length} data)</span>
+                      <span>Semua aktivitas telah dimuat ({feedEvents.length} dari {totalFeedCount > 0 ? totalFeedCount : feedEvents.length} data)</span>
                     </p>
                   )}
                 </div>
