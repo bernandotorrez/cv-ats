@@ -299,13 +299,15 @@ function generateSurabayaHtml(
   }
   .watermark {
     position: fixed;
-    bottom: 20px;
-    left: 0;
-    right: 0;
-    text-align: center;
-    font-size: 9pt;
-    font-weight: 500;
-    color: #9ca3af;
+    bottom: 12mm;
+    left: 40px;
+    right: 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 8.5pt;
+    font-weight: 400;
+    color: #000000;
   }
   @media print {
     body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -428,7 +430,7 @@ function generateSurabayaHtml(
     }
   </div>
   
-  ${watermark ? '<div class="watermark">Dibuat dengan CV Pintar — cvpintar.web.id</div>' : ""}
+  ${watermark ? '<div class="watermark"><span>cvpintar.web.id</span><span>powered by <strong>CV Pintar</strong></span></div>' : ""}
 </body>
 </html>`;
 }
@@ -585,12 +587,14 @@ function generateJakartaHtml(
   .watermark {
     position: fixed;
     bottom: 12mm;
-    left: 0;
-    right: 0;
-    text-align: center;
+    left: 16mm;
+    right: 16mm;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     font-size: 8.5pt;
-    font-weight: 500;
-    color: #9ca3af;
+    font-weight: 400;
+    color: #000000;
   }
   @media print {
     body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -607,7 +611,7 @@ function generateJakartaHtml(
   ${skillsHtml}
   ${langsHtml}
   ${certHtml}
-  ${watermark ? '<div class="watermark">Dibuat dengan CV Pintar — cvpintar.web.id</div>' : ""}
+  ${watermark ? '<div class="watermark"><span>cvpintar.web.id</span><span>powered by <strong>CV Pintar</strong></span></div>' : ""}
 </body>
 </html>`;
 }

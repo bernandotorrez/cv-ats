@@ -907,13 +907,19 @@ export async function generateDocx(cv: CvData, options: ExportOptions): Promise<
       new Paragraph({
         children: [
           new TextRun({
-            text: "Dibuat dengan CV Pintar — cvpintar.web.id",
-            size: 18,
+            text: "cvpintar.web.id",
+            size: 17,
             font: FONT_NAME,
-            color: "999999",
+            color: "000000",
+          }),
+          new TextRun({
+            text: "\t\t\t\t\t\t\t\t\t\t\t\tpowered by CV Pintar",
+            size: 17,
+            font: FONT_NAME,
+            color: "000000",
           }),
         ],
-        alignment: AlignmentType.CENTER,
+        alignment: AlignmentType.BOTH,
         spacing: { before: 400 },
       }),
     );
@@ -1073,6 +1079,19 @@ export function downloadPdf(_cv: CvData, fileName: string = "CV.pdf") {
       .cv-preview h2,
       .cv-preview h3 {
         break-after: avoid;
+      }
+
+      .cv-preview-watermark {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        width: 100% !important;
+        margin-top: 8mm !important;
+        color: #000000 !important;
+        font-size: 8.5pt !important;
+        line-height: 1.2 !important;
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
       }
 
       @page {

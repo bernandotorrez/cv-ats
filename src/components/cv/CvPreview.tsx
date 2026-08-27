@@ -153,19 +153,8 @@ export function CvPreview({
           transformOrigin: "top center",
         }}
       >
-        {renderTemplate()}
-        {showWatermark && (
-          <div
-            className="cv-preview-watermark text-sm font-medium text-gray-500 pointer-events-none"
-            style={{
-              marginTop: "16px",
-              textAlign: "center",
-              width: "100%",
-            }}
-          >
-            {t(language, "watermark")}
-          </div>
-        )}
+        <div className="flex-1 w-full">{renderTemplate()}</div>
+        {showWatermark && <CvWatermark />}
       </div>
 
       {totalPages > 1 && (
@@ -176,6 +165,33 @@ export function CvPreview({
           {pageNumber} / {totalPages}
         </div>
       )}
+    </div>
+  );
+}
+
+export function CvWatermark({ className }: { className?: string }) {
+  return (
+    <div
+      className={`cv-preview-watermark flex items-center justify-between pointer-events-none select-none ${className || ""}`}
+      style={{
+        marginTop: "auto",
+        paddingTop: "14px",
+        width: "100%",
+        color: "#000000",
+        fontFamily: "Inter, system-ui, sans-serif",
+        fontSize: "8.5pt",
+        lineHeight: 1.2,
+      }}
+    >
+      <span className="font-normal text-black" style={{ color: "#000000" }}>
+        cvpintar.web.id
+      </span>
+      <div className="flex items-center gap-1 font-normal text-black" style={{ color: "#000000" }}>
+        <span>powered by</span>
+        <span className="font-semibold text-black" style={{ color: "#000000", fontWeight: 600 }}>
+          CV Pintar
+        </span>
+      </div>
     </div>
   );
 }
@@ -212,7 +228,7 @@ export function MultiPageCvPreview({
           }}
         >
           <div
-            className="cv-preview bg-white text-[#111] shadow-lg"
+            className="cv-preview bg-white text-[#111] shadow-lg flex flex-col justify-between"
             style={{
               width: `${A4_WIDTH_MM}mm`,
               minHeight: `${A4_HEIGHT_MM}mm`,
@@ -222,21 +238,16 @@ export function MultiPageCvPreview({
               lineHeight: 1.5,
               transform: `scale(${scale})`,
               transformOrigin: "top left",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-between",
+              boxSizing: "border-box",
             }}
           >
-            {renderTemplateById(template, pageData, index === 0, language)}
-            {showWatermark && index === pages.length - 1 && (
-              <div
-                className="cv-preview-watermark text-sm font-medium text-gray-500 pointer-events-none"
-                style={{
-                  marginTop: "16px",
-                  textAlign: "center",
-                  width: "100%",
-                }}
-              >
-                {t(language, "watermark")}
-              </div>
-            )}
+            <div className="flex-1 w-full">
+              {renderTemplateById(template, pageData, index === 0, language)}
+            </div>
+            {showWatermark && index === pages.length - 1 && <CvWatermark />}
           </div>
 
           {pages.length > 1 && (
@@ -724,10 +735,17 @@ export const cvPrintStyles = `
 
   /* Watermark should flow after the last CV content */
   .cv-preview-watermark {
-    display: block !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    width: 100% !important;
     position: static !important;
-    margin-top: 10mm !important;
-    text-align: center !important;
+    margin-top: 8mm !important;
+    color: #000000 !important;
+    font-size: 8.5pt !important;
+    line-height: 1.2 !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
   }
 }
 `;

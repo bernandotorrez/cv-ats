@@ -363,6 +363,19 @@
     break-after: avoid;
   }
 
+  .cv-preview-watermark {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    width: 100% !important;
+    margin-top: 8mm !important;
+    color: #000000 !important;
+    font-size: 8.5pt !important;
+    line-height: 1.2 !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
   @page {
     size: A4;
     margin: 5mm 0;
