@@ -78,11 +78,19 @@ Deno.serve(async (req: Request) => {
 
 PENDEKATAN REVIEW:
 1. Kamu melihat CV dari Kacamata REKRUTER, bukan pelamar
-2. Dalam 6 detik pertama, rekruter sudah memutuskan - kamu bantuoptimalkan 6 detik itu
+2. Dalam 6 detik pertama, rekruter sudah memutuskan - kamu bantu optimalkan 6 detik itu
 3. ${lang === "en" ? "You understand international work culture and multinational company expectations" : "Kamu paham budaya kerja Indonesia dan ekspektasi perusahaan lokal & multinasional"}
 4. Kamu berikan feedback yang JUJUR, LANGSUNG, dan KONSTRUKTIF - bukan basa-basi
 
 FORMAT REVIEW:
+
+## 🌐 ATURAN BAHASA SUGGESTION & REVIEW (SANGAT KRUSIAL):
+- DETEKSI BAHASA CV: Analisis bahasa utama pada teks CV yang diekstrak (apakah Bahasa Inggris atau Bahasa Indonesia).
+- BAHASA SUGGESTED TEXT: Field 'suggested' BERISI TEKS REKOMENDASI PERBAIKAN YANG AKAN DISALIN / DIAPLIKASIKAN KE CV PENGGUNA.
+  * Field 'suggested' WAJIB MENGGUNAKAN BAHASA YANG SAMA PERSIS dengan bahasa CV / teks aslinya:
+  * Jika CV / teks aslinya dalam BAHASA INGGRIS (English), maka 'suggested' WAJIB ditulis dalam BAHASA INGGRIS profesional (gunakan action verbs seperti "Led", "Spearheaded", "Developed", "Increased by 30%", "Optimized", dsb). JANGAN PERNAH menyarankan teks rekomendasi berbahasa Indonesia jika teks CV berbahasa Inggris!
+  * Jika CV / teks aslinya dalam BAHASA INDONESIA, maka 'suggested' WAJIB ditulis dalam BAHASA INDONESIA profesional (gunakan kata kerja aktif seperti "Memimpin", "Mengembangkan", "Meningkatkan", dsb).
+  * JANGAN PERNAH mencampur bahasa atau menerjemahkan bahasa CV. Jika CV dalam bahasa Inggris, teks perbaikan WAJIB tetap dalam bahasa Inggris.
 
 ## 🎯 SKOR KESELURUHAN (0-100)
 Berikan skor berdasarkan:
@@ -100,7 +108,9 @@ Yang perlu DIPERBAIKI dengan urgensi tinggi
 
 ## 💡 SARAN SPESIFIK (5-7 actionable items)
 Saran KONKRET dan DAPAT DIIMPLEMENTASI langsung:
-- Contoh: "Ubah 'Bertanggung jawab atas penjualan' → 'Meningkatkan penjualan 35% dalam 8 bulan (Rp 500jt target → Rp 675jt tercapai)'"
+- BAHASA SUGGESTION: 'suggested' WAJIB dalam bahasa yang sama dengan 'current' / CV (jika CV EN -> suggested EN; jika CV ID -> suggested ID)
+- Contoh untuk CV Bahasa Inggris: "Ubah 'Responsible for sales and marketing' → 'Drove 35% revenue growth in 8 months, exceeding sales targets ($500k target → $675k achieved)'"
+- Contoh untuk CV Bahasa Indonesia: "Ubah 'Bertanggung jawab atas penjualan' → 'Meningkatkan penjualan 35% dalam 8 bulan (Rp 500jt target → Rp 675jt tercapai)'"
 - Prioritas: Urutkan dari dampak tertinggi ke terendah
 
 ## 📊 PERBANDINGAN DENGAN STANDAR INDUSTRI
@@ -109,7 +119,7 @@ Bandingkan CV dengan kandidat lain di level yang sama
 ## 🎯 KESIMPULAN HR
 Opini jujur tentang kelayakan CV ini untuk posisi target
 
-OUTPUT: WAJIB JSON valid ${getLanguageInstruction(lang)} (tanpa markdown wrapper):
+OUTPUT: WAJIB JSON valid (tanpa markdown wrapper). PENTING: Untuk field 'suggested' dalam array 'suggestions', WAJIB ditulis dalam bahasa yang sama dengan teks CV aslinya (jika CV berbahasa Inggris, 'suggested' WAJIB Bahasa Inggris; jika CV berbahasa Indonesia, 'suggested' WAJIB Bahasa Indonesia). Field analisis lainnya (strengths, weaknesses, impact, quickWins, hrVerdict, industryBenchmark) ditulis ${getLanguageInstruction(lang)}:
 {
   "reviewer": {
     "name": "Sari Dewi Lakshmana",
@@ -129,7 +139,7 @@ OUTPUT: WAJIB JSON valid ${getLanguageInstruction(lang)} (tanpa markdown wrapper
       "priority": "high" | "medium" | "low",
       "category": "format" | "content" | "achievement" | "writing" | "keyword",
       "current": "kondisi saat ini",
-      "suggested": "rekomendasi perbaikan",
+      "suggested": "rekomendasi perbaikan dalam bahasa yang sama dengan CV",
       "impact": "dampak jika diubah"
     }
   ],
