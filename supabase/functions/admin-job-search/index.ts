@@ -74,7 +74,7 @@ type JobParseResult = {
 };
 
 const AI_GATEWAY_URL = "https://ai.sumopod.com/v1/chat/completions";
-const AI_MODEL = "qwen3.7-flash-2026-07-15";
+const AI_MODEL = "gemini/gemini-3.1-flash-lite";
 const DEFAULT_SOURCES: SearchSource[] = ["jobstreet", "glints", "kalibrr", "dealls", "google"];
 const RICH_AI_SOURCE_LIMIT = 6;
 const RICH_AI_CONTENT_CHARS = 3500;

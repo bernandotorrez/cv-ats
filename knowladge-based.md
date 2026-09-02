@@ -44,6 +44,12 @@ Nilai utama CV Pintar:
 - Private mentoring bersama HR Recruiter.
 - Privasi data dijaga.
 
+## Teknologi & Model AI
+
+- **Model AI Utama**: `gemini/gemini-3.1-flash-lite` (via AI Gateway `ai.sumopod.com`).
+- **Fitur yang Menggunakan Model Ini**: Seluruh kapabilitas AI di CV Pintar, termasuk AI Writing & Suggestions, ATS Scoring, Review CV by HR Expert, Cover Letter Generator, Keyword Extractor, AI Job Match Score, Auto Tailor CV, Simulasi Wawancara AI, AI Chat / Panduan AI, ekstraksi teks dokumen CV (OCR multimodal), dan AI Job / Tryout Question Generator.
+- **Karakteristik**: Respon sangat cepat, akurat, dan unggul dalam pemrosesan bilingual (Bahasa Indonesia & Bahasa Inggris).
+
 ## Statistik dan Social Proof
 
 Angka yang ditampilkan di website:
@@ -951,6 +957,10 @@ Batas tanggung jawab:
 - Layanan bisa mengalami gangguan teknis, meskipun tim berupaya menjaga stabilitas.
 
 ## FAQ Umum
+
+### Model AI apa yang digunakan oleh CV Pintar?
+
+CV Pintar menggunakan model AI `gemini/gemini-3.1-flash-lite` yang dioptimalkan untuk kecepatan tinggi, akurasi penalaran, analisis CV ATS, dan dukungan natural bilingual (Bahasa Indonesia & Bahasa Inggris).
 
 ### Apa itu CV ATS friendly?
 
