@@ -262,15 +262,19 @@ function AdminUsersPage() {
   const goToNextPage = () => goToPage(pagination.page + 1);
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-semibold flex items-center gap-2">
-            <Users className="h-5 w-5" /> Manage Users
-          </h2>
-          <p className="text-sm text-muted-foreground">{pagination.total} pengguna terdaftar</p>
+    <div className="space-y-5 sm:space-y-6">
+      <section className="rounded-lg border bg-card p-4 sm:p-5">
+        <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+          <Users className="h-3.5 w-3.5" />
+          Users
         </div>
-      </div>
+        <h2 className="font-display text-2xl font-bold tracking-normal sm:text-3xl">
+          Kelola user &amp; subscription.
+        </h2>
+        <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+          {pagination.total} pengguna terdaftar — cari, edit role, dan atur tier di satu tempat.
+        </p>
+      </section>
 
       {/* Filters */}
       <div className="flex gap-3 flex-wrap">

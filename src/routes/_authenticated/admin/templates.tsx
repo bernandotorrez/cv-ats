@@ -1,4 +1,4 @@
-import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { buildSeo } from "@/lib/seo";
@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -15,22 +15,19 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/lib/auth-context";
-import { isAdmin } from "@/lib/admin";
-import { TEMPLATES } from "@/lib/cv-types";
 import {
-  ArrowLeft,
-  Plus,
-  Pencil,
-  Trash2,
-  Shield,
-  Palette,
-  Loader2,
-  AlertCircle,
-} from "lucide-react";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { supabase } from "@/integrations/supabase/client";
+import { Plus, Pencil, Trash2, Palette, Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/templates")({
   beforeLoad: async () => {
@@ -66,14 +63,13 @@ interface TemplateRow {
 }
 
 function AdminTemplatesPage() {
-  const { user } = useAuth();
-  const [admin, setAdmin] = useState(false);
-  const [checking, setChecking] = useState(true);
   const [templates, setTemplates] = useState<TemplateRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<TemplateRow | null>(null);
   const [saving, setSaving] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<TemplateRow | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   // Form state
   const [formSlug, setFormSlug] = useState("");
@@ -84,16 +80,8 @@ function AdminTemplatesPage() {
   const [formSort, setFormSort] = useState(0);
 
   useEffect(() => {
-    checkAdmin();
     loadTemplates();
   }, []);
-
-  const checkAdmin = async () => {
-    if (!user?.id) return;
-    const ok = await isAdmin(user.id);
-    setAdmin(ok);
-    setChecking(false);
-  };
 
   const loadTemplates = async () => {
     setLoading(true);
@@ -156,11 +144,14 @@ function AdminTemplatesPage() {
     loadTemplates();
   };
 
-  const handleDelete = async (t: TemplateRow) => {
-    if (!confirm(`Hapus template "${t.name}"?`)) return;
-    const { error } = await supabase.from("templates").delete().eq("id", t.id);
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    const { error } = await supabase.from("templates").delete().eq("id", deleteTarget.id);
+    setDeleting(false);
     if (error) return toast.error(error.message);
     toast.success("Template dihapus");
+    setDeleteTarget(null);
     loadTemplates();
   };
 
@@ -173,44 +164,25 @@ function AdminTemplatesPage() {
     loadTemplates();
   };
 
-  if (checking)
-    return (
-      <div className="container-page py-10 text-sm text-muted-foreground">Memeriksa akses...</div>
-    );
-
-  if (!admin) {
-    return (
-      <div className="container-page py-20 text-center">
-        <Shield className="h-12 w-12 mx-auto text-muted-foreground" />
-        <h1 className="mt-4 font-display text-2xl font-bold">Akses Ditolak</h1>
-        <p className="mt-2 text-muted-foreground">Hanya admin yang bisa mengakses halaman ini.</p>
-        <Button asChild className="mt-6">
-          <Link to="/dashboard">Kembali ke Dashboard</Link>
-        </Button>
-      </div>
-    );
-  }
-
   return (
-    <div className="container-page py-10">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <Button asChild variant="ghost" size="sm" className="mb-2">
-            <Link to="/dashboard">
-              <ArrowLeft className="h-4 w-4" /> Dashboard
-            </Link>
-          </Button>
-          <h1 className="font-display text-3xl font-bold text-foreground flex items-center gap-2">
-            <Shield className="h-6 w-6 text-primary" /> Admin: Template
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Kelola template CV yang tersedia untuk user.
+    <div className="space-y-5 sm:space-y-6">
+      <section className="flex flex-col gap-4 rounded-lg border bg-card p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+        <div className="min-w-0">
+          <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+            <Palette className="h-3.5 w-3.5" />
+            Templates
+          </div>
+          <h2 className="font-display text-2xl font-bold tracking-normal sm:text-3xl">
+            Kelola template CV yang tersedia.
+          </h2>
+          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+            Atur template yang tampil di galeri, urutan, dan status premium.
           </p>
         </div>
-        <Button onClick={openCreate} className="gap-2">
+        <Button onClick={openCreate} className="shrink-0 gap-2">
           <Plus className="h-4 w-4" /> Template Baru
         </Button>
-      </div>
+      </section>
 
       {loading ? (
         <p className="text-sm text-muted-foreground">Memuat template...</p>
@@ -252,7 +224,7 @@ function AdminTemplatesPage() {
                 <Button
                   size="sm"
                   variant="ghost"
-                  onClick={() => handleDelete(t)}
+                  onClick={() => setDeleteTarget(t)}
                   aria-label="Hapus"
                 >
                   <Trash2 className="h-4 w-4 text-destructive" />
@@ -345,6 +317,29 @@ function AdminTemplatesPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Delete confirmation */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Hapus template "{deleteTarget?.name}"?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Template akan hilang dari galeri template user. Tindakan ini tidak bisa dibatalkan.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Batal</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+              Hapus
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

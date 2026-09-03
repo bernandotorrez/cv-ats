@@ -579,7 +579,7 @@ function AdminAnalyticsPage() {
   };
 
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <div className="space-y-5 sm:space-y-6">
       {/* ─── Top Header & Controls ────────────────────────────────────────────── */}
       <div className="flex flex-col gap-4 rounded-xl border bg-card p-4 sm:p-6 lg:flex-row lg:items-center lg:justify-between">
         <div className="min-w-0">

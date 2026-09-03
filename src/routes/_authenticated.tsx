@@ -24,6 +24,8 @@ function AuthGate() {
     select: (state) => state.location.pathname,
   });
   const isCvBuilderPage = /^\/cv\/[^/]+\/?$/.test(pathname);
+  const isAdminPage = pathname === "/admin" || pathname.startsWith("/admin/");
+  const hideBottomNav = isCvBuilderPage || isAdminPage;
 
   if (loading || !user) {
     return (
@@ -44,11 +46,11 @@ function AuthGate() {
     <div
       className={cn(
         "print:pb-0 md:pb-0",
-        isCvBuilderPage ? "pb-0" : "pb-[calc(6.75rem+env(safe-area-inset-bottom))]",
+        hideBottomNav ? "pb-0" : "pb-[calc(6.75rem+env(safe-area-inset-bottom))]",
       )}
     >
       <Outlet />
-      {!isCvBuilderPage && <AuthenticatedBottomNav />}
+      {!hideBottomNav && <AuthenticatedBottomNav />}
     </div>
   );
 }

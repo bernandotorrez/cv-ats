@@ -328,15 +328,19 @@ function AdminTryoutPage() {
   }
 
   return (
-    <div className="space-y-5">
-      <div>
-        <h1 className="flex items-center gap-2 font-display text-2xl font-bold">
-          <Trophy className="h-5 w-5 text-primary" /> Kelola Tryout
-        </h1>
-        <p className="text-sm text-muted-foreground">
+    <div className="space-y-5 sm:space-y-6">
+      <section className="rounded-lg border bg-card p-4 sm:p-5">
+        <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+          <Trophy className="h-3.5 w-3.5" />
+          Tryout
+        </div>
+        <h2 className="font-display text-2xl font-bold tracking-normal sm:text-3xl">
+          Kelola Tryout
+        </h2>
+        <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
           Aktivasi kredit user, kelola exam set, dan monitor statistik.
         </p>
-      </div>
+      </section>
 
       {/* Stats */}
       {loading || !stats ? (
