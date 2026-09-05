@@ -690,37 +690,6 @@ function FeatureCard({
   );
 }
 
-function ScorePreview({
-  label,
-  score,
-  max,
-  passing,
-}: {
-  label: string;
-  score: number;
-  max: number;
-  passing: number;
-}) {
-  const passed = score >= passing;
-  const pct = (score / max) * 100;
-  return (
-    <div>
-      <div className="mb-1 flex items-center justify-between text-xs font-medium">
-        <span className="text-foreground">{label}</span>
-        <span className={passed ? "text-emerald-700 dark:text-emerald-400" : "text-amber-700 dark:text-amber-400"}>
-          {score} / {max} {passed ? "✓" : ""}
-        </span>
-      </div>
-      <div className="h-2 overflow-hidden rounded-full bg-muted">
-        <div
-          className={`h-full ${passed ? "bg-emerald-500" : "bg-amber-500"}`}
-          style={{ width: `${pct}%` }}
-        />
-      </div>
-    </div>
-  );
-}
-
 function SubtestInfo({
   label,
   fullName,

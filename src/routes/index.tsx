@@ -377,21 +377,21 @@ function LandingPage() {
                       <img
                         src="/mentor-female.png"
                         className="w-6 h-6 rounded-full border border-white"
-                        alt="user"
+                        alt=""
                         loading="lazy"
                         decoding="async"
                       />
                       <img
                         src="/mentor-male.png"
                         className="w-6 h-6 rounded-full border border-white"
-                        alt="user"
+                        alt=""
                         loading="lazy"
                         decoding="async"
                       />
                       <img
                         src="/mentor-female.png"
                         className="w-6 h-6 rounded-full border border-white"
-                        alt="user"
+                        alt=""
                         loading="lazy"
                         decoding="async"
                       />
@@ -1276,9 +1276,6 @@ function LandingPage() {
                 <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-green-900 text-green-300 uppercase tracking-wider">
                   MINTA BANTUAN MENTOR
                 </span>
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 uppercase tracking-wider">
-                  SEGERA HADIR
-                </span>
               </div>
               <h2 className="mt-4 font-display text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight">
                 Bimbingan Private 1-on-1 dengan Mentor Expert.
@@ -1308,12 +1305,14 @@ function LandingPage() {
               </div>
 
               <Button
-                disabled
+                asChild
                 size="lg"
-                className="mt-10 h-12 px-8 bg-yellow-300/50 text-gray-800 font-extrabold rounded-lg shadow-lg text-base opacity-75 cursor-not-allowed"
+                className="mt-10 h-12 px-8 bg-yellow-300 hover:bg-yellow-200 text-gray-900 font-extrabold rounded-lg shadow-lg text-base"
               >
-                Segera Hadir
-                <ArrowRight className="ml-2 h-4 w-4" />
+                <Link to="/private-coaching">
+                  Minta Bantuan Mentor
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
               </Button>
             </div>
 
@@ -1504,7 +1503,7 @@ function LandingPage() {
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-white text-xs">✓</span>
-                Mudah & cepat
+                ATS Friendly
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-white text-xs">✓</span>

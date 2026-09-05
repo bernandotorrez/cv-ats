@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Facebook, Instagram, Linkedin, Twitter, ArrowUp } from "lucide-react";
+import { ArrowUp } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 
@@ -40,21 +40,6 @@ export function SiteFooter() {
             <p className="text-sm leading-relaxed text-gray-400">
               Buat CV profesional, lacak lamaran, dan tingkatkan peluang kariermu.
             </p>
-            {/* Social Media Icons */}
-            <div className="flex gap-4 mt-2">
-              <a href="#" aria-label="Facebook" className="hover:text-white transition-colors">
-                <Facebook className="h-5 w-5" />
-              </a>
-              <a href="#" aria-label="Instagram" className="hover:text-white transition-colors">
-                <Instagram className="h-5 w-5" />
-              </a>
-              <a href="#" aria-label="LinkedIn" className="hover:text-white transition-colors">
-                <Linkedin className="h-5 w-5" />
-              </a>
-              <a href="#" aria-label="Twitter" className="hover:text-white transition-colors">
-                <Twitter className="h-5 w-5" />
-              </a>
-            </div>
           </div>
 
           {/* Links Columns */}
@@ -119,7 +104,7 @@ export function SiteFooter() {
 
         {/* Bottom copyright & Scroll to top */}
         <div className="border-t border-gray-900 pt-8 flex items-center justify-between text-xs text-gray-500">
-          <p>© 2026 CV Pintar. All rights reserved.</p>
+          <p>© {year} CV Pintar. All rights reserved.</p>
           <button
             onClick={handleScrollToTop}
             aria-label="Scroll to top"

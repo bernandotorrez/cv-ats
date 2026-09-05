@@ -135,27 +135,40 @@ const buyers = [
 ] as const satisfies readonly Buyer[];
 
 const tiers = ["Starter", "Pro"] as const;
-const MIN_DELAY_MS = 3000;
-const MAX_DELAY_MS = 10000;
-const VISIBLE_DURATION_MS = 5000;
+const INITIAL_DELAY_MS = 4000;
+const VISIBLE_DURATION_MS = 6000;
+const SESSION_KEY = "cvp_fake_buyer_shown";
 
 function pickRandom<T>(items: readonly T[]): T {
   return items[Math.floor(Math.random() * items.length)]!;
 }
 
-function randomDelay() {
-  return Math.floor(Math.random() * (MAX_DELAY_MS - MIN_DELAY_MS + 1)) + MIN_DELAY_MS;
+function hasShownThisSession() {
+  try {
+    return sessionStorage.getItem(SESSION_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function markShownThisSession() {
+  try {
+    sessionStorage.setItem(SESSION_KEY, "1");
+  } catch {
+    // ignore storage failures (private browsing, disabled storage)
+  }
 }
 
 export function FakeBuyerCard({ disabled = false }: { disabled?: boolean }) {
   const [dismissed, setDismissed] = useState(false);
+  const [alreadyShownSession] = useState(() => hasShownThisSession());
   const [buyer, setBuyer] = useState<Buyer | null>(null);
   const [tier, setTier] = useState<(typeof tiers)[number]>("Starter");
   const [visible, setVisible] = useState(false);
   const showTimerRef = useRef<number | undefined>(undefined);
   const hideTimerRef = useRef<number | undefined>(undefined);
 
-  const shouldShow = !disabled && !dismissed;
+  const shouldShow = !disabled && !dismissed && !alreadyShownSession;
 
   useEffect(() => {
     const clearTimers = () => {
@@ -169,32 +182,20 @@ export function FakeBuyerCard({ disabled = false }: { disabled?: boolean }) {
       return;
     }
 
-    const scheduleNext = () => {
-      showTimerRef.current = window.setTimeout(() => {
-        setBuyer(pickRandom(buyers));
-        setTier(pickRandom(tiers));
-        setVisible(true);
-
-        hideTimerRef.current = window.setTimeout(() => {
-          setVisible(false);
-          scheduleNext();
-        }, VISIBLE_DURATION_MS);
-      }, randomDelay());
-    };
-
-    scheduleNext();
-
-    return clearTimers;
-  }, [shouldShow]);
-
-  useEffect(() => {
-    if (buyer) return;
-
-    if (shouldShow) {
+    showTimerRef.current = window.setTimeout(() => {
       setBuyer(pickRandom(buyers));
       setTier(pickRandom(tiers));
-    }
-  }, [buyer, shouldShow]);
+      setVisible(true);
+      markShownThisSession();
+
+      hideTimerRef.current = window.setTimeout(() => {
+        setVisible(false);
+      }, VISIBLE_DURATION_MS);
+    }, INITIAL_DELAY_MS);
+
+    return clearTimers;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const productName = useMemo(() => `CV Pintar ${tier}`, [tier]);
 

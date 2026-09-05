@@ -124,12 +124,6 @@ function PrivateCoachingPage() {
                 <Sparkles className="h-3.5 w-3.5" aria-hidden />
                 Private mentoring by HR Recruiter
               </Badge>
-              <Badge
-                variant="outline"
-                className="border-amber-400 text-amber-700 font-bold bg-amber-50"
-              >
-                Segera Hadir
-              </Badge>
             </div>
             <h1 className="mt-5 max-w-3xl font-display text-4xl font-extrabold leading-tight tracking-tight text-foreground sm:text-5xl lg:text-6xl">
               Bukan cuma CV bagus. Kamu juga perlu tahu cara menjual dirimu.
@@ -139,13 +133,11 @@ function PrivateCoachingPage() {
               interview agar kamu lebih siap menghadapi proses rekrutmen.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Button
-                disabled
-                size="lg"
-                className="h-12 px-6 text-base opacity-75 cursor-not-allowed"
-              >
-                Segera Hadir
-                <ArrowRight className="h-4 w-4" aria-hidden />
+              <Button asChild size="lg" className="h-12 px-6 text-base">
+                <a href={waLink(packages[0].message)} target="_blank" rel="noopener noreferrer">
+                  Booking Sesi Mentoring
+                  <ArrowRight className="h-4 w-4" aria-hidden />
+                </a>
               </Button>
               <Button asChild size="lg" variant="outline" className="h-12 px-6 text-base">
                 <Link to="/cv-review">Cek CV dengan AI dulu</Link>
@@ -236,13 +228,11 @@ function PrivateCoachingPage() {
                   <div className="mt-6 font-display text-4xl font-extrabold text-foreground">
                     {item.price}
                   </div>
-                  <Button
-                    disabled
-                    size="lg"
-                    className="mt-6 h-12 w-full gap-2 opacity-75 cursor-not-allowed"
-                  >
-                    Segera Hadir
-                    <ArrowRight className="h-4 w-4" aria-hidden />
+                  <Button asChild size="lg" className="mt-6 h-12 w-full gap-2">
+                    <a href={waLink(item.message)} target="_blank" rel="noopener noreferrer">
+                      {item.cta}
+                      <ArrowRight className="h-4 w-4" aria-hidden />
+                    </a>
                   </Button>
                 </CardContent>
               </Card>
@@ -330,14 +320,11 @@ function PrivateCoachingPage() {
           <p className="mx-auto mt-4 max-w-xl text-sm leading-7 text-primary-foreground/90 md:text-base">
             Booking sesi mentoring dan bawa proses apply kamu ke langkah yang lebih terarah.
           </p>
-          <Button
-            disabled
-            size="lg"
-            variant="secondary"
-            className="mt-8 h-12 px-7 text-base opacity-75 cursor-not-allowed"
-          >
-            Segera Hadir
-            <CalendarClock className="h-4 w-4" aria-hidden />
+          <Button asChild size="lg" variant="secondary" className="mt-8 h-12 px-7 text-base">
+            <a href={waLink(packages[0].message)} target="_blank" rel="noopener noreferrer">
+              Booking Sekarang
+              <CalendarClock className="h-4 w-4" aria-hidden />
+            </a>
           </Button>
         </div>
       </section>
