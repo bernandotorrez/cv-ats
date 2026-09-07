@@ -979,11 +979,15 @@ export function downloadBlob(blob: Blob, fileName: string) {
 }
 
 /**
- * Download CV as PDF (via print dialog)
- * Prints a standalone clone of the rendered CV so editor layout/hidden tabs
- * cannot leak into the browser print preview.
+ * Download CV as a real PDF file (rendered client-side, not via window.print()).
+ *
+ * iOS Safari's print dialog has no "headers and footers" toggle like desktop
+ * Chrome/Edge, so anything printed through window.print() always gets a page
+ * URL/title footer stamped on by AirPrint itself — that's OS/browser chrome,
+ * not something CSS can suppress. Generating an actual PDF file sidesteps it
+ * entirely: printing a PDF document never adds that footer.
  */
-export function downloadPdf(_cv: CvData, fileName: string = "CV.pdf") {
+export async function downloadPdf(_cv: CvData, fileName: string = "CV.pdf"): Promise<void> {
   const printSource =
     document.querySelector<HTMLElement>(".cv-print-document .cv-print-area") ||
     document.querySelector<HTMLElement>(".cv-print-area");
@@ -993,131 +997,132 @@ export function downloadPdf(_cv: CvData, fileName: string = "CV.pdf") {
     return;
   }
 
-  const iframe = document.createElement("iframe");
-  iframe.setAttribute("aria-hidden", "true");
-  iframe.style.position = "fixed";
-  iframe.style.right = "0";
-  iframe.style.bottom = "0";
-  iframe.style.width = "1px";
-  iframe.style.height = "1px";
-  iframe.style.border = "0";
-  iframe.style.opacity = "0";
-  iframe.style.pointerEvents = "none";
-  document.body.appendChild(iframe);
+  const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
+    import("html2canvas-pro"),
+    import("jspdf"),
+  ]);
 
-  const printDocument = iframe.contentDocument;
-  const printWindow = iframe.contentWindow;
+  const A4_WIDTH_MM = 210;
+  const A4_HEIGHT_MM = 297;
 
-  if (!printDocument || !printWindow) {
-    iframe.remove();
-    window.print();
-    return;
-  }
+  // Render a de-chromed clone off-screen at a fixed real-world width so the
+  // editor's card border/shadow/zoom (or a hidden mobile tab) never leaks
+  // into the exported page — mirrors the print stylesheet the app already
+  // ships, but with an explicit width since html2canvas needs real layout
+  // (unlike @page print sizing, it can't fall back to page-box metrics).
+  const sandbox = document.createElement("div");
+  sandbox.style.position = "fixed";
+  sandbox.style.top = "0";
+  sandbox.style.left = "-99999px";
+  sandbox.style.width = `${A4_WIDTH_MM}mm`;
+  sandbox.style.background = "#ffffff";
+  sandbox.style.zIndex = "-1";
 
-  const styleNodes = Array.from(document.querySelectorAll<HTMLStyleElement>("style"))
-    .map((node) => `<style>${node.textContent || ""}</style>`)
-    .join("\n");
-  const stylesheetNodes = Array.from(
-    document.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"]'),
-  )
-    .map((node) => `<link rel="stylesheet" href="${node.href}" />`)
-    .join("\n");
+  const style = document.createElement("style");
+  style.textContent = `
+    .cv-pdf-sandbox * {
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+      color-adjust: exact !important;
+    }
+
+    .cv-pdf-sandbox .cv-print-area {
+      display: block !important;
+      padding: 0 !important;
+      background: #ffffff !important;
+      overflow: visible !important;
+    }
+
+    .cv-pdf-sandbox .cv-print-area > div,
+    .cv-pdf-sandbox .cv-preview-container,
+    .cv-pdf-sandbox .cv-preview {
+      display: block !important;
+      width: ${A4_WIDTH_MM}mm !important;
+      height: auto !important;
+      min-width: 0 !important;
+      min-height: 0 !important;
+      margin: 0 !important;
+      border: 0 !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+      transform: none !important;
+      overflow: visible !important;
+    }
+
+    .cv-pdf-sandbox .cv-preview {
+      padding: 11mm 16mm !important;
+    }
+
+    .cv-pdf-sandbox .cv-preview-watermark {
+      display: flex !important;
+      justify-content: space-between !important;
+      align-items: center !important;
+      width: 100% !important;
+      margin-top: 8mm !important;
+      color: #000000 !important;
+      font-size: 8.5pt !important;
+      line-height: 1.2 !important;
+    }
+  `;
+
   const clonedCv = printSource.cloneNode(true) as HTMLElement;
+  sandbox.className = "cv-pdf-sandbox";
+  sandbox.appendChild(style);
+  sandbox.appendChild(clonedCv);
+  document.body.appendChild(sandbox);
 
-  printDocument.open();
-  printDocument.write(`<!doctype html>
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <title>${fileName.replace(/[<>]/g, "")}</title>
-    ${stylesheetNodes}
-    ${styleNodes}
-    <style>
-      html,
-      body {
-        margin: 0 !important;
-        padding: 0 !important;
-        background: white !important;
-      }
+  try {
+    // Let web fonts settle before rasterizing so text isn't measured with
+    // fallback-font metrics.
+    await (document.fonts?.ready ?? Promise.resolve());
+    await new Promise<void>((resolve) =>
+      requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+    );
 
-      /* Force browsers to print background colors and images */
-      * {
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-        color-adjust: exact !important;
-      }
+    const canvas = await html2canvas(clonedCv, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: "#ffffff",
+    });
 
-      .cv-print-area {
-        display: block !important;
-        padding: 0 !important;
-        background: white !important;
-        overflow: visible !important;
-      }
+    const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
+    const pageHeightPx = Math.round((A4_HEIGHT_MM / A4_WIDTH_MM) * canvas.width);
 
-      .cv-print-area > div,
-      .cv-preview-container,
-      .cv-preview {
-        display: block !important;
-        width: auto !important;
-        height: auto !important;
-        min-width: 0 !important;
-        min-height: 0 !important;
-        margin: 0 !important;
-        border: 0 !important;
-        border-radius: 0 !important;
-        box-shadow: none !important;
-        transform: none !important;
-        overflow: visible !important;
-      }
+    let renderedPx = 0;
+    let isFirstPage = true;
+    while (renderedPx < canvas.height) {
+      const sliceHeightPx = Math.min(pageHeightPx, canvas.height - renderedPx);
+      const pageCanvas = document.createElement("canvas");
+      pageCanvas.width = canvas.width;
+      pageCanvas.height = sliceHeightPx;
+      const ctx = pageCanvas.getContext("2d");
+      if (!ctx) break;
+      ctx.drawImage(
+        canvas,
+        0,
+        renderedPx,
+        canvas.width,
+        sliceHeightPx,
+        0,
+        0,
+        canvas.width,
+        sliceHeightPx,
+      );
 
-      .cv-preview {
-        /* Small top/bottom padding; @page provides 5mm margin at breaks */
-        padding: 11mm 16mm !important;
-      }
+      const imgData = pageCanvas.toDataURL("image/jpeg", 0.95);
+      const sliceHeightMm = (sliceHeightPx / canvas.width) * A4_WIDTH_MM;
 
-      /* Keep headings with content below them */
-      .cv-preview h2,
-      .cv-preview h3 {
-        break-after: avoid;
-      }
+      if (!isFirstPage) pdf.addPage();
+      pdf.addImage(imgData, "JPEG", 0, 0, A4_WIDTH_MM, sliceHeightMm);
 
-      .cv-preview-watermark {
-        display: flex !important;
-        justify-content: space-between !important;
-        align-items: center !important;
-        width: 100% !important;
-        margin-top: 8mm !important;
-        color: #000000 !important;
-        font-size: 8.5pt !important;
-        line-height: 1.2 !important;
-        break-inside: avoid !important;
-        page-break-inside: avoid !important;
-      }
+      renderedPx += sliceHeightPx;
+      isFirstPage = false;
+    }
 
-      @page {
-        size: A4;
-        margin: 5mm 0;
-      }
-    </style>
-  </head>
-  <body></body>
-</html>`);
-  printDocument.close();
-  printDocument.body.appendChild(clonedCv);
-
-  let cleanedUp = false;
-  const cleanup = () => {
-    if (cleanedUp) return;
-    cleanedUp = true;
-    setTimeout(() => iframe.remove(), 1000);
-  };
-
-  printWindow.addEventListener("afterprint", cleanup, { once: true });
-  setTimeout(() => {
-    printWindow.focus();
-    printWindow.print();
-  }, 250);
-  setTimeout(cleanup, 60000);
+    pdf.save(fileName);
+  } finally {
+    sandbox.remove();
+  }
 }
 
 // ─── Cover Letter DOCX Generator ─────────────────────────────

@@ -1,11 +1,13 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { Download, FileText, Printer, Share2 } from "lucide-react";
-import { useEffect } from "react";
+import { Download, FileText, Loader2, Printer, Share2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 import { WhatsAppShare } from "@/components/share/WhatsAppShare";
 import { CvPreview, cvPrintStyles } from "@/components/cv/CvPreview";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { downloadPdf } from "@/lib/cv-export";
 import { emptyCv, type CvData, type TemplateId } from "@/lib/cv-types";
 import { buildSeo, SITE_URL } from "@/lib/seo";
 
@@ -64,6 +66,7 @@ export const Route = createFileRoute("/share/$token")({
 function SharedCvPage() {
   const { templateId, cvData, createdAt, cvId, userId, fullName, token } = Route.useLoaderData();
   const shareUrl = `${SITE_URL}/share/${token}`;
+  const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
     if (!cvId || !userId) return;
@@ -74,8 +77,17 @@ function SharedCvPage() {
     });
   }, [cvId, userId]);
 
-  const handlePrint = () => {
-    window.print();
+  const handlePrint = async () => {
+    if (downloading) return;
+    setDownloading(true);
+    try {
+      await downloadPdf(cvData, `${fullName || "CV"}.pdf`);
+    } catch (error) {
+      console.error("PDF generation error:", error);
+      toast.error("Gagal membuat file PDF. Coba lagi sebentar.");
+    } finally {
+      setDownloading(false);
+    }
   };
 
   return (
@@ -97,8 +109,18 @@ function SharedCvPage() {
               Dibagikan {new Date(createdAt).toLocaleDateString("id-ID")}
             </span>
             <WhatsAppShare shareUrl={shareUrl} fullName={fullName} size="sm" />
-            <Button size="sm" variant="outline" onClick={handlePrint} className="gap-1.5">
-              <Printer className="h-3.5 w-3.5" aria-hidden />
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handlePrint}
+              disabled={downloading}
+              className="gap-1.5"
+            >
+              {downloading ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
+              ) : (
+                <Printer className="h-3.5 w-3.5" aria-hidden />
+              )}
               <span className="hidden sm:inline">Cetak</span>
             </Button>
             <Button asChild size="sm">
@@ -122,9 +144,13 @@ function SharedCvPage() {
             CV ini dibuat dengan CV Pintar. Buat CV ATS friendly dalam 1 menit.
           </p>
           <div className="flex flex-wrap justify-center gap-3">
-            <Button onClick={handlePrint} size="lg" className="gap-2">
-              <Download className="h-4 w-4" aria-hidden />
-              Download / Cetak PDF
+            <Button onClick={handlePrint} disabled={downloading} size="lg" className="gap-2">
+              {downloading ? (
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+              ) : (
+                <Download className="h-4 w-4" aria-hidden />
+              )}
+              {downloading ? "Membuat PDF..." : "Download / Cetak PDF"}
             </Button>
             <Button asChild variant="outline" size="lg">
               <Link to="/register">Buat CV Gratis</Link>

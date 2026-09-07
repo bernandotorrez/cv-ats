@@ -153,9 +153,10 @@ export function DownloadDropdown({
     try {
       await trackDownload("pdf");
       setPdfDownloadCount(status.count + 1);
-      downloadPdf(cv, `${fileName}.pdf`);
-    } catch {
-      toast.error("Gagal menyimpan data download. Coba lagi sebentar.");
+      await downloadPdf(cv, `${fileName}.pdf`);
+    } catch (error) {
+      console.error("PDF generation error:", error);
+      toast.error("Gagal membuat file PDF. Coba lagi sebentar.");
       setLoading(null);
       return;
     }

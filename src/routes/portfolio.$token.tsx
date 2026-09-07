@@ -12,6 +12,7 @@ import {
   GraduationCap,
   Languages,
   Linkedin,
+  Loader2,
   Mail,
   MapPin,
   Phone,
@@ -29,6 +30,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
+import { downloadPdf } from "@/lib/cv-export";
 import { emptyCv, type CvData, type CvExperience, type TemplateId } from "@/lib/cv-types";
 import { buildSeo, SITE_URL } from "@/lib/seo";
 
@@ -87,6 +89,7 @@ function SharePage() {
   const { title, templateId, cvData, createdAt, updatedAt, cvId, userId, fullName, token } =
     Route.useLoaderData();
   const [copied, setCopied] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const shareUrl = `${SITE_URL}/portfolio/${token}`;
   const portfolioStats = useMemo(() => getPortfolioStats(cvData), [cvData]);
   const topSkills = cvData.skills.slice(0, 12);
@@ -102,8 +105,17 @@ function SharePage() {
     });
   }, [cvId, userId]);
 
-  const handlePrint = () => {
-    window.print();
+  const handlePrint = async () => {
+    if (downloading) return;
+    setDownloading(true);
+    try {
+      await downloadPdf(cvData, `${fullName || title || "CV"}.pdf`);
+    } catch (error) {
+      console.error("PDF generation error:", error);
+      toast.error("Gagal membuat file PDF. Coba lagi sebentar.");
+    } finally {
+      setDownloading(false);
+    }
   };
 
   const handleCopyShareLink = async () => {
@@ -185,9 +197,13 @@ function SharePage() {
               </div>
 
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                <Button onClick={handlePrint} size="lg" className="h-12 gap-2">
-                  <Download className="h-4 w-4" aria-hidden />
-                  Download / Cetak CV
+                <Button onClick={handlePrint} disabled={downloading} size="lg" className="h-12 gap-2">
+                  {downloading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                  ) : (
+                    <Download className="h-4 w-4" aria-hidden />
+                  )}
+                  {downloading ? "Membuat PDF..." : "Download / Cetak CV"}
                 </Button>
                 <Button asChild size="lg" variant="outline" className="h-12 gap-2">
                   <a href="#cv-preview">
@@ -384,8 +400,12 @@ function SharePage() {
                   Versi ini bisa dicetak atau disimpan sebagai PDF oleh penerima link.
                 </p>
               </div>
-              <Button onClick={handlePrint} variant="outline" className="gap-2">
-                <Printer className="h-4 w-4" aria-hidden />
+              <Button onClick={handlePrint} disabled={downloading} variant="outline" className="gap-2">
+                {downloading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                ) : (
+                  <Printer className="h-4 w-4" aria-hidden />
+                )}
                 Cetak
               </Button>
             </div>
