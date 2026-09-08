@@ -1164,7 +1164,25 @@ export async function downloadPdf(_cv: CvData, fileName: string = "CV.pdf"): Pro
       isFirstPage = false;
     }
 
-    pdf.save(fileName);
+    // jsPDF's own pdf.save() ends up creating an <a download> pointed at a
+    // Blob typed "application/pdf". Safari (desktop and iOS alike) always
+    // opens its native PDF viewer for that MIME type and ignores the
+    // download attribute entirely — so the file never reaches Downloads,
+    // it just displays. Re-typing the same bytes as a generic
+    // "application/octet-stream" blob keeps Safari from recognizing it as a
+    // PDF, so it saves the file instead of previewing it; other browsers
+    // download either type just fine.
+    const pdfBlob = pdf.output("blob") as Blob;
+    const genericBlob = new Blob([pdfBlob], { type: "application/octet-stream" });
+    const blobUrl = URL.createObjectURL(genericBlob);
+    const anchor = document.createElement("a");
+    anchor.href = blobUrl;
+    anchor.download = fileName;
+    anchor.rel = "noopener";
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 40_000);
   } finally {
     sandbox.remove();
   }
