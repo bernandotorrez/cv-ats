@@ -1086,17 +1086,62 @@ export async function downloadPdf(_cv: CvData, fileName: string = "CV.pdf"): Pro
     });
 
     const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
-    const pageHeightPx = Math.round((A4_HEIGHT_MM / A4_WIDTH_MM) * canvas.width);
+
+    // A hard pixel-height cut lands wherever it lands — usually mid text
+    // line — and with nothing drawn outside it, the break reads as content
+    // slammed against both page edges. Reserve a real margin at the top and
+    // bottom of every page, and nudge each cut up to the nearest blank row
+    // so a line of text never gets sliced in half.
+    const PAGE_MARGIN_MM = 12;
+    const pxPerMm = canvas.width / A4_WIDTH_MM;
+    const maxSliceHeightPx = Math.round((A4_HEIGHT_MM - PAGE_MARGIN_MM * 2) * pxPerMm);
+    const breakLookbackPx = Math.round(15 * pxPerMm);
+    const sourceCtx = canvas.getContext("2d");
+
+    const isRowBlank = (rowY: number): boolean => {
+      if (!sourceCtx) return false;
+      try {
+        const { data } = sourceCtx.getImageData(0, rowY, canvas.width, 1);
+        for (let x = 0; x < data.length; x += 16) {
+          // sample every 4th pixel (4 channels each) for speed
+          if (data[x] < 250 || data[x + 1] < 250 || data[x + 2] < 250) return false;
+        }
+        return true;
+      } catch {
+        // Canvas tainted by a cross-origin image without CORS headers —
+        // fall back to a hard cut instead of failing the whole export.
+        return false;
+      }
+    };
+
+    const findSafeBreak = (idealCutPx: number, minCutPx: number): number => {
+      if (!sourceCtx) return idealCutPx;
+      const earliest = Math.max(minCutPx, idealCutPx - breakLookbackPx);
+      for (let row = idealCutPx; row >= earliest; row--) {
+        if (isRowBlank(row)) return row;
+      }
+      return idealCutPx;
+    };
 
     let renderedPx = 0;
     let isFirstPage = true;
     while (renderedPx < canvas.height) {
-      const sliceHeightPx = Math.min(pageHeightPx, canvas.height - renderedPx);
+      const remainingPx = canvas.height - renderedPx;
+      let sliceHeightPx = Math.min(maxSliceHeightPx, remainingPx);
+
+      if (sliceHeightPx < remainingPx) {
+        const idealCutPx = renderedPx + sliceHeightPx;
+        const minCutPx = renderedPx + Math.round(maxSliceHeightPx * 0.5);
+        sliceHeightPx = findSafeBreak(idealCutPx, minCutPx) - renderedPx;
+      }
+
       const pageCanvas = document.createElement("canvas");
       pageCanvas.width = canvas.width;
       pageCanvas.height = sliceHeightPx;
       const ctx = pageCanvas.getContext("2d");
       if (!ctx) break;
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
       ctx.drawImage(
         canvas,
         0,
@@ -1110,10 +1155,10 @@ export async function downloadPdf(_cv: CvData, fileName: string = "CV.pdf"): Pro
       );
 
       const imgData = pageCanvas.toDataURL("image/jpeg", 0.95);
-      const sliceHeightMm = (sliceHeightPx / canvas.width) * A4_WIDTH_MM;
+      const sliceHeightMm = sliceHeightPx / pxPerMm;
 
       if (!isFirstPage) pdf.addPage();
-      pdf.addImage(imgData, "JPEG", 0, 0, A4_WIDTH_MM, sliceHeightMm);
+      pdf.addImage(imgData, "JPEG", 0, PAGE_MARGIN_MM, A4_WIDTH_MM, sliceHeightMm);
 
       renderedPx += sliceHeightPx;
       isFirstPage = false;
