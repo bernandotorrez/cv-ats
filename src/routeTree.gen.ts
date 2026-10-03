@@ -9,159 +9,78 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as VerifyEmailRouteImport } from './routes/verify-email'
-import { Route as TryoutCpnsRouteImport } from './routes/tryout-cpns'
-import { Route as TipsInterviewRouteImport } from './routes/tips-interview'
-import { Route as TentangRouteImport } from './routes/tentang'
-import { Route as TemplateRouteImport } from './routes/template'
-import { Route as SyaratKetentuanRouteImport } from './routes/syarat-ketentuan'
-import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as RegisterRouteImport } from './routes/register'
-import { Route as PrivateCoachingRouteImport } from './routes/private-coaching'
-import { Route as PanduanCvAtsRouteImport } from './routes/panduan-cv-ats'
-import { Route as LupaPasswordRouteImport } from './routes/lupa-password'
-import { Route as LowonganRouteImport } from './routes/lowongan'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as KontakRouteImport } from './routes/kontak'
-import { Route as KebijakanPrivasiRouteImport } from './routes/kebijakan-privasi'
-import { Route as HargaRouteImport } from './routes/harga'
-import { Route as FiturRouteImport } from './routes/fitur'
-import { Route as ChangelogRouteImport } from './routes/changelog'
-import { Route as BlogRouteImport } from './routes/blog'
-import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as TipsInterviewSlugRouteImport } from './routes/tips-interview.$slug'
-import { Route as SitemapXmlRouteImport } from './routes/sitemap.xml'
-import { Route as ShareTokenRouteImport } from './routes/share.$token'
-import { Route as SecurityTxtRouteImport } from './routes/security.txt'
-import { Route as PortfolioTokenRouteImport } from './routes/portfolio.$token'
-import { Route as ManifestWebmanifestRouteImport } from './routes/manifest.webmanifest'
-import { Route as LowonganSlugRouteImport } from './routes/lowongan.$slug'
-import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
-import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
-import { Route as ApiHeadersCheckRouteImport } from './routes/api.headers-check'
-import { Route as ApiAiCvReviewRouteImport } from './routes/api/ai-cv-review'
-import { Route as AuthenticatedTryoutRouteImport } from './routes/_authenticated/tryout'
-import { Route as AuthenticatedSimulasiWawancaraRouteImport } from './routes/_authenticated/simulasi-wawancara'
-import { Route as AuthenticatedReferralRouteImport } from './routes/_authenticated/referral'
-import { Route as AuthenticatedLamaranRouteImport } from './routes/_authenticated/lamaran'
-import { Route as AuthenticatedJobMatchRouteImport } from './routes/_authenticated/job-match'
-import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
-import { Route as AuthenticatedCompareRouteImport } from './routes/_authenticated/compare'
-import { Route as AuthenticatedAnalitikRouteImport } from './routes/_authenticated/analitik'
-import { Route as AuthenticatedAkunRouteImport } from './routes/_authenticated/akun'
+import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
+import { Route as BlogRouteImport } from './routes/blog'
+import { Route as ChangelogRouteImport } from './routes/changelog'
+import { Route as FiturRouteImport } from './routes/fitur'
+import { Route as HargaRouteImport } from './routes/harga'
+import { Route as KebijakanPrivasiRouteImport } from './routes/kebijakan-privasi'
+import { Route as KontakRouteImport } from './routes/kontak'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as LowonganRouteImport } from './routes/lowongan'
+import { Route as LupaPasswordRouteImport } from './routes/lupa-password'
+import { Route as PanduanCvAtsRouteImport } from './routes/panduan-cv-ats'
+import { Route as PrivateCoachingRouteImport } from './routes/private-coaching'
+import { Route as RegisterRouteImport } from './routes/register'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as SyaratKetentuanRouteImport } from './routes/syarat-ketentuan'
+import { Route as TemplateRouteImport } from './routes/template'
+import { Route as TentangRouteImport } from './routes/tentang'
+import { Route as TipsInterviewRouteImport } from './routes/tips-interview'
+import { Route as TryoutCpnsRouteImport } from './routes/tryout-cpns'
+import { Route as VerifyEmailRouteImport } from './routes/verify-email'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
-import { Route as AuthenticatedToolsIndexRouteImport } from './routes/_authenticated/tools.index'
-import { Route as AuthenticatedScoreIndexRouteImport } from './routes/_authenticated/score.index'
-import { Route as AuthenticatedCvIndexRouteImport } from './routes/_authenticated/cv.index'
-import { Route as AuthenticatedCvReviewIndexRouteImport } from './routes/_authenticated/cv-review.index'
+import { Route as AuthenticatedAkunRouteImport } from './routes/_authenticated/akun'
+import { Route as AuthenticatedAnalitikRouteImport } from './routes/_authenticated/analitik'
+import { Route as AuthenticatedCompareRouteImport } from './routes/_authenticated/compare'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedJobMatchRouteImport } from './routes/_authenticated/job-match'
+import { Route as AuthenticatedLamaranRouteImport } from './routes/_authenticated/lamaran'
+import { Route as AuthenticatedReferralRouteImport } from './routes/_authenticated/referral'
+import { Route as AuthenticatedSimulasiWawancaraRouteImport } from './routes/_authenticated/simulasi-wawancara'
+import { Route as AuthenticatedTryoutRouteImport } from './routes/_authenticated/tryout'
+import { Route as ApiAiCvReviewRouteImport } from './routes/api/ai-cv-review'
+import { Route as ApiHeadersCheckRouteImport } from './routes/api.headers-check'
+import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
+import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
+import { Route as LowonganSlugRouteImport } from './routes/lowongan.$slug'
+import { Route as ManifestWebmanifestRouteImport } from './routes/manifest.webmanifest'
+import { Route as PortfolioTokenRouteImport } from './routes/portfolio.$token'
+import { Route as SecurityTxtRouteImport } from './routes/security.txt'
+import { Route as ShareTokenRouteImport } from './routes/share.$token'
+import { Route as SitemapXmlRouteImport } from './routes/sitemap.xml'
+import { Route as TipsInterviewSlugRouteImport } from './routes/tips-interview.$slug'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
-import { Route as AuthenticatedTryoutLeaderboardRouteImport } from './routes/_authenticated/tryout.leaderboard'
-import { Route as AuthenticatedTryoutBeliRouteImport } from './routes/_authenticated/tryout.beli'
-import { Route as AuthenticatedTryoutExamIdRouteImport } from './routes/_authenticated/tryout.$examId'
-import { Route as AuthenticatedSimulasiWawancaraIdRouteImport } from './routes/_authenticated/simulasi-wawancara.$id'
-import { Route as AuthenticatedScoreCvIdRouteImport } from './routes/_authenticated/score.$cvId'
-import { Route as AuthenticatedCvIdRouteImport } from './routes/_authenticated/cv.$id'
-import { Route as AuthenticatedCvReviewCvIdRouteImport } from './routes/_authenticated/cv-review.$cvId'
-import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin/users'
-import { Route as AuthenticatedAdminTryoutRouteImport } from './routes/_authenticated/admin/tryout'
-import { Route as AuthenticatedAdminTemplatesRouteImport } from './routes/_authenticated/admin/templates'
-import { Route as AuthenticatedAdminJobsRouteImport } from './routes/_authenticated/admin/jobs'
 import { Route as AuthenticatedAdminAnalyticsRouteImport } from './routes/_authenticated/admin/analytics'
-import { Route as AuthenticatedTryoutExamIdUjianRouteImport } from './routes/_authenticated/tryout.$examId.ujian'
-import { Route as AuthenticatedToolsTailorCvIdRouteImport } from './routes/_authenticated/tools.tailor.$cvId'
-import { Route as AuthenticatedToolsKeywordCvIdRouteImport } from './routes/_authenticated/tools.keyword.$cvId'
+import { Route as AuthenticatedAdminJobsRouteImport } from './routes/_authenticated/admin/jobs'
+import { Route as AuthenticatedAdminTemplatesRouteImport } from './routes/_authenticated/admin/templates'
+import { Route as AuthenticatedAdminTryoutRouteImport } from './routes/_authenticated/admin/tryout'
+import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin/users'
+import { Route as AuthenticatedCvReviewIndexRouteImport } from './routes/_authenticated/cv-review.index'
+import { Route as AuthenticatedCvReviewCvIdRouteImport } from './routes/_authenticated/cv-review.$cvId'
+import { Route as AuthenticatedCvIndexRouteImport } from './routes/_authenticated/cv.index'
+import { Route as AuthenticatedCvIdRouteImport } from './routes/_authenticated/cv.$id'
+import { Route as AuthenticatedScoreIndexRouteImport } from './routes/_authenticated/score.index'
+import { Route as AuthenticatedScoreCvIdRouteImport } from './routes/_authenticated/score.$cvId'
+import { Route as AuthenticatedSimulasiWawancaraIdRouteImport } from './routes/_authenticated/simulasi-wawancara.$id'
+import { Route as AuthenticatedToolsIndexRouteImport } from './routes/_authenticated/tools.index'
+import { Route as AuthenticatedTryoutExamIdRouteImport } from './routes/_authenticated/tryout.$examId'
+import { Route as AuthenticatedTryoutBeliRouteImport } from './routes/_authenticated/tryout.beli'
+import { Route as AuthenticatedTryoutLeaderboardRouteImport } from './routes/_authenticated/tryout.leaderboard'
 import { Route as AuthenticatedToolsCoverLetterCvIdRouteImport } from './routes/_authenticated/tools.cover-letter.$cvId'
+import { Route as AuthenticatedToolsKeywordCvIdRouteImport } from './routes/_authenticated/tools.keyword.$cvId'
+import { Route as AuthenticatedToolsTailorCvIdRouteImport } from './routes/_authenticated/tools.tailor.$cvId'
+import { Route as AuthenticatedTryoutExamIdUjianRouteImport } from './routes/_authenticated/tryout.$examId.ujian'
 import { Route as AuthenticatedTryoutExamIdHasilAttemptIdRouteImport } from './routes/_authenticated/tryout.$examId.hasil.$attemptId'
 
-const VerifyEmailRoute = VerifyEmailRouteImport.update({
-  id: '/verify-email',
-  path: '/verify-email',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const TryoutCpnsRoute = TryoutCpnsRouteImport.update({
-  id: '/tryout-cpns',
-  path: '/tryout-cpns',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TipsInterviewRoute = TipsInterviewRouteImport.update({
-  id: '/tips-interview',
-  path: '/tips-interview',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TentangRoute = TentangRouteImport.update({
-  id: '/tentang',
-  path: '/tentang',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TemplateRoute = TemplateRouteImport.update({
-  id: '/template',
-  path: '/template',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SyaratKetentuanRoute = SyaratKetentuanRouteImport.update({
-  id: '/syarat-ketentuan',
-  path: '/syarat-ketentuan',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ResetPasswordRoute = ResetPasswordRouteImport.update({
-  id: '/reset-password',
-  path: '/reset-password',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RegisterRoute = RegisterRouteImport.update({
-  id: '/register',
-  path: '/register',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PrivateCoachingRoute = PrivateCoachingRouteImport.update({
-  id: '/private-coaching',
-  path: '/private-coaching',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PanduanCvAtsRoute = PanduanCvAtsRouteImport.update({
-  id: '/panduan-cv-ats',
-  path: '/panduan-cv-ats',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LupaPasswordRoute = LupaPasswordRouteImport.update({
-  id: '/lupa-password',
-  path: '/lupa-password',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LowonganRoute = LowonganRouteImport.update({
-  id: '/lowongan',
-  path: '/lowongan',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const KontakRoute = KontakRouteImport.update({
-  id: '/kontak',
-  path: '/kontak',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const KebijakanPrivasiRoute = KebijakanPrivasiRouteImport.update({
-  id: '/kebijakan-privasi',
-  path: '/kebijakan-privasi',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const HargaRoute = HargaRouteImport.update({
-  id: '/harga',
-  path: '/harga',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const FiturRoute = FiturRouteImport.update({
-  id: '/fitur',
-  path: '/fitur',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ChangelogRoute = ChangelogRouteImport.update({
-  id: '/changelog',
-  path: '/changelog',
+const AuthenticatedRoute = AuthenticatedRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BlogRoute = BlogRouteImport.update({
@@ -169,73 +88,134 @@ const BlogRoute = BlogRouteImport.update({
   path: '/blog',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedRoute = AuthenticatedRouteImport.update({
-  id: '/_authenticated',
+const ChangelogRoute = ChangelogRouteImport.update({
+  id: '/changelog',
+  path: '/changelog',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const FiturRoute = FiturRouteImport.update({
+  id: '/fitur',
+  path: '/fitur',
   getParentRoute: () => rootRouteImport,
 } as any)
-const TipsInterviewSlugRoute = TipsInterviewSlugRouteImport.update({
-  id: '/$slug',
-  path: '/$slug',
-  getParentRoute: () => TipsInterviewRoute,
-} as any)
-const SitemapXmlRoute = SitemapXmlRouteImport.update({
-  id: '/sitemap/xml',
-  path: '/sitemap/xml',
+const HargaRoute = HargaRouteImport.update({
+  id: '/harga',
+  path: '/harga',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ShareTokenRoute = ShareTokenRouteImport.update({
-  id: '/share/$token',
-  path: '/share/$token',
+const KebijakanPrivasiRoute = KebijakanPrivasiRouteImport.update({
+  id: '/kebijakan-privasi',
+  path: '/kebijakan-privasi',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SecurityTxtRoute = SecurityTxtRouteImport.update({
-  id: '/security/txt',
-  path: '/security/txt',
+const KontakRoute = KontakRouteImport.update({
+  id: '/kontak',
+  path: '/kontak',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PortfolioTokenRoute = PortfolioTokenRouteImport.update({
-  id: '/portfolio/$token',
-  path: '/portfolio/$token',
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ManifestWebmanifestRoute = ManifestWebmanifestRouteImport.update({
-  id: '/manifest/webmanifest',
-  path: '/manifest/webmanifest',
+const LowonganRoute = LowonganRouteImport.update({
+  id: '/lowongan',
+  path: '/lowongan',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LowonganSlugRoute = LowonganSlugRouteImport.update({
-  id: '/$slug',
-  path: '/$slug',
-  getParentRoute: () => LowonganRoute,
-} as any)
-const BlogSlugRoute = BlogSlugRouteImport.update({
-  id: '/$slug',
-  path: '/$slug',
-  getParentRoute: () => BlogRoute,
-} as any)
-const AuthCallbackRoute = AuthCallbackRouteImport.update({
-  id: '/auth/callback',
-  path: '/auth/callback',
+const LupaPasswordRoute = LupaPasswordRouteImport.update({
+  id: '/lupa-password',
+  path: '/lupa-password',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiHeadersCheckRoute = ApiHeadersCheckRouteImport.update({
-  id: '/api/headers-check',
-  path: '/api/headers-check',
+const PanduanCvAtsRoute = PanduanCvAtsRouteImport.update({
+  id: '/panduan-cv-ats',
+  path: '/panduan-cv-ats',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiAiCvReviewRoute = ApiAiCvReviewRouteImport.update({
-  id: '/api/ai-cv-review',
-  path: '/api/ai-cv-review',
+const PrivateCoachingRoute = PrivateCoachingRouteImport.update({
+  id: '/private-coaching',
+  path: '/private-coaching',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedTryoutRoute = AuthenticatedTryoutRouteImport.update({
-  id: '/tryout',
-  path: '/tryout',
+const RegisterRoute = RegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SyaratKetentuanRoute = SyaratKetentuanRouteImport.update({
+  id: '/syarat-ketentuan',
+  path: '/syarat-ketentuan',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TemplateRoute = TemplateRouteImport.update({
+  id: '/template',
+  path: '/template',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TentangRoute = TentangRouteImport.update({
+  id: '/tentang',
+  path: '/tentang',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TipsInterviewRoute = TipsInterviewRouteImport.update({
+  id: '/tips-interview',
+  path: '/tips-interview',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TryoutCpnsRoute = TryoutCpnsRouteImport.update({
+  id: '/tryout-cpns',
+  path: '/tryout-cpns',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VerifyEmailRoute = VerifyEmailRouteImport.update({
+  id: '/verify-email',
+  path: '/verify-email',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedAkunRoute = AuthenticatedAkunRouteImport.update({
+  id: '/akun',
+  path: '/akun',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedAnalitikRoute = AuthenticatedAnalitikRouteImport.update({
+  id: '/analitik',
+  path: '/analitik',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedCompareRoute = AuthenticatedCompareRouteImport.update({
+  id: '/compare',
+  path: '/compare',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedJobMatchRoute = AuthenticatedJobMatchRouteImport.update({
+  id: '/job-match',
+  path: '/job-match',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedLamaranRoute = AuthenticatedLamaranRouteImport.update({
+  id: '/lamaran',
+  path: '/lamaran',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedReferralRoute = AuthenticatedReferralRouteImport.update({
+  id: '/referral',
+  path: '/referral',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedSimulasiWawancaraRoute =
@@ -244,131 +224,69 @@ const AuthenticatedSimulasiWawancaraRoute =
     path: '/simulasi-wawancara',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
-const AuthenticatedReferralRoute = AuthenticatedReferralRouteImport.update({
-  id: '/referral',
-  path: '/referral',
+const AuthenticatedTryoutRoute = AuthenticatedTryoutRouteImport.update({
+  id: '/tryout',
+  path: '/tryout',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedLamaranRoute = AuthenticatedLamaranRouteImport.update({
-  id: '/lamaran',
-  path: '/lamaran',
-  getParentRoute: () => AuthenticatedRoute,
+const ApiAiCvReviewRoute = ApiAiCvReviewRouteImport.update({
+  id: '/api/ai-cv-review',
+  path: '/api/ai-cv-review',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedJobMatchRoute = AuthenticatedJobMatchRouteImport.update({
-  id: '/job-match',
-  path: '/job-match',
-  getParentRoute: () => AuthenticatedRoute,
+const ApiHeadersCheckRoute = ApiHeadersCheckRouteImport.update({
+  id: '/api/headers-check',
+  path: '/api/headers-check',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => AuthenticatedRoute,
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
+  id: '/auth/callback',
+  path: '/auth/callback',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedCompareRoute = AuthenticatedCompareRouteImport.update({
-  id: '/compare',
-  path: '/compare',
-  getParentRoute: () => AuthenticatedRoute,
+const BlogSlugRoute = BlogSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => BlogRoute,
 } as any)
-const AuthenticatedAnalitikRoute = AuthenticatedAnalitikRouteImport.update({
-  id: '/analitik',
-  path: '/analitik',
-  getParentRoute: () => AuthenticatedRoute,
+const LowonganSlugRoute = LowonganSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => LowonganRoute,
 } as any)
-const AuthenticatedAkunRoute = AuthenticatedAkunRouteImport.update({
-  id: '/akun',
-  path: '/akun',
-  getParentRoute: () => AuthenticatedRoute,
+const ManifestWebmanifestRoute = ManifestWebmanifestRouteImport.update({
+  id: '/manifest/webmanifest',
+  path: '/manifest/webmanifest',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
-  getParentRoute: () => AuthenticatedRoute,
+const PortfolioTokenRoute = PortfolioTokenRouteImport.update({
+  id: '/portfolio/$token',
+  path: '/portfolio/$token',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedToolsIndexRoute = AuthenticatedToolsIndexRouteImport.update({
-  id: '/tools/',
-  path: '/tools/',
-  getParentRoute: () => AuthenticatedRoute,
+const SecurityTxtRoute = SecurityTxtRouteImport.update({
+  id: '/security/txt',
+  path: '/security/txt',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedScoreIndexRoute = AuthenticatedScoreIndexRouteImport.update({
-  id: '/score/',
-  path: '/score/',
-  getParentRoute: () => AuthenticatedRoute,
+const ShareTokenRoute = ShareTokenRouteImport.update({
+  id: '/share/$token',
+  path: '/share/$token',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedCvIndexRoute = AuthenticatedCvIndexRouteImport.update({
-  id: '/cv/',
-  path: '/cv/',
-  getParentRoute: () => AuthenticatedRoute,
+const SitemapXmlRoute = SitemapXmlRouteImport.update({
+  id: '/sitemap/xml',
+  path: '/sitemap/xml',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedCvReviewIndexRoute =
-  AuthenticatedCvReviewIndexRouteImport.update({
-    id: '/cv-review/',
-    path: '/cv-review/',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
+const TipsInterviewSlugRoute = TipsInterviewSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => TipsInterviewRoute,
+} as any)
 const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => AuthenticatedAdminRoute,
-} as any)
-const AuthenticatedTryoutLeaderboardRoute =
-  AuthenticatedTryoutLeaderboardRouteImport.update({
-    id: '/leaderboard',
-    path: '/leaderboard',
-    getParentRoute: () => AuthenticatedTryoutRoute,
-  } as any)
-const AuthenticatedTryoutBeliRoute = AuthenticatedTryoutBeliRouteImport.update({
-  id: '/beli',
-  path: '/beli',
-  getParentRoute: () => AuthenticatedTryoutRoute,
-} as any)
-const AuthenticatedTryoutExamIdRoute =
-  AuthenticatedTryoutExamIdRouteImport.update({
-    id: '/$examId',
-    path: '/$examId',
-    getParentRoute: () => AuthenticatedTryoutRoute,
-  } as any)
-const AuthenticatedSimulasiWawancaraIdRoute =
-  AuthenticatedSimulasiWawancaraIdRouteImport.update({
-    id: '/$id',
-    path: '/$id',
-    getParentRoute: () => AuthenticatedSimulasiWawancaraRoute,
-  } as any)
-const AuthenticatedScoreCvIdRoute = AuthenticatedScoreCvIdRouteImport.update({
-  id: '/score/$cvId',
-  path: '/score/$cvId',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-const AuthenticatedCvIdRoute = AuthenticatedCvIdRouteImport.update({
-  id: '/cv/$id',
-  path: '/cv/$id',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-const AuthenticatedCvReviewCvIdRoute =
-  AuthenticatedCvReviewCvIdRouteImport.update({
-    id: '/cv-review/$cvId',
-    path: '/cv-review/$cvId',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedAdminUsersRoute = AuthenticatedAdminUsersRouteImport.update({
-  id: '/users',
-  path: '/users',
-  getParentRoute: () => AuthenticatedAdminRoute,
-} as any)
-const AuthenticatedAdminTryoutRoute =
-  AuthenticatedAdminTryoutRouteImport.update({
-    id: '/tryout',
-    path: '/tryout',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminTemplatesRoute =
-  AuthenticatedAdminTemplatesRouteImport.update({
-    id: '/templates',
-    path: '/templates',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminJobsRoute = AuthenticatedAdminJobsRouteImport.update({
-  id: '/jobs',
-  path: '/jobs',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
 const AuthenticatedAdminAnalyticsRoute =
@@ -377,16 +295,92 @@ const AuthenticatedAdminAnalyticsRoute =
     path: '/analytics',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
-const AuthenticatedTryoutExamIdUjianRoute =
-  AuthenticatedTryoutExamIdUjianRouteImport.update({
-    id: '/ujian',
-    path: '/ujian',
-    getParentRoute: () => AuthenticatedTryoutExamIdRoute,
+const AuthenticatedAdminJobsRoute = AuthenticatedAdminJobsRouteImport.update({
+  id: '/jobs',
+  path: '/jobs',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
+const AuthenticatedAdminTemplatesRoute =
+  AuthenticatedAdminTemplatesRouteImport.update({
+    id: '/templates',
+    path: '/templates',
+    getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
-const AuthenticatedToolsTailorCvIdRoute =
-  AuthenticatedToolsTailorCvIdRouteImport.update({
-    id: '/tools/tailor/$cvId',
-    path: '/tools/tailor/$cvId',
+const AuthenticatedAdminTryoutRoute =
+  AuthenticatedAdminTryoutRouteImport.update({
+    id: '/tryout',
+    path: '/tryout',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminUsersRoute = AuthenticatedAdminUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
+const AuthenticatedCvReviewIndexRoute =
+  AuthenticatedCvReviewIndexRouteImport.update({
+    id: '/cv-review/',
+    path: '/cv-review/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedCvReviewCvIdRoute =
+  AuthenticatedCvReviewCvIdRouteImport.update({
+    id: '/cv-review/$cvId',
+    path: '/cv-review/$cvId',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedCvIndexRoute = AuthenticatedCvIndexRouteImport.update({
+  id: '/cv/',
+  path: '/cv/',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedCvIdRoute = AuthenticatedCvIdRouteImport.update({
+  id: '/cv/$id',
+  path: '/cv/$id',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedScoreIndexRoute = AuthenticatedScoreIndexRouteImport.update({
+  id: '/score/',
+  path: '/score/',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedScoreCvIdRoute = AuthenticatedScoreCvIdRouteImport.update({
+  id: '/score/$cvId',
+  path: '/score/$cvId',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedSimulasiWawancaraIdRoute =
+  AuthenticatedSimulasiWawancaraIdRouteImport.update({
+    id: '/$id',
+    path: '/$id',
+    getParentRoute: () => AuthenticatedSimulasiWawancaraRoute,
+  } as any)
+const AuthenticatedToolsIndexRoute = AuthenticatedToolsIndexRouteImport.update({
+  id: '/tools/',
+  path: '/tools/',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedTryoutExamIdRoute =
+  AuthenticatedTryoutExamIdRouteImport.update({
+    id: '/$examId',
+    path: '/$examId',
+    getParentRoute: () => AuthenticatedTryoutRoute,
+  } as any)
+const AuthenticatedTryoutBeliRoute = AuthenticatedTryoutBeliRouteImport.update({
+  id: '/beli',
+  path: '/beli',
+  getParentRoute: () => AuthenticatedTryoutRoute,
+} as any)
+const AuthenticatedTryoutLeaderboardRoute =
+  AuthenticatedTryoutLeaderboardRouteImport.update({
+    id: '/leaderboard',
+    path: '/leaderboard',
+    getParentRoute: () => AuthenticatedTryoutRoute,
+  } as any)
+const AuthenticatedToolsCoverLetterCvIdRoute =
+  AuthenticatedToolsCoverLetterCvIdRouteImport.update({
+    id: '/tools/cover-letter/$cvId',
+    path: '/tools/cover-letter/$cvId',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedToolsKeywordCvIdRoute =
@@ -395,11 +389,17 @@ const AuthenticatedToolsKeywordCvIdRoute =
     path: '/tools/keyword/$cvId',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
-const AuthenticatedToolsCoverLetterCvIdRoute =
-  AuthenticatedToolsCoverLetterCvIdRouteImport.update({
-    id: '/tools/cover-letter/$cvId',
-    path: '/tools/cover-letter/$cvId',
+const AuthenticatedToolsTailorCvIdRoute =
+  AuthenticatedToolsTailorCvIdRouteImport.update({
+    id: '/tools/tailor/$cvId',
+    path: '/tools/tailor/$cvId',
     getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedTryoutExamIdUjianRoute =
+  AuthenticatedTryoutExamIdUjianRouteImport.update({
+    id: '/ujian',
+    path: '/ujian',
+    getParentRoute: () => AuthenticatedTryoutExamIdRoute,
   } as any)
 const AuthenticatedTryoutExamIdHasilAttemptIdRoute =
   AuthenticatedTryoutExamIdHasilAttemptIdRouteImport.update({
@@ -836,137 +836,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/verify-email': {
-      id: '/verify-email'
-      path: '/verify-email'
-      fullPath: '/verify-email'
-      preLoaderRoute: typeof VerifyEmailRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/tryout-cpns': {
-      id: '/tryout-cpns'
-      path: '/tryout-cpns'
-      fullPath: '/tryout-cpns'
-      preLoaderRoute: typeof TryoutCpnsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/tips-interview': {
-      id: '/tips-interview'
-      path: '/tips-interview'
-      fullPath: '/tips-interview'
-      preLoaderRoute: typeof TipsInterviewRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/tentang': {
-      id: '/tentang'
-      path: '/tentang'
-      fullPath: '/tentang'
-      preLoaderRoute: typeof TentangRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/template': {
-      id: '/template'
-      path: '/template'
-      fullPath: '/template'
-      preLoaderRoute: typeof TemplateRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/syarat-ketentuan': {
-      id: '/syarat-ketentuan'
-      path: '/syarat-ketentuan'
-      fullPath: '/syarat-ketentuan'
-      preLoaderRoute: typeof SyaratKetentuanRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/reset-password': {
-      id: '/reset-password'
-      path: '/reset-password'
-      fullPath: '/reset-password'
-      preLoaderRoute: typeof ResetPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/register': {
-      id: '/register'
-      path: '/register'
-      fullPath: '/register'
-      preLoaderRoute: typeof RegisterRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/private-coaching': {
-      id: '/private-coaching'
-      path: '/private-coaching'
-      fullPath: '/private-coaching'
-      preLoaderRoute: typeof PrivateCoachingRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/panduan-cv-ats': {
-      id: '/panduan-cv-ats'
-      path: '/panduan-cv-ats'
-      fullPath: '/panduan-cv-ats'
-      preLoaderRoute: typeof PanduanCvAtsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/lupa-password': {
-      id: '/lupa-password'
-      path: '/lupa-password'
-      fullPath: '/lupa-password'
-      preLoaderRoute: typeof LupaPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/lowongan': {
-      id: '/lowongan'
-      path: '/lowongan'
-      fullPath: '/lowongan'
-      preLoaderRoute: typeof LowonganRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/kontak': {
-      id: '/kontak'
-      path: '/kontak'
-      fullPath: '/kontak'
-      preLoaderRoute: typeof KontakRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/kebijakan-privasi': {
-      id: '/kebijakan-privasi'
-      path: '/kebijakan-privasi'
-      fullPath: '/kebijakan-privasi'
-      preLoaderRoute: typeof KebijakanPrivasiRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/harga': {
-      id: '/harga'
-      path: '/harga'
-      fullPath: '/harga'
-      preLoaderRoute: typeof HargaRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/fitur': {
-      id: '/fitur'
-      path: '/fitur'
-      fullPath: '/fitur'
-      preLoaderRoute: typeof FiturRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/changelog': {
-      id: '/changelog'
-      path: '/changelog'
-      fullPath: '/changelog'
-      preLoaderRoute: typeof ChangelogRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/blog': {
-      id: '/blog'
-      path: '/blog'
-      fullPath: '/blog'
-      preLoaderRoute: typeof BlogRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -976,144 +850,144 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/blog': {
+      id: '/blog'
+      path: '/blog'
+      fullPath: '/blog'
+      preLoaderRoute: typeof BlogRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/tips-interview/$slug': {
-      id: '/tips-interview/$slug'
-      path: '/$slug'
-      fullPath: '/tips-interview/$slug'
-      preLoaderRoute: typeof TipsInterviewSlugRouteImport
-      parentRoute: typeof TipsInterviewRoute
-    }
-    '/sitemap/xml': {
-      id: '/sitemap/xml'
-      path: '/sitemap/xml'
-      fullPath: '/sitemap/xml'
-      preLoaderRoute: typeof SitemapXmlRouteImport
+    '/changelog': {
+      id: '/changelog'
+      path: '/changelog'
+      fullPath: '/changelog'
+      preLoaderRoute: typeof ChangelogRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/share/$token': {
-      id: '/share/$token'
-      path: '/share/$token'
-      fullPath: '/share/$token'
-      preLoaderRoute: typeof ShareTokenRouteImport
+    '/fitur': {
+      id: '/fitur'
+      path: '/fitur'
+      fullPath: '/fitur'
+      preLoaderRoute: typeof FiturRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/security/txt': {
-      id: '/security/txt'
-      path: '/security/txt'
-      fullPath: '/security/txt'
-      preLoaderRoute: typeof SecurityTxtRouteImport
+    '/harga': {
+      id: '/harga'
+      path: '/harga'
+      fullPath: '/harga'
+      preLoaderRoute: typeof HargaRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/portfolio/$token': {
-      id: '/portfolio/$token'
-      path: '/portfolio/$token'
-      fullPath: '/portfolio/$token'
-      preLoaderRoute: typeof PortfolioTokenRouteImport
+    '/kebijakan-privasi': {
+      id: '/kebijakan-privasi'
+      path: '/kebijakan-privasi'
+      fullPath: '/kebijakan-privasi'
+      preLoaderRoute: typeof KebijakanPrivasiRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/manifest/webmanifest': {
-      id: '/manifest/webmanifest'
-      path: '/manifest/webmanifest'
-      fullPath: '/manifest/webmanifest'
-      preLoaderRoute: typeof ManifestWebmanifestRouteImport
+    '/kontak': {
+      id: '/kontak'
+      path: '/kontak'
+      fullPath: '/kontak'
+      preLoaderRoute: typeof KontakRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/lowongan/$slug': {
-      id: '/lowongan/$slug'
-      path: '/$slug'
-      fullPath: '/lowongan/$slug'
-      preLoaderRoute: typeof LowonganSlugRouteImport
-      parentRoute: typeof LowonganRoute
-    }
-    '/blog/$slug': {
-      id: '/blog/$slug'
-      path: '/$slug'
-      fullPath: '/blog/$slug'
-      preLoaderRoute: typeof BlogSlugRouteImport
-      parentRoute: typeof BlogRoute
-    }
-    '/auth/callback': {
-      id: '/auth/callback'
-      path: '/auth/callback'
-      fullPath: '/auth/callback'
-      preLoaderRoute: typeof AuthCallbackRouteImport
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/headers-check': {
-      id: '/api/headers-check'
-      path: '/api/headers-check'
-      fullPath: '/api/headers-check'
-      preLoaderRoute: typeof ApiHeadersCheckRouteImport
+    '/lowongan': {
+      id: '/lowongan'
+      path: '/lowongan'
+      fullPath: '/lowongan'
+      preLoaderRoute: typeof LowonganRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/ai-cv-review': {
-      id: '/api/ai-cv-review'
-      path: '/api/ai-cv-review'
-      fullPath: '/api/ai-cv-review'
-      preLoaderRoute: typeof ApiAiCvReviewRouteImport
+    '/lupa-password': {
+      id: '/lupa-password'
+      path: '/lupa-password'
+      fullPath: '/lupa-password'
+      preLoaderRoute: typeof LupaPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/tryout': {
-      id: '/_authenticated/tryout'
-      path: '/tryout'
-      fullPath: '/tryout'
-      preLoaderRoute: typeof AuthenticatedTryoutRouteImport
-      parentRoute: typeof AuthenticatedRoute
+    '/panduan-cv-ats': {
+      id: '/panduan-cv-ats'
+      path: '/panduan-cv-ats'
+      fullPath: '/panduan-cv-ats'
+      preLoaderRoute: typeof PanduanCvAtsRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/simulasi-wawancara': {
-      id: '/_authenticated/simulasi-wawancara'
-      path: '/simulasi-wawancara'
-      fullPath: '/simulasi-wawancara'
-      preLoaderRoute: typeof AuthenticatedSimulasiWawancaraRouteImport
-      parentRoute: typeof AuthenticatedRoute
+    '/private-coaching': {
+      id: '/private-coaching'
+      path: '/private-coaching'
+      fullPath: '/private-coaching'
+      preLoaderRoute: typeof PrivateCoachingRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/referral': {
-      id: '/_authenticated/referral'
-      path: '/referral'
-      fullPath: '/referral'
-      preLoaderRoute: typeof AuthenticatedReferralRouteImport
-      parentRoute: typeof AuthenticatedRoute
+    '/register': {
+      id: '/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/lamaran': {
-      id: '/_authenticated/lamaran'
-      path: '/lamaran'
-      fullPath: '/lamaran'
-      preLoaderRoute: typeof AuthenticatedLamaranRouteImport
-      parentRoute: typeof AuthenticatedRoute
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/job-match': {
-      id: '/_authenticated/job-match'
-      path: '/job-match'
-      fullPath: '/job-match'
-      preLoaderRoute: typeof AuthenticatedJobMatchRouteImport
-      parentRoute: typeof AuthenticatedRoute
+    '/syarat-ketentuan': {
+      id: '/syarat-ketentuan'
+      path: '/syarat-ketentuan'
+      fullPath: '/syarat-ketentuan'
+      preLoaderRoute: typeof SyaratKetentuanRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/dashboard': {
-      id: '/_authenticated/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
-      parentRoute: typeof AuthenticatedRoute
+    '/template': {
+      id: '/template'
+      path: '/template'
+      fullPath: '/template'
+      preLoaderRoute: typeof TemplateRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/compare': {
-      id: '/_authenticated/compare'
-      path: '/compare'
-      fullPath: '/compare'
-      preLoaderRoute: typeof AuthenticatedCompareRouteImport
-      parentRoute: typeof AuthenticatedRoute
+    '/tentang': {
+      id: '/tentang'
+      path: '/tentang'
+      fullPath: '/tentang'
+      preLoaderRoute: typeof TentangRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/analitik': {
-      id: '/_authenticated/analitik'
-      path: '/analitik'
-      fullPath: '/analitik'
-      preLoaderRoute: typeof AuthenticatedAnalitikRouteImport
+    '/tips-interview': {
+      id: '/tips-interview'
+      path: '/tips-interview'
+      fullPath: '/tips-interview'
+      preLoaderRoute: typeof TipsInterviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tryout-cpns': {
+      id: '/tryout-cpns'
+      path: '/tryout-cpns'
+      fullPath: '/tryout-cpns'
+      preLoaderRoute: typeof TryoutCpnsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/verify-email': {
+      id: '/verify-email'
+      path: '/verify-email'
+      fullPath: '/verify-email'
+      preLoaderRoute: typeof VerifyEmailRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/akun': {
@@ -1123,123 +997,144 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAkunRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/admin': {
-      id: '/_authenticated/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AuthenticatedAdminRouteImport
+    '/_authenticated/analitik': {
+      id: '/_authenticated/analitik'
+      path: '/analitik'
+      fullPath: '/analitik'
+      preLoaderRoute: typeof AuthenticatedAnalitikRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/tools/': {
-      id: '/_authenticated/tools/'
-      path: '/tools'
-      fullPath: '/tools/'
-      preLoaderRoute: typeof AuthenticatedToolsIndexRouteImport
+    '/_authenticated/compare': {
+      id: '/_authenticated/compare'
+      path: '/compare'
+      fullPath: '/compare'
+      preLoaderRoute: typeof AuthenticatedCompareRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/score/': {
-      id: '/_authenticated/score/'
-      path: '/score'
-      fullPath: '/score/'
-      preLoaderRoute: typeof AuthenticatedScoreIndexRouteImport
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/cv/': {
-      id: '/_authenticated/cv/'
-      path: '/cv'
-      fullPath: '/cv/'
-      preLoaderRoute: typeof AuthenticatedCvIndexRouteImport
+    '/_authenticated/job-match': {
+      id: '/_authenticated/job-match'
+      path: '/job-match'
+      fullPath: '/job-match'
+      preLoaderRoute: typeof AuthenticatedJobMatchRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/cv-review/': {
-      id: '/_authenticated/cv-review/'
-      path: '/cv-review'
-      fullPath: '/cv-review/'
-      preLoaderRoute: typeof AuthenticatedCvReviewIndexRouteImport
+    '/_authenticated/lamaran': {
+      id: '/_authenticated/lamaran'
+      path: '/lamaran'
+      fullPath: '/lamaran'
+      preLoaderRoute: typeof AuthenticatedLamaranRouteImport
       parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/referral': {
+      id: '/_authenticated/referral'
+      path: '/referral'
+      fullPath: '/referral'
+      preLoaderRoute: typeof AuthenticatedReferralRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/simulasi-wawancara': {
+      id: '/_authenticated/simulasi-wawancara'
+      path: '/simulasi-wawancara'
+      fullPath: '/simulasi-wawancara'
+      preLoaderRoute: typeof AuthenticatedSimulasiWawancaraRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/tryout': {
+      id: '/_authenticated/tryout'
+      path: '/tryout'
+      fullPath: '/tryout'
+      preLoaderRoute: typeof AuthenticatedTryoutRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/api/ai-cv-review': {
+      id: '/api/ai-cv-review'
+      path: '/api/ai-cv-review'
+      fullPath: '/api/ai-cv-review'
+      preLoaderRoute: typeof ApiAiCvReviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/headers-check': {
+      id: '/api/headers-check'
+      path: '/api/headers-check'
+      fullPath: '/api/headers-check'
+      preLoaderRoute: typeof ApiHeadersCheckRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/callback': {
+      id: '/auth/callback'
+      path: '/auth/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/blog/$slug': {
+      id: '/blog/$slug'
+      path: '/$slug'
+      fullPath: '/blog/$slug'
+      preLoaderRoute: typeof BlogSlugRouteImport
+      parentRoute: typeof BlogRoute
+    }
+    '/lowongan/$slug': {
+      id: '/lowongan/$slug'
+      path: '/$slug'
+      fullPath: '/lowongan/$slug'
+      preLoaderRoute: typeof LowonganSlugRouteImport
+      parentRoute: typeof LowonganRoute
+    }
+    '/manifest/webmanifest': {
+      id: '/manifest/webmanifest'
+      path: '/manifest/webmanifest'
+      fullPath: '/manifest/webmanifest'
+      preLoaderRoute: typeof ManifestWebmanifestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/portfolio/$token': {
+      id: '/portfolio/$token'
+      path: '/portfolio/$token'
+      fullPath: '/portfolio/$token'
+      preLoaderRoute: typeof PortfolioTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/security/txt': {
+      id: '/security/txt'
+      path: '/security/txt'
+      fullPath: '/security/txt'
+      preLoaderRoute: typeof SecurityTxtRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/share/$token': {
+      id: '/share/$token'
+      path: '/share/$token'
+      fullPath: '/share/$token'
+      preLoaderRoute: typeof ShareTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap/xml': {
+      id: '/sitemap/xml'
+      path: '/sitemap/xml'
+      fullPath: '/sitemap/xml'
+      preLoaderRoute: typeof SitemapXmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tips-interview/$slug': {
+      id: '/tips-interview/$slug'
+      path: '/$slug'
+      fullPath: '/tips-interview/$slug'
+      preLoaderRoute: typeof TipsInterviewSlugRouteImport
+      parentRoute: typeof TipsInterviewRoute
     }
     '/_authenticated/admin/': {
       id: '/_authenticated/admin/'
       path: '/'
       fullPath: '/admin/'
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/tryout/leaderboard': {
-      id: '/_authenticated/tryout/leaderboard'
-      path: '/leaderboard'
-      fullPath: '/tryout/leaderboard'
-      preLoaderRoute: typeof AuthenticatedTryoutLeaderboardRouteImport
-      parentRoute: typeof AuthenticatedTryoutRoute
-    }
-    '/_authenticated/tryout/beli': {
-      id: '/_authenticated/tryout/beli'
-      path: '/beli'
-      fullPath: '/tryout/beli'
-      preLoaderRoute: typeof AuthenticatedTryoutBeliRouteImport
-      parentRoute: typeof AuthenticatedTryoutRoute
-    }
-    '/_authenticated/tryout/$examId': {
-      id: '/_authenticated/tryout/$examId'
-      path: '/$examId'
-      fullPath: '/tryout/$examId'
-      preLoaderRoute: typeof AuthenticatedTryoutExamIdRouteImport
-      parentRoute: typeof AuthenticatedTryoutRoute
-    }
-    '/_authenticated/simulasi-wawancara/$id': {
-      id: '/_authenticated/simulasi-wawancara/$id'
-      path: '/$id'
-      fullPath: '/simulasi-wawancara/$id'
-      preLoaderRoute: typeof AuthenticatedSimulasiWawancaraIdRouteImport
-      parentRoute: typeof AuthenticatedSimulasiWawancaraRoute
-    }
-    '/_authenticated/score/$cvId': {
-      id: '/_authenticated/score/$cvId'
-      path: '/score/$cvId'
-      fullPath: '/score/$cvId'
-      preLoaderRoute: typeof AuthenticatedScoreCvIdRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/cv/$id': {
-      id: '/_authenticated/cv/$id'
-      path: '/cv/$id'
-      fullPath: '/cv/$id'
-      preLoaderRoute: typeof AuthenticatedCvIdRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/cv-review/$cvId': {
-      id: '/_authenticated/cv-review/$cvId'
-      path: '/cv-review/$cvId'
-      fullPath: '/cv-review/$cvId'
-      preLoaderRoute: typeof AuthenticatedCvReviewCvIdRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/admin/users': {
-      id: '/_authenticated/admin/users'
-      path: '/users'
-      fullPath: '/admin/users'
-      preLoaderRoute: typeof AuthenticatedAdminUsersRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/admin/tryout': {
-      id: '/_authenticated/admin/tryout'
-      path: '/tryout'
-      fullPath: '/admin/tryout'
-      preLoaderRoute: typeof AuthenticatedAdminTryoutRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/admin/templates': {
-      id: '/_authenticated/admin/templates'
-      path: '/templates'
-      fullPath: '/admin/templates'
-      preLoaderRoute: typeof AuthenticatedAdminTemplatesRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/admin/jobs': {
-      id: '/_authenticated/admin/jobs'
-      path: '/jobs'
-      fullPath: '/admin/jobs'
-      preLoaderRoute: typeof AuthenticatedAdminJobsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
     '/_authenticated/admin/analytics': {
@@ -1249,18 +1144,116 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminAnalyticsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
-    '/_authenticated/tryout/$examId/ujian': {
-      id: '/_authenticated/tryout/$examId/ujian'
-      path: '/ujian'
-      fullPath: '/tryout/$examId/ujian'
-      preLoaderRoute: typeof AuthenticatedTryoutExamIdUjianRouteImport
-      parentRoute: typeof AuthenticatedTryoutExamIdRoute
+    '/_authenticated/admin/jobs': {
+      id: '/_authenticated/admin/jobs'
+      path: '/jobs'
+      fullPath: '/admin/jobs'
+      preLoaderRoute: typeof AuthenticatedAdminJobsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
     }
-    '/_authenticated/tools/tailor/$cvId': {
-      id: '/_authenticated/tools/tailor/$cvId'
-      path: '/tools/tailor/$cvId'
-      fullPath: '/tools/tailor/$cvId'
-      preLoaderRoute: typeof AuthenticatedToolsTailorCvIdRouteImport
+    '/_authenticated/admin/templates': {
+      id: '/_authenticated/admin/templates'
+      path: '/templates'
+      fullPath: '/admin/templates'
+      preLoaderRoute: typeof AuthenticatedAdminTemplatesRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/tryout': {
+      id: '/_authenticated/admin/tryout'
+      path: '/tryout'
+      fullPath: '/admin/tryout'
+      preLoaderRoute: typeof AuthenticatedAdminTryoutRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/users': {
+      id: '/_authenticated/admin/users'
+      path: '/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AuthenticatedAdminUsersRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/cv-review/': {
+      id: '/_authenticated/cv-review/'
+      path: '/cv-review'
+      fullPath: '/cv-review/'
+      preLoaderRoute: typeof AuthenticatedCvReviewIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/cv-review/$cvId': {
+      id: '/_authenticated/cv-review/$cvId'
+      path: '/cv-review/$cvId'
+      fullPath: '/cv-review/$cvId'
+      preLoaderRoute: typeof AuthenticatedCvReviewCvIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/cv/': {
+      id: '/_authenticated/cv/'
+      path: '/cv'
+      fullPath: '/cv/'
+      preLoaderRoute: typeof AuthenticatedCvIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/cv/$id': {
+      id: '/_authenticated/cv/$id'
+      path: '/cv/$id'
+      fullPath: '/cv/$id'
+      preLoaderRoute: typeof AuthenticatedCvIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/score/': {
+      id: '/_authenticated/score/'
+      path: '/score'
+      fullPath: '/score/'
+      preLoaderRoute: typeof AuthenticatedScoreIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/score/$cvId': {
+      id: '/_authenticated/score/$cvId'
+      path: '/score/$cvId'
+      fullPath: '/score/$cvId'
+      preLoaderRoute: typeof AuthenticatedScoreCvIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/simulasi-wawancara/$id': {
+      id: '/_authenticated/simulasi-wawancara/$id'
+      path: '/$id'
+      fullPath: '/simulasi-wawancara/$id'
+      preLoaderRoute: typeof AuthenticatedSimulasiWawancaraIdRouteImport
+      parentRoute: typeof AuthenticatedSimulasiWawancaraRoute
+    }
+    '/_authenticated/tools/': {
+      id: '/_authenticated/tools/'
+      path: '/tools'
+      fullPath: '/tools/'
+      preLoaderRoute: typeof AuthenticatedToolsIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/tryout/$examId': {
+      id: '/_authenticated/tryout/$examId'
+      path: '/$examId'
+      fullPath: '/tryout/$examId'
+      preLoaderRoute: typeof AuthenticatedTryoutExamIdRouteImport
+      parentRoute: typeof AuthenticatedTryoutRoute
+    }
+    '/_authenticated/tryout/beli': {
+      id: '/_authenticated/tryout/beli'
+      path: '/beli'
+      fullPath: '/tryout/beli'
+      preLoaderRoute: typeof AuthenticatedTryoutBeliRouteImport
+      parentRoute: typeof AuthenticatedTryoutRoute
+    }
+    '/_authenticated/tryout/leaderboard': {
+      id: '/_authenticated/tryout/leaderboard'
+      path: '/leaderboard'
+      fullPath: '/tryout/leaderboard'
+      preLoaderRoute: typeof AuthenticatedTryoutLeaderboardRouteImport
+      parentRoute: typeof AuthenticatedTryoutRoute
+    }
+    '/_authenticated/tools/cover-letter/$cvId': {
+      id: '/_authenticated/tools/cover-letter/$cvId'
+      path: '/tools/cover-letter/$cvId'
+      fullPath: '/tools/cover-letter/$cvId'
+      preLoaderRoute: typeof AuthenticatedToolsCoverLetterCvIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/tools/keyword/$cvId': {
@@ -1270,12 +1263,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedToolsKeywordCvIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/tools/cover-letter/$cvId': {
-      id: '/_authenticated/tools/cover-letter/$cvId'
-      path: '/tools/cover-letter/$cvId'
-      fullPath: '/tools/cover-letter/$cvId'
-      preLoaderRoute: typeof AuthenticatedToolsCoverLetterCvIdRouteImport
+    '/_authenticated/tools/tailor/$cvId': {
+      id: '/_authenticated/tools/tailor/$cvId'
+      path: '/tools/tailor/$cvId'
+      fullPath: '/tools/tailor/$cvId'
+      preLoaderRoute: typeof AuthenticatedToolsTailorCvIdRouteImport
       parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/tryout/$examId/ujian': {
+      id: '/_authenticated/tryout/$examId/ujian'
+      path: '/ujian'
+      fullPath: '/tryout/$examId/ujian'
+      preLoaderRoute: typeof AuthenticatedTryoutExamIdUjianRouteImport
+      parentRoute: typeof AuthenticatedTryoutExamIdRoute
     }
     '/_authenticated/tryout/$examId/hasil/$attemptId': {
       id: '/_authenticated/tryout/$examId/hasil/$attemptId'
