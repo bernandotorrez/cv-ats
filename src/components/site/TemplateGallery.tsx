@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { Link } from "@tanstack/react-router";
-import { ShieldCheck, FileText, Sparkles, ArrowRight } from "lucide-react";
+import { ShieldCheck, FileText, Sparkles, ArrowRight, Pause, Play } from "lucide-react";
 import { templatesData } from "@/lib/cv-templates-data";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -35,6 +35,7 @@ const templateComponents = {
 
 export function TemplateGallery() {
   const [filter, setFilter] = useState<"Semua" | "ATS-Friendly" | "Kreatif">("Semua");
+  const [paused, setPaused] = useState(false);
 
   const filteredTemplates = useMemo(() => {
     if (filter === "Semua") return templatesData;
@@ -84,11 +85,16 @@ export function TemplateGallery() {
           </div>
 
           {/* Filter Buttons */}
-          <div className="flex justify-center gap-3">
+          <div
+            className="flex flex-wrap justify-center gap-3"
+            role="group"
+            aria-label="Filter template"
+          >
             <Button
               variant={filter === "Semua" ? "default" : "secondary"}
               className={`rounded-full px-8 ${filter === "Semua" ? "bg-green-700 hover:bg-green-800 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}
               onClick={() => setFilter("Semua")}
+              aria-pressed={filter === "Semua"}
             >
               Semua
             </Button>
@@ -96,6 +102,7 @@ export function TemplateGallery() {
               variant={filter === "ATS-Friendly" ? "default" : "secondary"}
               className={`rounded-full px-8 ${filter === "ATS-Friendly" ? "bg-green-700 hover:bg-green-800 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}
               onClick={() => setFilter("ATS-Friendly")}
+              aria-pressed={filter === "ATS-Friendly"}
             >
               ATS-Friendly
             </Button>
@@ -103,6 +110,7 @@ export function TemplateGallery() {
               variant={filter === "Kreatif" ? "default" : "secondary"}
               className={`rounded-full px-8 ${filter === "Kreatif" ? "bg-green-700 hover:bg-green-800 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}
               onClick={() => setFilter("Kreatif")}
+              aria-pressed={filter === "Kreatif"}
             >
               Kreatif
             </Button>
@@ -126,20 +134,26 @@ export function TemplateGallery() {
               animation: marquee 35s linear infinite;
               min-width: 200%;
             }
-            .group:hover .animate-marquee {
+            .group:hover .animate-marquee,
+            .group:focus-within .animate-marquee,
+            .animate-marquee[data-paused="true"] {
               animation-play-state: paused;
             }
           `,
             }}
           />
-          <div className="flex gap-6 animate-marquee py-4 w-max">
+          <div className="flex gap-6 animate-marquee py-4 w-max" data-paused={paused}>
             {[...filteredTemplates, ...filteredTemplates].map((template, idx) => {
               const TemplateComponent =
                 templateComponents[template.slug as keyof typeof templateComponents];
 
+              const isDuplicate = idx >= filteredTemplates.length;
+
               return (
                 <Card
                   key={`${template.slug}-${idx}`}
+                  aria-hidden={isDuplicate || undefined}
+                  inert={isDuplicate}
                   className="w-[280px] shrink-0 overflow-hidden rounded-2xl border border-gray-200 bg-white hover:shadow-xl transition-all duration-300 flex flex-col"
                 >
                   {/* Image / Preview Area */}
@@ -147,14 +161,18 @@ export function TemplateGallery() {
                     {/* Badge */}
                     <div className="absolute top-4 left-4 z-20">
                       <span
-                        className={`px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white rounded ${template.type === "Kreatif" ? "bg-teal-500" : "bg-green-700"}`}
+                        className={`px-3 py-1 text-xs font-bold uppercase tracking-wider text-white rounded ${template.type === "Kreatif" ? "bg-teal-700" : "bg-green-700"}`}
                       >
                         {template.type === "Kreatif" ? "KREATIF" : "ATS OPTIMIZED"}
                       </span>
                     </div>
 
                     {/* Render Component scaled down */}
-                    <div className="relative w-full h-full overflow-hidden bg-white shadow-sm ring-1 ring-gray-200 rounded-lg">
+                    <div
+                      aria-hidden="true"
+                      inert
+                      className="relative w-full h-full overflow-hidden bg-white shadow-sm ring-1 ring-gray-200 rounded-lg"
+                    >
                       <div
                         className="absolute left-0 top-0"
                         style={{
@@ -192,7 +210,7 @@ export function TemplateGallery() {
                       asChild
                       className="w-full bg-green-700 hover:bg-green-800 text-white rounded-lg group/btn"
                     >
-                      <Link to="/register">
+                      <Link to="/register" aria-label={`Gunakan template ${template.name}`}>
                         Gunakan Template
                         <ArrowRight className="ml-2 w-4 h-4 transition-transform group-hover/btn:translate-x-1" />
                       </Link>
@@ -202,6 +220,22 @@ export function TemplateGallery() {
               );
             })}
           </div>
+        </div>
+
+        <div className="mt-6 flex justify-center">
+          <button
+            type="button"
+            onClick={() => setPaused((p) => !p)}
+            aria-pressed={paused}
+            className="inline-flex min-h-11 items-center gap-2 rounded-full border border-gray-300 bg-white px-4 text-sm font-semibold text-gray-700 hover:border-green-700 hover:text-green-800"
+          >
+            {paused ? (
+              <Play aria-hidden="true" className="h-4 w-4" />
+            ) : (
+              <Pause aria-hidden="true" className="h-4 w-4" />
+            )}
+            {paused ? "Putar animasi template" : "Jeda animasi template"}
+          </button>
         </div>
       </div>
     </section>

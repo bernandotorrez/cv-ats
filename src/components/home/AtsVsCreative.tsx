@@ -4,10 +4,10 @@ import { Button } from "@/components/ui/button";
 
 export function AtsVsCreative() {
   return (
-    <section className="py-20 bg-green-50/30">
+    <section className="py-20 lg:py-28 bg-green-50">
       <div className="container-page">
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-green-50 text-green-700 uppercase tracking-wider">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-green-100 text-green-800 uppercase tracking-wider">
             Format CV
           </span>
           <h2 className="mt-4 font-display text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight leading-tight">
@@ -20,8 +20,8 @@ export function AtsVsCreative() {
 
         <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
           {/* ATS-Friendly Card */}
-          <div className="rounded-2xl border-2 border-green-600 bg-white p-8 shadow-xl relative overflow-hidden flex flex-col">
-            <div className="absolute top-0 right-0 bg-green-600 text-white px-4 py-1.5 rounded-bl-xl text-xs font-bold">
+          <div className="rounded-2xl border-2 border-green-700 bg-white p-8 shadow-xl relative overflow-hidden flex flex-col">
+            <div className="absolute top-0 right-0 bg-green-700 text-white px-4 py-1.5 rounded-bl-xl text-xs font-bold">
               Paling Direkomendasikan
             </div>
             
@@ -44,7 +44,7 @@ export function AtsVsCreative() {
                 "Meminimalkan risiko CV ditolak sebelum dibaca HRD"
               ].map((point, idx) => (
                 <div key={idx} className="flex items-start gap-3">
-                  <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0 mt-0.5" />
+                  <CheckCircle2 className="h-5 w-5 text-green-700 shrink-0 mt-0.5" />
                   <span className="text-sm font-medium text-gray-700">{point}</span>
                 </div>
               ))}
@@ -62,7 +62,7 @@ export function AtsVsCreative() {
           <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-md hover:shadow-lg transition-shadow flex flex-col">
             <div className="flex items-center gap-4 mb-6">
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-purple-100 text-purple-700">
-                <Sparkles className="h-6 w-6" />
+                <Sparkles aria-hidden="true" className="h-6 w-6" />
               </div>
               <h3 className="font-display text-2xl font-bold text-gray-900">CV Kreatif</h3>
             </div>
