@@ -17,10 +17,15 @@ import {
   Zap,
 } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { buildSeo } from "@/lib/seo";
+import {
+  CtaBanner,
+  Eyebrow,
+  PageHero,
+  PrimaryCta,
+  SecondaryCta,
+  SectionHeader,
+} from "@/components/site/marketing";
 
 export const Route = createFileRoute("/tentang")({
   head: () =>
@@ -106,228 +111,280 @@ const promises = [
 
 function TentangPage() {
   return (
-    <>
-      <section className="overflow-hidden bg-background">
-        <div className="container-page grid gap-10 py-14 md:grid-cols-[1.03fr_0.97fr] md:items-center md:py-20 lg:py-24">
-          <div>
-            <Badge className="gap-1.5 bg-info text-info-foreground hover:bg-info">
-              <Sparkles className="h-3.5 w-3.5" aria-hidden />
-              Tentang CV Pintar
-            </Badge>
-            <h1 className="mt-5 max-w-3xl font-display text-4xl font-extrabold leading-tight tracking-tight text-foreground sm:text-5xl lg:text-6xl">
-              Kami ingin CV bagus tidak cuma dimiliki orang yang sudah tahu caranya.
-            </h1>
-            <p className="mt-5 max-w-2xl text-base leading-8 text-muted-foreground sm:text-lg">
-              CV Pintar dibuat untuk membantu pencari kerja Indonesia menulis CV yang rapi, relevan,
-              lolos ATS, dan lebih mudah dipahami rekruter.
-            </p>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Button asChild size="lg" className="h-12 px-6 text-base">
-                <Link to="/register">
-                  Buat CV Gratis
-                  <ArrowRight className="h-4 w-4" aria-hidden />
-                </Link>
-              </Button>
-              <Button asChild size="lg" variant="outline" className="h-12 px-6 text-base">
-                <Link to="/private-coaching">Lihat Private Mentoring</Link>
-              </Button>
-            </div>
-          </div>
-
-          <div className="rounded-lg border border-border bg-card p-4 shadow-xl shadow-primary/10">
-            <div className="rounded-md bg-background p-5">
-              <div className="flex items-center gap-4 border-b border-border pb-5">
-                <div className="grid h-14 w-14 place-items-center rounded-lg bg-primary text-primary-foreground">
-                  <FileText className="h-7 w-7" aria-hidden />
-                </div>
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    Our belief
-                  </p>
-                  <h2 className="font-display text-xl font-bold">CV adalah pintu pertama.</h2>
-                </div>
-              </div>
-              <div className="mt-5 space-y-3">
-                {[
-                  ["Jelas", "Rekruter cepat paham kamu melamar sebagai apa."],
-                  ["Relevan", "Isi CV nyambung dengan role dan industri target."],
-                  ["Terukur", "Pencapaian punya bukti, angka, atau konteks."],
-                ].map(([title, desc]) => (
-                  <div key={title} className="rounded-lg border border-border p-4">
-                    <div className="flex items-start gap-3">
-                      <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-primary" aria-hidden />
-                      <div>
-                        <p className="text-sm font-semibold text-foreground">{title}</p>
-                        <p className="mt-1 text-sm leading-6 text-muted-foreground">{desc}</p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+    <div className="overflow-hidden bg-white">
+      <PageHero
+        eyebrow={
+          <>
+            <Sparkles aria-hidden="true" className="h-4 w-4" />
+            Tentang CV Pintar
+          </>
+        }
+        title={
+          <>
+            Kami ingin CV bagus{" "}
+            <span className="text-green-700">
+              tidak cuma dimiliki orang yang sudah tahu caranya.
+            </span>
+          </>
+        }
+        desc="CV Pintar dibuat untuk membantu pencari kerja Indonesia menulis CV yang rapi, relevan, lolos ATS, dan lebih mudah dipahami rekruter."
+        aside={<BeliefCard />}
+      >
+        <div className="mt-8 flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
+          <PrimaryCta to="/register">Buat CV Gratis</PrimaryCta>
+          <SecondaryCta to="/fitur">Lihat Fitur</SecondaryCta>
         </div>
-      </section>
+      </PageHero>
 
-      <section aria-label="Dampak CV Pintar" className="border-y border-border bg-card">
-        <div className="container-page grid grid-cols-2 gap-px py-4 sm:grid-cols-4">
+      {/* Stats */}
+      <section aria-label="Dampak CV Pintar" className="container-page -mt-6 lg:-mt-10">
+        <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-gray-200 bg-gray-200 shadow-lg md:grid-cols-4">
           {stats.map((item) => (
-            <div key={item.label} className="px-3 py-5 text-center">
-              <item.icon className="mx-auto h-5 w-5 text-primary" aria-hidden />
-              <div className="mt-3 font-display text-2xl font-bold text-primary md:text-3xl">
-                {item.value}
+            <div key={item.label} className="flex items-center gap-4 bg-white p-5 sm:p-6">
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-green-100 text-green-800">
+                <item.icon aria-hidden="true" className="h-6 w-6" />
+              </span>
+              <div className="flex flex-col-reverse">
+                <dt className="mt-1 text-sm font-medium capitalize text-gray-600">{item.label}</dt>
+                <dd className="font-display text-2xl font-extrabold leading-none text-gray-900">
+                  {item.value}
+                </dd>
               </div>
-              <p className="mt-1 text-xs font-medium text-muted-foreground md:text-sm">
-                {item.label}
-              </p>
             </div>
           ))}
-        </div>
+        </dl>
       </section>
 
-      <section className="container-page py-16 md:py-24">
-        <div className="grid gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:items-center">
+      {/* Mission */}
+      <section aria-labelledby="misi-heading" className="py-20 lg:py-28">
+        <div className="container-page grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
           <div>
-            <Badge variant="secondary">Misi Kami</Badge>
-            <h2 className="mt-3 font-display text-3xl font-bold tracking-tight md:text-4xl">
-              Membuat proses apply terasa lebih adil, jelas, dan bisa dikerjakan.
+            <Eyebrow>Misi kami</Eyebrow>
+            <h2
+              id="misi-heading"
+              className="mt-4 font-display text-3xl font-extrabold leading-tight tracking-tight text-gray-900 sm:text-4xl lg:text-5xl"
+            >
+              Membuat proses apply terasa{" "}
+              <span className="text-green-700">lebih adil, jelas, dan bisa dikerjakan.</span>
             </h2>
           </div>
-          <p className="text-base leading-8 text-muted-foreground">
+          <blockquote className="border-l-4 border-green-700 pl-6 text-lg leading-relaxed text-gray-700 sm:text-xl">
             Kami percaya kesempatan kerja yang lebih baik dimulai dari dokumen pertama yang benar.
             CV bukan tempat untuk menebak-nebak. CV harus membantu kamu menjelaskan pengalaman
             dengan struktur yang rapi, bahasa yang kuat, dan bukti yang mudah dipindai.
-          </p>
+          </blockquote>
         </div>
       </section>
 
-      <section className="bg-muted/45 py-16 md:py-24">
+      {/* Story */}
+      <section aria-labelledby="cerita-heading" className="bg-gray-50 py-20 lg:py-28">
         <div className="container-page">
-          <SectionIntro
-            eyebrow="Cerita Kami"
+          <SectionHeader
+            id="cerita-heading"
+            eyebrow="Cerita kami"
             title="Dari masalah yang sering terlihat, jadi produk yang bisa dipakai."
-            desc="Kami membangun CV Pintar dari pola yang sama: kandidat layak sering kalah bukan karena kurang mampu, tapi karena CV-nya tidak menyampaikan nilai dengan jelas."
+            desc="Kandidat layak sering kalah bukan karena kurang mampu, tapi karena CV-nya tidak menyampaikan nilai dengan jelas."
           />
-
-          <div className="mt-10 grid gap-4 md:grid-cols-3">
+          <ol className="grid gap-5 md:grid-cols-3">
             {storyParagraphs.map((item, index) => (
-              <article key={item.title} className="rounded-lg border border-border bg-card p-6">
+              <li
+                key={item.title}
+                className="relative rounded-2xl border border-gray-200 bg-white p-7"
+              >
                 <div className="flex items-center justify-between gap-4">
-                  <Badge variant="outline">{item.label}</Badge>
-                  <span className="font-display text-sm font-bold text-primary">0{index + 1}</span>
+                  <span
+                    className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wider ${
+                      index === 2 ? "bg-green-700 text-white" : "bg-gray-100 text-gray-800"
+                    }`}
+                  >
+                    {item.label}
+                  </span>
+                  <span
+                    aria-hidden="true"
+                    className="font-display text-3xl font-extrabold text-green-200"
+                  >
+                    {index + 1}
+                  </span>
                 </div>
-                <h3 className="mt-5 font-display text-xl font-bold text-foreground">
-                  {item.title}
-                </h3>
-                <p className="mt-3 text-sm leading-7 text-muted-foreground">{item.text}</p>
-              </article>
+                <h3 className="mt-5 font-display text-xl font-bold text-gray-900">{item.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-gray-600">{item.text}</p>
+              </li>
             ))}
-          </div>
+          </ol>
         </div>
       </section>
 
-      <section className="container-page py-16 md:py-24">
-        <SectionIntro
-          eyebrow="Yang Bikin Kami Beda"
-          title="Teknologi yang membantu, bukan membuat proses makin ramai."
-          desc="Kami memilih fitur yang benar-benar dekat dengan kebutuhan pelamar: menulis lebih baik, mengukur kesiapan, dan berlatih sebelum kesempatan datang."
-        />
-
-        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {values.map((value) => (
-            <Card key={value.title} className="rounded-lg border-border bg-card shadow-none">
-              <CardContent className="p-6">
-                <div className="grid h-11 w-11 place-items-center rounded-lg bg-primary/10 text-primary">
-                  <value.icon className="h-5 w-5" aria-hidden />
-                </div>
-                <h3 className="mt-5 font-display text-lg font-semibold">{value.title}</h3>
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">{value.description}</p>
-              </CardContent>
-            </Card>
-          ))}
+      {/* Values */}
+      <section aria-labelledby="beda-heading" className="py-20 lg:py-28">
+        <div className="container-page">
+          <SectionHeader
+            id="beda-heading"
+            eyebrow="Yang bikin kami beda"
+            title="Teknologi yang membantu, bukan membuat proses makin ramai."
+            desc="Kami memilih fitur yang dekat dengan kebutuhan pelamar: menulis lebih baik, mengukur kesiapan, dan berlatih sebelum kesempatan datang."
+          />
+          <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {values.map((value) => (
+              <li
+                key={value.title}
+                className="rounded-2xl border border-gray-200 bg-white p-6 transition-shadow hover:shadow-lg"
+              >
+                <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-green-100 text-green-800">
+                  <value.icon aria-hidden="true" className="h-6 w-6" />
+                </span>
+                <h3 className="mt-5 font-display text-lg font-bold text-gray-900">{value.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-gray-600">{value.description}</p>
+              </li>
+            ))}
+          </ul>
         </div>
       </section>
 
-      <section className="bg-card py-16 md:py-24">
+      {/* Promises */}
+      <section
+        aria-labelledby="komitmen-heading"
+        className="bg-green-950 py-20 text-white lg:py-28"
+      >
         <div className="container-page grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
           <div>
-            <Badge variant="secondary">Komitmen</Badge>
-            <h2 className="mt-3 font-display text-3xl font-bold tracking-tight md:text-4xl">
+            <Eyebrow tone="dark">Komitmen</Eyebrow>
+            <h2
+              id="komitmen-heading"
+              className="mt-4 font-display text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl"
+            >
               Kami ingin kamu merasa lebih siap, bukan lebih bingung.
             </h2>
-            <p className="mt-4 text-base leading-8 text-muted-foreground">
+            <p className="mt-4 text-base leading-relaxed text-green-100 sm:text-lg">
               Setiap fitur yang kami bangun harus punya satu tujuan: membantu kamu mengambil langkah
               berikutnya dengan lebih percaya diri.
             </p>
           </div>
-
-          <div className="grid gap-3">
+          <ul className="grid gap-3">
             {promises.map((item) => (
-              <div key={item} className="rounded-lg border border-border bg-background p-4">
-                <div className="flex items-start gap-3">
-                  <Shield className="mt-0.5 h-5 w-5 shrink-0 text-primary" aria-hidden />
-                  <p className="text-sm leading-6 text-muted-foreground">{item}</p>
+              <li
+                key={item}
+                className="flex items-start gap-3 rounded-2xl border border-white/15 bg-white/5 p-5"
+              >
+                <Shield aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-yellow-300" />
+                <span className="text-base text-white">{item}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      {/* Next step */}
+      <section aria-labelledby="next-heading" className="py-20 lg:py-28">
+        <div className="container-page">
+          <SectionHeader
+            id="next-heading"
+            eyebrow="Langkah berikutnya"
+            title="Dari CV rapi ke strategi apply yang lebih kuat."
+            desc="Setelah CV dibuat, lanjut ke scoring, review HR, dan simulasi wawancara."
+          />
+          <ul className="mx-auto grid max-w-4xl gap-5 sm:grid-cols-2">
+            <li>
+              <Link
+                to="/fitur"
+                className="group flex h-full flex-col rounded-2xl border border-gray-200 bg-white p-6 transition-all hover:-translate-y-1 hover:border-green-600 hover:shadow-xl"
+              >
+                <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-green-700 text-white">
+                  <FileCheck aria-hidden="true" className="h-6 w-6" />
+                </span>
+                <h3 className="mt-5 font-display text-lg font-bold text-gray-900 group-hover:text-green-800">
+                  Review CV & Scoring
+                </h3>
+                <p className="mt-2 flex-1 text-sm leading-relaxed text-gray-600">
+                  Analisis mendalam dari perspektif HR, lengkap dengan skor ATS dan prioritas
+                  perbaikan.
+                </p>
+                <span className="mt-5 inline-flex items-center gap-1.5 text-sm font-bold text-green-800">
+                  Lihat fitur
+                  <ArrowRight
+                    aria-hidden="true"
+                    className="h-4 w-4 transition-transform group-hover:translate-x-1"
+                  />
+                </span>
+              </Link>
+            </li>
+            <li>
+              <Link
+                to="/private-coaching"
+                className="group flex h-full flex-col rounded-2xl border border-gray-200 bg-white p-6 transition-all hover:-translate-y-1 hover:border-green-600 hover:shadow-xl"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-green-700 text-white">
+                    <BriefcaseBusiness aria-hidden="true" className="h-6 w-6" />
+                  </span>
+                  <span className="rounded-full bg-yellow-300 px-2.5 py-1 text-xs font-bold text-gray-900">
+                    Segera hadir
+                  </span>
                 </div>
-              </div>
-            ))}
-          </div>
+                <h3 className="mt-5 font-display text-lg font-bold text-gray-900 group-hover:text-green-800">
+                  Private Mentoring
+                </h3>
+                <p className="mt-2 flex-1 text-sm leading-relaxed text-gray-600">
+                  Bimbingan 1-on-1 dengan HR Recruiter. Daftar tunggu sudah dibuka.
+                </p>
+                <span className="mt-5 inline-flex items-center gap-1.5 text-sm font-bold text-green-800">
+                  Masuk daftar tunggu
+                  <ArrowRight
+                    aria-hidden="true"
+                    className="h-4 w-4 transition-transform group-hover:translate-x-1"
+                  />
+                </span>
+              </Link>
+            </li>
+          </ul>
         </div>
       </section>
 
-      <section className="container-page py-16 md:py-24">
-        <div className="grid gap-6 rounded-lg border border-border bg-card p-6 shadow-sm md:p-8 lg:grid-cols-[1fr_1fr] lg:items-center">
-          <div>
-            <Badge className="bg-info text-info-foreground hover:bg-info">Next step</Badge>
-            <h2 className="mt-4 font-display text-3xl font-bold tracking-tight md:text-4xl">
-              Dari CV rapi ke strategi apply yang lebih kuat.
-            </h2>
-            <p className="mt-4 text-base leading-8 text-muted-foreground">
-              Setelah CV dibuat, kamu bisa lanjut ke scoring, review HR, simulasi wawancara, atau
-              private mentoring bersama HR Recruiter.
-            </p>
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {[
-              [BriefcaseBusiness, "Private Mentoring", "Bimbingan 1-on-1 dengan HR Recruiter."],
-              [FileCheck, "Review CV", "Analisis mendalam dari perspektif HR."],
-            ].map(([Icon, title, desc]) => (
-              <div key={title as string} className="rounded-lg border border-border p-4">
-                <Icon className="h-5 w-5 text-primary" aria-hidden />
-                <h3 className="mt-3 text-sm font-semibold text-foreground">{title as string}</h3>
-                <p className="mt-1 text-sm leading-6 text-muted-foreground">{desc as string}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="container-page pb-16 md:pb-24">
-        <div className="rounded-lg bg-primary px-6 py-12 text-center text-primary-foreground md:px-10 md:py-16">
-          <FileText className="mx-auto h-8 w-8" aria-hidden />
-          <h2 className="mx-auto mt-5 max-w-2xl font-display text-3xl font-bold tracking-tight md:text-4xl">
-            Siap membuat CV yang lebih mudah dipercaya?
-          </h2>
-          <p className="mx-auto mt-4 max-w-xl text-sm leading-7 text-primary-foreground/90 md:text-base">
-            Mulai gratis, rapikan isi dengan AI, lalu cek apakah CV kamu sudah siap dikirim.
-          </p>
-          <Button asChild size="lg" variant="secondary" className="mt-8 h-12 px-7 text-base">
-            <Link to="/register">
-              Mulai sekarang
-              <ArrowRight className="h-4 w-4" aria-hidden />
-            </Link>
-          </Button>
-        </div>
-      </section>
-    </>
+      <CtaBanner
+        title="Siap membuat CV yang lebih mudah dipercaya?"
+        desc="Mulai gratis, rapikan isi dengan AI, lalu cek apakah CV kamu sudah siap dikirim."
+        cta="Mulai Sekarang"
+      />
+    </div>
   );
 }
 
-function SectionIntro({ eyebrow, title, desc }: { eyebrow: string; title: string; desc: string }) {
+function BeliefCard() {
   return (
-    <div className="mx-auto max-w-2xl text-center">
-      <Badge variant="secondary">{eyebrow}</Badge>
-      <h2 className="mt-3 font-display text-3xl font-bold tracking-tight md:text-4xl">{title}</h2>
-      <p className="mt-4 text-base leading-8 text-muted-foreground">{desc}</p>
+    <div className="relative mx-auto w-full max-w-md px-2 sm:px-0">
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 translate-x-3 translate-y-3 rotate-2 rounded-3xl bg-green-700"
+      />
+      <div className="relative rounded-3xl border border-gray-200 bg-white p-6 shadow-2xl">
+        <div className="flex items-center gap-4 border-b border-gray-100 pb-5">
+          <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-green-700 text-white">
+            <FileText aria-hidden="true" className="h-7 w-7" />
+          </span>
+          <div>
+            <p className="text-xs font-bold uppercase tracking-wider text-gray-600">
+              Keyakinan kami
+            </p>
+            <p className="font-display text-xl font-extrabold text-gray-900">
+              CV adalah pintu pertama.
+            </p>
+          </div>
+        </div>
+        <ul className="mt-5 grid gap-3">
+          {[
+            ["Jelas", "Rekruter cepat paham kamu melamar sebagai apa."],
+            ["Relevan", "Isi CV nyambung dengan role dan industri target."],
+            ["Terukur", "Pencapaian punya bukti, angka, atau konteks."],
+          ].map(([title, desc]) => (
+            <li key={title} className="flex items-start gap-3 rounded-xl bg-gray-50 p-4">
+              <CheckCircle2 aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-green-700" />
+              <div>
+                <p className="font-bold text-gray-900">{title}</p>
+                <p className="mt-0.5 text-sm leading-relaxed text-gray-600">{desc}</p>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 }
