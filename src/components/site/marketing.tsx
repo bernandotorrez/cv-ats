@@ -185,12 +185,15 @@ export function CtaBanner({
   cta,
   to = "/register",
   points = ["Gratis selamanya", "Mudah & cepat", "ATS Friendly", "Dipercaya 10.000+ pengguna"],
+  secondary,
 }: {
   title: ReactNode;
   desc?: ReactNode;
   cta: string;
   to?: string;
   points?: string[];
+  /** Optional external secondary action (opens in a new tab). */
+  secondary?: { href: string; label: string };
 }) {
   return (
     <section className="container-page py-16 lg:py-24">
@@ -220,17 +223,30 @@ export function CtaBanner({
               </li>
             ))}
           </ul>
-          <Button
-            asChild
-            size="lg"
-            className="mt-10 h-14 rounded-xl bg-yellow-300 px-8 text-base font-extrabold text-gray-950 shadow-lg hover:bg-yellow-200"
-          >
-            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-            <Link to={to as any}>
-              {cta}
-              <ArrowRight aria-hidden="true" className="ml-2 h-5 w-5" />
-            </Link>
-          </Button>
+          <div className="mt-10 flex flex-col justify-center gap-3 sm:flex-row">
+            <Button
+              asChild
+              size="lg"
+              className="h-14 rounded-xl bg-yellow-300 px-8 text-base font-extrabold text-gray-950 shadow-lg hover:bg-yellow-200"
+            >
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+              <Link to={to as any}>
+                {cta}
+                <ArrowRight aria-hidden="true" className="ml-2 h-5 w-5" />
+              </Link>
+            </Button>
+            {secondary && (
+              <a
+                href={secondary.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex h-14 items-center justify-center rounded-xl border-2 border-white/70 px-8 text-base font-bold text-white transition-colors hover:bg-white/10"
+              >
+                {secondary.label}
+                <span className="sr-only"> (membuka tab baru)</span>
+              </a>
+            )}
+          </div>
         </div>
       </div>
     </section>

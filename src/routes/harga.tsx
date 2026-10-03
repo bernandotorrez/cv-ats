@@ -9,7 +9,7 @@ import {
   Gift,
   LockKeyhole,
   MessageCircle,
-  MessageSquareText,
+  Minus,
   RefreshCw,
   ShieldCheck,
   Sparkles,
@@ -28,10 +28,8 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { buildSeo } from "@/lib/seo";
+import { CtaBanner, Eyebrow, PageHero, SectionHeader } from "@/components/site/marketing";
 
 const WHATSAPP_NUMBER = "6285190607141";
 const STARTER_PAYMENT_URL = "https://lynk.id/ben-yt-ai/rj687wre6kr0";
@@ -244,93 +242,131 @@ export const Route = createFileRoute("/harga")({
   component: HargaPage,
 });
 
+const PER_DAY: Record<string, string> = {
+  Starter: "≈ Rp 500 / hari",
+  Pro: "≈ Rp 1.200 / hari",
+};
+
+const KEY_FEATURE_COUNT = 8;
+
+function NewTabHint() {
+  return <span className="sr-only"> (membuka tab baru)</span>;
+}
+
 function HargaPage() {
   return (
-    <main className="overflow-x-clip bg-background">
-      <section className="border-b border-border/70">
-        <div className="container-page grid gap-12 py-16 md:grid-cols-[minmax(0,1fr)_minmax(320px,0.86fr)] md:items-center md:py-24">
-          <div>
-            <Badge className="mb-6 gap-2 border-yellow-200 bg-yellow-100 px-4 py-2 text-sm text-yellow-950 shadow-sm hover:bg-yellow-100">
-              <Sparkles className="h-4 w-4" aria-hidden="true" />
-              Harga sederhana, hasilnya serius
-            </Badge>
-
-            <h1 className="max-w-3xl font-display text-4xl font-bold leading-[1.02] text-foreground sm:text-5xl lg:text-6xl">
-              Mulai gratis. Upgrade saat CV kamu mulai bekerja lebih keras.
-            </h1>
-
-            <p className="mt-6 max-w-2xl text-lg leading-8 text-muted-foreground">
-              Pilih paket sesuai ritme lamaranmu. Tidak ada kontrak panjang, tidak ada biaya
-              tersembunyi, dan kamu bisa mengecek kecocokan CV dengan lowongan sebelum kirim.
-            </p>
-
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Button asChild size="lg" className="h-12 px-6 text-base">
-                <a href="#pilih-paket">
-                  Bandingkan paket
-                  <ArrowRight className="h-5 w-5" aria-hidden="true" />
-                </a>
-              </Button>
-              <Button asChild variant="outline" size="lg" className="h-12 px-6 text-base">
-                <Link to="/register">Mulai gratis</Link>
-              </Button>
-            </div>
-
-            <dl className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {proof.map((item) => (
-                <div
-                  key={item.label}
-                  className="rounded-lg border border-border bg-card p-3 shadow-sm"
-                >
-                  <item.icon className="mb-3 h-5 w-5 text-primary" aria-hidden="true" />
-                  <dt className="font-display text-xl font-bold text-foreground">{item.stat}</dt>
-                  <dd className="mt-1 text-sm text-muted-foreground">{item.label}</dd>
-                </div>
-              ))}
-            </dl>
-          </div>
-
-          <PriceSignal />
-        </div>
-      </section>
-
-      <section className="container-page py-14 md:py-20">
-        <div className="grid gap-4 md:grid-cols-3">
-          {quickFit.map((item) => (
-            <Card key={item.title} className="border-border/80 shadow-sm">
-              <CardContent className="p-6">
-                <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                  <item.icon className="h-5 w-5" aria-hidden="true" />
-                </div>
-                <h2 className="font-display text-xl font-bold text-foreground">{item.title}</h2>
-                <p className="mt-3 leading-7 text-muted-foreground">{item.desc}</p>
-              </CardContent>
-            </Card>
+    <div className="overflow-hidden bg-white">
+      <PageHero
+        eyebrow={
+          <>
+            <Sparkles aria-hidden="true" className="h-4 w-4" />
+            Harga sederhana, hasilnya serius
+          </>
+        }
+        title={
+          <>
+            Mulai gratis.{" "}
+            <span className="text-green-700">Upgrade saat CV kamu mulai bekerja lebih keras.</span>
+          </>
+        }
+        desc="Pilih paket sesuai ritme lamaranmu. Tanpa kontrak panjang, tanpa biaya tersembunyi."
+      >
+        <ul className="mt-8 flex flex-wrap justify-center gap-3">
+          {guarantees.map((g) => (
+            <li
+              key={g.label}
+              className="flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-800 shadow-sm"
+            >
+              <g.icon aria-hidden="true" className="h-4 w-4 text-green-700" />
+              {g.label}
+            </li>
           ))}
+        </ul>
+      </PageHero>
+
+      {/* Pricing cards — right after hero */}
+      <section
+        id="pilih-paket"
+        aria-labelledby="paket-heading"
+        className="scroll-mt-20 pb-20 lg:pb-28"
+      >
+        <div className="container-page">
+          <h2 id="paket-heading" className="sr-only">
+            Pilih paket
+          </h2>
+          <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-3 lg:items-start">
+            {tiers.map((tier) => (
+              <PricingCard key={tier.name} tier={tier} />
+            ))}
+          </div>
+          <p className="mt-8 text-center text-sm text-gray-600">
+            Butuh detail kuota?{" "}
+            <a
+              href="#perbandingan"
+              className="font-bold text-green-800 underline underline-offset-4"
+            >
+              Lihat perbandingan lengkap
+            </a>
+          </p>
         </div>
       </section>
 
-      <section className="border-y border-border/70 bg-card py-14 md:py-20">
-        <div className="container-page grid gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:items-center">
+      {/* Which plan fits */}
+      <section aria-labelledby="fit-heading" className="bg-gray-50 py-20 lg:py-28">
+        <div className="container-page">
+          <SectionHeader
+            id="fit-heading"
+            eyebrow="Panduan memilih"
+            title="Paket mana yang cocok untukmu?"
+            desc="Free cukup untuk mulai. Starter cocok untuk apply aktif. Pro memberi ruang lebih besar saat kamu mengejar beberapa peluang sekaligus."
+          />
+          <ol className="grid gap-5 md:grid-cols-3">
+            {quickFit.map((item, i) => (
+              <li
+                key={item.title}
+                className={`relative rounded-2xl border bg-white p-7 ${
+                  i === 1 ? "border-2 border-green-700 shadow-xl" : "border-gray-200"
+                }`}
+              >
+                {i === 1 && (
+                  <span className="absolute -top-3 left-7 rounded-full bg-yellow-300 px-3 py-1 text-xs font-bold text-gray-900">
+                    Paling banyak dipilih
+                  </span>
+                )}
+                <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-green-100 text-green-800">
+                  <item.icon aria-hidden="true" className="h-6 w-6" />
+                </span>
+                <h3 className="mt-5 font-display text-xl font-bold text-gray-900">{item.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-gray-600">{item.desc}</p>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
+
+      {/* Job match highlight */}
+      <section aria-labelledby="lowongan-heading" className="py-20 lg:py-28">
+        <div className="container-page grid gap-12 lg:grid-cols-[0.85fr_1.15fr] lg:items-center">
           <div>
-            <Badge variant="secondary" className="mb-4 px-3 py-1.5">
-              Fitur lowongan
-            </Badge>
-            <h2 className="font-display text-3xl font-bold leading-tight text-foreground md:text-4xl">
-              Paket berbayar membantu CV kamu lebih pas ke lowongan target.
+            <Eyebrow>Fitur lowongan</Eyebrow>
+            <h2
+              id="lowongan-heading"
+              className="mt-4 font-display text-3xl font-extrabold leading-tight tracking-tight text-gray-900 sm:text-4xl"
+            >
+              Paket berbayar bikin CV-mu{" "}
+              <span className="text-green-700">lebih pas ke lowongan target.</span>
             </h2>
-            <p className="mt-4 text-lg leading-8 text-muted-foreground">
+            <p className="mt-4 text-base leading-relaxed text-gray-600 sm:text-lg">
               Starter memberi kuota AI Job Match Score untuk mengecek kecocokan CV. Pro menambahkan
               Auto Tailor CV agar kamu bisa membuat versi yang lebih relevan untuk tiap lowongan.
             </p>
           </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
+          <ul className="grid gap-5 sm:grid-cols-2">
             {[
               {
                 icon: FileSearch,
                 title: "AI Job Match Score",
-                tier: "Starter 20x, Pro 100x / bulan",
+                tier: "Starter 20x · Pro 100x / bulan",
                 desc: "Bandingkan CV dengan lowongan dari database, URL, atau job description untuk melihat match score dan keyword gap.",
               },
               {
@@ -340,217 +376,212 @@ function HargaPage() {
                 desc: "AI menyesuaikan ringkasan, urutan skill, dan bullet pengalaman agar lebih relevan tanpa mengarang data.",
               },
             ].map((item) => (
-              <Card key={item.title} className="border-border/80 shadow-sm">
-                <CardContent className="p-6">
-                  <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                    <item.icon className="h-5 w-5" aria-hidden="true" />
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="font-display text-xl font-bold text-foreground">{item.title}</h3>
-                    <Badge className="bg-info text-info-foreground hover:bg-info">
-                      {item.tier}
-                    </Badge>
-                  </div>
-                  <p className="mt-3 leading-7 text-muted-foreground">{item.desc}</p>
-                </CardContent>
-              </Card>
+              <li
+                key={item.title}
+                className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm"
+              >
+                <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-green-700 text-white">
+                  <item.icon aria-hidden="true" className="h-6 w-6" />
+                </span>
+                <h3 className="mt-5 font-display text-xl font-bold text-gray-900">{item.title}</h3>
+                <p className="mt-2 inline-block rounded-full bg-green-100 px-2.5 py-1 text-xs font-bold text-green-800">
+                  {item.tier}
+                </p>
+                <p className="mt-3 text-sm leading-relaxed text-gray-600">{item.desc}</p>
+              </li>
             ))}
-          </div>
+          </ul>
         </div>
       </section>
 
-      <section id="pilih-paket" className="bg-muted/45 py-16 md:py-24">
+      {/* Add-ons */}
+      <section aria-labelledby="addon-heading" className="bg-gray-50 py-20 lg:py-28">
         <div className="container-page">
-          <SectionIntro
-            eyebrow="Pilih paket"
-            title="Bayar untuk momentum, bukan untuk fitur yang membingungkan."
-            desc="Free cukup untuk mulai. Starter cocok untuk apply aktif. Pro memberi ruang lebih besar saat kamu mengejar beberapa peluang sekaligus."
+          <SectionHeader
+            id="addon-heading"
+            eyebrow="Add-on satuan"
+            title="Cuma butuh satu fitur? Beli satuan."
+            desc="Tanpa langganan paket. Cukup Rp 5.000 untuk fitur yang kamu perlukan."
           />
-
-          <div className="mt-10 grid gap-6 lg:grid-cols-3 lg:items-stretch">
-            {tiers.map((tier) => (
-              <PricingCard key={tier.name} tier={tier} />
+          <ul className="mx-auto grid max-w-5xl gap-6 md:grid-cols-2">
+            {[
+              {
+                icon: Upload,
+                title: "Upload CV Lama",
+                desc: "Upload CV lama (PDF/DOCX), biarkan AI membaca dan mengisi datanya otomatis ke template baru.",
+                price: "Rp 5.000",
+                unit: "/ bulan",
+                href: "https://lynk.id/ben-yt-ai/qqom281ddwwm",
+                cta: "Beli Upload CV",
+              },
+              {
+                icon: Sparkles,
+                title: "Foto Profesional AI",
+                desc: "Ubah foto kasual menjadi pas foto formal jas hitam & dasi rapi kualitas studio foto secara instan.",
+                price: "Rp 5.000",
+                unit: "/ kuota",
+                href: "https://lynk.id/ben-yt-ai/zz5m163mknj6",
+                cta: "Beli Kuota Foto Pro AI",
+              },
+            ].map((a) => (
+              <li
+                key={a.title}
+                className="flex flex-col rounded-2xl border border-gray-200 bg-white p-7 shadow-sm"
+              >
+                <div className="flex items-start gap-4">
+                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-yellow-100 text-gray-900">
+                    <a.icon aria-hidden="true" className="h-6 w-6" />
+                  </span>
+                  <div>
+                    <h3 className="font-display text-xl font-bold text-gray-900">{a.title}</h3>
+                    <p className="mt-1">
+                      <span className="font-display text-2xl font-extrabold text-gray-900">
+                        {a.price}
+                      </span>{" "}
+                      <span className="text-sm font-medium text-gray-600">{a.unit}</span>
+                    </p>
+                  </div>
+                </div>
+                <p className="mt-4 flex-1 text-sm leading-relaxed text-gray-600">{a.desc}</p>
+                <a
+                  href={a.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-6 inline-flex h-12 items-center justify-center gap-2 rounded-xl border-2 border-gray-900 bg-white px-6 text-base font-bold text-gray-900 transition-colors hover:bg-gray-900 hover:text-white"
+                >
+                  {a.cta}
+                  <CreditCard aria-hidden="true" className="h-4 w-4" />
+                  <NewTabHint />
+                </a>
+              </li>
             ))}
-          </div>
+          </ul>
         </div>
       </section>
 
-      {/* Add-ons Section */}
-      <section className="container-page py-12">
-        <div className="grid gap-6 md:grid-cols-2">
-          {/* Card 1: Upload CV */}
-          <Card className="border-yellow-200 bg-yellow-50/50 shadow-sm relative overflow-hidden flex flex-col justify-between">
-            <div className="absolute right-0 top-0 h-full w-1/3 bg-gradient-to-l from-yellow-200/20 to-transparent pointer-events-none" />
-            <CardContent className="p-8 flex-1 flex flex-col sm:flex-row items-center gap-6 relative z-10">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-yellow-100 text-yellow-600">
-                <Upload className="h-7 w-7" />
-              </div>
-              <div className="flex-1 text-center sm:text-left">
-                <h3 className="font-display text-xl font-bold text-foreground">
-                  Hanya Butuh Fitur Upload CV?
-                </h3>
-                <p className="mt-2 text-muted-foreground text-sm">
-                  Upload CV lama (PDF/DOCX), biarkan AI membaca dan mengisi datanya otomatis ke
-                  template baru. Beli satuan hanya Rp 5.000 / bulan.
-                </p>
-              </div>
-            </CardContent>
-            <div className="px-8 pb-8 pt-0 z-10">
-              <Button
-                asChild
-                size="lg"
-                className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-semibold"
-              >
-                <a
-                  href="https://lynk.id/ben-yt-ai/qqom281ddwwm"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Beli Upload CV (Rp 5rb / bln)
-                </a>
-              </Button>
-            </div>
-          </Card>
-
-          {/* Card 2: Foto Profesional */}
-          <Card className="border-purple-200 bg-purple-50/50 shadow-sm relative overflow-hidden flex flex-col justify-between">
-            <div className="absolute right-0 top-0 h-full w-1/3 bg-gradient-to-l from-purple-200/20 to-transparent pointer-events-none" />
-            <CardContent className="p-8 flex-1 flex flex-col sm:flex-row items-center gap-6 relative z-10">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-purple-100 text-purple-600">
-                <Sparkles className="h-7 w-7" />
-              </div>
-              <div className="flex-1 text-center sm:text-left">
-                <h3 className="font-display text-xl font-bold text-foreground">
-                  Hanya Butuh Foto Profesional?
-                </h3>
-                <p className="mt-2 text-muted-foreground text-sm">
-                  Ubah foto kasual kamu menjadi pas foto formal jas hitam & dasi rapi kualitas
-                  studio foto secara instan. Beli satuan hanya Rp 5.000 / bulan.
-                </p>
-              </div>
-            </CardContent>
-            <div className="px-8 pb-8 pt-0 z-10">
-              <Button
-                asChild
-                size="lg"
-                className="w-full bg-purple-500 hover:bg-purple-600 text-white font-semibold"
-              >
-                <a
-                  href="https://lynk.id/ben-yt-ai/zz5m163mknj6"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Beli Kuota Foto Pro AI (Rp 5rb / Kuota)
-                </a>
-              </Button>
-            </div>
-          </Card>
-        </div>
-      </section>
-
-      <section className="container-page py-16 md:py-24">
-        <SectionIntro
-          eyebrow="Detail fitur"
-          title="Perbedaan paket yang mudah dibaca."
-          desc="Fokus pada kuota yang benar-benar memengaruhi proses apply: jumlah CV, bantuan AI, scoring, review, dan interview."
-        />
-
-        <Card className="mt-10 overflow-hidden border-border/80 shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[720px] text-sm">
-              <caption className="sr-only">Perbandingan fitur paket CV Pintar</caption>
-              <thead>
-                <tr className="border-b bg-muted/70">
-                  <th scope="col" className="p-4 text-left font-bold text-foreground">
-                    Fitur
-                  </th>
-                  <th scope="col" className="p-4 text-center font-bold text-foreground">
-                    Free
-                  </th>
-                  <th
-                    scope="col"
-                    className="bg-primary/10 p-4 text-center font-bold text-foreground"
-                  >
-                    Starter
-                  </th>
-                  <th scope="col" className="p-4 text-center font-bold text-foreground">
-                    Pro
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {comparison.map((row) => (
-                  <tr key={row[0]} className="border-b last:border-0">
-                    <th scope="row" className="p-4 text-left font-semibold text-foreground">
-                      {row[0]}
+      {/* Comparison */}
+      <section
+        id="perbandingan"
+        aria-labelledby="compare-heading"
+        className="scroll-mt-20 py-20 lg:py-28"
+      >
+        <div className="container-page">
+          <SectionHeader
+            id="compare-heading"
+            eyebrow="Detail fitur"
+            title="Perbedaan paket yang mudah dibaca."
+            desc="Fokus pada kuota yang benar-benar memengaruhi proses apply: jumlah CV, bantuan AI, scoring, review, dan interview."
+          />
+          <div className="mx-auto max-w-5xl overflow-hidden rounded-2xl border border-gray-200 shadow-sm">
+            <div
+              className="overflow-x-auto"
+              tabIndex={0}
+              role="region"
+              aria-label="Tabel perbandingan paket, bisa digeser"
+            >
+              <table className="w-full min-w-[640px] text-sm">
+                <caption className="sr-only">Perbandingan fitur paket CV Pintar</caption>
+                <thead>
+                  <tr className="bg-gray-50">
+                    <th scope="col" className="p-4 text-left font-bold text-gray-900">
+                      Fitur
                     </th>
-                    <td className="p-4 text-center text-muted-foreground">{row[1]}</td>
-                    <td className="bg-primary/5 p-4 text-center font-semibold text-foreground">
-                      {row[2]}
-                    </td>
-                    <td className="p-4 text-center text-muted-foreground">{row[3]}</td>
+                    <th scope="col" className="p-4 text-center font-bold text-gray-900">
+                      Free
+                    </th>
+                    <th scope="col" className="bg-green-700 p-4 text-center font-bold text-white">
+                      Starter
+                    </th>
+                    <th scope="col" className="p-4 text-center font-bold text-gray-900">
+                      Pro
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </Card>
-      </section>
-
-      <section className="bg-primary py-16 text-primary-foreground md:py-20">
-        <div className="container-page grid gap-8 md:grid-cols-[1fr_0.9fr] md:items-center">
-          <div>
-            <Badge className="mb-5 border-white/25 bg-white/15 text-white hover:bg-white/15">
-              Pembayaran
-            </Badge>
-            <h2 className="font-display text-3xl font-bold leading-tight md:text-4xl">
-              Starter dan Pro bisa langsung dibayar lewat Lynk.
-            </h2>
-            <p className="mt-4 max-w-2xl text-lg leading-8 text-primary-foreground/85">
-              Klik tombol Starter atau Pro untuk menuju halaman pembayaran Lynk sesuai paket yang
-              kamu pilih.
-            </p>
-          </div>
-          <div className="grid gap-3 sm:grid-cols-3 md:grid-cols-1">
-            {guarantees.map((item) => (
-              <div
-                key={item.label}
-                className="flex items-center gap-3 rounded-lg border border-white/20 bg-white/10 p-4"
-              >
-                <item.icon className="h-5 w-5 shrink-0" aria-hidden="true" />
-                <span className="font-semibold">{item.label}</span>
-              </div>
-            ))}
+                </thead>
+                <tbody>
+                  {comparison.map((row) => (
+                    <tr key={row[0]} className="border-t border-gray-200">
+                      <th scope="row" className="p-4 text-left font-semibold text-gray-900">
+                        {row[0]}
+                      </th>
+                      {row.slice(1).map((cell, i) => (
+                        <td
+                          key={i}
+                          className={`p-4 text-center ${i === 1 ? "bg-green-50 font-semibold text-gray-900" : "text-gray-700"}`}
+                        >
+                          {cell === "-" ? (
+                            <>
+                              <Minus aria-hidden="true" className="mx-auto h-4 w-4 text-gray-500" />
+                              <span className="sr-only">Tidak tersedia</span>
+                            </>
+                          ) : (
+                            cell
+                          )}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </section>
 
-      <section className="container-page py-16 md:py-24">
-        <div className="grid gap-10 lg:grid-cols-[0.82fr_1fr] lg:items-start">
+      {/* Proof */}
+      <section aria-label="Bukti performa" className="container-page">
+        <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-gray-200 bg-gray-200 md:grid-cols-4">
+          {proof.map((item) => (
+            <div key={item.label} className="flex items-center gap-4 bg-white p-5 sm:p-6">
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-green-100 text-green-800">
+                <item.icon aria-hidden="true" className="h-6 w-6" />
+              </span>
+              <div className="flex flex-col-reverse">
+                <dt className="mt-1 text-sm font-medium capitalize text-gray-600">{item.label}</dt>
+                <dd className="font-display text-2xl font-extrabold leading-none text-gray-900">
+                  {item.stat}
+                </dd>
+              </div>
+            </div>
+          ))}
+        </dl>
+      </section>
+
+      {/* FAQ */}
+      <section aria-labelledby="faq-heading" className="py-20 lg:py-28">
+        <div className="container-page grid gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:items-start">
           <div>
-            <Badge variant="secondary" className="mb-4 px-3 py-1.5">
-              FAQ
-            </Badge>
-            <h2 className="font-display text-3xl font-bold leading-tight text-foreground md:text-4xl">
+            <Eyebrow>FAQ</Eyebrow>
+            <h2
+              id="faq-heading"
+              className="mt-4 font-display text-3xl font-extrabold leading-tight tracking-tight text-gray-900 sm:text-4xl"
+            >
               Pertanyaan sebelum memilih paket.
             </h2>
-            <p className="mt-4 text-lg leading-8 text-muted-foreground">
-              Pricing yang baik harus jelas dari awal. Ini beberapa hal yang biasanya ditanyakan
-              sebelum upgrade.
+            <p className="mt-4 text-base leading-relaxed text-gray-600 sm:text-lg">
+              Pricing yang baik harus jelas dari awal. Masih ragu?{" "}
+              <a
+                href={`https://wa.me/${WHATSAPP_NUMBER}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 font-bold text-green-800 underline underline-offset-4"
+              >
+                <MessageCircle aria-hidden="true" className="h-4 w-4" />
+                Tanya via WhatsApp
+                <NewTabHint />
+              </a>
             </p>
           </div>
-
-          <Accordion
-            type="single"
-            collapsible
-            className="rounded-xl border border-border bg-card px-4"
-          >
+          <Accordion type="single" collapsible className="space-y-3">
             {faqs.map((faq, index) => (
-              <AccordionItem key={faq.q} value={`faq-${index}`}>
-                <AccordionTrigger className="text-left text-base font-semibold hover:no-underline">
+              <AccordionItem
+                key={faq.q}
+                value={`faq-${index}`}
+                className="rounded-xl border border-gray-200 bg-white px-5 shadow-sm"
+              >
+                <AccordionTrigger className="min-h-11 text-left text-base font-bold text-gray-900 hover:no-underline hover:text-green-800">
                   {faq.q}
                 </AccordionTrigger>
-                <AccordionContent className="leading-7 text-muted-foreground">
+                <AccordionContent className="text-sm leading-relaxed text-gray-600 sm:text-base">
                   {faq.a}
                 </AccordionContent>
               </AccordionItem>
@@ -559,232 +590,165 @@ function HargaPage() {
         </div>
       </section>
 
-      <section className="container-page pb-16 md:pb-24">
-        <div className="grid gap-8 rounded-2xl border border-border bg-card p-6 shadow-sm md:grid-cols-[1fr_auto] md:items-center md:p-10">
-          <div>
-            <Badge className="mb-5 bg-primary text-primary-foreground">Mulai hari ini</Badge>
-            <h2 className="max-w-2xl font-display text-3xl font-bold leading-tight text-foreground md:text-4xl">
-              CV yang lebih siap bisa dimulai tanpa bayar dulu.
-            </h2>
-            <p className="mt-4 max-w-2xl text-lg leading-8 text-muted-foreground">
-              Buat akun, pilih template, isi CV, lalu upgrade hanya saat kamu butuh kuota dan fitur
-              yang lebih kuat.
-            </p>
-          </div>
-          <div className="flex flex-col gap-3 sm:flex-row md:flex-col">
-            <Button asChild size="lg" className="h-12 px-6 text-base">
-              <a href={STARTER_PAYMENT_URL} target="_blank" rel="noreferrer">
-                Bayar Starter
-                <CreditCard className="h-5 w-5" aria-hidden="true" />
-              </a>
-            </Button>
-            <Button asChild variant="outline" size="lg" className="h-12 px-6 text-base">
-              <Link to="/register">Mulai gratis</Link>
-            </Button>
-          </div>
-        </div>
-      </section>
-    </main>
+      <CtaBanner
+        title="CV yang lebih siap bisa dimulai tanpa bayar dulu."
+        desc="Buat akun, pilih template, isi CV, lalu upgrade hanya saat kamu butuh kuota dan fitur yang lebih kuat."
+        cta="Mulai Gratis"
+        points={["Paket Free selamanya", "Refund 7 hari", "Bayar aman via Lynk"]}
+        secondary={{ href: STARTER_PAYMENT_URL, label: "Langsung Pilih Starter" }}
+      />
+    </div>
   );
 }
 
 function PricingCard({ tier }: { tier: (typeof tiers)[number] }) {
-  const featured = tier.popular;
-  const isStarter = tier.name === "Starter";
-  const isPro = tier.name === "Pro";
-  const isLynkPayment = isStarter || isPro;
+  const featured = !!tier.popular;
+  const isFree = tier.name === "Free";
+  const keyFeatures = tier.features.slice(0, KEY_FEATURE_COUNT);
+  const more = tier.features.length - keyFeatures.length;
+  const Icon = isFree ? Gift : tier.name === "Starter" ? Wand2 : BadgeCheck;
+
+  const btnBase =
+    "mt-6 inline-flex h-14 w-full items-center justify-center gap-2 rounded-xl text-base font-bold transition-colors";
+  const btnTone = featured
+    ? "bg-yellow-300 text-gray-950 hover:bg-yellow-200"
+    : "border-2 border-gray-900 bg-white text-gray-900 hover:bg-gray-900 hover:text-white";
 
   return (
-    <Card
-      className={`relative h-full border-border/80 shadow-sm ${
-        featured ? "border-primary bg-background shadow-lg shadow-primary/10" : "bg-card"
+    <article
+      aria-labelledby={`tier-${tier.name}`}
+      className={`relative flex h-full flex-col rounded-3xl p-7 ${
+        featured
+          ? "order-first bg-green-800 text-white shadow-2xl lg:order-none shadow-green-900/30 lg:-mt-4 lg:pb-11 lg:pt-11"
+          : "border border-gray-200 bg-white shadow-sm"
       }`}
     >
       {tier.badge && (
-        <div className="absolute -top-4 left-5 right-5 flex justify-center">
-          <Badge
-            className={
-              featured
-                ? "bg-primary px-4 py-1.5 text-primary-foreground"
-                : "border-yellow-200 bg-yellow-100 px-4 py-1.5 text-yellow-950 hover:bg-yellow-100"
-            }
-          >
-            {tier.badge}
-          </Badge>
-        </div>
+        <p
+          className={`absolute -top-3.5 left-7 rounded-full px-3 py-1 text-xs font-bold ${
+            featured ? "bg-yellow-300 text-gray-900" : "bg-gray-900 text-white"
+          }`}
+        >
+          {tier.badge}
+        </p>
       )}
 
-      <CardContent className="flex h-full flex-col p-6 pt-9">
-        <div>
-          <div className="mb-5 flex items-start justify-between gap-4">
-            <div>
-              <h3 className="font-display text-2xl font-bold text-foreground">{tier.name}</h3>
-              <p className="mt-2 leading-7 text-muted-foreground">{tier.desc}</p>
-            </div>
-            <div
-              className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-lg ${
-                featured ? "bg-primary text-primary-foreground" : "bg-primary/10 text-primary"
-              }`}
-            >
-              {tier.name === "Free" ? (
-                <Gift className="h-5 w-5" aria-hidden="true" />
-              ) : tier.name === "Starter" ? (
-                <Wand2 className="h-5 w-5" aria-hidden="true" />
-              ) : (
-                <BadgeCheck className="h-5 w-5" aria-hidden="true" />
-              )}
-            </div>
-          </div>
+      <div className="flex items-center justify-between gap-4">
+        <h3 id={`tier-${tier.name}`} className="font-display text-2xl font-extrabold">
+          {tier.name}
+        </h3>
+        <span
+          className={`flex h-11 w-11 items-center justify-center rounded-xl ${
+            featured ? "bg-white/15 text-yellow-300" : "bg-green-100 text-green-800"
+          }`}
+        >
+          <Icon aria-hidden="true" className="h-5 w-5" />
+        </span>
+      </div>
+      <p className={`mt-2 text-sm leading-relaxed ${featured ? "text-green-50" : "text-gray-600"}`}>
+        {tier.desc}
+      </p>
 
-          <div className="border-y border-border py-5">
-            <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-              <span className="font-display text-4xl font-bold text-foreground">{tier.price}</span>
-              <span className="font-medium text-muted-foreground">{tier.period}</span>
-            </div>
-            <p className="mt-3 flex items-start gap-2 text-sm font-semibold text-primary">
-              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
-              {tier.highlight}
-            </p>
-          </div>
-        </div>
-
-        {tier.name === "Free" ? (
-          <Button
-            asChild
-            size="lg"
-            variant={tier.ctaVariant}
-            data-analytics-event="click_pricing_free"
-            className={`mt-6 h-12 w-full text-base ${featured ? "shadow-sm" : ""}`}
-          >
-            <Link to="/register">
-              {tier.cta}
-              <ArrowRight className="h-4 w-4" aria-hidden="true" />
-            </Link>
-          </Button>
-        ) : (
-          <>
-            <Button
-              asChild
-              size="lg"
-              variant={tier.ctaVariant}
-              data-analytics-event={`click_pricing_${tier.name.toLowerCase()}`}
-              className={`mt-6 h-12 w-full text-base ${featured ? "shadow-sm" : ""}`}
-            >
-              <a href={getUpgradeUrl(tier.name)} target="_blank" rel="noreferrer">
-                {tier.cta}
-                {isLynkPayment ? (
-                  <CreditCard className="h-4 w-4" aria-hidden="true" />
-                ) : (
-                  <MessageCircle className="h-4 w-4" aria-hidden="true" />
-                )}
-              </a>
-            </Button>
-            <p className="mt-3 text-center text-xs leading-5 text-muted-foreground">
-              {isLynkPayment
-                ? `Tombol ini membuka halaman pembayaran Lynk untuk paket ${tier.name}.`
-                : `Tombol ini membuka WhatsApp untuk konfirmasi Upgrade ${tier.name}.`}
-            </p>
-          </>
+      <div className={`mt-6 border-y py-5 ${featured ? "border-white/20" : "border-gray-200"}`}>
+        <p className="flex flex-wrap items-baseline gap-x-2">
+          <span className="font-display text-4xl font-extrabold">{tier.price}</span>
+          <span className={`font-medium ${featured ? "text-green-100" : "text-gray-600"}`}>
+            {tier.period}
+          </span>
+        </p>
+        <p
+          className={`mt-1 text-sm font-semibold ${featured ? "text-yellow-200" : "text-green-800"}`}
+        >
+          {PER_DAY[tier.name] ?? tier.highlight}
+        </p>
+        {PER_DAY[tier.name] && (
+          <p className={`mt-1 text-sm ${featured ? "text-green-50" : "text-gray-600"}`}>
+            {tier.highlight}
+          </p>
         )}
+      </div>
 
-        <ul className="mt-6 space-y-3">
-          {tier.features.map((feature) => (
-            <li key={feature} className="flex items-start gap-3 text-sm leading-6">
-              <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-primary" aria-hidden="true" />
-              <span className="text-foreground">{feature}</span>
-            </li>
-          ))}
-        </ul>
-      </CardContent>
-    </Card>
-  );
-}
+      {isFree ? (
+        <Link
+          to="/register"
+          data-analytics-event="click_pricing_free"
+          className={`${btnBase} ${btnTone}`}
+        >
+          {tier.cta}
+          <ArrowRight aria-hidden="true" className="h-5 w-5" />
+        </Link>
+      ) : (
+        <a
+          href={getUpgradeUrl(tier.name)}
+          target="_blank"
+          rel="noreferrer"
+          data-analytics-event={`click_pricing_${tier.name.toLowerCase()}`}
+          className={`${btnBase} ${btnTone}`}
+        >
+          {tier.cta}
+          <CreditCard aria-hidden="true" className="h-5 w-5" />
+          <NewTabHint />
+        </a>
+      )}
+      <p className={`mt-3 text-center text-xs ${featured ? "text-green-50" : "text-gray-600"}`}>
+        {isFree ? "Bisa upgrade kapan saja" : "Pembayaran aman via Lynk · Refund 7 hari"}
+      </p>
 
-function PriceSignal() {
-  return (
-    <Card className="overflow-hidden border-border/80 bg-card shadow-sm">
-      <CardContent className="p-4 sm:p-6">
-        <div className="rounded-xl border border-border bg-background p-4">
-          <div className="mb-5 flex items-center justify-between gap-4 border-b border-border pb-4">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">
-                Rekomendasi cepat
-              </p>
-              <h2 className="mt-2 font-display text-2xl font-bold text-foreground">Starter</h2>
-            </div>
-            <Badge className="bg-primary text-primary-foreground">Rp 15.000</Badge>
-          </div>
-
-          <div className="space-y-3">
-            {[
-              { icon: Wand2, title: "Banyak apply", desc: "50x saran AI dan 10x scoring" },
-              {
-                icon: FileSearch,
-                title: "Cek kecocokan",
-                desc: "20x AI Job Match Score / bulan",
-              },
-              {
-                icon: MessageSquareText,
-                title: "Lebih siap kirim",
-                desc: "Cover letter, keyword extractor, dan review HR",
-              },
-            ].map((item) => (
-              <div key={item.title} className="flex items-center gap-4 rounded-lg bg-muted/70 p-4">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                  <item.icon className="h-5 w-5" aria-hidden="true" />
-                </div>
-                <div>
-                  <p className="font-bold text-foreground">{item.title}</p>
-                  <p className="text-sm text-muted-foreground">{item.desc}</p>
-                </div>
-              </div>
+      <ul className="mt-6 space-y-3 text-sm">
+        {keyFeatures.map((feature) => (
+          <li key={feature} className="flex items-start gap-3">
+            <CheckCircle2
+              aria-hidden="true"
+              className={`mt-0.5 h-5 w-5 shrink-0 ${featured ? "text-yellow-300" : "text-green-700"}`}
+            />
+            <span className={featured ? "text-white" : "text-gray-800"}>{feature}</span>
+          </li>
+        ))}
+      </ul>
+      {more > 0 && (
+        <details className="group mt-3 text-sm">
+          <summary
+            className={`flex min-h-11 cursor-pointer list-none items-center gap-1 font-bold underline underline-offset-4 ${
+              featured ? "text-yellow-200" : "text-green-800"
+            }`}
+          >
+            <span className="group-open:hidden">+ {more} fitur lainnya</span>
+            <span className="hidden group-open:inline">Sembunyikan</span>
+          </summary>
+          <ul className="mt-2 space-y-3">
+            {tier.features.slice(KEY_FEATURE_COUNT).map((feature) => (
+              <li key={feature} className="flex items-start gap-3">
+                <CheckCircle2
+                  aria-hidden="true"
+                  className={`mt-0.5 h-5 w-5 shrink-0 ${featured ? "text-yellow-300" : "text-green-700"}`}
+                />
+                <span className={featured ? "text-white" : "text-gray-800"}>{feature}</span>
+              </li>
             ))}
-          </div>
-
-          <div className="mt-5 rounded-lg bg-primary p-5 text-primary-foreground">
-            <p className="font-bold">Untuk kebanyakan pencari kerja aktif:</p>
-            <p className="mt-2 leading-7 text-primary-foreground/90">
-              Starter biasanya sudah cukup untuk memperbaiki CV, menyesuaikan lamaran, dan menjaga
-              PDF tetap bersih tanpa watermark.
-            </p>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function SectionIntro({ eyebrow, title, desc }: { eyebrow: string; title: string; desc: string }) {
-  return (
-    <div className="mx-auto max-w-3xl text-center">
-      <Badge variant="secondary" className="mb-4 px-3 py-1.5">
-        {eyebrow}
-      </Badge>
-      <h2 className="font-display text-3xl font-bold leading-tight text-foreground md:text-4xl">
-        {title}
-      </h2>
-      <p className="mt-4 text-lg leading-8 text-muted-foreground">{desc}</p>
-    </div>
+          </ul>
+        </details>
+      )}
+    </article>
   );
 }
 
 function HargaLoading() {
   return (
-    <main className="overflow-x-clip bg-background">
-      <section className="border-b border-border/70">
+    <div className="overflow-x-clip bg-white">
+      <section className="border-b border-gray-100">
         <div className="container-page py-16 md:py-24">
-          <div className="h-9 w-64 animate-pulse rounded-full bg-muted" />
-          <div className="mt-8 h-14 max-w-3xl animate-pulse rounded-lg bg-muted" />
-          <div className="mt-4 h-8 max-w-2xl animate-pulse rounded-lg bg-muted" />
+          <div className="mx-auto h-9 w-64 animate-pulse rounded-full bg-gray-100" />
+          <div className="mx-auto mt-8 h-14 max-w-3xl animate-pulse rounded-lg bg-gray-100" />
+          <div className="mx-auto mt-4 h-8 max-w-2xl animate-pulse rounded-lg bg-gray-100" />
         </div>
       </section>
       <div className="container-page py-16">
         <div className="grid gap-6 lg:grid-cols-3">
           {Array.from({ length: 3 }).map((_, index) => (
-            <div key={index} className="h-96 animate-pulse rounded-xl bg-muted" />
+            <div key={index} className="h-96 animate-pulse rounded-3xl bg-gray-100" />
           ))}
         </div>
       </div>
-    </main>
+    </div>
   );
 }
