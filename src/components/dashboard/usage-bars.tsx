@@ -16,11 +16,17 @@ interface UsageBarsProps {
   bars: UsageBar[];
 }
 
+/** Persentase pemakaian (0–100+). Kuota 0 dianggap penuh agar tidak menghasilkan NaN (0/0). */
+function getUsageRatio(used: number, max: number): number {
+  if (max <= 0) return 1;
+  return used / max;
+}
+
 function getStatus(used: number, max: number | null) {
   if (max === null) return "unlimited";
-  const pct = (used / max) * 100;
-  if (pct >= 100) return "exhausted";
-  if (pct >= 80) return "warning";
+  const ratio = getUsageRatio(used, max);
+  if (ratio >= 1) return "exhausted";
+  if (ratio >= 0.8) return "warning";
   return "ok";
 }
 
@@ -28,7 +34,10 @@ export function UsageBars({ bars }: UsageBarsProps) {
   const visibleBars = bars.filter((b) => b.visible);
   if (visibleBars.length === 0) return null;
 
-  const warningCount = visibleBars.filter((b) => b.max !== null && b.used / b.max >= 0.8).length;
+  // Kuota 0 (fitur tidak termasuk paket) bukan "hampir habis" — jangan ikut dihitung
+  const warningCount = visibleBars.filter(
+    (b) => b.max !== null && b.max > 0 && getUsageRatio(b.used, b.max) >= 0.8,
+  ).length;
 
   return (
     <div className="space-y-3">
@@ -45,7 +54,9 @@ export function UsageBars({ bars }: UsageBarsProps) {
       <div className="grid grid-cols-1 gap-3 xs:grid-cols-2 lg:grid-cols-3">
         {visibleBars.map((bar) => {
           const status = getStatus(bar.used, bar.max);
-          const pct = bar.max === null ? 100 : Math.min((bar.used / bar.max) * 100, 100);
+          const pct =
+            bar.max === null ? 100 : Math.min(getUsageRatio(bar.used, bar.max) * 100, 100);
+          const notIncluded = bar.max !== null && bar.max <= 0;
           const remaining = bar.max === null ? null : Math.max(bar.max - bar.used, 0);
 
           return (
@@ -87,7 +98,9 @@ export function UsageBars({ bars }: UsageBarsProps) {
                       {status === "unlimited"
                         ? "Tanpa batas bulan ini"
                         : status === "exhausted"
-                          ? "Kuota habis"
+                          ? notIncluded
+                            ? "Tidak termasuk paket"
+                            : "Kuota habis"
                           : `${remaining} sisa bulan ini`}
                     </p>
                   </div>
@@ -138,7 +151,7 @@ export function UsageBars({ bars }: UsageBarsProps) {
                           : "text-muted-foreground/70",
                     )}
                   >
-                    {Math.round(pct)}% digunakan
+                    {notIncluded ? "Upgrade untuk membuka" : `${Math.round(pct)}% digunakan`}
                   </span>
                   {status === "ok" && pct === 0 && (
                     <span className="flex items-center gap-0.5 text-[10px] text-emerald-600 font-semibold">
