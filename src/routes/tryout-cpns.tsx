@@ -12,6 +12,7 @@ import {
   CheckCircle2,
   Clock,
   FileCheck,
+  Loader2,
   Star,
   Trophy,
 } from "lucide-react";
@@ -24,7 +25,8 @@ import {
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { getTryoutLynkUrl, type TryoutPackage } from "@/lib/tryout-types";
+import { type TryoutPackage } from "@/lib/tryout-types";
+import { useCheckout } from "@/lib/payment";
 import {
   AnchorCta,
   Eyebrow,
@@ -251,6 +253,7 @@ const rupiah = (value: number) =>
 
 function TryoutCpnsLandingPage() {
   const [packages, setPackages] = useState<TryoutPackage[]>([]);
+  const checkout = useCheckout();
 
   useEffect(() => {
     void supabase
@@ -413,13 +416,13 @@ function TryoutCpnsLandingPage() {
                   key={pkg.id}
                   className={pkg.slug === "lengkap" ? "order-first md:order-none" : undefined}
                 >
-                  <PackageCard pkg={pkg} basePerCredit={basePerCredit} />
+                  <PackageCard pkg={pkg} basePerCredit={basePerCredit} checkout={checkout} />
                 </li>
               ))}
             </ul>
           )}
           <p className="mt-8 text-center text-sm text-gray-600">
-            Pembayaran via Lynk · Aktivasi maksimal 1x24 jam · Kredit berlaku 12 bulan
+            Pembayaran via QRIS · Kredit aktif otomatis setelah bayar · Kredit berlaku 12 bulan
           </p>
         </div>
       </section>
@@ -564,7 +567,16 @@ function TryoutCpnsLandingPage() {
   );
 }
 
-function PackageCard({ pkg, basePerCredit }: { pkg: TryoutPackage; basePerCredit: number }) {
+function PackageCard({
+  pkg,
+  basePerCredit,
+  checkout,
+}: {
+  pkg: TryoutPackage;
+  basePerCredit: number;
+  checkout: ReturnType<typeof useCheckout>;
+}) {
+  const product = `tryout:${pkg.slug}` as const;
   const featured = pkg.slug === "lengkap";
   const perCredit = pkg.credits > 0 ? pkg.price / pkg.credits : pkg.price;
   const savings = basePerCredit > 0 ? Math.round((1 - perCredit / basePerCredit) * 100) : 0;
@@ -613,20 +625,23 @@ function PackageCard({ pkg, basePerCredit }: { pkg: TryoutPackage; basePerCredit
         </p>
       </div>
 
-      <a
-        href={getTryoutLynkUrl(pkg.slug)}
-        target="_blank"
-        rel="noopener noreferrer"
-        className={`mt-6 inline-flex h-14 w-full items-center justify-center gap-2 rounded-xl text-base font-bold transition-colors ${
+      <button
+        type="button"
+        onClick={() => checkout.checkout(product)}
+        disabled={!!checkout.pending}
+        className={`mt-6 inline-flex h-14 w-full items-center justify-center gap-2 rounded-xl text-base font-bold transition-colors disabled:cursor-wait disabled:opacity-70 ${
           featured
             ? "bg-yellow-300 text-gray-950 hover:bg-yellow-200"
             : "border-2 border-gray-900 bg-white text-gray-900 hover:bg-gray-900 hover:text-white"
         }`}
       >
         Beli {pkg.name}
-        <ArrowRight aria-hidden="true" className="h-5 w-5" />
-        <span className="sr-only"> (membuka tab baru)</span>
-      </a>
+        {checkout.pending === product ? (
+          <Loader2 aria-hidden="true" className="h-5 w-5 animate-spin" />
+        ) : (
+          <ArrowRight aria-hidden="true" className="h-5 w-5" />
+        )}
+      </button>
 
       <ul className="mt-6 space-y-3 text-sm">
         {(pkg.features || []).map((f, idx) => (

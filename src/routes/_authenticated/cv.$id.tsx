@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
+import { useCheckout } from "@/lib/payment";
 import { CvPreview } from "@/components/cv/CvPreview";
 import { cvPrintStyles } from "@/components/cv/CvPreview";
 import { DownloadDropdown } from "@/components/cv/DownloadDropdown";
@@ -131,6 +132,7 @@ function CvEditorPage() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { checkout, pending: checkoutPending } = useCheckout();
   const search = Route.useSearch() as { guided?: string };
   const [title, setTitle] = useState("CV Baru");
   const [templateId, setTemplateId] = useState<TemplateId>("jakarta");
@@ -281,7 +283,7 @@ function CvEditorPage() {
         .single();
       const { data: profile } = await (supabase as any)
         .from("profiles")
-        .select("has_upload_cv, upload_cv_end_date, quota_pro_photo, quota_upload_cv")
+        .select("has_upload_cv, upload_cv_end_date, quota_pro_photo, quota_pro_photo_purchased, quota_upload_cv")
         .eq("id", row.user_id)
         .single();
       if (profile) {
@@ -290,7 +292,7 @@ function CvEditorPage() {
           isUnlocked = new Date(profile.upload_cv_end_date) > new Date();
         }
         setHasUploadCvFeature(isUnlocked);
-        setQuotaProPhoto(profile.quota_pro_photo || 0);
+        setQuotaProPhoto((profile.quota_pro_photo || 0) + (profile.quota_pro_photo_purchased || 0));
         setQuotaUploadCv(profile.quota_upload_cv || 0);
       }
       if (sub) {
@@ -1098,16 +1100,16 @@ function CvEditorPage() {
               <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 rounded-lg bg-background/60 backdrop-blur-sm p-4 text-center">
                 <LockKeyhole className="h-10 w-10 text-muted-foreground" />
                 <p className="text-sm font-medium text-foreground">
-                  Upgrade Tier kamu atau beli Fitur Upload CV (Langganan 1 Bulan)
+                  Upgrade Tier kamu atau beli Fitur Upload CV (Rp 10.000 / 2 Bulan)
                 </p>
-                <Button asChild size="sm">
-                  <a
-                    href="https://lynk.id/ben-yt-ai/qqom281ddwwm"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Beli Sekarang
-                  </a>
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={() => checkout("addon:upload_cv", 2)}
+                  disabled={!!checkoutPending}
+                >
+                  {checkoutPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Beli Sekarang
                 </Button>
               </div>
             )}

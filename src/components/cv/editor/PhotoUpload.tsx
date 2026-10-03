@@ -12,6 +12,7 @@ import {
   Image as ImageIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useCheckout } from "@/lib/payment";
 import { Slider } from "@/components/ui/slider";
 import Cropper, { Area } from "react-easy-crop";
 import getCroppedImg from "@/lib/cropImage";
@@ -28,7 +29,7 @@ interface PhotoUploadProps {
   userId: string;
   cvId: string;
   onPhotoChange: (url: string) => void;
-  proPhotoQuota: number;
+  proPhotoQuota?: number;
 }
 
 export function PhotoUpload({
@@ -36,9 +37,10 @@ export function PhotoUpload({
   userId,
   cvId,
   onPhotoChange,
-  proPhotoQuota,
+  proPhotoQuota = 0,
 }: PhotoUploadProps) {
   const [uploading, setUploading] = useState(false);
+  const { checkout, pending: checkoutPending } = useCheckout();
   const [isDragging, setIsDragging] = useState(false);
   const [generatingProPhoto, setGeneratingProPhoto] = useState(false);
   const [showUnlockModal, setShowUnlockModal] = useState(false);
@@ -560,16 +562,13 @@ export function PhotoUpload({
             </div>
             <div className="flex flex-col gap-2">
               <Button
-                asChild
+                type="button"
+                onClick={() => checkout("addon:pro_photo", 2)}
+                disabled={!!checkoutPending}
                 className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-semibold"
               >
-                <a
-                  href="https://lynk.id/ben-yt-ai/zz5m163mknj6"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Beli Kuota Foto Pro (Rp 5.000 / Foto)
-                </a>
+                {checkoutPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Beli 2 Kuota Foto Pro (Rp 10.000)
               </Button>
             </div>
           </div>

@@ -17,7 +17,7 @@ type ActivateBody = {
   user_id?: string;
   package_slug?: string;
   credits?: number; // override jumlah kredit (default dari package)
-  payment_method?: "manual" | "lynk" | "transfer";
+  payment_method?: "manual" | "lynk" | "sumopod" | "transfer";
   payment_ref?: string;
   notes?: string;
 };

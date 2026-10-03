@@ -6,7 +6,7 @@
  * Body: { images: string[] (base64 png/jpg), fileName: string }
  */
 
-import { getUserId, corsResponse, errorResponse } from "../_shared/ai-common.ts";
+import { getUserId, corsResponse, errorResponse, CV_AI_MODEL } from "../_shared/ai-common.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 import { checkRateLimit, createRateLimitedResponse } from "../_shared/rate-limit.ts";
 
@@ -55,7 +55,7 @@ Deno.serve(async (req: Request) => {
           Authorization: `Bearer ${AI_API_KEY}`,
         },
         body: JSON.stringify({
-          model: "gemini/gemini-3.1-flash-lite",
+          model: CV_AI_MODEL,
           messages: [
             {
               role: "user",

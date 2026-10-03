@@ -7,6 +7,7 @@ import {
   FileSearch,
   FileText,
   Gift,
+  Loader2,
   LockKeyhole,
   MessageCircle,
   Minus,
@@ -30,21 +31,16 @@ import {
 } from "@/components/ui/accordion";
 import { buildSeo } from "@/lib/seo";
 import { CtaBanner, Eyebrow, PageHero, SectionHeader } from "@/components/site/marketing";
+import { useCheckout, type ProductKey } from "@/lib/payment";
 
 const WHATSAPP_NUMBER = "6285190607141";
-const STARTER_PAYMENT_URL = "https://lynk.id/ben-yt-ai/rj687wre6kr0";
-const PRO_PAYMENT_URL = "http://lynk.id/ben-yt-ai/zq1y83lq1kek";
 
-function getUpgradeWhatsAppUrl(tierName: string) {
-  return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
-    `Halo, saya ingin Upgrade ${tierName}. Mohon info nomor rekening untuk transfer.`,
-  )}`;
-}
+type Checkout = ReturnType<typeof useCheckout>;
 
-function getUpgradeUrl(tierName: string) {
-  if (tierName === "Starter") return STARTER_PAYMENT_URL;
-  if (tierName === "Pro") return PRO_PAYMENT_URL;
-  return getUpgradeWhatsAppUrl(tierName);
+function getTierProduct(tierName: string): ProductKey | null {
+  if (tierName === "Starter") return "tier:starter";
+  if (tierName === "Pro") return "tier:pro";
+  return null;
 }
 
 const tiers = [
@@ -156,12 +152,12 @@ const quickFit = [
 const comparison = [
   ["CV aktif", "1", "3", "10"],
   ["Template", "2 basic", "Semua", "Semua"],
-  ["Upload CV (PDF/DOCX)", "Add-on (Rp 5.000 / bln)", "10x / bulan", "20x / bulan"],
+  ["Upload CV (PDF/DOCX)", "Add-on (Rp 10.000 / 2 bln)", "10x / bulan", "20x / bulan"],
   [
     "Foto Profesional AI",
-    "Rp 5.000 / Kuota",
-    "2x / bln (+Rp 5rb/Add-on)",
-    "5x / bln (+Rp 5rb/Add-on)",
+    "Rp 10.000 / 2 Kuota",
+    "2x / bln (+Add-on Rp 10rb/2 kuota)",
+    "5x / bln (+Add-on Rp 10rb/2 kuota)",
   ],
   ["AI suggestions", "1x", "50x", "200x"],
   ["ATS scoring", "1x", "10x", "50x"],
@@ -180,7 +176,7 @@ const comparison = [
 const guarantees = [
   { icon: ShieldCheck, label: "Refund 7 hari" },
   { icon: LockKeyhole, label: "Data terenkripsi" },
-  { icon: CreditCard, label: "Bayar via Lynk" },
+  { icon: CreditCard, label: "Bayar via QRIS" },
 ] as const;
 
 const faqs = [
@@ -190,11 +186,11 @@ const faqs = [
   },
   {
     q: "Metode pembayaran apa saja?",
-    a: "Paket Starter dan Pro bisa dibayar langsung lewat Lynk. Setelah pembayaran selesai diproses, akses paket akan diaktifkan.",
+    a: "Semua paket dan add-on dibayar via QRIS (bisa dari m-banking atau e-wallet apa pun). Akses langsung aktif otomatis begitu pembayaran terkonfirmasi.",
   },
   {
     q: "Bisa ganti atau berhenti paket kapan saja?",
-    a: "Bisa. Paket berbayar aktif setelah pembayaran Lynk selesai diproses. Downgrade atau berhenti paket bisa dikonfirmasi lewat WhatsApp sebelum periode berikutnya.",
+    a: "Bisa. Paket berbayar aktif otomatis setelah pembayaran terkonfirmasi, berlaku 30 hari. Downgrade atau berhenti paket bisa dikonfirmasi lewat WhatsApp sebelum periode berikutnya.",
   },
   {
     q: "Bagaimana jika tidak cocok?",
@@ -254,6 +250,7 @@ function NewTabHint() {
 }
 
 function HargaPage() {
+  const checkout = useCheckout();
   return (
     <div className="overflow-hidden bg-white">
       <PageHero
@@ -296,7 +293,7 @@ function HargaPage() {
           </h2>
           <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-3 lg:items-start">
             {tiers.map((tier) => (
-              <PricingCard key={tier.name} tier={tier} />
+              <PricingCard key={tier.name} tier={tier} checkout={checkout} />
             ))}
           </div>
           <p className="mt-8 text-center text-sm text-gray-600">
@@ -401,7 +398,7 @@ function HargaPage() {
             id="addon-heading"
             eyebrow="Add-on satuan"
             title="Cuma butuh satu fitur? Beli satuan."
-            desc="Tanpa langganan paket. Cukup Rp 5.000 untuk fitur yang kamu perlukan."
+            desc="Tanpa langganan paket. Cukup Rp 10.000 untuk fitur yang kamu perlukan."
           />
           <ul className="mx-auto grid max-w-5xl gap-6 md:grid-cols-2">
             {[
@@ -409,19 +406,21 @@ function HargaPage() {
                 icon: Upload,
                 title: "Upload CV Lama",
                 desc: "Upload CV lama (PDF/DOCX), biarkan AI membaca dan mengisi datanya otomatis ke template baru.",
-                price: "Rp 5.000",
-                unit: "/ bulan",
-                href: "https://lynk.id/ben-yt-ai/qqom281ddwwm",
-                cta: "Beli Upload CV",
+                price: "Rp 10.000",
+                unit: "/ 2 bulan",
+                product: "addon:upload_cv" as ProductKey,
+                quantity: 2,
+                cta: "Beli Upload CV (2 Bulan)",
               },
               {
                 icon: Sparkles,
                 title: "Foto Profesional AI",
                 desc: "Ubah foto kasual menjadi pas foto formal jas hitam & dasi rapi kualitas studio foto secara instan.",
-                price: "Rp 5.000",
-                unit: "/ kuota",
-                href: "https://lynk.id/ben-yt-ai/zz5m163mknj6",
-                cta: "Beli Kuota Foto Pro AI",
+                price: "Rp 10.000",
+                unit: "/ 2 kuota",
+                product: "addon:pro_photo" as ProductKey,
+                quantity: 2,
+                cta: "Beli 2 Kuota Foto Pro AI",
               },
             ].map((a) => (
               <li
@@ -443,16 +442,19 @@ function HargaPage() {
                   </div>
                 </div>
                 <p className="mt-4 flex-1 text-sm leading-relaxed text-gray-600">{a.desc}</p>
-                <a
-                  href={a.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-6 inline-flex h-12 items-center justify-center gap-2 rounded-xl border-2 border-gray-900 bg-white px-6 text-base font-bold text-gray-900 transition-colors hover:bg-gray-900 hover:text-white"
+                <button
+                  type="button"
+                  onClick={() => checkout.checkout(a.product, a.quantity)}
+                  disabled={!!checkout.pending}
+                  className="mt-6 inline-flex h-12 items-center justify-center gap-2 rounded-xl border-2 border-gray-900 bg-white px-6 text-base font-bold text-gray-900 transition-colors hover:bg-gray-900 hover:text-white disabled:cursor-wait disabled:opacity-70"
                 >
                   {a.cta}
-                  <CreditCard aria-hidden="true" className="h-4 w-4" />
-                  <NewTabHint />
-                </a>
+                  {checkout.pending === a.product ? (
+                    <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <CreditCard aria-hidden="true" className="h-4 w-4" />
+                  )}
+                </button>
               </li>
             ))}
           </ul>
@@ -594,16 +596,21 @@ function HargaPage() {
         title="CV yang lebih siap bisa dimulai tanpa bayar dulu."
         desc="Buat akun, pilih template, isi CV, lalu upgrade hanya saat kamu butuh kuota dan fitur yang lebih kuat."
         cta="Mulai Gratis"
-        points={["Paket Free selamanya", "Refund 7 hari", "Bayar aman via Lynk"]}
-        secondary={{ href: STARTER_PAYMENT_URL, label: "Langsung Pilih Starter" }}
+        points={["Paket Free selamanya", "Refund 7 hari", "Bayar aman via QRIS"]}
+        secondary={{
+          label: "Langsung Pilih Starter",
+          onClick: () => checkout.checkout("tier:starter"),
+          loading: checkout.pending === "tier:starter",
+        }}
       />
     </div>
   );
 }
 
-function PricingCard({ tier }: { tier: (typeof tiers)[number] }) {
+function PricingCard({ tier, checkout }: { tier: (typeof tiers)[number]; checkout: Checkout }) {
   const featured = !!tier.popular;
   const isFree = tier.name === "Free";
+  const product = getTierProduct(tier.name);
   const keyFeatures = tier.features.slice(0, KEY_FEATURE_COUNT);
   const more = tier.features.length - keyFeatures.length;
   const Icon = isFree ? Gift : tier.name === "Starter" ? Wand2 : BadgeCheck;
@@ -678,20 +685,23 @@ function PricingCard({ tier }: { tier: (typeof tiers)[number] }) {
           <ArrowRight aria-hidden="true" className="h-5 w-5" />
         </Link>
       ) : (
-        <a
-          href={getUpgradeUrl(tier.name)}
-          target="_blank"
-          rel="noreferrer"
+        <button
+          type="button"
+          onClick={() => product && checkout.checkout(product)}
+          disabled={!product || !!checkout.pending}
           data-analytics-event={`click_pricing_${tier.name.toLowerCase()}`}
-          className={`${btnBase} ${btnTone}`}
+          className={`${btnBase} ${btnTone} disabled:cursor-wait disabled:opacity-70`}
         >
           {tier.cta}
-          <CreditCard aria-hidden="true" className="h-5 w-5" />
-          <NewTabHint />
-        </a>
+          {product && checkout.pending === product ? (
+            <Loader2 aria-hidden="true" className="h-5 w-5 animate-spin" />
+          ) : (
+            <CreditCard aria-hidden="true" className="h-5 w-5" />
+          )}
+        </button>
       )}
       <p className={`mt-3 text-center text-xs ${featured ? "text-green-50" : "text-gray-600"}`}>
-        {isFree ? "Bisa upgrade kapan saja" : "Pembayaran aman via Lynk · Refund 7 hari"}
+        {isFree ? "Bisa upgrade kapan saja" : "Pembayaran aman via QRIS · Refund 7 hari"}
       </p>
 
       <ul className="mt-6 space-y-3 text-sm">

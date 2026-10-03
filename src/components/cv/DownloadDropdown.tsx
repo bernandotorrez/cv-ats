@@ -107,7 +107,9 @@ export function DownloadDropdown({
         user_tier: isFreeTier ? "free" : null,
       });
 
-      await supabase.from("cv_analytics").insert({
+      // cv_analytics belum ada di generated types
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabase as any).from("cv_analytics").insert({
         cv_id: cvId,
         user_id: userId,
         event_type: "download",

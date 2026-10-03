@@ -478,7 +478,7 @@ export function CVReviewPanel({ cvData, cvId, onReviewComplete, className }: CVR
 
                 <TabsContent value="suggestions" className="mt-4">
                   <div className="space-y-4">
-                    {reviewResult.suggestions.map((suggestion, i) => (
+                    {(reviewResult.suggestions ?? []).map((suggestion, i) => (
                       <Card
                         key={i}
                         className={

@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, CheckCircle2 } from "lucide-react";
+import { ArrowRight, CheckCircle2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 /* Shared building blocks for public marketing pages (light, WCAG AA). */
@@ -192,8 +192,8 @@ export function CtaBanner({
   cta: string;
   to?: string;
   points?: string[];
-  /** Optional external secondary action (opens in a new tab). */
-  secondary?: { href: string; label: string };
+  /** Optional secondary action: external link (new tab) or button (onClick). */
+  secondary?: { label: string; href?: string; onClick?: () => void; loading?: boolean };
 }) {
   return (
     <section className="container-page py-16 lg:py-24">
@@ -235,7 +235,20 @@ export function CtaBanner({
                 <ArrowRight aria-hidden="true" className="ml-2 h-5 w-5" />
               </Link>
             </Button>
-            {secondary && (
+            {secondary?.onClick && (
+              <button
+                type="button"
+                onClick={secondary.onClick}
+                disabled={secondary.loading}
+                className="inline-flex h-14 items-center justify-center rounded-xl border-2 border-white/70 px-8 text-base font-bold text-white transition-colors hover:bg-white/10 disabled:cursor-wait disabled:opacity-70"
+              >
+                {secondary.label}
+                {secondary.loading && (
+                  <Loader2 aria-hidden="true" className="ml-2 h-5 w-5 animate-spin" />
+                )}
+              </button>
+            )}
+            {secondary?.href && !secondary.onClick && (
               <a
                 href={secondary.href}
                 target="_blank"

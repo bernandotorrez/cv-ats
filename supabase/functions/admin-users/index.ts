@@ -28,6 +28,7 @@ type AdminUsersPageRow = {
   has_upload_cv?: boolean;
   upload_cv_end_date?: string | null;
   quota_pro_photo?: number;
+  quota_pro_photo_purchased?: number;
   quota_upload_cv?: number;
   tryout_credits?: number;
   tryout_used?: number;
@@ -163,7 +164,7 @@ Deno.serve(async (req: Request) => {
       if (userIds.length > 0) {
         const { data: profiles } = await admin
           .from("profiles")
-          .select("id, has_upload_cv, upload_cv_end_date, quota_pro_photo, quota_upload_cv")
+          .select("id, has_upload_cv, upload_cv_end_date, quota_pro_photo, quota_pro_photo_purchased, quota_upload_cv")
           .in("id", userIds);
         profileMap = new Map((profiles || []).map((p) => [p.id, p]));
       }
@@ -182,6 +183,7 @@ Deno.serve(async (req: Request) => {
           has_upload_cv: isUnlocked,
           upload_cv_end_date: endDateStr || null,
           quota_pro_photo: p?.quota_pro_photo || 0,
+          quota_pro_photo_purchased: p?.quota_pro_photo_purchased || 0,
           quota_upload_cv: p?.quota_upload_cv || 0,
         };
       });
@@ -444,7 +446,7 @@ async function buildUserRows(admin: ReturnType<typeof getAdminClient>, authUsers
     userIds.length
       ? admin
           .from("profiles")
-          .select("id, full_name, created_at, has_upload_cv, upload_cv_end_date, quota_pro_photo, quota_upload_cv")
+          .select("id, full_name, created_at, has_upload_cv, upload_cv_end_date, quota_pro_photo, quota_pro_photo_purchased, quota_upload_cv")
           .in("id", userIds)
       : Promise.resolve({ data: [] }),
     userIds.length
@@ -478,15 +480,28 @@ async function buildUserRows(admin: ReturnType<typeof getAdminClient>, authUsers
 
   const profileMap = new Map(
     (profiles.data || []).map(
-      (profile: { id: string; full_name?: string; created_at?: string }) => [profile.id, profile],
+      (profile: {
+        id: string;
+        full_name?: string;
+        created_at?: string;
+        has_upload_cv?: boolean;
+        upload_cv_end_date?: string | null;
+        quota_pro_photo?: number;
+        quota_pro_photo_purchased?: number;
+        quota_upload_cv?: number;
+      }) => [profile.id, profile],
     ),
   );
   const roleMap = new Map(
     (roles.data || []).map((role: { user_id: string; role: string }) => [role.user_id, role.role]),
   );
   const subMap = new Map(
-    (subs.data || []).map(
-      (sub: { user_id: string; status: string; subscription_tiers?: { slug?: string } }) => [
+    ((subs.data || []) as unknown as Array<{
+      user_id: string;
+      status: string;
+      subscription_tiers?: { slug?: string };
+    }>).map(
+      (sub) => [
         sub.user_id,
         sub,
       ],
@@ -528,6 +543,7 @@ async function buildUserRows(admin: ReturnType<typeof getAdminClient>, authUsers
       has_upload_cv: isUnlocked,
       upload_cv_end_date: profile?.upload_cv_end_date || null,
       quota_pro_photo: profile?.quota_pro_photo || 0,
+      quota_pro_photo_purchased: profile?.quota_pro_photo_purchased || 0,
       quota_upload_cv: profile?.quota_upload_cv || 0,
       tryout_credits: tc?.total || 0,
       tryout_used: tc?.used || 0,

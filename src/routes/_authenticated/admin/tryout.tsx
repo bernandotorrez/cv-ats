@@ -1618,7 +1618,7 @@ function ActivateCreditDialog({
 }) {
   const [selectedUserId, setSelectedUserId] = useState("");
   const [packageSlug, setPackageSlug] = useState("satuan");
-  const [paymentMethod, setPaymentMethod] = useState<"manual" | "lynk" | "transfer">("manual");
+  const [paymentMethod, setPaymentMethod] = useState<"manual" | "lynk" | "sumopod" | "transfer">("manual");
   const [paymentRef, setPaymentRef] = useState("");
   const [credits, setCredits] = useState<number>(1);
   const [submitting, setSubmitting] = useState(false);
@@ -1844,6 +1844,7 @@ function ActivateCreditDialog({
               >
                 <option value="manual">Manual (WA)</option>
                 <option value="transfer">Transfer Bank</option>
+                <option value="sumopod">QRIS (SumoPod)</option>
                 <option value="lynk">Lynk</option>
               </select>
             </div>

@@ -1,5 +1,5 @@
 import { corsHeaders } from "../_shared/cors.ts";
-import { getAdminClient, getUserId } from "../_shared/ai-common.ts";
+import { AI_MODEL, getAdminClient, getUserId } from "../_shared/ai-common.ts";
 
 type SearchSource = "jobstreet" | "glints" | "kalibrr" | "dealls" | "google";
 
@@ -74,7 +74,6 @@ type JobParseResult = {
 };
 
 const AI_GATEWAY_URL = "https://ai.sumopod.com/v1/chat/completions";
-const AI_MODEL = "gemini/gemini-3.1-flash-lite";
 const DEFAULT_SOURCES: SearchSource[] = ["jobstreet", "glints", "kalibrr", "dealls", "google"];
 const RICH_AI_SOURCE_LIMIT = 6;
 const RICH_AI_CONTENT_CHARS = 3500;
@@ -225,7 +224,7 @@ Deno.serve(async (req: Request) => {
     // ── STEP 4: Build rows & filter ─────────────────────────────────────────
     const rows = extractedJobs
       .map((job) => toJobRow(job, query, location, enrichedResults))
-      .filter(Boolean);
+      .filter((row): row is NonNullable<typeof row> => row !== null);
     const invalidCount = extractedJobs.length - rows.length;
     if (invalidCount > 0) {
       log.warn("rows_filtered", { invalid_rows: invalidCount, reason: "missing required fields" });

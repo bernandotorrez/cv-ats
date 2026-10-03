@@ -83,7 +83,7 @@ const paymentRules = [
   {
     icon: CreditCard,
     label: "Pembayaran paket",
-    desc: "Paket Starter dan Pro dibayar lewat Lynk. Akses paket aktif setelah pembayaran selesai diproses.",
+    desc: "Paket Starter dan Pro dibayar via QRIS melalui payment gateway. Akses paket aktif otomatis setelah pembayaran terkonfirmasi.",
   },
 ];
 
@@ -217,7 +217,7 @@ function SyaratKetentuanPage() {
             icon={CreditCard}
             number="03"
             title="Pembayaran dan refund"
-            description="Paket Starter dan Pro dibayar lewat Lynk. Akses paket aktif setelah pembayaran selesai diproses."
+            description="Paket Starter dan Pro dibayar via QRIS melalui payment gateway. Akses paket aktif otomatis setelah pembayaran terkonfirmasi."
           >
             <div className="grid gap-4 md:grid-cols-3">
               {paymentRules.map((item) => (

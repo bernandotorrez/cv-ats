@@ -202,7 +202,10 @@ function LoginPage() {
 
     clearAttempts();
     toast.success("Berhasil masuk");
-    navigate({ to: redirect || "/dashboard" });
+    // Hanya path internal (cegah open redirect); href agar query string ikut terbawa
+    const target =
+      redirect && redirect.startsWith("/") && !redirect.startsWith("//") ? redirect : "/dashboard";
+    navigate({ href: target });
   };
 
   return (

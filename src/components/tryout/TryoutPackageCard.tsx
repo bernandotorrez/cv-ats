@@ -2,7 +2,7 @@
  * TryoutPackageCard — Kartu paket pembelian tryout.
  * Dark mode & responsive support.
  */
-import { Check, Star } from "lucide-react";
+import { Check, Loader2, Star } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -18,7 +18,10 @@ type Props = {
   hasPembahasan?: boolean;
   hasAnalytics?: boolean;
   hasLeaderboard?: boolean;
-  lynkUrl?: string;
+  /** Bila diisi, tombol beli memanggil checkout (pembayaran QRIS). */
+  onBuy?: () => void;
+  buying?: boolean;
+  buyDisabled?: boolean;
   whatsappNumber?: string;
 };
 
@@ -33,7 +36,9 @@ export function TryoutPackageCard({
   hasPembahasan = false,
   hasAnalytics = false,
   hasLeaderboard = false,
-  lynkUrl,
+  onBuy,
+  buying = false,
+  buyDisabled = false,
   whatsappNumber = "6285190607141",
 }: Props) {
   const formattedPrice = new Intl.NumberFormat("id-ID", {
@@ -97,11 +102,10 @@ export function TryoutPackageCard({
       </div>
 
       <div className="mt-auto space-y-2 border-t bg-muted/30 p-4">
-        {lynkUrl ? (
-          <Button asChild className="w-full">
-            <a href={lynkUrl} target="_blank" rel="noopener noreferrer">
-              Beli via Lynk
-            </a>
+        {onBuy ? (
+          <Button type="button" className="w-full" onClick={onBuy} disabled={buyDisabled || buying}>
+            {buying && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Beli Sekarang
           </Button>
         ) : (
           <Button asChild className="w-full">
@@ -111,7 +115,9 @@ export function TryoutPackageCard({
           </Button>
         )}
         <p className="text-center text-[10px] text-muted-foreground">
-          Transfer manual · aktivasi 1x24 jam setelah bukti transfer
+          {onBuy
+            ? "Bayar via QRIS · kredit aktif otomatis setelah pembayaran"
+            : "Transfer manual · aktivasi 1x24 jam setelah bukti transfer"}
         </p>
       </div>
     </article>

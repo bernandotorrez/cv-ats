@@ -262,7 +262,7 @@ ${hrPersonaPrompt}`;
           },
           strengths: parsed.strengths || [],
           weaknesses: parsed.weaknesses || [],
-          suggestions: (parsed.suggestions || []).map((s: any) => ({
+          suggestions: ((parsed.suggestions as any[]) || []).map((s: any) => ({
             priority: s.priority || "medium",
             category: s.category || "content",
             current: s.currentText || s.current || "",

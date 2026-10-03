@@ -198,7 +198,7 @@ Deno.serve(async (req: Request) => {
       // Check quota - only on POST (task creation)
       const { data: profile } = await admin
         .from("profiles")
-        .select("quota_pro_photo, quota_pro_photo_reset_at")
+        .select("quota_pro_photo, quota_pro_photo_reset_at, quota_pro_photo_purchased")
         .eq("id", userId)
         .single();
 
@@ -213,6 +213,7 @@ Deno.serve(async (req: Request) => {
         ? new Date(profile.quota_pro_photo_reset_at)
         : null;
       const needsReset = !lastReset || lastReset < monthStart;
+      let effectiveQuota: number = profile?.quota_pro_photo || 0;
 
       if (needsReset) {
         // Check user's active subscription tier
@@ -237,15 +238,14 @@ Deno.serve(async (req: Request) => {
             .eq("id", userId);
 
           // Use the fresh quota
-          var effectiveQuota = tierAllocation;
-        } else {
-          var effectiveQuota = profile?.quota_pro_photo || 0;
+          effectiveQuota = tierAllocation;
         }
-      } else {
-        var effectiveQuota = profile?.quota_pro_photo || 0;
       }
 
-      if (effectiveQuota <= 0) {
+      // Kuota beli (add-on) terpisah dan tidak ikut reset bulanan tier
+      const purchasedQuota: number = (profile as any)?.quota_pro_photo_purchased || 0;
+
+      if (effectiveQuota + purchasedQuota <= 0) {
         return new Response(
           JSON.stringify({
             error: "Access Denied: Please buy Photo Pro Quota to use this feature.",
@@ -316,12 +316,19 @@ Deno.serve(async (req: Request) => {
         );
       }
 
-      // Decrement quota atomically
-      const { error: updateError } = await admin
-        .from("profiles")
-        .update({ quota_pro_photo: effectiveQuota - 1 })
-        .eq("id", userId)
-        .eq("quota_pro_photo", effectiveQuota); // Atomic: prevents race-condition double-decrement
+      // Decrement quota atomically: kuota tier dulu, lalu kuota beli
+      const { error: updateError } =
+        effectiveQuota > 0
+          ? await admin
+              .from("profiles")
+              .update({ quota_pro_photo: effectiveQuota - 1 })
+              .eq("id", userId)
+              .eq("quota_pro_photo", effectiveQuota) // Atomic: prevents race-condition double-decrement
+          : await admin
+              .from("profiles")
+              .update({ quota_pro_photo_purchased: purchasedQuota - 1 })
+              .eq("id", userId)
+              .eq("quota_pro_photo_purchased", purchasedQuota);
 
       if (updateError) {
         console.error("Failed to decrement quota:", updateError);

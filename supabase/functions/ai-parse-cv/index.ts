@@ -8,6 +8,7 @@
 
 import {
   aiComplete,
+  CV_AI_MODEL,
   checkAndTrackQuota,
   corsResponse,
   errorResponse,
@@ -156,8 +157,8 @@ PENTING:
           content: `CV TEXT:\n\n${cvText}\n\nParse CV ini menjadi JSON terstruktur sesuai format yang dijelaskan.`,
         },
       ],
-      // Upload CV otomatis: tetap pakai Gemini (OCR multimodal butuh model ini)
-      { model: "gemini/gemini-3.1-flash-lite", temperature: 0.2, maxTokens: 4000, jsonMode: true },
+      // Upload CV otomatis: model terpisah (AI_MODEL_CV, default Gemini)
+      { model: CV_AI_MODEL, temperature: 0.2, maxTokens: 4000, jsonMode: true },
       lang,
     );
 

@@ -46,6 +46,8 @@ import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
 import { Route as LowonganSlugRouteImport } from './routes/lowongan.$slug'
 import { Route as ManifestWebmanifestRouteImport } from './routes/manifest.webmanifest'
+import { Route as PaymentCancelRouteImport } from './routes/payment.cancel'
+import { Route as PaymentSuccessRouteImport } from './routes/payment.success'
 import { Route as PortfolioTokenRouteImport } from './routes/portfolio.$token'
 import { Route as SecurityTxtRouteImport } from './routes/security.txt'
 import { Route as ShareTokenRouteImport } from './routes/share.$token'
@@ -259,6 +261,16 @@ const ManifestWebmanifestRoute = ManifestWebmanifestRouteImport.update({
   path: '/manifest/webmanifest',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PaymentCancelRoute = PaymentCancelRouteImport.update({
+  id: '/payment/cancel',
+  path: '/payment/cancel',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PaymentSuccessRoute = PaymentSuccessRouteImport.update({
+  id: '/payment/success',
+  path: '/payment/success',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PortfolioTokenRoute = PortfolioTokenRouteImport.update({
   id: '/portfolio/$token',
   path: '/portfolio/$token',
@@ -445,6 +457,8 @@ export interface FileRoutesByFullPath {
   '/blog/$slug': typeof BlogSlugRoute
   '/lowongan/$slug': typeof LowonganSlugRoute
   '/manifest/webmanifest': typeof ManifestWebmanifestRoute
+  '/payment/cancel': typeof PaymentCancelRoute
+  '/payment/success': typeof PaymentSuccessRoute
   '/portfolio/$token': typeof PortfolioTokenRoute
   '/security/txt': typeof SecurityTxtRoute
   '/share/$token': typeof ShareTokenRoute
@@ -509,6 +523,8 @@ export interface FileRoutesByTo {
   '/blog/$slug': typeof BlogSlugRoute
   '/lowongan/$slug': typeof LowonganSlugRoute
   '/manifest/webmanifest': typeof ManifestWebmanifestRoute
+  '/payment/cancel': typeof PaymentCancelRoute
+  '/payment/success': typeof PaymentSuccessRoute
   '/portfolio/$token': typeof PortfolioTokenRoute
   '/security/txt': typeof SecurityTxtRoute
   '/share/$token': typeof ShareTokenRoute
@@ -576,6 +592,8 @@ export interface FileRoutesById {
   '/blog/$slug': typeof BlogSlugRoute
   '/lowongan/$slug': typeof LowonganSlugRoute
   '/manifest/webmanifest': typeof ManifestWebmanifestRoute
+  '/payment/cancel': typeof PaymentCancelRoute
+  '/payment/success': typeof PaymentSuccessRoute
   '/portfolio/$token': typeof PortfolioTokenRoute
   '/security/txt': typeof SecurityTxtRoute
   '/share/$token': typeof ShareTokenRoute
@@ -643,6 +661,8 @@ export interface FileRouteTypes {
     | '/blog/$slug'
     | '/lowongan/$slug'
     | '/manifest/webmanifest'
+    | '/payment/cancel'
+    | '/payment/success'
     | '/portfolio/$token'
     | '/security/txt'
     | '/share/$token'
@@ -707,6 +727,8 @@ export interface FileRouteTypes {
     | '/blog/$slug'
     | '/lowongan/$slug'
     | '/manifest/webmanifest'
+    | '/payment/cancel'
+    | '/payment/success'
     | '/portfolio/$token'
     | '/security/txt'
     | '/share/$token'
@@ -773,6 +795,8 @@ export interface FileRouteTypes {
     | '/blog/$slug'
     | '/lowongan/$slug'
     | '/manifest/webmanifest'
+    | '/payment/cancel'
+    | '/payment/success'
     | '/portfolio/$token'
     | '/security/txt'
     | '/share/$token'
@@ -828,6 +852,8 @@ export interface RootRouteChildren {
   ApiHeadersCheckRoute: typeof ApiHeadersCheckRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
   ManifestWebmanifestRoute: typeof ManifestWebmanifestRoute
+  PaymentCancelRoute: typeof PaymentCancelRoute
+  PaymentSuccessRoute: typeof PaymentSuccessRoute
   PortfolioTokenRoute: typeof PortfolioTokenRoute
   SecurityTxtRoute: typeof SecurityTxtRoute
   ShareTokenRoute: typeof ShareTokenRoute
@@ -1093,6 +1119,20 @@ declare module '@tanstack/react-router' {
       path: '/manifest/webmanifest'
       fullPath: '/manifest/webmanifest'
       preLoaderRoute: typeof ManifestWebmanifestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/payment/cancel': {
+      id: '/payment/cancel'
+      path: '/payment/cancel'
+      fullPath: '/payment/cancel'
+      preLoaderRoute: typeof PaymentCancelRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/payment/success': {
+      id: '/payment/success'
+      path: '/payment/success'
+      fullPath: '/payment/success'
+      preLoaderRoute: typeof PaymentSuccessRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/portfolio/$token': {
@@ -1467,6 +1507,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiHeadersCheckRoute: ApiHeadersCheckRoute,
   AuthCallbackRoute: AuthCallbackRoute,
   ManifestWebmanifestRoute: ManifestWebmanifestRoute,
+  PaymentCancelRoute: PaymentCancelRoute,
+  PaymentSuccessRoute: PaymentSuccessRoute,
   PortfolioTokenRoute: PortfolioTokenRoute,
   SecurityTxtRoute: SecurityTxtRoute,
   ShareTokenRoute: ShareTokenRoute,

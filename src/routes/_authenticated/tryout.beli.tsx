@@ -10,7 +10,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { TryoutPackageCard } from "@/components/tryout";
 import { supabase } from "@/integrations/supabase/client";
-import { getTryoutLynkUrl, type TryoutPackage } from "@/lib/tryout-types";
+import { type TryoutPackage } from "@/lib/tryout-types";
+import { useCheckout } from "@/lib/payment";
 import { BackButton } from "@/components/ui/back-button";
 
 export const Route = createFileRoute("/_authenticated/tryout/beli")({
@@ -27,6 +28,7 @@ export const Route = createFileRoute("/_authenticated/tryout/beli")({
 function TryoutBeliPage() {
   const [packages, setPackages] = useState<TryoutPackage[]>([]);
   const [loading, setLoading] = useState(true);
+  const { checkout, pending } = useCheckout();
 
   useEffect(() => {
     void supabase
@@ -58,8 +60,8 @@ function TryoutBeliPage() {
             Beli Kredit Tryout SKD
           </h1>
           <p className="mt-2 max-w-2xl text-sm opacity-90 sm:text-base">
-            Pilih paket yang sesuai kebutuhanmu. Aktivasi dilakukan setelah bukti
-            transfer diverifikasi admin (1x24 jam) atau otomatis via Lynk.
+            Pilih paket yang sesuai kebutuhanmu. Bayar via QRIS dan kredit langsung
+            aktif otomatis setelah pembayaran terkonfirmasi.
           </p>
         </div>
       </section>
@@ -72,7 +74,7 @@ function TryoutBeliPage() {
         </div>
         <div className="grid gap-3 sm:grid-cols-3">
           <Step n={1} title="Pilih Paket" desc="Tentukan paket yang kamu mau." />
-          <Step n={2} title="Bayar" desc="Lewat Lynk (otomatis) atau transfer manual via WhatsApp." />
+          <Step n={2} title="Bayar" desc="Scan QRIS dari m-banking atau e-wallet apa pun." />
           <Step n={3} title="Aktivasi" desc="Kredit langsung aktif & bisa langsung mulai tryout." />
         </div>
       </section>
@@ -101,7 +103,9 @@ function TryoutBeliPage() {
                 hasPembahasan={pkg.has_pembahasan}
                 hasAnalytics={pkg.has_analytics}
                 hasLeaderboard={pkg.has_leaderboard}
-                lynkUrl={getTryoutLynkUrl(pkg.slug)}
+                onBuy={() => checkout(`tryout:${pkg.slug}`)}
+                buying={pending === `tryout:${pkg.slug}`}
+                buyDisabled={!!pending}
                 whatsappNumber={whatsappNumber}
               />
             ))}

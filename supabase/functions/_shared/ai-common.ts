@@ -30,7 +30,10 @@ export interface AiCompletionOptions {
 
 const AI_GATEWAY_URL = "https://ai.sumopod.com/v1/chat/completions";
 const AI_API_KEY = Deno.env.get("AI_API_KEY") || "";
-const AI_MODEL = "gemini/gemini-3.1-flash-lite";
+// Model bisa diganti tanpa deploy ulang via: supabase secrets set AI_MODEL=... AI_MODEL_CV=...
+export const AI_MODEL = Deno.env.get("AI_MODEL") || "deepseek-v4.1-flash:netra";
+// Scan/Upload CV (OCR multimodal) — default Gemini
+export const CV_AI_MODEL = Deno.env.get("AI_MODEL_CV") || "gemini/gemini-3.1-flash-lite";
 
 export const FEATURE_MAP: Record<string, string> = {
   "ai-suggest": "suggest",
@@ -90,7 +93,7 @@ export function getAdminClient() {
 // ─── Quota ─────────────────────────────────────────────────────────
 
 export async function checkAndTrackQuota(
-  adminClient: ReturnType<typeof createClient>,
+  adminClient: ReturnType<typeof getAdminClient>,
   userId: string,
   feature: string,
   tokensUsed: number,

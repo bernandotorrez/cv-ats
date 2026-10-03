@@ -80,6 +80,7 @@ interface UserRow {
   last_sign_in_at?: string | null;
   has_upload_cv?: boolean;
   quota_pro_photo?: number;
+  quota_pro_photo_purchased?: number;
   quota_upload_cv?: number;
   tryout_credits?: number;
   tryout_used?: number;
@@ -365,9 +366,10 @@ function AdminUsersPage() {
                         Kuota Upload CV: {u.quota_upload_cv}
                       </span>
                     )}
-                    {u.quota_pro_photo !== undefined && u.quota_pro_photo > 0 && (
+                    {((u.quota_pro_photo ?? 0) > 0 || (u.quota_pro_photo_purchased ?? 0) > 0) && (
                       <span className="text-muted-foreground">
-                        Kuota Pro Photo: {u.quota_pro_photo}
+                        Kuota Pro Photo: {u.quota_pro_photo ?? 0}
+                        {(u.quota_pro_photo_purchased ?? 0) > 0 && ` (+${u.quota_pro_photo_purchased} dibeli)`}
                       </span>
                     )}
                     {u.tryout_credits !== undefined && u.tryout_credits > 0 && (

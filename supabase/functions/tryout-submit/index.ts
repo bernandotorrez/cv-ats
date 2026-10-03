@@ -136,7 +136,9 @@ Deno.serve(async (req: Request) => {
         .select("tryout_packages!inner(has_pembahasan)")
         .eq("id", attempt.credit_id)
         .maybeSingle();
-      hasPembahasan = !!credit?.tryout_packages?.has_pembahasan;
+      // Relasi many-to-one: runtime berupa object, bukan array
+      const pkg = (credit as { tryout_packages?: { has_pembahasan?: boolean } } | null)?.tryout_packages;
+      hasPembahasan = !!pkg?.has_pembahasan;
     }
 
     return json(req, {

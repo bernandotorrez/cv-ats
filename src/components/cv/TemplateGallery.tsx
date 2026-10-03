@@ -126,7 +126,7 @@ export function TemplateGallery({
           >
             {/* Preview Thumbnail - Actual Template */}
             <div className="h-40 rounded-t-[10px] overflow-hidden bg-white p-2">
-              {TemplateComponent && data ? (
+              {data ? (
                 <div
                   className="h-full w-full overflow-hidden rounded bg-white shadow-sm"
                   style={{

@@ -8,6 +8,7 @@
 
 import {
   aiComplete,
+  CV_AI_MODEL,
   checkAndTrackQuota,
   corsResponse,
   errorResponse,
@@ -164,7 +165,8 @@ ${hrPersonaPrompt}`;
 
     const result = await aiComplete(
       [{ role: "user", content: analysisPrompt }],
-      { temperature: 0.4, maxTokens: 4000, jsonMode: true },
+      // Upload CV: model terpisah (AI_MODEL_CV, default Gemini)
+      { model: CV_AI_MODEL, temperature: 0.4, maxTokens: 4000, jsonMode: true },
       lang,
     );
 
