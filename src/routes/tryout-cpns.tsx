@@ -4,19 +4,16 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
+  AlertTriangle,
   ArrowRight,
-  Clock,
-  Award,
   BarChart3,
-  FileCheck,
-  Trophy,
-  Star,
-  Check,
-  ChevronDown,
   BookOpen,
-  Target,
+  Check,
   CheckCircle2,
-  TrendingUp,
+  Clock,
+  FileCheck,
+  Star,
+  Trophy,
 } from "lucide-react";
 import { buildSeo } from "@/lib/seo";
 import {
@@ -26,10 +23,15 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { TryoutPackageCard } from "@/components/tryout/TryoutPackageCard";
 import { supabase } from "@/integrations/supabase/client";
 import { getTryoutLynkUrl, type TryoutPackage } from "@/lib/tryout-types";
+import {
+  AnchorCta,
+  Eyebrow,
+  PrimaryCta,
+  SectionHeader,
+  TrustChecks,
+} from "@/components/site/marketing";
 
 export const Route = createFileRoute("/tryout-cpns")({
   head: () =>
@@ -184,9 +186,71 @@ export const Route = createFileRoute("/tryout-cpns")({
   component: TryoutCpnsLandingPage,
 });
 
+const faqs = [
+  {
+    q: "Apakah soalnya mirip ujian asli?",
+    a: "Ya. Soal disusun mengikuti kisi-kisi BKN terbaru dengan komposisi 30 TWK, 35 TIU, dan 45 TKP. Tingkat kesulitan setara ujian asli.",
+  },
+  {
+    q: "Bisa dikerjakan di HP?",
+    a: "Bisa. Tryout didesain mobile-first dan berjalan lancar di smartphone. Disarankan menggunakan browser Chrome/Safari terbaru.",
+  },
+  {
+    q: "Berapa passing grade SKD?",
+    a: "TWK minimal 65, TIU minimal 80, TKP minimal 166. Ketiga subtes harus memenuhi passing grade agar dinyatakan LULUS.",
+  },
+  {
+    q: "Berapa lama akses tryout berlaku?",
+    a: "Kredit tryout berlaku 12 bulan sejak aktivasi. Kamu bisa gunakan kapan saja sesuai kebutuhan persiapan.",
+  },
+  {
+    q: "Bagaimana jika koneksi terputus di tengah ujian?",
+    a: "Jawaban otomatis tersimpan lokal (localStorage) setiap ada perubahan. Setelah koneksi pulih, submit akan dilakukan otomatis.",
+  },
+  {
+    q: "Bisa diulang untuk set yang sama?",
+    a: "Bisa, selama kamu punya kredit tersisa. Setiap attempt menggunakan 1 kredit.",
+  },
+];
+
+const features = [
+  {
+    icon: Clock,
+    title: "Timer Realistis",
+    desc: "100 menit sesuai standar BKN. Auto-submit saat waktu habis.",
+  },
+  {
+    icon: BarChart3,
+    title: "Skor Real-time",
+    desc: "Skor TWK, TIU, TKP keluar seketika. Status lulus per subtes.",
+  },
+  {
+    icon: Trophy,
+    title: "Leaderboard",
+    desc: "Bersaing sehat dengan pejuang SKD se-Indonesia. Top 10 tampil di papan peringkat.",
+  },
+  {
+    icon: FileCheck,
+    title: "Pembahasan",
+    desc: "Setiap soal ada pembahasan detail. Tersedia di paket Lengkap.",
+  },
+] as const;
+
+const subtests = [
+  { label: "TWK", fullName: "Tes Wawasan Kebangsaan", count: 30, passing: 65, max: 150 },
+  { label: "TIU", fullName: "Tes Intelegensi Umum", count: 35, passing: 80, max: 175 },
+  { label: "TKP", fullName: "Tes Karakteristik Pribadi", count: 45, passing: 166, max: 225 },
+] as const;
+
+const rupiah = (value: number) =>
+  new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    minimumFractionDigits: 0,
+  }).format(value);
+
 function TryoutCpnsLandingPage() {
   const [packages, setPackages] = useState<TryoutPackage[]>([]);
-  const [faqOpen, setFaqOpen] = useState<number | null>(0);
 
   useEffect(() => {
     void supabase
@@ -199,222 +263,94 @@ function TryoutCpnsLandingPage() {
       });
   }, []);
 
-  return (
-    <div className="w-full max-w-full overflow-x-hidden bg-white">
-      {/* Hero Section */}
-      <section className="relative pt-6 pb-12 sm:pt-12 sm:pb-24 lg:pt-16 lg:pb-28 bg-gradient-to-b from-green-50/40 via-white to-white overflow-hidden">
-        <div className="container-page">
-          <div className="grid gap-8 sm:gap-12 lg:grid-cols-2 lg:items-center">
-            {/* Left Content */}
-            <div className="flex flex-col items-start text-left max-w-2xl">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-green-50 text-green-700 uppercase tracking-wider mb-3 sm:mb-4 max-w-full">
-                <Trophy className="h-3.5 w-3.5 shrink-0" /> Simulasi SKD Terlengkap 2026
-              </span>
-              <h1 className="font-display text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-gray-900 leading-[1.15]">
-                Tryout SKD Realistis{" "}
-                <span className="text-green-700 block sm:inline">
-                  untuk Lulus CPNS.
-                </span>
-              </h1>
+  // Highest per-tryout price is the baseline for "hemat" badges.
+  const basePerCredit = packages.reduce(
+    (max, p) => (p.credits > 0 ? Math.max(max, p.price / p.credits) : max),
+    0,
+  );
 
-              <p className="mt-4 sm:mt-6 text-sm sm:text-lg text-gray-600 leading-relaxed">
-                110 soal sesuai kisi-kisi BKN (30 TWK + 35 TIU + 45 TKP), timer 100 menit, passing grade sesuai standar, dan pembahasan lengkap di paket premium.
+  return (
+    <div className="overflow-hidden bg-white">
+      {/* Hero */}
+      <section
+        aria-labelledby="tryout-heading"
+        className="relative overflow-hidden bg-gradient-to-b from-green-50 via-white to-white pb-16 pt-10 lg:pb-24 lg:pt-16"
+      >
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -right-40 -top-40 h-[32rem] w-[32rem] rounded-full bg-green-200/50 blur-3xl"
+        />
+        <div className="container-page relative">
+          <div className="grid items-center gap-12 lg:grid-cols-2">
+            <div className="flex max-w-2xl flex-col items-start">
+              <span className="inline-flex w-fit items-center gap-2 rounded-full border border-green-200 bg-white px-3 py-1.5 text-sm font-semibold text-green-800 shadow-sm">
+                <Trophy aria-hidden="true" className="h-4 w-4" />
+                Simulasi SKD Terlengkap 2026
+              </span>
+              <h1
+                id="tryout-heading"
+                className="mt-6 font-display text-4xl font-extrabold leading-[1.08] tracking-tight text-gray-900 sm:text-5xl lg:text-6xl"
+              >
+                Tryout SKD realistis <span className="text-green-700">untuk lulus CPNS.</span>
+              </h1>
+              <p className="mt-6 text-lg leading-relaxed text-gray-600">
+                110 soal sesuai kisi-kisi BKN (30 TWK + 35 TIU + 45 TKP), timer 100 menit, passing
+                grade sesuai standar, dan pembahasan lengkap di paket premium.
               </p>
 
-              <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto">
-                <Button
-                  asChild
-                  size="lg"
-                  className="w-full sm:w-auto h-12 px-6 sm:px-8 bg-green-700 hover:bg-green-800 text-white font-semibold rounded-md shadow-md text-sm sm:text-base"
-                >
-                  <Link to={"/tryout" as never}>
-                    Mulai Tryout Gratis
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
-                </Button>
-                <Button
-                  asChild
-                  size="lg"
-                  variant="outline"
-                  className="w-full sm:w-auto h-12 px-6 sm:px-8 border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold rounded-md text-sm sm:text-base"
-                >
-                  <a href="#paket">Lihat Paket Harga</a>
-                </Button>
+              <div className="mt-8 flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
+                <PrimaryCta to="/tryout">Mulai Tryout Gratis</PrimaryCta>
+                <AnchorCta href="#paket">Lihat Paket Harga</AnchorCta>
               </div>
-
-              {/* Bullet checks */}
-              <div className="mt-6 sm:mt-8 flex flex-wrap gap-x-6 sm:gap-x-8 gap-y-2.5 text-xs sm:text-sm text-gray-600 font-medium">
-                <div className="flex items-center gap-2">
-                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-700">
-                    <Check className="h-3.5 w-3.5" />
-                  </span>
-                  110 Soal Standar BKN
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-700">
-                    <Clock className="h-3.5 w-3.5" />
-                  </span>
-                  Timer 100 Menit
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-700">
-                    <Target className="h-3.5 w-3.5" />
-                  </span>
-                  Passing Grade Akurat
-                </div>
-              </div>
+              <TrustChecks
+                items={["110 soal standar BKN", "Timer 100 menit", "Passing grade akurat"]}
+              />
             </div>
 
-            {/* Right Hero Image & Badges */}
-            <div className="relative flex flex-col items-center justify-center lg:items-end w-full py-4 sm:py-6 px-2 sm:px-6 md:px-8 overflow-visible">
-              <div className="relative w-full max-w-[340px] sm:max-w-[380px] md:max-w-[400px] lg:max-w-[425px] mx-auto lg:mr-2 my-2 sm:my-4">
-                <img
-                  src="/images/hero-cpns.webp"
-                  alt="Dua peserta CPNS SKD yang optimis dan lulus"
-                  className="w-full h-auto object-contain drop-shadow-xl"
-                />
-
-                {/* Floating Card Left: Skor Terakhir & Ranking (Tablet MD & Desktop) */}
-                <div className="hidden md:block absolute -top-3 left-0 md:-left-4 lg:-left-6 bg-white/95 backdrop-blur-sm rounded-2xl p-2.5 sm:p-3.5 shadow-xl border border-gray-100/90 animate-float w-[155px] md:w-[175px] z-20">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[8px] sm:text-[9px] font-bold text-gray-400 uppercase tracking-wider">
-                      SKOR TERAKHIR
-                    </span>
-                    <span className="bg-green-100 text-green-700 text-[8px] sm:text-[9px] font-extrabold px-1.5 py-0.5 rounded-full">
-                      BAIK
-                    </span>
-                  </div>
-                  <div className="mt-0.5 flex items-baseline gap-1">
-                    <span className="text-xl sm:text-2xl font-black text-green-700">73</span>
-                    <span className="text-[9px] sm:text-[10px] font-semibold text-gray-400">/ 100</span>
-                  </div>
-                  <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden mt-1 mb-1.5">
-                    <div className="h-full bg-green-600 rounded-full w-[73%]" />
-                  </div>
-                  <span className="text-[8px] sm:text-[9px] font-bold text-gray-400 uppercase tracking-wider block mb-1">
-                    RANKING NASIONAL
-                  </span>
-                  <div className="flex items-end gap-1 h-4 sm:h-5 pt-0.5">
-                    <div className="flex-1 bg-green-100 rounded-t h-[40%]" />
-                    <div className="flex-1 bg-green-100 rounded-t h-[60%]" />
-                    <div className="flex-1 bg-green-100 rounded-t h-[35%]" />
-                    <div className="flex-1 bg-green-100 rounded-t h-[50%]" />
-                    <div className="flex-1 bg-green-600 rounded-t h-[100%]" />
-                    <div className="flex-1 bg-green-100 rounded-t h-[45%]" />
-                    <div className="flex-1 bg-green-100 rounded-t h-[30%]" />
-                  </div>
-                </div>
-
-                {/* Floating Card Right: Simulasi CAT (Tablet MD & Desktop) */}
-                <div className="hidden md:block absolute -top-3 right-0 md:-right-3 lg:-right-4 bg-green-700 text-white rounded-2xl p-2.5 sm:p-3.5 shadow-xl animate-float-delayed w-[155px] md:w-[175px] z-20">
-                  <div className="flex items-center gap-1.5 text-[10px] sm:text-xs font-bold border-b border-green-600/80 pb-1.5 mb-1.5">
-                    <div className="flex h-4 sm:h-5 w-4 sm:w-5 items-center justify-center rounded-lg bg-green-600 text-white shrink-0">
-                      <FileCheck className="h-2.5 sm:h-3 w-2.5 sm:w-3" />
-                    </div>
-                    <span className="truncate">Simulasi CAT</span>
-                  </div>
-                  <div className="space-y-1.5 text-[9px] sm:text-[10px]">
-                    <div>
-                      <div className="flex items-center justify-between mb-0.5">
-                        <span className="flex items-center gap-1 font-semibold text-white">
-                          <CheckCircle2 className="h-2.5 sm:h-3 w-2.5 sm:w-3 text-white shrink-0" /> TWK
-                        </span>
-                        <span className="text-[8px] sm:text-[9px] font-semibold text-white">Selesai</span>
-                      </div>
-                      <div className="h-1 w-full bg-green-800/80 rounded-full overflow-hidden">
-                        <div className="h-full bg-white w-full rounded-full" />
-                      </div>
-                    </div>
-
-                    <div>
-                      <div className="flex items-center justify-between mb-0.5">
-                        <span className="flex items-center gap-1 font-semibold text-white">
-                          <CheckCircle2 className="h-2.5 sm:h-3 w-2.5 sm:w-3 text-white shrink-0" /> TIU
-                        </span>
-                        <span className="text-[8px] sm:text-[9px] font-semibold text-white">Selesai</span>
-                      </div>
-                      <div className="h-1 w-full bg-green-800/80 rounded-full overflow-hidden">
-                        <div className="h-full bg-white w-full rounded-full" />
-                      </div>
-                    </div>
-
-                    <div>
-                      <div className="flex items-center justify-between mb-0.5">
-                        <span className="flex items-center gap-1 font-semibold text-white">
-                          <span className="h-1 sm:h-1.5 w-1 sm:w-1.5 rounded-full bg-white inline-block shrink-0" /> TKP
-                        </span>
-                        <span className="text-[8px] sm:text-[9px] font-semibold text-white">82%</span>
-                      </div>
-                      <div className="h-1 w-full bg-green-800/80 rounded-full overflow-hidden">
-                        <div className="h-full bg-white w-[82%] rounded-full" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Floating Card Bottom-Left (Tablet MD & Desktop) */}
-                <div className="hidden md:flex absolute -bottom-3 left-0 md:-left-3 lg:-left-5 bg-white/95 backdrop-blur-sm rounded-xl p-2 sm:p-2.5 shadow-xl border border-gray-100/90 animate-float items-center gap-2 max-w-[155px] md:max-w-[170px] z-20">
-                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700 font-extrabold">
-                    <TrendingUp className="h-3.5 w-3.5" />
-                  </div>
-                  <div className="flex flex-col min-w-0">
-                    <span className="text-[10px] sm:text-[11px] font-extrabold text-gray-900 leading-tight truncate">Peluang SKD</span>
-                    <span className="text-[8px] sm:text-[9px] text-emerald-600 font-semibold truncate">+40% Evaluasi</span>
-                  </div>
-                </div>
-
-                {/* Floating Card Bottom-Right (Tablet MD & Desktop) */}
-                <div className="hidden md:flex absolute -bottom-3 right-0 md:-right-3 lg:-right-4 bg-white/95 backdrop-blur-sm rounded-xl p-2 sm:p-2.5 shadow-xl border border-gray-100/90 animate-float-delayed items-center gap-2 max-w-[155px] md:max-w-[170px] z-20">
-                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-blue-600 font-bold">
-                    <BookOpen className="h-3.5 w-3.5" />
-                  </div>
-                  <div className="flex flex-col min-w-0">
-                    <span className="text-[10px] sm:text-[11px] font-extrabold text-gray-900 leading-tight truncate">Modul Belajar</span>
-                    <span className="text-[8px] sm:text-[9px] text-gray-400 font-medium truncate">TIU · TWK · TKP</span>
-                  </div>
-                </div>
+            <div className="relative mx-auto w-full max-w-md px-4 sm:px-8 lg:px-0">
+              <img
+                src="/images/hero-cpns.webp"
+                alt="Dua peserta CPNS SKD yang optimis dan lulus"
+                className="h-auto w-full object-contain drop-shadow-xl"
+                fetchPriority="high"
+              />
+              <div
+                aria-hidden="true"
+                className="absolute -left-2 top-4 w-44 rounded-2xl border border-gray-100 bg-white p-4 shadow-xl animate-float sm:-left-6"
+              >
+                <p className="text-xs font-bold uppercase tracking-wider text-gray-600">
+                  Skor terakhir
+                </p>
+                <p className="mt-1 font-display text-3xl font-extrabold text-gray-900">
+                  405<span className="text-base font-semibold text-gray-600">/550</span>
+                </p>
+                <p className="mt-1 inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-bold text-green-800">
+                  <CheckCircle2 className="h-3.5 w-3.5" /> Lulus PG
+                </p>
               </div>
-
-              {/* Mobile Feature Badges (< md screens) */}
-              <div className="mt-4 grid grid-cols-2 gap-2 w-full md:hidden">
-                <div className="bg-white rounded-xl p-2.5 border border-gray-100 shadow-sm flex items-center gap-2">
-                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-green-100 text-green-700 font-extrabold text-xs">
-                    <Trophy className="h-3.5 w-3.5" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-[11px] font-bold text-gray-900 truncate">Skor 73/100</div>
-                    <div className="text-[9px] text-green-700 font-semibold truncate">Top 10%</div>
-                  </div>
-                </div>
-
-                <div className="bg-green-700 text-white rounded-xl p-2.5 shadow-sm flex items-center gap-2">
-                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-green-600 text-white">
-                    <FileCheck className="h-3.5 w-3.5" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-[11px] font-bold truncate">Simulasi CAT</div>
-                    <div className="text-[9px] text-green-100 font-medium truncate">110 Soal</div>
-                  </div>
-                </div>
-
-                <div className="bg-white rounded-xl p-2.5 border border-gray-100 shadow-sm flex items-center gap-2">
-                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700">
-                    <TrendingUp className="h-3.5 w-3.5" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-[11px] font-bold text-gray-900 truncate">Evaluasi</div>
-                    <div className="text-[9px] text-emerald-600 font-semibold truncate">+40% Lolos</div>
-                  </div>
-                </div>
-
-                <div className="bg-white rounded-xl p-2.5 border border-gray-100 shadow-sm flex items-center gap-2">
-                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-blue-600">
-                    <BookOpen className="h-3.5 w-3.5" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-[11px] font-bold text-gray-900 truncate">Modul</div>
-                    <div className="text-[9px] text-gray-500 truncate">TIU·TWK·TKP</div>
-                  </div>
+              <div
+                aria-hidden="true"
+                className="absolute -right-2 bottom-6 w-48 rounded-2xl bg-green-800 p-4 text-white shadow-xl animate-float-delayed sm:-right-6"
+              >
+                <p className="flex items-center gap-2 text-sm font-bold">
+                  <FileCheck className="h-4 w-4 text-yellow-300" /> Simulasi CAT
+                </p>
+                <div className="mt-3 space-y-2 text-xs font-semibold">
+                  {[
+                    ["TWK", "100%"],
+                    ["TIU", "100%"],
+                    ["TKP", "82%"],
+                  ].map(([l, w]) => (
+                    <div key={l}>
+                      <div className="mb-1 flex justify-between">
+                        <span>{l}</span>
+                        <span>{w}</span>
+                      </div>
+                      <div className="h-1.5 overflow-hidden rounded-full bg-green-950/60">
+                        <div className="h-full rounded-full bg-yellow-300" style={{ width: w }} />
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
@@ -423,171 +359,152 @@ function TryoutCpnsLandingPage() {
       </section>
 
       {/* Features */}
-      <section className="container-page py-8 sm:py-12">
-        <div className="text-center">
-          <h2 className="font-display text-2xl sm:text-4xl font-bold">
-            Kenapa Tryout di CV Pintar?
-          </h2>
-          <p className="mx-auto mt-2 max-w-xl text-sm sm:text-base text-muted-foreground">
-            Dirancang untuk persiapan SKD yang realistis, terukur, dan terarah.
-          </p>
-        </div>
-
-        <div className="mt-8 sm:mt-10 grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
-          <FeatureCard
-            icon={Clock}
-            color="amber"
-            title="Timer Realistis"
-            desc="100 menit sesuai standar BKN. Auto-submit saat waktu habis."
+      <section aria-labelledby="kenapa-heading" className="py-20 lg:py-28">
+        <div className="container-page">
+          <SectionHeader
+            id="kenapa-heading"
+            eyebrow="Kenapa CV Pintar"
+            title="Persiapan SKD yang realistis, terukur, dan terarah."
           />
-          <FeatureCard
-            icon={BarChart3}
-            color="sky"
-            title="Skor Real-time"
-            desc="Skor TWK, TIU, TKP keluar seketika. Status lulus per subtes."
-          />
-          <FeatureCard
-            icon={Trophy}
-            color="emerald"
-            title="Leaderboard"
-            desc="Bersaing sehat dengan pejuang SKD se-Indonesia. Top 10 tampil di papan peringkat."
-          />
-          <FeatureCard
-            icon={FileCheck}
-            color="rose"
-            title="Pembahasan"
-            desc="Setiap soal ada pembahasan detail. Tersedia di paket Lengkap."
-          />
-        </div>
-      </section>
-
-      {/* Format Ujian */}
-      <section className="container-page py-8 sm:py-12">
-        <div className="rounded-2xl sm:rounded-3xl border bg-card p-4 sm:p-10">
-          <div className="mb-6 sm:mb-8 flex items-center gap-2">
-            <BookOpen className="h-5 w-5 text-primary shrink-0" />
-            <h2 className="font-display text-xl sm:text-3xl font-bold">
-              Format Ujian SKD
-            </h2>
-          </div>
-
-          <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-3">
-            <SubtestInfo
-              label="TWK"
-              fullName="Tes Wawasan Kebangsaan"
-              count={30}
-              passing={65}
-              max={150}
-              color="amber"
-            />
-            <SubtestInfo
-              label="TIU"
-              fullName="Tes Intelegensi Umum"
-              count={35}
-              passing={80}
-              max={175}
-              color="sky"
-            />
-            <SubtestInfo
-              label="TKP"
-              fullName="Tes Karakteristik Pribadi"
-              count={45}
-              passing={166}
-              max={225}
-              color="emerald"
-            />
-          </div>
-
-          <div className="mt-6 sm:mt-8 rounded-xl sm:rounded-2xl border-2 border-dashed border-amber-300 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/40 p-4 sm:p-5 text-xs sm:text-sm">
-            <div className="font-bold text-amber-900 dark:text-amber-400">⚠️ Penting</div>
-            <p className="mt-1 text-amber-800">
-              Kamu harus lulus <strong>ketiga subtes</strong> untuk dinyatakan LULUS. Total skor
-              tinggi tidak cukup jika satu subtes tidak memenuhi passing grade.
-            </p>
-          </div>
+          <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {features.map((f) => (
+              <li
+                key={f.title}
+                className="rounded-2xl border border-gray-200 bg-white p-6 transition-shadow hover:shadow-lg"
+              >
+                <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-green-700 text-white">
+                  <f.icon aria-hidden="true" className="h-6 w-6" />
+                </span>
+                <h3 className="mt-5 font-display text-lg font-bold text-gray-900">{f.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-gray-600">{f.desc}</p>
+              </li>
+            ))}
+          </ul>
         </div>
       </section>
 
       {/* Pricing */}
-      <section id="paket" className="container-page py-8 sm:py-12">
-        <div className="text-center">
-          <h2 className="font-display text-2xl sm:text-4xl font-bold">Pilih Paket Tryout</h2>
-          <p className="mx-auto mt-2 max-w-xl text-sm sm:text-base text-muted-foreground">
-            Mulai dari 1x tryout sampai paket lengkap dengan pembahasan + leaderboard.
+      <section
+        id="paket"
+        aria-labelledby="paket-heading"
+        className="scroll-mt-20 bg-gray-50 py-20 lg:py-28"
+      >
+        <div className="container-page">
+          <SectionHeader
+            id="paket-heading"
+            eyebrow="Paket tryout"
+            title="Pilih paket, mulai latihan hari ini."
+            desc="Mulai dari 1x tryout sampai paket lengkap dengan pembahasan + leaderboard."
+          />
+          {packages.length === 0 ? (
+            <div
+              aria-busy="true"
+              aria-label="Memuat paket"
+              className="mx-auto grid max-w-4xl gap-6 md:grid-cols-2"
+            >
+              {[0, 1].map((i) => (
+                <div key={i} className="h-96 animate-pulse rounded-3xl bg-gray-200" />
+              ))}
+            </div>
+          ) : (
+            <ul className="mx-auto grid max-w-4xl gap-6 md:grid-cols-2 md:items-start">
+              {packages.map((pkg) => (
+                <li
+                  key={pkg.id}
+                  className={pkg.slug === "lengkap" ? "order-first md:order-none" : undefined}
+                >
+                  <PackageCard pkg={pkg} basePerCredit={basePerCredit} />
+                </li>
+              ))}
+            </ul>
+          )}
+          <p className="mt-8 text-center text-sm text-gray-600">
+            Pembayaran via Lynk · Aktivasi maksimal 1x24 jam · Kredit berlaku 12 bulan
           </p>
         </div>
+      </section>
 
-        <div className="mx-auto mt-8 sm:mt-10 grid grid-cols-1 max-w-4xl gap-6 md:grid-cols-2">
-          {packages.map((pkg) => (
-            <TryoutPackageCard
-              key={pkg.id}
-              slug={pkg.slug}
-              name={pkg.name}
-              description={pkg.description || ""}
-              price={pkg.price}
-              credits={pkg.credits}
-              features={pkg.features || []}
-              featured={pkg.slug === "lengkap"}
-              hasPembahasan={pkg.has_pembahasan}
-              hasAnalytics={pkg.has_analytics}
-              hasLeaderboard={pkg.has_leaderboard}
-              lynkUrl={getTryoutLynkUrl(pkg.slug)}
-            />
-          ))}
+      {/* Exam format */}
+      <section aria-labelledby="format-heading" className="py-20 lg:py-28">
+        <div className="container-page">
+          <SectionHeader
+            id="format-heading"
+            eyebrow={
+              <>
+                <BookOpen aria-hidden="true" className="h-4 w-4" /> Format ujian
+              </>
+            }
+            title="Format ujian SKD & passing grade."
+            desc="Kenali komposisi soal dan nilai minimum tiap subtes sebelum mulai berlatih."
+          />
+          <ul className="grid gap-5 md:grid-cols-3">
+            {subtests.map((s) => (
+              <li key={s.label} className="rounded-2xl border border-gray-200 bg-white p-6">
+                <p className="font-display text-3xl font-extrabold text-green-700">{s.label}</p>
+                <p className="text-sm font-medium text-gray-700">{s.fullName}</p>
+                <dl className="mt-5 space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <dt className="text-gray-600">Jumlah soal</dt>
+                    <dd className="font-bold text-gray-900">{s.count}</dd>
+                  </div>
+                  <div className="flex justify-between">
+                    <dt className="text-gray-600">Skor maksimal</dt>
+                    <dd className="font-bold text-gray-900">{s.max}</dd>
+                  </div>
+                  <div className="flex justify-between border-t border-gray-200 pt-2">
+                    <dt className="font-semibold text-gray-900">Passing grade</dt>
+                    <dd className="font-extrabold text-green-800">{s.passing}</dd>
+                  </div>
+                </dl>
+                <div aria-hidden="true" className="relative mt-4 h-2 rounded-full bg-gray-100">
+                  <div
+                    className="h-full rounded-full bg-green-600"
+                    style={{ width: `${(s.passing / s.max) * 100}%` }}
+                  />
+                </div>
+              </li>
+            ))}
+          </ul>
+          <div
+            role="note"
+            className="mt-8 flex items-start gap-3 rounded-2xl border-2 border-amber-300 bg-amber-50 p-5 text-sm"
+          >
+            <AlertTriangle aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-amber-800" />
+            <p className="text-gray-900">
+              <strong>Penting:</strong> kamu harus lulus <strong>ketiga subtes</strong> untuk
+              dinyatakan LULUS. Total skor tinggi tidak cukup jika satu subtes tidak memenuhi
+              passing grade.
+            </p>
+          </div>
         </div>
       </section>
 
       {/* FAQ */}
-      <section className="container-page py-10 sm:py-16">
-        <div className="mx-auto max-w-3xl">
-          <div className="text-center mb-8 sm:mb-10">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-green-50 text-green-700 uppercase tracking-wider">
-              FAQ
-            </span>
-            <h2 className="mt-3 font-display text-2xl sm:text-4xl font-extrabold text-gray-900 tracking-tight">
-              Pertanyaan Sering Diajukan
+      <section aria-labelledby="faq-heading" className="bg-gray-50 py-20 lg:py-28">
+        <div className="container-page grid gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:items-start">
+          <div>
+            <Eyebrow>FAQ</Eyebrow>
+            <h2
+              id="faq-heading"
+              className="mt-4 font-display text-3xl font-extrabold leading-tight tracking-tight text-gray-900 sm:text-4xl"
+            >
+              Pertanyaan sering diajukan.
             </h2>
-            <p className="mt-2 text-xs sm:text-sm text-gray-500">
+            <p className="mt-4 text-base leading-relaxed text-gray-600 sm:text-lg">
               Segala hal yang perlu kamu ketahui tentang simulasi tryout SKD CPNS.
             </p>
           </div>
-
-          <Accordion type="single" collapsible className="w-full space-y-3 sm:space-y-4">
-            {[
-              {
-                q: "Apakah soalnya mirip ujian asli?",
-                a: "Ya. Soal disusun mengikuti kisi-kisi BKN terbaru dengan komposisi 30 TWK, 35 TIU, dan 45 TKP. Tingkat kesulitan setara ujian asli.",
-              },
-              {
-                q: "Bisa dikerjakan di HP?",
-                a: "Bisa. Tryout didesain mobile-first dan berjalan lancar di smartphone. Disarankan menggunakan browser Chrome/Safari terbaru.",
-              },
-              {
-                q: "Berapa passing grade SKD?",
-                a: "TWK minimal 65, TIU minimal 80, TKP minimal 166. Ketiga subtes harus memenuhi passing grade agar dinyatakan LULUS.",
-              },
-              {
-                q: "Berapa lama akses tryout berlaku?",
-                a: "Kredit tryout berlaku 12 bulan sejak aktivasi. Kamu bisa gunakan kapan saja sesuai kebutuhan persiapan.",
-              },
-              {
-                q: "Bagaimana jika koneksi terputus di tengah ujian?",
-                a: "Jawaban otomatis tersimpan lokal (localStorage) setiap ada perubahan. Setelah koneksi pulih, submit akan dilakukan otomatis.",
-              },
-              {
-                q: "Bisa diulang untuk set yang sama?",
-                a: "Bisa, selama kamu punya kredit tersisa. Setiap attempt menggunakan 1 kredit.",
-              },
-            ].map((faq, index) => (
+          <Accordion type="single" collapsible className="space-y-3">
+            {faqs.map((faq, index) => (
               <AccordionItem
                 key={faq.q}
                 value={`faq-${index}`}
-                className="border border-gray-100 rounded-xl px-4 sm:px-5 py-1.5 sm:py-2 bg-white shadow-sm"
+                className="rounded-xl border border-gray-200 bg-white px-5 shadow-sm"
               >
-                <AccordionTrigger className="text-left font-bold text-gray-800 text-xs sm:text-sm hover:no-underline hover:text-green-700">
+                <AccordionTrigger className="min-h-11 text-left text-base font-bold text-gray-900 hover:no-underline hover:text-green-800">
                   {faq.q}
                 </AccordionTrigger>
-                <AccordionContent className="text-xs md:text-sm leading-relaxed text-gray-500 pt-2 border-t border-gray-50 mt-2">
+                <AccordionContent className="text-sm leading-relaxed text-gray-600 sm:text-base">
                   {faq.a}
                 </AccordionContent>
               </AccordionItem>
@@ -596,139 +513,150 @@ function TryoutCpnsLandingPage() {
         </div>
       </section>
 
-      {/* Final CTA Banner Section */}
-      <section className="container-page pb-16 sm:pb-24">
-        <div className="rounded-2xl sm:rounded-3xl bg-green-700 px-5 sm:px-8 py-8 sm:py-12 text-white shadow-2xl relative overflow-hidden flex flex-col lg:flex-row items-center justify-between gap-8 lg:gap-12">
-          {/* Decorative background element */}
-          <div className="absolute -top-12 -left-12 w-48 h-48 rounded-full bg-green-600/30 blur-2xl pointer-events-none" />
-
-          {/* Content */}
-          <div className="relative z-10 flex-1 max-w-2xl text-left">
-            <h2 className="font-display text-2xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight">
-              Siap Lulus SKD? Mulai latihan dari sekarang.
+      {/* Final CTA */}
+      <section className="container-page py-16 lg:py-24">
+        <div className="relative flex flex-col items-center justify-between gap-10 overflow-hidden rounded-3xl bg-green-700 px-6 py-12 text-white shadow-2xl sm:px-12 lg:flex-row lg:py-16">
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute -left-12 -top-12 h-48 w-48 rounded-full bg-green-600/40 blur-2xl"
+          />
+          <div className="relative max-w-2xl">
+            <h2 className="font-display text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl lg:text-5xl">
+              Siap lulus SKD? Mulai latihan dari sekarang.
             </h2>
-            <p className="mt-3 sm:mt-4 text-sm sm:text-lg text-green-100">
+            <p className="mt-4 text-base text-green-50 sm:text-lg">
               Setiap tryout membuatmu lebih siap menghadapi ujian asli BKN.
             </p>
-
-            {/* Checklist */}
-            <div className="mt-6 sm:mt-8 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs sm:text-sm font-semibold text-green-50">
-              <div className="flex items-center gap-2">
-                <span className="text-white text-xs font-bold">✓</span>
-                110 Soal Standar BKN
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-white text-xs font-bold">✓</span>
-                Timer 100 Menit Realistis
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-white text-xs font-bold">✓</span>
-                Pembahasan Lengkap & Akurat
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-white text-xs font-bold">✓</span>
-                Passing Grade Resmi BKN 2026
-              </div>
-            </div>
-
+            <ul className="mt-8 grid gap-3 text-sm font-semibold text-green-50 sm:grid-cols-2">
+              {[
+                "110 Soal Standar BKN",
+                "Timer 100 Menit Realistis",
+                "Pembahasan Lengkap & Akurat",
+                "Passing Grade Resmi BKN 2026",
+              ].map((p) => (
+                <li key={p} className="flex items-center gap-2">
+                  <CheckCircle2 aria-hidden="true" className="h-4 w-4 text-yellow-300" />
+                  {p}
+                </li>
+              ))}
+            </ul>
             <Button
               asChild
               size="lg"
-              className="w-full sm:w-auto mt-6 sm:mt-10 h-12 px-6 sm:px-8 bg-yellow-300 hover:bg-yellow-400 text-gray-950 font-extrabold rounded-lg shadow-lg text-sm sm:text-base"
+              className="mt-10 h-14 w-full rounded-xl bg-yellow-300 px-8 text-base font-extrabold text-gray-950 shadow-lg hover:bg-yellow-200 sm:w-auto"
             >
               <Link to={"/tryout" as never}>
                 Mulai Tryout SKD Sekarang
-                <ArrowRight className="ml-2 h-4 w-4" />
+                <ArrowRight aria-hidden="true" className="ml-2 h-5 w-5" />
               </Link>
             </Button>
           </div>
-
-          {/* Right Image */}
-          <div className="relative z-10 w-full max-w-[240px] sm:max-w-[280px] lg:max-w-[360px] flex justify-center lg:justify-end">
-            <div className="relative w-full">
-              <img
-                src="/images/cta-asn-female.webp"
-                alt="Perempuan ASN tersenyum sukses di depan laptop"
-                className="w-full h-auto rounded-2xl object-cover shadow-2xl border-4 border-white/20"
-              />
-            </div>
-          </div>
+          <img
+            src="/images/cta-asn-female.webp"
+            alt=""
+            loading="lazy"
+            decoding="async"
+            className="relative w-full max-w-[260px] rounded-2xl border-4 border-white/20 object-cover shadow-2xl lg:max-w-[340px]"
+          />
         </div>
       </section>
     </div>
   );
 }
 
-function FeatureCard({
-  icon: Icon,
-  color,
-  title,
-  desc,
-}: {
-  icon: typeof Clock;
-  color: "amber" | "sky" | "emerald" | "rose";
-  title: string;
-  desc: string;
-}) {
-  const colorClass = {
-    amber: "from-amber-500 to-orange-500",
-    sky: "from-sky-500 to-blue-500",
-    emerald: "from-emerald-500 to-green-500",
-    rose: "from-rose-500 to-pink-500",
-  }[color];
+function PackageCard({ pkg, basePerCredit }: { pkg: TryoutPackage; basePerCredit: number }) {
+  const featured = pkg.slug === "lengkap";
+  const perCredit = pkg.credits > 0 ? pkg.price / pkg.credits : pkg.price;
+  const savings = basePerCredit > 0 ? Math.round((1 - perCredit / basePerCredit) * 100) : 0;
+  const extras = [
+    pkg.has_pembahasan && { icon: FileCheck, label: "Pembahasan" },
+    pkg.has_analytics && { icon: BarChart3, label: "Analytics" },
+    pkg.has_leaderboard && { icon: Trophy, label: "Leaderboard" },
+  ].filter(Boolean) as { icon: typeof Trophy; label: string }[];
 
   return (
-    <div className="rounded-2xl border bg-card p-5 shadow-sm transition hover:shadow-md">
-      <div
-        className={`grid h-11 w-11 place-items-center rounded-xl bg-gradient-to-br text-white ${colorClass}`}
+    <article
+      aria-labelledby={`pkg-${pkg.slug}`}
+      className={`relative flex h-full flex-col rounded-3xl p-7 ${
+        featured
+          ? "bg-green-800 text-white shadow-2xl shadow-green-900/30"
+          : "border border-gray-200 bg-white shadow-sm"
+      }`}
+    >
+      {featured && (
+        <p className="absolute -top-3.5 left-7 inline-flex items-center gap-1 rounded-full bg-yellow-300 px-3 py-1 text-xs font-bold text-gray-900">
+          <Star aria-hidden="true" className="h-3.5 w-3.5" /> Best Value
+        </p>
+      )}
+      <h3 id={`pkg-${pkg.slug}`} className="font-display text-2xl font-extrabold">
+        {pkg.name}
+      </h3>
+      {pkg.description && (
+        <p
+          className={`mt-2 text-sm leading-relaxed ${featured ? "text-green-50" : "text-gray-600"}`}
+        >
+          {pkg.description}
+        </p>
+      )}
+
+      <div className={`mt-6 border-y py-5 ${featured ? "border-white/20" : "border-gray-200"}`}>
+        <p className="font-display text-4xl font-extrabold">{rupiah(pkg.price)}</p>
+        <p
+          className={`mt-1 text-sm font-semibold ${featured ? "text-yellow-200" : "text-green-800"}`}
+        >
+          {pkg.credits}x tryout · {rupiah(Math.round(perCredit))} / tryout
+          {savings > 0 && (
+            <span className="ml-2 rounded-full bg-yellow-300 px-2 py-0.5 text-xs font-bold text-gray-900">
+              Hemat {savings}%
+            </span>
+          )}
+        </p>
+      </div>
+
+      <a
+        href={getTryoutLynkUrl(pkg.slug)}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={`mt-6 inline-flex h-14 w-full items-center justify-center gap-2 rounded-xl text-base font-bold transition-colors ${
+          featured
+            ? "bg-yellow-300 text-gray-950 hover:bg-yellow-200"
+            : "border-2 border-gray-900 bg-white text-gray-900 hover:bg-gray-900 hover:text-white"
+        }`}
       >
-        <Icon className="h-5 w-5" />
-      </div>
-      <h3 className="mt-4 font-display font-bold">{title}</h3>
-      <p className="mt-1 text-sm text-muted-foreground">{desc}</p>
-    </div>
-  );
-}
+        Beli {pkg.name}
+        <ArrowRight aria-hidden="true" className="h-5 w-5" />
+        <span className="sr-only"> (membuka tab baru)</span>
+      </a>
 
-function SubtestInfo({
-  label,
-  fullName,
-  count,
-  passing,
-  max,
-  color,
-}: {
-  label: string;
-  fullName: string;
-  count: number;
-  passing: number;
-  max: number;
-  color: "amber" | "sky" | "emerald";
-}) {
-  const colorClass = {
-    amber: "border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/40 text-amber-900 dark:text-amber-400",
-    sky: "border-sky-200 bg-sky-50 dark:border-sky-800 dark:bg-sky-950/40 text-sky-900 dark:text-sky-400",
-    emerald: "border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-950/40 text-emerald-900 dark:text-emerald-400",
-  }[color];
-
-  return (
-    <div className={`rounded-2xl border-2 p-5 ${colorClass}`}>
-      <div className="font-display text-2xl font-bold">{label}</div>
-      <div className="text-xs">{fullName}</div>
-      <div className="mt-3 space-y-1 text-sm">
-        <div className="flex justify-between">
-          <span>Jumlah soal</span>
-          <span className="font-bold">{count}</span>
-        </div>
-        <div className="flex justify-between">
-          <span>Skor maksimal</span>
-          <span className="font-bold">{max}</span>
-        </div>
-        <div className="flex justify-between border-t pt-1">
-          <span>Passing grade</span>
-          <span className="font-bold">{passing}</span>
-        </div>
-      </div>
-    </div>
+      <ul className="mt-6 space-y-3 text-sm">
+        {(pkg.features || []).map((f, idx) => (
+          <li key={idx} className="flex items-start gap-3">
+            <Check
+              aria-hidden="true"
+              className={`mt-0.5 h-5 w-5 shrink-0 ${featured ? "text-yellow-300" : "text-green-700"}`}
+            />
+            <span className={featured ? "text-white" : "text-gray-800"}>{f}</span>
+          </li>
+        ))}
+      </ul>
+      {extras.length > 0 && (
+        <ul
+          aria-label="Termasuk"
+          className={`mt-5 flex flex-wrap gap-2 border-t pt-4 ${featured ? "border-white/20" : "border-gray-200"}`}
+        >
+          {extras.map((e) => (
+            <li
+              key={e.label}
+              className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${
+                featured ? "bg-white/15 text-white" : "bg-green-100 text-green-800"
+              }`}
+            >
+              <e.icon aria-hidden="true" className="h-3.5 w-3.5" />
+              {e.label}
+            </li>
+          ))}
+        </ul>
+      )}
+    </article>
   );
 }
