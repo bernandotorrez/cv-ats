@@ -252,3 +252,43 @@ export function CtaBanner({
     </section>
   );
 }
+
+/** Secondary-styled in-page anchor (e.g. "#checklist"). */
+export function AnchorCta({ href, children }: { href: string; children: ReactNode }) {
+  return (
+    <a
+      href={href}
+      className="inline-flex h-14 items-center justify-center rounded-xl border-2 border-gray-300 bg-white px-8 text-base font-semibold text-gray-800 transition-colors hover:border-green-700 hover:bg-green-50 hover:text-green-800"
+    >
+      {children}
+    </a>
+  );
+}
+
+/** "Lompat ke" chips for long pages. */
+export function JumpNav({
+  label = "Di halaman ini",
+  items,
+}: {
+  label?: string;
+  items: { id: string; label: string }[];
+}) {
+  return (
+    <nav aria-label={label} className="mt-8 w-full border-t border-gray-200 pt-6">
+      <p className="text-sm font-semibold text-gray-900">{label}:</p>
+      <ul className="mt-3 flex flex-wrap gap-2">
+        {items.map((item, i) => (
+          <li key={item.id}>
+            <a
+              href={`#${item.id}`}
+              className="inline-flex min-h-11 items-center gap-2 rounded-full border border-gray-300 bg-white px-4 text-sm font-semibold text-gray-800 transition-colors hover:border-green-700 hover:bg-green-50 hover:text-green-800"
+            >
+              <span className="text-green-700">{String(i + 1).padStart(2, "0")}</span>
+              {item.label}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  );
+}
