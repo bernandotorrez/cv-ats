@@ -45,6 +45,7 @@ import { TemplateGallery } from "@/components/site/TemplateGallery";
 import { AtsVsCreative } from "@/components/home/AtsVsCreative";
 import { ThreeSteps } from "@/components/home/ThreeSteps";
 import { SeoContent } from "@/components/home/SeoContent";
+import { CheckItem, Eyebrow, SectionHeader } from "@/components/site/marketing";
 
 export const Route = createFileRoute("/")({
   head: () =>
@@ -262,59 +263,6 @@ const guides = [
     to: "/tips-interview/persiapan-interview-pertama",
   },
 ] as const;
-
-/* ---------- Shared building blocks ---------- */
-
-function Eyebrow({ children, tone = "light" }: { children: ReactNode; tone?: "light" | "dark" }) {
-  return (
-    <span
-      className={
-        tone === "light"
-          ? "inline-flex w-fit items-center gap-1.5 rounded-full bg-green-100 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-green-800"
-          : "inline-flex w-fit items-center gap-1.5 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-emerald-300"
-      }
-    >
-      {children}
-    </span>
-  );
-}
-
-function SectionHeader({
-  eyebrow,
-  title,
-  desc,
-  id,
-}: {
-  eyebrow: ReactNode;
-  title: ReactNode;
-  desc?: ReactNode;
-  id?: string;
-}) {
-  return (
-    <div className="mx-auto mb-12 max-w-3xl text-center lg:mb-16">
-      <Eyebrow>{eyebrow}</Eyebrow>
-      <h2
-        id={id}
-        className="mt-4 font-display text-3xl font-extrabold leading-tight tracking-tight text-gray-900 sm:text-4xl lg:text-5xl"
-      >
-        {title}
-      </h2>
-      {desc && <p className="mt-4 text-base leading-relaxed text-gray-600 sm:text-lg">{desc}</p>}
-    </div>
-  );
-}
-
-function CheckItem({ children, tone = "light" }: { children: ReactNode; tone?: "light" | "dark" }) {
-  return (
-    <li className="flex items-start gap-3">
-      <CheckCircle2
-        aria-hidden="true"
-        className={`mt-0.5 h-5 w-5 shrink-0 ${tone === "light" ? "text-green-700" : "text-emerald-400"}`}
-      />
-      <span className={tone === "light" ? "text-gray-700" : "text-slate-200"}>{children}</span>
-    </li>
-  );
-}
 
 function ScorePreviewBar({
   label,

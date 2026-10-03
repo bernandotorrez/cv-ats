@@ -3,13 +3,11 @@ import {
   ArrowRight,
   Bot,
   Briefcase,
-  CheckCircle2,
   Download,
   FileSearch,
   FileText,
   GitCompare,
   Languages,
-  LockKeyhole,
   Mic,
   RefreshCw,
   Share2,
@@ -23,10 +21,17 @@ import {
   Wand2,
 } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { buildSeo } from "@/lib/seo";
+import {
+  CheckItem,
+  CtaBanner,
+  Eyebrow,
+  PageHero,
+  PrimaryCta,
+  SecondaryCta,
+  SectionHeader,
+  TrustChecks,
+} from "@/components/site/marketing";
 
 export const Route = createFileRoute("/fitur")({
   head: () =>
@@ -42,14 +47,32 @@ export const Route = createFileRoute("/fitur")({
 });
 
 const proof = [
-  { icon: Users, stat: "5.000+", label: "pengguna aktif" },
+  { icon: Users, stat: "5.000+", label: "Pengguna aktif" },
   { icon: FileText, stat: "10.000+", label: "CV dibuat" },
-  { icon: TrendingUp, stat: "92%", label: "skor ATS rata-rata" },
-  { icon: Star, stat: "4.9/5", label: "rating pengguna" },
+  { icon: TrendingUp, stat: "92%", label: "Skor ATS rata-rata" },
+  { icon: Star, stat: "4.9/5", label: "Rating pengguna" },
 ] as const;
 
-const featureGroups = [
+type Plan = "Starter" | "Pro";
+
+type FeatureItem = {
+  icon: typeof FileText;
+  name: string;
+  desc: string;
+  plan?: Plan;
+  isNew?: boolean;
+};
+
+const featureGroups: {
+  id: string;
+  step: string;
+  title: string;
+  desc: string;
+  items: FeatureItem[];
+}[] = [
   {
+    id: "buat",
+    step: "01",
     title: "Buat CV yang rapi",
     desc: "Mulai dari struktur yang benar agar CV mudah dibaca sistem dan manusia.",
     items: [
@@ -71,6 +94,8 @@ const featureGroups = [
     ],
   },
   {
+    id: "ai",
+    step: "02",
     title: "Perkuat isi dengan AI",
     desc: "Ubah pengalaman biasa menjadi pesan karier yang lebih jelas dan meyakinkan.",
     items: [
@@ -88,21 +113,21 @@ const featureGroups = [
         icon: FileSearch,
         name: "AI Job Match Score",
         desc: "Cocokkan CV dengan lowongan dari database, URL, atau job description untuk melihat match score dan keyword gap.",
-        badge: "Starter",
+        plan: "Starter",
         isNew: true,
       },
       {
         icon: RefreshCw,
         name: "Auto Tailor CV untuk Lowongan",
         desc: "Tempel job description, lalu AI menyesuaikan ringkasan, urutan skill, dan bullet pengalaman agar lebih relevan tanpa mengarang data.",
-        badge: "Pro",
+        plan: "Pro",
         isNew: true,
       },
       {
         icon: UserRoundCheck,
         name: "Review CV by HR Expert AI",
         desc: "Analisis mendalam dari perspektif HR profesional 20+ tahun, lengkap dengan quick wins.",
-        badge: "Starter",
+        plan: "Starter",
       },
       {
         icon: FileSearch,
@@ -122,6 +147,8 @@ const featureGroups = [
     ],
   },
   {
+    id: "lamaran",
+    step: "03",
     title: "Siapkan lamaran berikutnya",
     desc: "Setelah CV siap, lanjutkan ke tracking, interview, dan iterasi yang lebih terarah.",
     items: [
@@ -129,13 +156,13 @@ const featureGroups = [
         icon: Briefcase,
         name: "Pelacak Lamaran",
         desc: "Simpan posisi, perusahaan, status, catatan, dan next step dalam satu dashboard.",
-        badge: "Baru",
+        isNew: true,
       },
       {
         icon: Mic,
         name: "Simulasi Wawancara AI",
         desc: "Latihan interview dengan pertanyaan, jawaban, dan feedback instan.",
-        badge: "Pro",
+        plan: "Pro",
       },
       {
         icon: GitCompare,
@@ -146,7 +173,6 @@ const featureGroups = [
         icon: Share2,
         name: "Portfolio / Share Page",
         desc: "Bagikan portfolio publik berisi profil, skill, pengalaman, kontak, dan preview CV yang bisa dicetak.",
-        badge: "Baru",
         isNew: true,
       },
       {
@@ -156,276 +182,349 @@ const featureGroups = [
       },
     ],
   },
-] as const;
+];
 
 const workflow = [
-  ["01", "Buat", "Pilih template ATS dan susun struktur CV yang bersih."],
-  ["02", "Perkuat", "AI bantu menulis isi yang konkret, ringkas, dan relevan."],
-  ["03", "Cek", "Scoring dan review membantu menemukan bagian yang masih lemah."],
-  ["04", "Kirim", "Export PDF, lacak lamaran, lalu siapkan interview berikutnya."],
+  ["1", "Buat", "Pilih template ATS dan susun struktur CV yang bersih."],
+  ["2", "Perkuat", "AI bantu menulis isi yang konkret, ringkas, dan relevan."],
+  ["3", "Cek", "Scoring dan review membantu menemukan bagian yang masih lemah."],
+  ["4", "Kirim", "Export PDF, lacak lamaran, lalu siapkan interview berikutnya."],
 ] as const;
+
+function PlanBadge({ plan }: { plan: Plan }) {
+  return (
+    <span
+      className={
+        plan === "Pro"
+          ? "rounded-full bg-gray-900 px-2.5 py-1 text-xs font-bold text-white"
+          : "rounded-full bg-green-100 px-2.5 py-1 text-xs font-bold text-green-800"
+      }
+    >
+      <span className="sr-only">Tersedia di paket </span>
+      {plan}
+    </span>
+  );
+}
 
 function FiturPage() {
   return (
-    <>
-      <section className="overflow-x-clip bg-background">
-        <div className="container-page grid min-w-0 gap-12 py-14 md:grid-cols-[1fr_0.95fr] md:items-center md:py-20 lg:py-24">
-          <div className="min-w-0">
-            <Badge className="gap-1.5 bg-info text-info-foreground hover:bg-info">
-              <Sparkles className="h-3.5 w-3.5" aria-hidden />
-              Fitur lengkap untuk CV yang siap bersaing
-            </Badge>
-            <h1 className="mt-5 max-w-3xl break-words font-display text-3xl font-extrabold leading-[1.08] tracking-tight text-foreground sm:text-5xl lg:text-6xl">
-              Semua yang kamu butuhkan sebelum klik kirim.
-            </h1>
-            <p className="mt-5 max-w-2xl text-base leading-8 text-muted-foreground sm:text-lg">
-              CV Pintar menggabungkan template ATS, AI bilingual, scoring, review HR, dan tools
-              lamaran kerja dalam satu alur yang sederhana. Tidak ramai. Tidak membingungkan.
-              Langsung membantu.
-            </p>
-
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Button asChild size="lg" className="h-12 w-full px-6 text-base sm:w-auto">
-                <Link to="/register">
-                  Mulai gratis
-                  <ArrowRight className="h-4 w-4" aria-hidden />
-                </Link>
-              </Button>
-              <Button
-                asChild
-                size="lg"
-                variant="outline"
-                className="h-12 w-full px-6 text-base sm:w-auto"
-              >
-                <Link to="/template">Lihat template</Link>
-              </Button>
-            </div>
-          </div>
-
-          <FeaturePreview />
+    <div className="overflow-hidden bg-white">
+      <PageHero
+        eyebrow={
+          <>
+            <Sparkles aria-hidden="true" className="h-4 w-4" />
+            {featureGroups.reduce((n, g) => n + g.items.length, 0)}+ fitur dalam satu alur
+          </>
+        }
+        title={
+          <>
+            Semua yang kamu butuhkan <span className="text-green-700">sebelum klik kirim.</span>
+          </>
+        }
+        desc={
+          <>
+            Template ATS, AI bilingual, scoring, review HR, dan tools lamaran kerja dalam satu alur
+            yang sederhana.{" "}
+            <strong className="font-semibold text-gray-900">Tidak ramai. Langsung membantu.</strong>
+          </>
+        }
+        aside={<FeaturePreview />}
+      >
+        <div className="mt-8 flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
+          <PrimaryCta to="/register">Mulai Gratis Sekarang</PrimaryCta>
+          <SecondaryCta to="/template">Lihat Template</SecondaryCta>
         </div>
-      </section>
+        <TrustChecks />
 
-      <section aria-label="Bukti performa" className="border-y border-border bg-card">
-        <div className="container-page grid grid-cols-2 gap-px py-4 sm:grid-cols-4">
+        <nav
+          aria-label="Lompat ke kategori fitur"
+          className="mt-8 w-full border-t border-gray-200 pt-6"
+        >
+          <p className="text-sm font-semibold text-gray-900">Lompat ke:</p>
+          <ul className="mt-3 flex flex-wrap gap-2">
+            {featureGroups.map((g) => (
+              <li key={g.id}>
+                <a
+                  href={`#${g.id}`}
+                  className="inline-flex min-h-11 items-center gap-2 rounded-full border border-gray-300 bg-white px-4 text-sm font-semibold text-gray-800 transition-colors hover:border-green-700 hover:bg-green-50 hover:text-green-800"
+                >
+                  <span className="text-green-700">{g.step}</span>
+                  {g.title}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      </PageHero>
+
+      {/* Proof bar */}
+      <section aria-label="Bukti performa" className="container-page -mt-6 lg:-mt-10">
+        <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-gray-200 bg-gray-200 shadow-lg md:grid-cols-4">
           {proof.map((item) => (
-            <div key={item.label} className="px-3 py-5 text-center">
-              <item.icon className="mx-auto h-5 w-5 text-primary" aria-hidden />
-              <div className="mt-3 font-display text-2xl font-bold text-primary md:text-3xl">
-                {item.stat}
+            <div key={item.label} className="flex items-center gap-4 bg-white p-5 sm:p-6">
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-green-100 text-green-800">
+                <item.icon aria-hidden="true" className="h-6 w-6" />
+              </span>
+              <div className="flex flex-col-reverse">
+                <dt className="mt-1 text-sm font-medium text-gray-600">{item.label}</dt>
+                <dd className="font-display text-2xl font-extrabold leading-none text-gray-900">
+                  {item.stat}
+                </dd>
               </div>
-              <p className="mt-1 text-xs font-medium text-muted-foreground md:text-sm">
-                {item.label}
-              </p>
             </div>
           ))}
-        </div>
+        </dl>
       </section>
 
-      <section className="container-page py-16 md:py-24">
-        <SectionIntro
-          eyebrow="Alur kerja"
-          title="Dari CV kosong ke lamaran yang lebih siap."
-          desc="Setiap fitur ditempatkan di alur yang natural, supaya kamu tahu harus melakukan apa berikutnya."
-        />
-
-        <div className="mt-10 grid gap-4 md:grid-cols-4">
-          {workflow.map(([step, title, desc]) => (
-            <div key={step} className="rounded-lg border border-border bg-card p-6">
-              <p className="font-display text-sm font-bold text-primary">{step}</p>
-              <h2 className="mt-4 font-display text-lg font-semibold">{title}</h2>
-              <p className="mt-2 text-sm leading-6 text-muted-foreground">{desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="bg-muted/45 py-16 md:py-24">
+      {/* Workflow */}
+      <section aria-labelledby="flow-heading" className="py-20 lg:py-28">
         <div className="container-page">
-          <SectionIntro
+          <SectionHeader
+            id="flow-heading"
+            eyebrow="Alur kerja"
+            title="Dari CV kosong ke lamaran yang lebih siap."
+            desc="Setiap fitur ditempatkan di alur yang natural, supaya kamu tahu harus melakukan apa berikutnya."
+          />
+          <div className="relative">
+            <div
+              aria-hidden="true"
+              className="absolute left-[12%] right-[12%] top-7 hidden border-t-2 border-dashed border-green-300 md:block"
+            />
+            <ol className="relative grid gap-10 md:grid-cols-4 md:gap-6">
+              {workflow.map(([n, title, desc]) => (
+                <li key={n} className="flex flex-col items-center text-center">
+                  <span className="relative z-10 flex h-14 w-14 items-center justify-center rounded-full bg-green-700 font-display text-2xl font-extrabold text-white ring-8 ring-white">
+                    <span className="sr-only">Langkah </span>
+                    {n}
+                  </span>
+                  <h3 className="mt-5 font-display text-xl font-bold text-gray-900">{title}</h3>
+                  <p className="mt-2 max-w-[16rem] text-sm leading-relaxed text-gray-600">{desc}</p>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </div>
+      </section>
+
+      {/* Feature groups */}
+      <section aria-labelledby="features-heading" className="bg-gray-50 py-20 lg:py-28">
+        <div className="container-page">
+          <SectionHeader
+            id="features-heading"
             eyebrow="Fitur"
             title="Powerful, tapi tetap ringan dipakai."
             desc="Fokus pada fitur yang benar-benar membantu pencari kerja: struktur, relevansi, bukti, dan kesiapan interview."
           />
 
-          <div className="mt-12 space-y-14">
+          <div className="mx-auto -mt-4 mb-14 flex max-w-2xl flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm text-gray-700">
+            <span className="flex items-center gap-2">
+              <PlanBadge plan="Starter" /> / <PlanBadge plan="Pro" /> = tersedia di paket berbayar
+            </span>
+            <Link
+              to="/harga"
+              className="inline-flex min-h-11 items-center gap-1 font-bold text-green-800 underline-offset-4 hover:underline"
+            >
+              Bandingkan paket
+              <ArrowRight aria-hidden="true" className="h-4 w-4" />
+            </Link>
+          </div>
+
+          <div className="space-y-20">
             {featureGroups.map((group) => (
-              <section key={group.title}>
-                <div className="grid gap-3 lg:grid-cols-[0.35fr_0.65fr] lg:items-end">
+              <section
+                key={group.id}
+                id={group.id}
+                aria-labelledby={`${group.id}-heading`}
+                className="scroll-mt-28"
+              >
+                <div className="mb-8 flex items-end gap-5">
+                  <span
+                    aria-hidden="true"
+                    className="font-display text-6xl font-extrabold leading-none text-green-200 sm:text-7xl"
+                  >
+                    {group.step}
+                  </span>
                   <div>
-                    <h2 className="font-display text-2xl font-bold tracking-tight md:text-3xl">
+                    <h3
+                      id={`${group.id}-heading`}
+                      className="font-display text-2xl font-extrabold tracking-tight text-gray-900 sm:text-3xl"
+                    >
                       {group.title}
-                    </h2>
-                    <p className="mt-2 max-w-xl text-sm leading-7 text-muted-foreground">
+                    </h3>
+                    <p className="mt-1 max-w-xl text-base leading-relaxed text-gray-600">
                       {group.desc}
                     </p>
                   </div>
                 </div>
 
-                <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                   {group.items.map((item) => (
-                    <Card key={item.name} className="rounded-lg border-border bg-card shadow-none">
-                      <CardContent className="p-6">
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="grid h-11 w-11 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
-                            <item.icon className="h-5 w-5" aria-hidden />
-                          </div>
-                          <div className="flex flex-wrap justify-end gap-2">
-                            {"isNew" in item && item.isNew && (
-                              <Badge className="bg-primary text-primary-foreground hover:bg-primary">
-                                New
-                              </Badge>
-                            )}
-                            {"badge" in item && item.badge && (
-                              <Badge className="bg-info text-info-foreground hover:bg-info">
-                                {item.badge}
-                              </Badge>
-                            )}
-                          </div>
+                    <li
+                      key={item.name}
+                      className="flex flex-col rounded-2xl border border-gray-200 bg-white p-6 transition-all hover:-translate-y-1 hover:border-green-600 hover:shadow-xl"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-green-100 text-green-800">
+                          <item.icon aria-hidden="true" className="h-6 w-6" />
+                        </span>
+                        <div className="flex flex-wrap justify-end gap-2">
+                          {item.isNew && (
+                            <span className="rounded-full bg-yellow-300 px-2.5 py-1 text-xs font-bold text-gray-900">
+                              Baru
+                            </span>
+                          )}
+                          {item.plan && <PlanBadge plan={item.plan} />}
                         </div>
-                        <h3 className="mt-5 font-display text-lg font-semibold">{item.name}</h3>
-                        <p className="mt-2 text-sm leading-6 text-muted-foreground">{item.desc}</p>
-                      </CardContent>
-                    </Card>
+                      </div>
+                      <h4 className="mt-5 font-display text-lg font-bold text-gray-900">
+                        {item.name}
+                      </h4>
+                      <p className="mt-2 text-sm leading-relaxed text-gray-600">{item.desc}</p>
+                    </li>
                   ))}
-                </div>
+                </ul>
               </section>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="container-page py-16 md:py-24">
-        <div className="grid gap-10 rounded-lg border border-border bg-card p-6 md:p-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
-          <div>
-            <Badge variant="secondary">AI + HR</Badge>
-            <h2 className="mt-4 font-display text-3xl font-bold tracking-tight md:text-4xl">
-              Bukan cuma bikin CV. Kamu tahu kenapa CV itu lebih kuat.
-            </h2>
-            <p className="mt-4 text-base leading-8 text-muted-foreground">
-              Saran AI membantu menulis lebih cepat. Scoring dan review HR membantu mengambil
-              keputusan: bagian mana yang perlu dipotong, diperjelas, atau diberi angka.
-            </p>
-            <div className="mt-7 grid gap-3 sm:grid-cols-2">
-              {[
-                "Saran bilingual Indonesia dan Inggris",
-                "Keyword dan tailoring berdasarkan job description",
-                "Feedback HR dengan prioritas perbaikan",
-                "Preview ATS sebelum export PDF",
-              ].map((item) => (
-                <div key={item} className="flex items-start gap-2 text-sm text-muted-foreground">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden />
-                  <span>{item}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="rounded-lg bg-background p-5">
-            <div className="flex items-center justify-between gap-4 border-b border-border pb-4">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  CV readiness
-                </p>
-                <h3 className="mt-1 font-display text-xl font-bold">Review summary</h3>
-              </div>
-              <div className="rounded-md bg-primary px-3 py-2 text-center text-primary-foreground">
-                <p className="text-xs font-medium">Score</p>
-                <p className="font-display text-xl font-bold">91</p>
+      {/* AI + HR */}
+      <section aria-labelledby="aihr-heading" className="py-20 lg:py-28">
+        <div className="container-page">
+          <div className="grid items-center gap-12 lg:grid-cols-2">
+            <div>
+              <Eyebrow>AI + HR</Eyebrow>
+              <h2
+                id="aihr-heading"
+                className="mt-4 font-display text-3xl font-extrabold leading-tight tracking-tight text-gray-900 sm:text-4xl lg:text-5xl"
+              >
+                Bukan cuma bikin CV.{" "}
+                <span className="text-green-700">Kamu tahu kenapa CV itu lebih kuat.</span>
+              </h2>
+              <p className="mt-5 text-base leading-relaxed text-gray-600 sm:text-lg">
+                Saran AI membantu menulis lebih cepat. Scoring dan review HR membantu mengambil
+                keputusan: bagian mana yang perlu dipotong, diperjelas, atau diberi angka.
+              </p>
+              <ul className="mt-8 grid gap-4 sm:grid-cols-2">
+                {[
+                  "Saran bilingual Indonesia dan Inggris",
+                  "Keyword dan tailoring berdasarkan job description",
+                  "Feedback HR dengan prioritas perbaikan",
+                  "Preview ATS sebelum export PDF",
+                ].map((item) => (
+                  <CheckItem key={item}>{item}</CheckItem>
+                ))}
+              </ul>
+              <div className="mt-10">
+                <PrimaryCta to="/register">Cek Skor CV Gratis</PrimaryCta>
               </div>
             </div>
 
-            <div className="mt-5 space-y-3">
-              {[
-                ["Kuat", "Ringkasan profil sudah fokus pada impact."],
-                ["Perlu naik", "Tambahkan metrik di pengalaman utama."],
-                ["Quick win", "Masukkan keyword role target di 2 bullet."],
-              ].map(([title, desc]) => (
-                <div key={title} className="rounded-lg border border-border bg-card p-4">
-                  <p className="text-sm font-semibold text-foreground">{title}</p>
-                  <p className="mt-1 text-sm leading-6 text-muted-foreground">{desc}</p>
-                </div>
-              ))}
-            </div>
+            <ReviewMockup />
           </div>
         </div>
       </section>
 
-      <section className="container-page pb-16 md:pb-24">
-        <div className="rounded-lg bg-primary px-6 py-12 text-center text-primary-foreground md:px-10 md:py-16">
-          <LockKeyhole className="mx-auto h-8 w-8" aria-hidden />
-          <h2 className="mx-auto mt-5 max-w-2xl font-display text-3xl font-bold tracking-tight md:text-4xl">
-            Mulai dari satu CV. Lanjutkan sampai interview.
-          </h2>
-          <p className="mx-auto mt-4 max-w-xl text-sm leading-7 text-primary-foreground/90 md:text-base">
-            Coba gratis tanpa kartu kredit. Buat CV pertama, cek skornya, lalu kirim dengan lebih
-            percaya diri.
-          </p>
-          <Button asChild size="lg" variant="secondary" className="mt-8 h-12 px-7 text-base">
-            <Link to="/register">
-              Mulai gratis sekarang
-              <ArrowRight className="h-4 w-4" aria-hidden />
-            </Link>
-          </Button>
-        </div>
-      </section>
-    </>
-  );
-}
-
-function SectionIntro({ eyebrow, title, desc }: { eyebrow: string; title: string; desc: string }) {
-  return (
-    <div className="mx-auto max-w-2xl text-center">
-      <Badge variant="secondary">{eyebrow}</Badge>
-      <h2 className="mt-3 font-display text-3xl font-bold tracking-tight md:text-4xl">{title}</h2>
-      <p className="mt-4 text-base leading-8 text-muted-foreground">{desc}</p>
+      <CtaBanner
+        title="Mulai dari satu CV. Lanjutkan sampai interview."
+        desc="Buat CV pertama, cek skornya, lalu kirim dengan lebih percaya diri."
+        cta="Mulai Gratis Sekarang"
+      />
     </div>
   );
 }
 
 function FeaturePreview() {
   return (
-    <div className="mx-auto w-full max-w-[calc(100vw-2rem)] rounded-lg border border-border bg-card p-4 shadow-xl shadow-primary/10 sm:max-w-lg">
-      <div className="rounded-md border border-border bg-background p-5">
-        <div className="flex items-start justify-between gap-4 border-b border-border pb-5">
+    <div className="relative mx-auto w-full max-w-md px-2 sm:px-0">
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 -z-0 translate-x-3 translate-y-3 rotate-2 rounded-3xl bg-green-700"
+      />
+      <div
+        role="img"
+        aria-label="Ringkasan toolkit CV Pintar: template dengan struktur rapi, AI writing Indonesia dan Inggris, scoring keyword, dan simulasi interview dengan feedback instan."
+        className="relative rounded-3xl border border-gray-200 bg-white p-6 shadow-2xl"
+      >
+        <div className="flex items-start justify-between gap-4 border-b border-gray-100 pb-5">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <p className="text-xs font-bold uppercase tracking-wider text-gray-600">
               Smart toolkit
             </p>
-            <h2 className="mt-1 font-display text-xl font-bold">CV Pintar</h2>
-            <p className="mt-1 text-sm text-muted-foreground">Build, score, review, interview</p>
+            <p className="mt-1 font-display text-xl font-extrabold text-gray-900">CV Pintar</p>
+            <p className="mt-1 text-sm text-gray-600">Build, score, review, interview</p>
           </div>
-          <Badge className="bg-info text-info-foreground hover:bg-info">ATS-ready</Badge>
+          <span className="rounded-full bg-green-100 px-2.5 py-1 text-xs font-bold text-green-800">
+            ATS-ready
+          </span>
         </div>
 
         <div className="mt-5 grid gap-3">
-          {[
-            [FileText, "Template", "Struktur rapi"],
-            [Bot, "AI writing", "ID + EN"],
-            [Target, "Scoring", "Keyword cocok"],
-            [Mic, "Interview", "Feedback instan"],
-          ].map(([Icon, title, desc]) => (
-            <div
-              key={title as string}
-              className="flex items-center gap-3 rounded-lg bg-muted/70 p-3"
-            >
-              <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
-                <Icon className="h-5 w-5" aria-hidden />
+          {(
+            [
+              [FileText, "Template", "Struktur rapi"],
+              [Bot, "AI writing", "ID + EN"],
+              [Target, "Scoring", "Keyword cocok"],
+              [Mic, "Interview", "Feedback instan"],
+            ] as const
+          ).map(([Icon, title, desc]) => (
+            <div key={title} className="flex items-center gap-3 rounded-xl bg-gray-50 p-3">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-green-100 text-green-800">
+                <Icon className="h-5 w-5" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-bold text-gray-900">{title}</p>
+                <p className="text-xs text-gray-600">{desc}</p>
               </div>
-              <div className="min-w-0">
-                <p className="text-sm font-semibold text-foreground">{title as string}</p>
-                <p className="text-xs text-muted-foreground">{desc as string}</p>
-              </div>
+              <span className="h-2 w-2 rounded-full bg-green-600" />
             </div>
           ))}
         </div>
 
-        <div className="mt-5 rounded-lg bg-primary p-4 text-primary-foreground">
-          <p className="text-sm font-semibold">Next best action</p>
-          <p className="mt-1 text-sm leading-6 text-primary-foreground/90">
+        <div className="mt-5 rounded-xl bg-green-800 p-4 text-white">
+          <p className="flex items-center gap-2 text-sm font-bold">
+            <Sparkles className="h-4 w-4 text-yellow-300" /> Next best action
+          </p>
+          <p className="mt-1 text-sm leading-relaxed text-green-50">
             Tambahkan angka hasil kerja di pengalaman utama sebelum export PDF.
           </p>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function ReviewMockup() {
+  return (
+    <div
+      role="img"
+      aria-label="Contoh ringkasan review CV dengan skor 91: ringkasan profil sudah kuat, pengalaman utama perlu ditambah metrik, dan quick win menambahkan keyword role target di dua bullet."
+      className="mx-auto w-full max-w-md rounded-3xl border border-gray-200 bg-white p-6 shadow-xl shadow-green-900/10"
+    >
+      <div className="flex items-center justify-between gap-4 border-b border-gray-100 pb-5">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-wider text-gray-600">CV readiness</p>
+          <p className="mt-1 font-display text-xl font-extrabold text-gray-900">Review summary</p>
+        </div>
+        <div className="rounded-2xl bg-green-800 px-4 py-2 text-center text-white">
+          <p className="text-xs font-semibold text-green-100">Score</p>
+          <p className="font-display text-2xl font-extrabold">91</p>
+        </div>
+      </div>
+      <div className="mt-5 space-y-3">
+        {[
+          ["Kuat", "Ringkasan profil sudah fokus pada impact.", "bg-green-100 text-green-800"],
+          ["Perlu naik", "Tambahkan metrik di pengalaman utama.", "bg-amber-100 text-amber-900"],
+          ["Quick win", "Masukkan keyword role target di 2 bullet.", "bg-yellow-200 text-gray-900"],
+        ].map(([title, desc, tone]) => (
+          <div key={title} className="flex items-start gap-3 rounded-xl border border-gray-200 p-4">
+            <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-bold ${tone}`}>
+              {title}
+            </span>
+            <p className="text-sm leading-relaxed text-gray-700">{desc}</p>
+          </div>
+        ))}
       </div>
     </div>
   );
