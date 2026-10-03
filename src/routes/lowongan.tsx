@@ -1,11 +1,9 @@
 import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { buildSectionHead } from "@/lib/seo";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
   Pagination,
@@ -25,24 +23,20 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton-loading";
+import { CtaBanner, Eyebrow, SectionHeader } from "@/components/site/marketing";
 import {
   ArrowRight,
   BadgeCheck,
-  BookOpen,
   Bookmark,
   BookmarkCheck,
   Bot,
   Briefcase,
   Building2,
   CalendarDays,
-  CheckCircle2,
   Clock,
-  Compass,
   DollarSign,
   ExternalLink,
   FileText,
-  Filter,
-  GraduationCap,
   Layers3,
   Laptop,
   Loader2,
@@ -55,7 +49,7 @@ import {
   Target,
   TrendingUp,
   Wand2,
-  Zap,
+  X,
 } from "lucide-react";
 
 export const Route = createFileRoute("/lowongan")({
@@ -376,105 +370,194 @@ function LowonganPage() {
       })
     : "Hari ini";
 
+  const hasActiveFilter =
+    search !== "" ||
+    typeFilter !== "Semua Tipe" ||
+    levelFilter !== "Semua Level" ||
+    locationFilter !== "Semua Lokasi";
+
+  const resetFilters = () => {
+    setSearch("");
+    setTypeFilter("Semua Tipe");
+    setLevelFilter("Semua Level");
+    setLocationFilter("Semua Lokasi");
+  };
+
+  const quickChips = [
+    {
+      label: "Remote",
+      active: locationFilter === "Remote",
+      toggle: () => setLocationFilter((v) => (v === "Remote" ? "Semua Lokasi" : "Remote")),
+    },
+    {
+      label: "Jakarta",
+      active: locationFilter === "Jakarta",
+      toggle: () => setLocationFilter((v) => (v === "Jakarta" ? "Semua Lokasi" : "Jakarta")),
+    },
+    {
+      label: "Entry Level",
+      active: levelFilter === "entry",
+      toggle: () => setLevelFilter((v) => (v === "entry" ? "Semua Level" : "entry")),
+    },
+    {
+      label: "Magang",
+      active: typeFilter === "internship",
+      toggle: () => setTypeFilter((v) => (v === "internship" ? "Semua Tipe" : "internship")),
+    },
+  ];
+
+  const scrollToList = () =>
+    document
+      .getElementById("daftar-lowongan")
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+
   return (
-    <main className="overflow-x-clip bg-background">
-      <section className="border-b border-border/70">
-        <div className="container-page grid gap-10 py-14 lg:grid-cols-[minmax(0,1fr)_minmax(340px,0.88fr)] lg:items-center lg:py-20">
-          <div>
-            <Badge className="mb-6 gap-2 border-emerald-200 bg-emerald-100 px-4 py-2 text-sm text-emerald-950 shadow-sm hover:bg-emerald-100">
-              <Sparkles className="h-4 w-4" aria-hidden="true" />
+    <div className="overflow-hidden bg-white">
+      {/* Hero with search-first */}
+      <section
+        aria-labelledby="lowongan-heading"
+        className="relative overflow-hidden bg-gradient-to-b from-green-50 via-white to-white pb-14 pt-10 lg:pb-20 lg:pt-16"
+      >
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -right-40 -top-40 h-[32rem] w-[32rem] rounded-full bg-green-200/50 blur-3xl"
+        />
+        <div className="container-page relative">
+          <div className="mx-auto max-w-3xl text-center">
+            <span className="inline-flex w-fit items-center gap-2 rounded-full border border-green-200 bg-white px-3 py-1.5 text-sm font-semibold text-green-800 shadow-sm">
+              <Sparkles aria-hidden="true" className="h-4 w-4" />
               Job board + AI search helper
-            </Badge>
-
-            <h1 className="max-w-3xl font-display text-4xl font-bold leading-[1.04] text-foreground sm:text-5xl lg:text-6xl">
-              Temukan lowongan yang pas, lalu siapkan CV yang lebih tajam.
+            </span>
+            <h1
+              id="lowongan-heading"
+              className="mt-6 font-display text-4xl font-extrabold leading-[1.08] tracking-tight text-gray-900 sm:text-5xl lg:text-6xl"
+            >
+              Temukan lowongan yang pas,{" "}
+              <span className="text-green-700">lalu lamar dengan CV yang lebih tajam.</span>
             </h1>
-
-            <p className="mt-6 max-w-2xl text-lg leading-8 text-muted-foreground">
-              Browse lowongan dari database CV Pintar, filter peluang yang relevan, dan buka
-              pencarian lintas platform tanpa mengetik ulang query yang sama.
+            <p className="mt-6 text-lg leading-relaxed text-gray-600">
+              Filter peluang yang relevan, buka pencarian lintas platform, dan cocokkan CV-mu
+              sebelum mengirim lamaran.
             </p>
-
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Button asChild size="lg" className="h-12 px-6 text-base">
-                <a href="#daftar-lowongan">
-                  Lihat lowongan
-                  <ArrowRight className="h-5 w-5" aria-hidden="true" />
-                </a>
-              </Button>
-              <Button asChild variant="outline" size="lg" className="h-12 px-6 text-base">
-                <Link to="/panduan-cv-ats">Cek panduan CV ATS</Link>
-              </Button>
-            </div>
-
-            <dl className="mt-10 grid grid-cols-3 gap-3">
-              {[
-                [jobs.length.toLocaleString("id-ID"), "lowongan"],
-                [totalCompanies.toLocaleString("id-ID"), "perusahaan"],
-                [latestDate, "update"],
-              ].map(([stat, label]) => (
-                <div key={label} className="rounded-lg border border-border bg-card p-3 shadow-sm">
-                  <dt className="font-display text-xl font-bold text-foreground">{stat}</dt>
-                  <dd className="mt-1 text-sm text-muted-foreground">{label}</dd>
-                </div>
-              ))}
-            </dl>
           </div>
 
-          <SearchPanel
-            aiRole={aiRole}
-            aiLocation={aiLocation}
-            onRoleChange={setAiRole}
-            onLocationChange={setAiLocation}
-            sources={smartSources}
-          />
+          <form
+            role="search"
+            aria-label="Cari lowongan"
+            onSubmit={(e) => {
+              e.preventDefault();
+              scrollToList();
+            }}
+            className="mx-auto mt-8 flex max-w-3xl flex-col gap-2 rounded-2xl border border-gray-200 bg-white p-2 shadow-xl shadow-green-900/10 sm:flex-row"
+          >
+            <label htmlFor="hero-job-search" className="sr-only">
+              Cari posisi, perusahaan, atau lokasi
+            </label>
+            <div className="relative flex-1">
+              <Search
+                aria-hidden="true"
+                className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-500"
+              />
+              <input
+                id="hero-job-search"
+                type="search"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Cari posisi, perusahaan, lokasi…"
+                className="h-14 w-full rounded-xl bg-transparent pl-12 pr-4 text-base text-gray-900 placeholder:text-gray-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-700"
+              />
+            </div>
+            <button
+              type="submit"
+              className="inline-flex h-14 items-center justify-center gap-2 rounded-xl bg-green-700 px-8 text-base font-bold text-white transition-colors hover:bg-green-800"
+            >
+              Cari Lowongan
+              <ArrowRight aria-hidden="true" className="h-5 w-5" />
+            </button>
+          </form>
+
+          <div className="mx-auto mt-5 flex max-w-3xl flex-wrap items-center justify-center gap-2">
+            <span className="text-sm font-semibold text-gray-700">Populer:</span>
+            {quickChips.map((chip) => (
+              <button
+                key={chip.label}
+                type="button"
+                aria-pressed={chip.active}
+                onClick={() => {
+                  chip.toggle();
+                  scrollToList();
+                }}
+                className={`inline-flex min-h-11 items-center rounded-full px-4 text-sm font-semibold transition-colors ${
+                  chip.active
+                    ? "bg-green-700 text-white"
+                    : "border border-gray-300 bg-white text-gray-800 hover:border-green-700 hover:text-green-800"
+                }`}
+              >
+                {chip.label}
+              </button>
+            ))}
+          </div>
+
+          <dl className="mx-auto mt-10 grid max-w-3xl grid-cols-2 gap-px overflow-hidden rounded-2xl border border-gray-200 bg-gray-200 sm:grid-cols-4">
+            {[
+              [jobs.length.toLocaleString("id-ID"), "Lowongan"],
+              [totalCompanies.toLocaleString("id-ID"), "Perusahaan"],
+              [totalRemote.toLocaleString("id-ID"), "Remote"],
+              [latestDate, "Update terakhir"],
+            ].map(([stat, label]) => (
+              <div key={label} className="flex flex-col-reverse bg-white p-4 text-center">
+                <dt className="mt-1 text-sm font-medium text-gray-600">{label}</dt>
+                <dd className="font-display text-2xl font-extrabold text-gray-900">
+                  {loading ? "…" : stat}
+                </dd>
+              </div>
+            ))}
+          </dl>
         </div>
       </section>
 
-      <section className="container-page py-12 md:py-16">
-        <div className="grid gap-4 md:grid-cols-3">
-          {playbook.map((item) => (
-            <Card key={item.title} className="border-border/80 shadow-sm">
-              <CardContent className="p-6">
-                <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                  <item.icon className="h-5 w-5" aria-hidden="true" />
-                </div>
-                <h2 className="font-display text-xl font-bold text-foreground">{item.title}</h2>
-                <p className="mt-3 leading-7 text-muted-foreground">{item.desc}</p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </section>
-
-      <section id="daftar-lowongan" className="bg-muted/45 py-12 md:py-16">
+      {/* Job list */}
+      <section
+        id="daftar-lowongan"
+        aria-labelledby="daftar-heading"
+        className="scroll-mt-16 bg-gray-50 py-14 lg:py-20"
+      >
         <div className="container-page">
-          <div className="mb-8 grid gap-5 lg:grid-cols-[0.75fr_1fr] lg:items-end">
+          <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <Badge variant="secondary" className="mb-4 px-3 py-1.5">
-                <Briefcase className="mr-1.5 h-3.5 w-3.5" />
+              <h2
+                id="daftar-heading"
+                className="font-display text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl"
+              >
                 Daftar lowongan
-              </Badge>
-              <h2 className="font-display text-3xl font-bold leading-tight text-foreground md:text-4xl">
-                Filter cepat untuk peluang yang paling masuk akal.
               </h2>
-              <p className="mt-3 leading-7 text-muted-foreground">
-                Klik kartu lowongan untuk melihat detail, ringkasan, dan sumber aslinya.
+              <p className="mt-2 text-base text-gray-600">
+                Klik lowongan untuk melihat detail, ringkasan, dan sumber aslinya.
               </p>
             </div>
+          </div>
 
-            <div className="grid gap-3 rounded-lg border border-border bg-card p-3 shadow-sm sm:grid-cols-[1fr_auto_auto_auto]">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <div className="sticky top-16 z-20 -mx-4 mb-6 border-y border-gray-200 bg-white/95 px-4 py-3 backdrop-blur md:mx-0 md:rounded-2xl md:border md:px-3">
+            <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-[1fr_auto_auto_auto]">
+              <div className="relative sm:col-span-3 lg:col-span-1">
+                <label htmlFor="job-search" className="sr-only">
+                  Cari posisi, perusahaan, atau lokasi
+                </label>
+                <Search
+                  aria-hidden="true"
+                  className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500"
+                />
                 <Input
-                  placeholder="Cari posisi, perusahaan, lokasi..."
+                  id="job-search"
+                  type="search"
+                  placeholder="Cari posisi, perusahaan, lokasi…"
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
-                  className="pl-9"
+                  className="h-11 pl-9"
                 />
               </div>
               <Select value={typeFilter} onValueChange={setTypeFilter}>
-                <SelectTrigger className="w-full sm:w-[150px]">
+                <SelectTrigger aria-label="Tipe pekerjaan" className="h-11 w-full lg:w-[160px]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -486,7 +569,7 @@ function LowonganPage() {
                 </SelectContent>
               </Select>
               <Select value={levelFilter} onValueChange={setLevelFilter}>
-                <SelectTrigger className="w-full sm:w-[150px]">
+                <SelectTrigger aria-label="Level karier" className="h-11 w-full lg:w-[160px]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -498,7 +581,7 @@ function LowonganPage() {
                 </SelectContent>
               </Select>
               <Select value={locationFilter} onValueChange={setLocationFilter}>
-                <SelectTrigger className="w-full sm:w-[150px]">
+                <SelectTrigger aria-label="Lokasi" className="h-11 w-full lg:w-[160px]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -512,56 +595,126 @@ function LowonganPage() {
             </div>
           </div>
 
-          <div className="mb-5 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-            <Badge variant="outline" className="bg-background">
-              <Filter className="mr-1.5 h-3.5 w-3.5" />
-              {filtered.length.toLocaleString("id-ID")} hasil
-            </Badge>
-            {filtered.length > 0 && (
-              <Badge variant="outline" className="bg-background">
-                {firstItem.toLocaleString("id-ID")}-{lastItem.toLocaleString("id-ID")} dari{" "}
-                {filtered.length.toLocaleString("id-ID")}
-              </Badge>
+          <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+            <p aria-live="polite" className="text-sm text-gray-700">
+              {loading ? (
+                "Memuat lowongan…"
+              ) : filtered.length > 0 ? (
+                <>
+                  Menampilkan{" "}
+                  <strong className="text-gray-900">
+                    {firstItem.toLocaleString("id-ID")}–{lastItem.toLocaleString("id-ID")}
+                  </strong>{" "}
+                  dari{" "}
+                  <strong className="text-gray-900">
+                    {filtered.length.toLocaleString("id-ID")}
+                  </strong>{" "}
+                  lowongan
+                </>
+              ) : (
+                "Tidak ada lowongan yang cocok."
+              )}
+            </p>
+            {hasActiveFilter && (
+              <button
+                type="button"
+                onClick={resetFilters}
+                className="inline-flex min-h-11 items-center gap-1.5 rounded-full px-3 text-sm font-bold text-green-800 underline underline-offset-4 hover:text-green-900"
+              >
+                <X aria-hidden="true" className="h-4 w-4" />
+                Reset filter
+              </button>
             )}
-            <Badge variant="outline" className="bg-background">
-              <Compass className="mr-1.5 h-3.5 w-3.5" />
-              {totalRemote.toLocaleString("id-ID")} remote
-            </Badge>
-            <span>Gunakan keyword dari lowongan untuk memperkuat CV kamu.</span>
           </div>
 
           {loading ? (
             <div className="grid gap-4">
               {Array.from({ length: 5 }).map((_, index) => (
-                <Skeleton key={index} className="h-36" />
+                <Skeleton key={index} className="h-36 rounded-2xl" />
               ))}
             </div>
           ) : filtered.length === 0 ? (
-            <div className="rounded-lg border border-dashed bg-background py-16 text-center">
-              <Briefcase className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
-              <h3 className="text-lg font-semibold">Tidak ada lowongan</h3>
-              <p className="mt-1 text-sm text-muted-foreground">Coba ubah filter pencarian.</p>
+            <div className="rounded-2xl border border-dashed border-gray-300 bg-white px-6 py-16 text-center">
+              <Briefcase aria-hidden="true" className="mx-auto mb-3 h-10 w-10 text-gray-500" />
+              <h3 className="font-display text-lg font-bold text-gray-900">
+                Belum ada lowongan yang cocok
+              </h3>
+              <p className="mt-1 text-sm text-gray-600">
+                Coba ubah filter, atau cari lintas platform di bawah.
+              </p>
+              <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={resetFilters}
+                  className="h-11 rounded-xl border-gray-300"
+                >
+                  Reset filter
+                </Button>
+                <Button
+                  asChild
+                  className="h-11 rounded-xl bg-green-700 font-bold text-white hover:bg-green-800"
+                >
+                  <a href="#cari-lintas-platform">Cari lintas platform</a>
+                </Button>
+              </div>
             </div>
           ) : (
             <>
-              <div className="grid gap-4">
-                {paginatedJobs.map((job) => (
-                  <JobCard
-                    key={job.id}
-                    job={job}
-                    isLoggedIn={Boolean(user)}
-                    isSaved={savedJobIds.has(job.id)}
-                    isSaving={savingJobId === job.id}
-                    onToggleSaved={toggleSavedJob}
-                  />
+              <ul className="grid gap-4">
+                {paginatedJobs.map((job, index) => (
+                  <Fragment key={job.id}>
+                    <li>
+                      <JobCard
+                        job={job}
+                        isLoggedIn={Boolean(user)}
+                        isSaved={savedJobIds.has(job.id)}
+                        isSaving={savingJobId === job.id}
+                        onToggleSaved={toggleSavedJob}
+                      />
+                    </li>
+                    {index === 2 && paginatedJobs.length > 3 && (
+                      <li>
+                        <aside
+                          aria-label="Cek kecocokan CV"
+                          className="flex flex-col items-start justify-between gap-4 rounded-2xl bg-green-800 p-6 text-white sm:flex-row sm:items-center"
+                        >
+                          <div className="flex items-start gap-4">
+                            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/15 text-yellow-300">
+                              <Target aria-hidden="true" className="h-5 w-5" />
+                            </span>
+                            <div>
+                              <p className="font-display text-lg font-bold">
+                                Sudah ketemu yang cocok?
+                              </p>
+                              <p className="mt-0.5 text-sm text-green-50">
+                                Cek seberapa cocok CV-mu dengan lowongannya pakai AI Job Match
+                                Score.
+                              </p>
+                            </div>
+                          </div>
+                          <Link
+                            to="/register"
+                            className="inline-flex h-11 shrink-0 items-center gap-2 rounded-xl bg-yellow-300 px-5 font-bold text-gray-950 hover:bg-yellow-200"
+                          >
+                            Cek Kecocokan CV
+                            <ArrowRight aria-hidden="true" className="h-4 w-4" />
+                          </Link>
+                        </aside>
+                      </li>
+                    )}
+                  </Fragment>
                 ))}
-              </div>
+              </ul>
 
               {totalPages > 1 && (
-                <div className="mt-8 flex flex-col items-center gap-3">
-                  <p className="text-sm text-muted-foreground">
+                <nav
+                  aria-label="Halaman lowongan"
+                  className="mt-8 flex flex-col items-center gap-3"
+                >
+                  <p className="text-sm text-gray-600">
                     Halaman {currentPageSafe.toLocaleString("id-ID")} dari{" "}
-                    {totalPages.toLocaleString("id-ID")} - 10 lowongan per halaman
+                    {totalPages.toLocaleString("id-ID")} · 10 lowongan per halaman
                   </p>
                   <Pagination>
                     <PaginationContent className="flex-wrap justify-center">
@@ -575,6 +728,7 @@ function LowonganPage() {
                           onClick={(event) => {
                             event.preventDefault();
                             setCurrentPage((page) => Math.max(1, page - 1));
+                            scrollToList();
                           }}
                         />
                       </PaginationItem>
@@ -589,9 +743,12 @@ function LowonganPage() {
                             <PaginationLink
                               href="#daftar-lowongan"
                               isActive={item === currentPageSafe}
+                              aria-label={`Halaman ${item}`}
+                              className="h-11 w-11"
                               onClick={(event) => {
                                 event.preventDefault();
                                 setCurrentPage(item);
+                                scrollToList();
                               }}
                             >
                               {item}
@@ -612,64 +769,133 @@ function LowonganPage() {
                           onClick={(event) => {
                             event.preventDefault();
                             setCurrentPage((page) => Math.min(totalPages, page + 1));
+                            scrollToList();
                           }}
                         />
                       </PaginationItem>
                     </PaginationContent>
                   </Pagination>
-                </div>
+                </nav>
               )}
             </>
           )}
         </div>
       </section>
 
-      <section className="container-page py-12 md:py-16">
-        <div className="grid gap-6 lg:grid-cols-[0.9fr_1fr] lg:items-center">
-          <Card className="border-border/80 shadow-sm">
-            <CardContent className="p-6">
-              <Badge className="mb-5 bg-primary text-primary-foreground">Lamaran lebih siap</Badge>
-              <h2 className="font-display text-3xl font-bold leading-tight text-foreground">
-                Jangan cuma cari lowongan. Cocokkan CV dengan role-nya.
-              </h2>
-              <p className="mt-4 leading-8 text-muted-foreground">
-                Setelah menemukan lowongan, gunakan AI CV Pintar untuk scoring, keyword, cover
-                letter, dan perbaikan kalimat agar lamaran lebih relevan.
-              </p>
-              <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-                <Button asChild>
-                  <Link to="/register">
-                    Buat CV dengan AI <Zap className="h-4 w-4" />
-                  </Link>
-                </Button>
-                <Button asChild variant="outline">
-                  <Link to="/template">
-                    Lihat Template <BookOpen className="h-4 w-4" />
-                  </Link>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          <div className="grid gap-3 sm:grid-cols-2">
-            {[
-              { title: "ATS score", desc: "Cek struktur dan keyword sebelum submit.", Icon: BadgeCheck },
-              { title: "Cover letter", desc: "Buat surat lamaran sesuai lowongan.", Icon: FileText },
-              { title: "Keyword extractor", desc: "Ambil skill penting dari job description.", Icon: Layers3 },
-              { title: "Application tracker", desc: "Catat status lamaran dan follow up.", Icon: TrendingUp },
-            ].map(({ title, desc, Icon }) => (
-              <div key={title} className="rounded-lg border bg-card p-4 shadow-sm">
-                <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                  <Icon className="h-5 w-5" aria-hidden="true" />
-                </div>
-                <h3 className="font-semibold text-foreground">{title}</h3>
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">{desc}</p>
-              </div>
-            ))}
+      {/* Cross-platform search */}
+      <section
+        id="cari-lintas-platform"
+        aria-labelledby="lintas-heading"
+        className="scroll-mt-20 py-20 lg:py-28"
+      >
+        <div className="container-page grid gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+          <div>
+            <Eyebrow>
+              <Bot aria-hidden="true" className="h-4 w-4" /> Smart search
+            </Eyebrow>
+            <h2
+              id="lintas-heading"
+              className="mt-4 font-display text-3xl font-extrabold leading-tight tracking-tight text-gray-900 sm:text-4xl"
+            >
+              Belum ketemu?{" "}
+              <span className="text-green-700">Cari lintas platform sekali ketik.</span>
+            </h2>
+            <p className="mt-4 text-base leading-relaxed text-gray-600 sm:text-lg">
+              Query dirapikan otomatis untuk LinkedIn, JobStreet, Glints, Kalibrr, dan Google Jobs —
+              tanpa mengetik ulang.
+            </p>
+            <p className="mt-6 flex items-start gap-3 rounded-xl bg-yellow-50 p-4 text-sm leading-relaxed text-gray-800">
+              <MousePointerClick
+                aria-hidden="true"
+                className="mt-0.5 h-5 w-5 shrink-0 text-gray-900"
+              />
+              <span>
+                <strong>Tips:</strong> gabungkan role + level + lokasi, misalnya “Junior Data
+                Analyst Jakarta” atau “Remote Backend Engineer”.
+              </span>
+            </p>
           </div>
+          <SearchPanel
+            aiRole={aiRole}
+            aiLocation={aiLocation}
+            onRoleChange={setAiRole}
+            onLocationChange={setAiLocation}
+            sources={smartSources}
+          />
         </div>
       </section>
-    </main>
+
+      {/* Playbook */}
+      <section aria-labelledby="playbook-heading" className="bg-gray-50 py-20 lg:py-28">
+        <div className="container-page">
+          <SectionHeader
+            id="playbook-heading"
+            eyebrow="Lamar lebih siap"
+            title="Jangan cuma cari lowongan. Cocokkan CV dengan role-nya."
+            desc="Tiga langkah sederhana supaya lamaranmu lebih relevan dari kandidat lain."
+          />
+          <ol className="grid gap-5 md:grid-cols-3">
+            {playbook.map((item, i) => (
+              <li key={item.title} className="rounded-2xl border border-gray-200 bg-white p-7">
+                <div className="flex items-center justify-between">
+                  <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-green-100 text-green-800">
+                    <item.icon aria-hidden="true" className="h-6 w-6" />
+                  </span>
+                  <span
+                    aria-hidden="true"
+                    className="font-display text-3xl font-extrabold text-green-200"
+                  >
+                    {i + 1}
+                  </span>
+                </div>
+                <h3 className="mt-5 font-display text-xl font-bold text-gray-900">{item.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-gray-600">{item.desc}</p>
+              </li>
+            ))}
+          </ol>
+          <ul className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              {
+                title: "ATS score",
+                desc: "Cek struktur dan keyword sebelum submit.",
+                Icon: BadgeCheck,
+              },
+              {
+                title: "Cover letter",
+                desc: "Buat surat lamaran sesuai lowongan.",
+                Icon: FileText,
+              },
+              {
+                title: "Keyword extractor",
+                desc: "Ambil skill penting dari job description.",
+                Icon: Layers3,
+              },
+              {
+                title: "Application tracker",
+                desc: "Catat status lamaran dan follow up.",
+                Icon: TrendingUp,
+              },
+            ].map(({ title, desc, Icon }) => (
+              <li key={title} className="flex gap-4 rounded-2xl bg-white p-5">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-green-700 text-white">
+                  <Icon aria-hidden="true" className="h-5 w-5" />
+                </span>
+                <div>
+                  <h3 className="font-bold text-gray-900">{title}</h3>
+                  <p className="mt-1 text-sm leading-relaxed text-gray-600">{desc}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      <CtaBanner
+        title="Lowongan sudah di tangan. Saatnya CV yang siap bersaing."
+        desc="Gunakan AI CV Pintar untuk scoring, keyword, cover letter, dan perbaikan kalimat agar lamaran lebih relevan."
+        cta="Buat CV dengan AI"
+      />
+    </div>
   );
 }
 
@@ -687,61 +913,52 @@ function SearchPanel({
   sources: SearchSource[];
 }) {
   return (
-    <Card className="overflow-hidden border-border/80 bg-card shadow-sm">
-      <CardContent className="p-4 sm:p-6">
-        <div className="rounded-lg border border-border bg-background p-4">
-          <div className="mb-5 flex items-start justify-between gap-4 border-b border-border pb-4">
-            <div>
-              <p className="text-xs font-bold uppercase text-primary">Smart search console</p>
-              <h2 className="mt-2 font-display text-2xl font-bold text-foreground">
-                Cari lintas platform
-              </h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Query dirapikan untuk LinkedIn, JobStreet, Glints, Kalibrr, dan Google Jobs.
-              </p>
-            </div>
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-              <Bot className="h-5 w-5" aria-hidden="true" />
-            </div>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-[1.2fr_0.8fr]">
-            <Input
-              value={aiRole}
-              onChange={(event) => onRoleChange(event.target.value)}
-              placeholder="Frontend Developer, HR Officer"
-            />
-            <Input
-              value={aiLocation}
-              onChange={(event) => onLocationChange(event.target.value)}
-              placeholder="Indonesia, Remote"
-            />
-          </div>
-
-          <div className="mt-4 grid gap-2 sm:grid-cols-2">
-            {sources.map((source) => (
-              <Button key={source.name} asChild variant="outline" className="justify-between">
-                <a href={source.url} target="_blank" rel="noopener noreferrer">
-                  <span>{source.name}</span>
-                  <ExternalLink className="h-4 w-4" />
-                </a>
-              </Button>
-            ))}
-          </div>
-
-          <div className="mt-5 rounded-lg bg-primary p-4 text-primary-foreground">
-            <div className="mb-2 flex items-center gap-2">
-              <MousePointerClick className="h-4 w-4" aria-hidden="true" />
-              <p className="font-semibold">Tips cepat</p>
-            </div>
-            <p className="text-sm leading-6 text-primary-foreground/85">
-              Coba gabungkan role + level + lokasi, misalnya “Junior Data Analyst Jakarta” atau
-              “Remote Backend Engineer”.
-            </p>
-          </div>
+    <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-xl shadow-green-900/10 sm:p-8">
+      <div className="grid gap-4 sm:grid-cols-[1.2fr_0.8fr]">
+        <div>
+          <label htmlFor="ai-role" className="text-sm font-bold text-gray-900">
+            Posisi
+          </label>
+          <Input
+            id="ai-role"
+            value={aiRole}
+            onChange={(event) => onRoleChange(event.target.value)}
+            placeholder="Frontend Developer, HR Officer"
+            className="mt-1.5 h-11"
+          />
         </div>
-      </CardContent>
-    </Card>
+        <div>
+          <label htmlFor="ai-location" className="text-sm font-bold text-gray-900">
+            Lokasi
+          </label>
+          <Input
+            id="ai-location"
+            value={aiLocation}
+            onChange={(event) => onLocationChange(event.target.value)}
+            placeholder="Indonesia, Remote"
+            className="mt-1.5 h-11"
+          />
+        </div>
+      </div>
+
+      <p className="mt-6 text-sm font-bold text-gray-900">Buka hasil pencarian di:</p>
+      <ul className="mt-3 grid gap-2 sm:grid-cols-2">
+        {sources.map((source) => (
+          <li key={source.name}>
+            <a
+              href={source.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex min-h-12 items-center justify-between gap-3 rounded-xl border border-gray-300 px-4 font-semibold text-gray-900 transition-colors hover:border-green-700 hover:bg-green-50 hover:text-green-800"
+            >
+              {source.name}
+              <ExternalLink aria-hidden="true" className="h-4 w-4" />
+              <span className="sr-only"> (membuka tab baru)</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
@@ -769,138 +986,180 @@ function JobCard({
   const deadlineText = job.deadline ? formatDeadline(job.deadline) : null;
 
   const detailLink = isFallback ? buildSearchSources(job.title, job.location)[4].url : null;
+  const titleId = `job-${job.id}`;
+  const actionBtn =
+    "inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-xl px-4 text-sm font-bold transition-colors";
 
   return (
-    <Card className="overflow-hidden border-border/80 bg-background transition-all hover:border-primary/35 hover:shadow-md">
-      <CardContent className="p-0">
-        <div className="grid gap-0 md:grid-cols-[1fr_auto]">
-          <div className="p-5">
-            <div className="mb-3 flex flex-wrap items-center gap-2">
-              <Badge className="bg-primary/10 text-primary hover:bg-primary/10">
-                {levelLabel(job.level)}
-              </Badge>
-              <Badge variant="secondary">{typeLabel(job.type)}</Badge>
-              {job.work_mode && (
-                <Badge variant="outline" className="gap-1.5">
-                  <Laptop className="h-3.5 w-3.5" />
-                  {workModeLabel(job.work_mode)}
-                </Badge>
-              )}
-              {job.industry && <Badge variant="outline">{job.industry}</Badge>}
-              {isFallback && <Badge variant="outline">Contoh</Badge>}
+    <article
+      aria-labelledby={titleId}
+      className="group overflow-hidden rounded-2xl border border-gray-200 bg-white transition-all hover:border-green-600 hover:shadow-lg"
+    >
+      <div className="grid md:grid-cols-[1fr_auto]">
+        <div className="p-5 sm:p-6">
+          <div className="flex items-start gap-4">
+            <span
+              aria-hidden="true"
+              className="hidden h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-green-100 font-display text-lg font-extrabold text-green-800 sm:flex"
+            >
+              {job.company.charAt(0)}
+            </span>
+            <div className="min-w-0 flex-1">
+              <h3 id={titleId} className="font-display text-xl font-bold text-gray-900">
+                {isFallback ? (
+                  <a
+                    href={detailLink ?? "#"}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-green-800 hover:underline"
+                  >
+                    {job.title}
+                    <span className="sr-only"> (membuka tab baru)</span>
+                  </a>
+                ) : (
+                  <Link
+                    to="/lowongan/$slug"
+                    params={{ slug: job.slug }}
+                    className="hover:text-green-800 hover:underline"
+                  >
+                    {job.title}
+                  </Link>
+                )}
+              </h3>
+              <p className="mt-1 flex items-center gap-1.5 text-sm font-semibold text-gray-700">
+                <Building2 aria-hidden="true" className="h-4 w-4" /> {job.company}
+              </p>
             </div>
+          </div>
 
+          <ul
+            className="mt-4 flex flex-wrap gap-2 text-xs font-semibold"
+            aria-label="Detail lowongan"
+          >
+            <li className="rounded-full bg-green-100 px-2.5 py-1 text-green-800">
+              {levelLabel(job.level)}
+            </li>
+            <li className="rounded-full bg-gray-100 px-2.5 py-1 text-gray-800">
+              {typeLabel(job.type)}
+            </li>
+            {job.work_mode && (
+              <li className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 text-gray-800">
+                <Laptop aria-hidden="true" className="h-3.5 w-3.5" />
+                {workModeLabel(job.work_mode)}
+              </li>
+            )}
+            {job.industry && (
+              <li className="rounded-full bg-gray-100 px-2.5 py-1 text-gray-800">{job.industry}</li>
+            )}
+            {isFallback && (
+              <li className="rounded-full bg-yellow-200 px-2.5 py-1 text-gray-900">Contoh</li>
+            )}
+          </ul>
+
+          <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-gray-700">
+            <span className="flex items-center gap-1.5">
+              <MapPin aria-hidden="true" className="h-4 w-4 text-gray-500" /> {job.location}
+            </span>
+            {salaryText && (
+              <span className="flex items-center gap-1.5 font-semibold text-gray-900">
+                <DollarSign aria-hidden="true" className="h-4 w-4 text-green-700" /> {salaryText}
+              </span>
+            )}
+            {deadlineText && (
+              <span className="flex items-center gap-1.5">
+                <CalendarDays aria-hidden="true" className="h-4 w-4 text-gray-500" /> Deadline{" "}
+                {deadlineText}
+              </span>
+            )}
+          </div>
+
+          <p className="mt-3 line-clamp-2 text-sm leading-relaxed text-gray-600">
+            {job.description}
+          </p>
+
+          {techItems.length > 0 && (
+            <ul className="mt-4 flex flex-wrap gap-1.5" aria-label="Skill">
+              {techItems.map((item) => (
+                <li
+                  key={item}
+                  className="rounded-md border border-gray-200 px-2 py-0.5 text-xs font-medium text-gray-700"
+                >
+                  {item}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        <div className="flex flex-col justify-center gap-3 border-t border-gray-200 bg-gray-50 p-5 md:w-60 md:border-l md:border-t-0">
+          <p className="flex items-center gap-1.5 text-xs font-medium text-gray-600">
+            <Clock aria-hidden="true" className="h-3.5 w-3.5" />
+            Diposting{" "}
+            {new Date(job.created_at).toLocaleDateString("id-ID", {
+              day: "numeric",
+              month: "short",
+            })}
+          </p>
+          <div className="flex w-full gap-2 md:flex-col">
             {isFallback ? (
               <a
                 href={detailLink ?? "#"}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group/title inline-flex"
+                className={`${actionBtn} bg-green-700 text-white hover:bg-green-800`}
               >
-                <h3 className="font-display text-xl font-bold text-foreground transition-colors group-hover/title:text-primary">
-                  {job.title}
-                </h3>
+                Cari serupa
+                <ExternalLink aria-hidden="true" className="h-4 w-4" />
+                <span className="sr-only"> (membuka tab baru)</span>
               </a>
             ) : (
-              <Link to="/lowongan/$slug" params={{ slug: job.slug }} className="group/title">
-                <h3 className="font-display text-xl font-bold text-foreground transition-colors group-hover/title:text-primary">
-                  {job.title}
-                </h3>
+              <Link
+                to="/lowongan/$slug"
+                params={{ slug: job.slug }}
+                aria-label={`Lihat detail ${job.title} di ${job.company}`}
+                className={`${actionBtn} bg-green-700 text-white hover:bg-green-800`}
+              >
+                Lihat Detail
+                <ArrowRight aria-hidden="true" className="h-4 w-4" />
               </Link>
             )}
-
-            <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-              <span className="flex items-center gap-1.5">
-                <Building2 className="h-4 w-4" /> {job.company}
-              </span>
-              <span className="flex items-center gap-1.5">
-                <MapPin className="h-4 w-4" /> {job.location}
-              </span>
-              {salaryText && (
-                <span className="flex items-center gap-1.5">
-                  <DollarSign className="h-4 w-4" /> {salaryText}
-                </span>
-              )}
-              {deadlineText && (
-                <span className="flex items-center gap-1.5">
-                  <CalendarDays className="h-4 w-4" /> Deadline {deadlineText}
-                </span>
-              )}
-            </div>
-
-            <p className="mt-3 line-clamp-2 leading-7 text-muted-foreground">{job.description}</p>
-
-            {techItems.length > 0 && (
-              <div className="mt-4 flex flex-wrap gap-2">
-                {techItems.map((item) => (
-                  <Badge key={item} variant="secondary" className="bg-muted text-muted-foreground">
-                    {item}
-                  </Badge>
-                ))}
-              </div>
+            {isFallback ? null : isLoggedIn ? (
+              <button
+                type="button"
+                aria-pressed={isSaved}
+                aria-label={`${isSaved ? "Hapus dari simpanan" : "Simpan"}: ${job.title}`}
+                disabled={isSaving}
+                onClick={() => onToggleSaved(job.id)}
+                className={`${actionBtn} border-2 ${
+                  isSaved
+                    ? "border-green-700 bg-green-50 text-green-800"
+                    : "border-gray-300 bg-white text-gray-800 hover:border-green-700 hover:text-green-800"
+                } disabled:opacity-60`}
+              >
+                {isSaving ? (
+                  <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" />
+                ) : isSaved ? (
+                  <BookmarkCheck aria-hidden="true" className="h-4 w-4" />
+                ) : (
+                  <Bookmark aria-hidden="true" className="h-4 w-4" />
+                )}
+                {isSaved ? "Tersimpan" : "Simpan"}
+              </button>
+            ) : (
+              <Link
+                to="/login"
+                search={{ redirect: "/lowongan" }}
+                aria-label={`Masuk untuk menyimpan ${job.title}`}
+                className={`${actionBtn} border-2 border-gray-300 bg-white text-gray-800 hover:border-green-700 hover:text-green-800`}
+              >
+                <LogIn aria-hidden="true" className="h-4 w-4" />
+                Masuk & Simpan
+              </Link>
             )}
           </div>
-
-          <div className="flex items-center justify-between gap-4 border-t border-border bg-muted/45 p-5 md:w-60 md:flex-col md:items-start md:justify-center md:border-l md:border-t-0">
-            <span className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-              <Clock className="h-3.5 w-3.5" />
-              Diposting{" "}
-              {new Date(job.created_at).toLocaleDateString("id-ID", {
-                day: "numeric",
-                month: "short",
-              })}
-            </span>
-            <div className="flex w-full flex-wrap gap-2">
-              {isFallback ? (
-                <Button type="button" variant="outline" size="sm" className="flex-1" disabled>
-                  Contoh
-                </Button>
-              ) : isLoggedIn ? (
-                <Button
-                  type="button"
-                  variant={isSaved ? "default" : "outline"}
-                  size="sm"
-                  className="flex-1 justify-center gap-2"
-                  disabled={isSaving}
-                  onClick={() => onToggleSaved(job.id)}
-                >
-                  {isSaving ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : isSaved ? (
-                    <BookmarkCheck className="h-4 w-4" />
-                  ) : (
-                    <Bookmark className="h-4 w-4" />
-                  )}
-                  {isSaved ? "Tersimpan" : "Simpan"}
-                </Button>
-              ) : (
-                <Button asChild variant="outline" size="sm" className="flex-1 justify-center gap-2">
-                  <Link to="/login" search={{ redirect: "/lowongan" }}>
-                    <LogIn className="h-4 w-4" />
-                    Masuk
-                  </Link>
-                </Button>
-              )}
-              {isFallback ? (
-                <Button asChild variant="ghost" size="sm" className="flex-1 justify-center gap-2">
-                  <a href={detailLink ?? "#"} target="_blank" rel="noopener noreferrer">
-                    Detail
-                    <ExternalLink className="h-4 w-4" />
-                  </a>
-                </Button>
-              ) : (
-                <Button asChild variant="ghost" size="sm" className="flex-1 justify-center gap-2">
-                  <Link to="/lowongan/$slug" params={{ slug: job.slug }}>
-                    Detail
-                    <ArrowRight className="h-4 w-4" />
-                  </Link>
-                </Button>
-              )}
-            </div>
-          </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </article>
   );
 }
 
