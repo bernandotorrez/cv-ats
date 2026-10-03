@@ -3,19 +3,15 @@ import { useMemo, useState } from "react";
 import {
   ArrowRight,
   Award,
-  BookOpen,
   BriefcaseBusiness,
-  CheckCircle2,
   ChevronLeft,
   ChevronRight,
   CircleDollarSign,
   Clock,
-  Filter,
   Flame,
   GraduationCap,
   Laptop,
   Library,
-  Lightbulb,
   MessageSquare,
   Mic,
   Search,
@@ -27,18 +23,19 @@ import {
 } from "lucide-react";
 
 import { ArticleCardSkeleton } from "@/components/ui/skeleton-loading";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { buildSectionHead } from "@/lib/seo";
+import {
+  AnchorCta,
+  CtaBanner,
+  PageHero,
+  PrimaryCta,
+  SectionHeader,
+  TrustChecks,
+} from "@/components/site/marketing";
 
 type IconName =
-  | "GraduationCap"
-  | "MessageSquare"
-  | "Laptop"
-  | "CircleDollarSign"
-  | "Sparkles"
-  | "Target";
+  "GraduationCap" | "MessageSquare" | "Laptop" | "CircleDollarSign" | "Sparkles" | "Target";
 
 const iconMap: Record<IconName, React.ComponentType<{ className?: string }>> = {
   GraduationCap,
@@ -136,12 +133,38 @@ export const Route = createFileRoute("/tips-interview")({
   component: TipsHubPage,
 });
 
+const prepSteps = [
+  {
+    icon: Search,
+    title: "Riset dulu",
+    desc: "Kenali perusahaan, role, produk, dan alasan kamu cocok untuk kebutuhan mereka.",
+  },
+  {
+    icon: MessageSquare,
+    title: "Strukturkan jawaban",
+    desc: "Gunakan STAR agar jawaban tidak melebar, tetap konkret, dan mudah diikuti.",
+  },
+  {
+    icon: UserRoundCheck,
+    title: "Latih delivery",
+    desc: "Jawaban bagus tetap perlu tempo, contoh, dan nada percaya diri yang natural.",
+  },
+] as const;
+
 function TipsHubPage() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const [filter, setFilter] = useState<string | null>(null);
   const [page, setPage] = useState(0);
 
-  const categoryList = useMemo(() => [...new Set(tips.map((tip) => tip.category))], []);
+  const categoryList = useMemo(
+    () =>
+      [...new Set(tips.map((tip) => tip.category))].map((name) => ({
+        name,
+        icon: categories.find((c) => c.name === name)?.icon ?? ("Sparkles" as IconName),
+        count: tips.filter((tip) => tip.category === name).length,
+      })),
+    [],
+  );
   const filtered = useMemo(
     () => (filter ? tips.filter((tip) => tip.category === filter) : tips),
     [filter],
@@ -153,207 +176,174 @@ function TipsHubPage() {
     return <Outlet />;
   }
 
+  const chip = (active: boolean) =>
+    `inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full px-4 text-sm font-semibold transition-colors ${
+      active
+        ? "bg-green-700 text-white"
+        : "border border-gray-300 bg-white text-gray-800 hover:border-green-700 hover:text-green-800"
+    }`;
+
   return (
-    <main className="overflow-x-clip bg-background">
-      <section className="border-b border-border/70">
-        <div className="container-page grid gap-12 py-16 md:grid-cols-[minmax(0,1fr)_minmax(320px,0.88fr)] md:items-center md:py-24">
-          <div>
-            <Badge className="mb-6 gap-2 border-yellow-200 bg-yellow-100 px-4 py-2 text-sm text-yellow-950 shadow-sm hover:bg-yellow-100">
-              <Sparkles className="h-4 w-4" aria-hidden="true" />
-              Tips interview yang bisa langsung dipakai
-            </Badge>
-
-            <h1 className="max-w-3xl font-display text-4xl font-bold leading-[1.02] text-foreground sm:text-5xl lg:text-6xl">
-              Jawaban interview yang bagus tidak terasa dihafal. Ia terasa siap.
-            </h1>
-
-            <p className="mt-6 max-w-2xl text-lg leading-8 text-muted-foreground">
-              Pelajari cara menjawab HR, technical, behavioral, sampai negosiasi gaji dengan
-              struktur yang jelas, percaya diri, dan tetap natural.
-            </p>
-
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Button asChild size="lg" className="h-12 px-6 text-base">
-                <a href="#semua-tips">
-                  Mulai belajar
-                  <ArrowRight className="h-5 w-5" aria-hidden="true" />
-                </a>
-              </Button>
-              <Button asChild variant="outline" size="lg" className="h-12 px-6 text-base">
-                <Link to="/register">Latihan dengan AI</Link>
-              </Button>
-            </div>
-
-            <dl className="mt-10 grid grid-cols-3 gap-3">
-              {[
-                ["6", "artikel inti"],
-                ["5", "kategori"],
-                ["STAR", "framework"],
-              ].map(([stat, label]) => (
-                <div key={label} className="rounded-lg border border-border bg-card p-3 shadow-sm">
-                  <dt className="font-display text-xl font-bold text-foreground">{stat}</dt>
-                  <dd className="mt-1 text-sm text-muted-foreground">{label}</dd>
-                </div>
-              ))}
-            </dl>
-          </div>
-
-          <InterviewPreview />
+    <div className="overflow-hidden bg-white">
+      <PageHero
+        eyebrow={
+          <>
+            <Sparkles aria-hidden="true" className="h-4 w-4" />
+            Tips interview yang bisa langsung dipakai
+          </>
+        }
+        title={
+          <>
+            Jawaban interview yang bagus tidak terasa dihafal.{" "}
+            <span className="text-green-700">Ia terasa siap.</span>
+          </>
+        }
+        desc="Pelajari cara menjawab HR, technical, behavioral, sampai negosiasi gaji dengan struktur yang jelas, percaya diri, dan tetap natural."
+        aside={<InterviewPreview />}
+      >
+        <div className="mt-8 flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
+          <PrimaryCta to="/register">Latihan Interview dengan AI</PrimaryCta>
+          <AnchorCta href="#semua-tips">Baca Tips</AnchorCta>
         </div>
-      </section>
+        <TrustChecks
+          items={[
+            `${tips.length} artikel inti`,
+            `${categoryList.length} kategori`,
+            "Framework STAR",
+          ]}
+        />
+      </PageHero>
 
-      <section className="container-page py-14 md:py-20">
-        <div className="grid gap-4 md:grid-cols-3">
-          {[
-            {
-              icon: Search,
-              title: "Riset dulu",
-              desc: "Kenali perusahaan, role, produk, dan alasan kamu cocok untuk kebutuhan mereka.",
-            },
-            {
-              icon: MessageSquare,
-              title: "Strukturkan jawaban",
-              desc: "Gunakan STAR agar jawaban tidak melebar, tetap konkret, dan mudah diikuti.",
-            },
-            {
-              icon: UserRoundCheck,
-              title: "Latih delivery",
-              desc: "Jawaban bagus tetap perlu tempo, contoh, dan nada percaya diri yang natural.",
-            },
-          ].map((item) => (
-            <Card key={item.title} className="border-border/80 shadow-sm">
-              <CardContent className="p-6">
-                <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                  <item.icon className="h-5 w-5" aria-hidden="true" />
-                </div>
-                <h2 className="font-display text-xl font-bold text-foreground">{item.title}</h2>
-                <p className="mt-3 leading-7 text-muted-foreground">{item.desc}</p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </section>
-
-      <section className="bg-muted/45 py-16 md:py-24">
+      {/* Prep steps */}
+      <section aria-labelledby="prep-heading" className="py-20 lg:py-28">
         <div className="container-page">
-          <SectionIntro
-            eyebrow="Wajib dibaca"
+          <SectionHeader
+            id="prep-heading"
+            eyebrow="Cara persiapan"
+            title="Tiga hal yang membedakan kandidat siap dan kandidat nervous."
+          />
+          <ol className="grid gap-5 md:grid-cols-3">
+            {prepSteps.map((item, i) => (
+              <li key={item.title} className="rounded-2xl border border-gray-200 bg-white p-7">
+                <div className="flex items-center justify-between">
+                  <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-green-100 text-green-800">
+                    <item.icon aria-hidden="true" className="h-6 w-6" />
+                  </span>
+                  <span
+                    aria-hidden="true"
+                    className="font-display text-3xl font-extrabold text-green-200"
+                  >
+                    {i + 1}
+                  </span>
+                </div>
+                <h3 className="mt-5 font-display text-xl font-bold text-gray-900">{item.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-gray-600">{item.desc}</p>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
+
+      {/* Featured */}
+      <section aria-labelledby="featured-heading" className="bg-gray-50 py-20 lg:py-28">
+        <div className="container-page">
+          <SectionHeader
+            id="featured-heading"
+            eyebrow={
+              <>
+                <Flame aria-hidden="true" className="h-4 w-4" /> Wajib dibaca
+              </>
+            }
             title="Mulai dari artikel yang paling sering menyelamatkan kandidat."
             desc="Dua topik ini biasanya muncul paling awal: persiapan interview pertama dan pertanyaan HR umum."
           />
-
-          <div className="mt-10 grid gap-6 md:grid-cols-2">
+          <ul className="grid gap-6 md:grid-cols-2">
             {featuredTips.map((tip) => (
-              <TipCard key={tip.slug} tip={tip} featured />
+              <li key={tip.slug}>
+                <TipCard tip={tip} featured />
+              </li>
             ))}
-          </div>
+          </ul>
         </div>
       </section>
 
-      <section className="container-page py-16 md:py-24">
-        <div className="grid gap-8 lg:grid-cols-[0.82fr_1fr] lg:items-start">
-          <div>
-            <Badge variant="secondary" className="mb-4 gap-2 px-3 py-1.5">
-              <Library className="h-4 w-4" aria-hidden="true" />
-              Kategori
-            </Badge>
-            <h2 className="font-display text-3xl font-bold leading-tight text-foreground md:text-4xl">
-              Pilih topik sesuai tahap interview-mu.
-            </h2>
-            <p className="mt-4 text-lg leading-8 text-muted-foreground">
-              Kamu bisa mulai dari HR interview, technical, behavioral, atau langsung belajar
-              negosiasi gaji.
-            </p>
-          </div>
+      {/* All tips with filter */}
+      <section
+        id="semua-tips"
+        aria-labelledby="semua-heading"
+        className="scroll-mt-20 py-20 lg:py-28"
+      >
+        <div className="container-page">
+          <SectionHeader
+            id="semua-heading"
+            eyebrow={
+              <>
+                <Library aria-hidden="true" className="h-4 w-4" /> Semua tips
+              </>
+            }
+            title="Pilih topik sesuai tahap interview-mu."
+            desc="Filter topik, simpan pola jawabannya, lalu latih dengan suara agar jawabanmu terasa lebih natural."
+          />
 
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            {categories.map((category) => {
+          <div
+            role="group"
+            aria-label="Filter tips interview"
+            className="mb-4 flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] md:flex-wrap md:justify-center [&::-webkit-scrollbar]:hidden"
+          >
+            <button
+              type="button"
+              aria-pressed={filter === null}
+              onClick={() => {
+                setFilter(null);
+                setPage(0);
+              }}
+              className={chip(filter === null)}
+            >
+              Semua
+              <span className="rounded-full bg-black/10 px-1.5 text-xs">{tips.length}</span>
+            </button>
+            {categoryList.map((category) => {
               const Icon = iconMap[category.icon];
+              const active = filter === category.name;
               return (
                 <button
                   key={category.name}
                   type="button"
-                  className="rounded-xl border border-border bg-card p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  aria-pressed={active}
                   onClick={() => {
                     setFilter(category.name);
                     setPage(0);
                   }}
+                  className={chip(active)}
                 >
-                  <Icon className="mb-4 h-7 w-7 text-primary" aria-hidden="true" />
-                  <span className="block font-bold text-foreground">{category.name}</span>
-                  <span className="mt-1 block text-sm text-muted-foreground">
-                    {category.count} artikel
-                  </span>
+                  <Icon aria-hidden="true" className="h-4 w-4" />
+                  {category.name}
+                  <span className="rounded-full bg-black/10 px-1.5 text-xs">{category.count}</span>
                 </button>
               );
             })}
           </div>
-        </div>
-      </section>
+          <p aria-live="polite" className="mb-8 text-center text-sm text-gray-600">
+            Menampilkan <strong className="text-gray-900">{filtered.length}</strong> artikel
+            {filter && <> untuk “{filter}”</>}
+          </p>
 
-      <section id="semua-tips" className="bg-muted/45 py-16 md:py-24">
-        <div className="container-page">
-          <SectionIntro
-            eyebrow="Semua tips"
-            title="Baca yang kamu butuhkan, praktikkan sebelum jadwal interview."
-            desc="Filter topik, simpan pola jawabannya, lalu latih dengan suara agar jawabanmu terasa lebih natural."
-          />
-
-          <div className="mt-10 rounded-xl border border-border bg-background p-3 shadow-sm">
-            <div className="mb-3 flex items-center gap-2 px-1 text-sm font-semibold text-muted-foreground">
-              <Filter className="h-4 w-4" aria-hidden="true" />
-              Filter topik
-            </div>
-            <div
-              className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-              role="group"
-              aria-label="Filter tips interview"
-            >
-              <Button
-                type="button"
-                variant={filter === null ? "default" : "outline"}
-                size="sm"
-                className="shrink-0"
-                aria-pressed={filter === null}
-                onClick={() => {
-                  setFilter(null);
-                  setPage(0);
-                }}
-              >
-                Semua
-              </Button>
-              {categoryList.map((category) => (
-                <Button
-                  key={category}
-                  type="button"
-                  variant={filter === category ? "default" : "outline"}
-                  size="sm"
-                  className="shrink-0"
-                  aria-pressed={filter === category}
-                  onClick={() => {
-                    setFilter(category);
-                    setPage(0);
-                  }}
-                >
-                  {category}
-                </Button>
-              ))}
-            </div>
-          </div>
-
-          <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {pageItems.map((tip) => (
-              <TipCard key={tip.slug} tip={tip} />
+              <li key={tip.slug}>
+                <TipCard tip={tip} />
+              </li>
             ))}
-          </div>
+          </ul>
 
           {totalPages > 1 && (
-            <div className="mt-10 flex items-center justify-center gap-3">
+            <nav aria-label="Halaman tips" className="mt-10 flex items-center justify-center gap-2">
               <Button
                 variant="outline"
                 size="icon"
                 disabled={page === 0}
                 aria-label="Halaman sebelumnya"
+                className="h-11 w-11"
                 onClick={() => setPage((current) => current - 1)}
               >
                 <ChevronLeft className="h-4 w-4" aria-hidden="true" />
@@ -362,9 +352,9 @@ function TipsHubPage() {
                 <Button
                   key={index}
                   variant={page === index ? "default" : "outline"}
-                  size="sm"
-                  className="h-9 w-9"
+                  className="h-11 w-11"
                   aria-label={`Halaman ${index + 1}`}
+                  aria-current={page === index ? "page" : undefined}
                   onClick={() => setPage(index)}
                 >
                   {index + 1}
@@ -375,41 +365,51 @@ function TipsHubPage() {
                 size="icon"
                 disabled={page >= totalPages - 1}
                 aria-label="Halaman berikutnya"
+                className="h-11 w-11"
                 onClick={() => setPage((current) => current + 1)}
               >
                 <ChevronRight className="h-4 w-4" aria-hidden="true" />
               </Button>
-            </div>
+            </nav>
           )}
+
+          {/* Pitch */}
+          <aside
+            aria-label="Simulasi wawancara AI"
+            className="mt-14 flex flex-col items-start justify-between gap-6 rounded-2xl bg-green-800 p-7 text-white sm:flex-row sm:items-center"
+          >
+            <div className="flex items-start gap-4">
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white/15 text-yellow-300">
+                <Mic aria-hidden="true" className="h-6 w-6" />
+              </span>
+              <div>
+                <p className="font-display text-xl font-bold">
+                  Baca saja tidak cukup. Latih jawabanmu.
+                </p>
+                <p className="mt-1 text-sm text-green-50">
+                  Simulasi Wawancara AI memberi pertanyaan, menilai jawabanmu, dan kasih feedback
+                  instan.
+                </p>
+              </div>
+            </div>
+            <Link
+              to="/fitur"
+              className="inline-flex h-12 shrink-0 items-center gap-2 rounded-xl bg-yellow-300 px-6 font-bold text-gray-950 transition-colors hover:bg-yellow-200"
+            >
+              Lihat Fiturnya
+              <ArrowRight aria-hidden="true" className="h-4 w-4" />
+            </Link>
+          </aside>
         </div>
       </section>
 
-      <section className="container-page py-16 md:py-24">
-        <div className="grid gap-8 rounded-2xl border border-border bg-card p-6 shadow-sm md:grid-cols-[1fr_auto] md:items-center md:p-10">
-          <div>
-            <Badge className="mb-5 bg-primary text-primary-foreground">Langkah berikutnya</Badge>
-            <h2 className="max-w-2xl font-display text-3xl font-bold leading-tight text-foreground md:text-4xl">
-              Interview lebih mudah saat CV, cerita, dan jawabanmu nyambung.
-            </h2>
-            <p className="mt-4 max-w-2xl text-lg leading-8 text-muted-foreground">
-              Rapikan CV, siapkan bukti pencapaian, lalu latih jawaban supaya kamu tidak sekadar
-              menjawab, tapi meyakinkan.
-            </p>
-          </div>
-          <div className="flex flex-col gap-3 sm:flex-row md:flex-col">
-            <Button asChild size="lg" className="h-12 px-6 text-base">
-              <Link to="/register">
-                Latihan dengan AI
-                <ArrowRight className="h-5 w-5" aria-hidden="true" />
-              </Link>
-            </Button>
-            <Button asChild variant="outline" size="lg" className="h-12 px-6 text-base">
-              <Link to="/panduan-cv-ats">Panduan CV ATS</Link>
-            </Button>
-          </div>
-        </div>
-      </section>
-    </main>
+      <CtaBanner
+        title="Interview lebih mudah saat CV, cerita, dan jawabanmu nyambung."
+        desc="Rapikan CV, siapkan bukti pencapaian, lalu latih jawaban supaya kamu tidak sekadar menjawab, tapi meyakinkan."
+        cta="Mulai Gratis"
+        points={["CV ATS friendly", "Latihan interview AI", "Tips dari praktisi HR"]}
+      />
+    </div>
   );
 }
 
@@ -417,118 +417,116 @@ function TipCard({ tip, featured = false }: { tip: (typeof tips)[number]; featur
   const Icon = iconMap[tip.icon];
 
   return (
-    <Link to="/tips-interview/$slug" params={{ slug: tip.slug }} className="group block h-full">
-      <Card
-        className={`h-full border-border/80 bg-card shadow-sm transition duration-200 group-hover:-translate-y-1 group-hover:border-primary group-hover:shadow-lg ${
-          featured ? "md:min-h-[260px]" : ""
+    <Link
+      to="/tips-interview/$slug"
+      params={{ slug: tip.slug }}
+      className={`group flex h-full flex-col rounded-2xl border bg-white p-6 transition-all hover:-translate-y-1 hover:border-green-600 hover:shadow-xl ${
+        featured ? "border-green-200 sm:p-8" : "border-gray-200"
+      }`}
+    >
+      <div className="flex items-start justify-between gap-4">
+        <span
+          className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${
+            featured ? "bg-green-700 text-white" : "bg-green-100 text-green-800"
+          }`}
+        >
+          <Icon className="h-6 w-6" aria-hidden="true" />
+        </span>
+        <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-semibold text-gray-800">
+          {tip.category}
+        </span>
+      </div>
+      <h3
+        className={`mt-5 font-display font-bold leading-tight text-gray-900 group-hover:text-green-800 ${
+          featured ? "text-2xl" : "text-xl"
         }`}
       >
-        <CardContent className="flex h-full flex-col p-6">
-          <div className="mb-5 flex items-start justify-between gap-4">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-              <Icon className="h-6 w-6" aria-hidden="true" />
-            </div>
-            <Badge variant="secondary">{tip.category}</Badge>
-          </div>
-          <h3 className="font-display text-xl font-bold leading-tight text-foreground transition group-hover:text-primary">
-            {tip.title}
-          </h3>
-          <p className="mt-3 flex-1 leading-7 text-muted-foreground">{tip.excerpt}</p>
-          <div className="mt-6 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-            <span className="inline-flex items-center gap-1.5">
-              <Clock className="h-4 w-4" aria-hidden="true" />
-              {tip.readTime}
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <Award className="h-4 w-4" aria-hidden="true" />
-              {tip.level}
-            </span>
-          </div>
-          <div className="mt-5 inline-flex items-center font-semibold text-primary">
-            Baca tips
-            <ArrowRight
-              className="ml-2 h-4 w-4 transition group-hover:translate-x-1"
-              aria-hidden="true"
-            />
-          </div>
-        </CardContent>
-      </Card>
+        {tip.title}
+      </h3>
+      <p className="mt-3 flex-1 text-sm leading-relaxed text-gray-600">{tip.excerpt}</p>
+      <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-gray-600">
+        <span className="inline-flex items-center gap-1.5">
+          <Clock className="h-4 w-4" aria-hidden="true" />
+          {tip.readTime}
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <Award className="h-4 w-4" aria-hidden="true" />
+          {tip.level}
+        </span>
+      </div>
+      <span className="mt-5 inline-flex items-center text-sm font-bold text-green-800">
+        Baca tips
+        <ArrowRight
+          className="ml-1.5 h-4 w-4 transition-transform group-hover:translate-x-1"
+          aria-hidden="true"
+        />
+      </span>
     </Link>
   );
 }
 
 function InterviewPreview() {
   return (
-    <Card className="overflow-hidden border-border/80 bg-card shadow-sm">
-      <CardContent className="p-4 sm:p-6">
-        <div className="rounded-xl border border-border bg-background p-4">
-          <div className="mb-5 flex items-center justify-between gap-4 border-b border-border pb-4">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">
-                Interview prep
-              </p>
-              <h2 className="mt-2 font-display text-2xl font-bold text-foreground">Jawaban siap</h2>
-            </div>
-            <Badge className="bg-primary text-primary-foreground">STAR</Badge>
-          </div>
-
-          <div className="space-y-3">
-            {[
-              { icon: BriefcaseBusiness, title: "Situation", desc: "Konteks singkat" },
-              { icon: Target, title: "Task", desc: "Tanggung jawabmu" },
-              { icon: Zap, title: "Action", desc: "Langkah yang kamu ambil" },
-              { icon: Star, title: "Result", desc: "Hasil yang terukur" },
-            ].map((item) => (
-              <div key={item.title} className="flex items-center gap-4 rounded-lg bg-muted/70 p-4">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                  <item.icon className="h-5 w-5" aria-hidden="true" />
-                </div>
-                <div>
-                  <p className="font-bold text-foreground">{item.title}</p>
-                  <p className="text-sm text-muted-foreground">{item.desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-5 rounded-lg bg-primary p-5 text-primary-foreground">
-            <div className="mb-2 flex items-center gap-2">
-              <Mic className="h-5 w-5" aria-hidden="true" />
-              <p className="font-bold">Latihan terbaik</p>
-            </div>
-            <p className="leading-7 text-primary-foreground/90">
-              Jawab dengan suara, rekam, lalu perbaiki bagian yang terlalu panjang atau belum punya
-              bukti konkret.
+    <div className="relative mx-auto w-full max-w-md px-2 sm:px-0">
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 translate-x-3 translate-y-3 rotate-2 rounded-3xl bg-green-700"
+      />
+      <div className="relative rounded-3xl border border-gray-200 bg-white p-6 shadow-2xl">
+        <div className="flex items-center justify-between gap-4 border-b border-gray-100 pb-5">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-wider text-gray-600">
+              Interview prep
             </p>
+            <p className="mt-1 font-display text-xl font-extrabold text-gray-900">Metode STAR</p>
           </div>
+          <span className="rounded-full bg-green-100 px-3 py-1 text-sm font-bold text-green-800">
+            STAR
+          </span>
         </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function SectionIntro({ eyebrow, title, desc }: { eyebrow: string; title: string; desc: string }) {
-  return (
-    <div className="mx-auto max-w-3xl text-center">
-      <Badge variant="secondary" className="mb-4 px-3 py-1.5">
-        {eyebrow}
-      </Badge>
-      <h2 className="font-display text-3xl font-bold leading-tight text-foreground md:text-4xl">
-        {title}
-      </h2>
-      <p className="mt-4 text-lg leading-8 text-muted-foreground">{desc}</p>
+        <ol className="mt-5 grid gap-3">
+          {[
+            { icon: BriefcaseBusiness, title: "Situation", desc: "Konteks singkat" },
+            { icon: Target, title: "Task", desc: "Tanggung jawabmu" },
+            { icon: Zap, title: "Action", desc: "Langkah yang kamu ambil" },
+            { icon: Star, title: "Result", desc: "Hasil yang terukur" },
+          ].map((item) => (
+            <li key={item.title} className="flex items-center gap-3 rounded-xl bg-gray-50 p-3">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-green-100 text-green-800">
+                <item.icon className="h-5 w-5" aria-hidden="true" />
+              </span>
+              <div>
+                <p className="font-bold text-gray-900">
+                  <span className="text-green-700">{item.title.charAt(0)}</span>
+                  {item.title.slice(1)}
+                </p>
+                <p className="text-sm text-gray-600">{item.desc}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+        <div className="mt-5 rounded-xl bg-green-800 p-4 text-white">
+          <p className="flex items-center gap-2 text-sm font-bold">
+            <Mic className="h-4 w-4 text-yellow-300" aria-hidden="true" /> Latihan terbaik
+          </p>
+          <p className="mt-1 text-sm leading-relaxed text-green-50">
+            Jawab dengan suara, rekam, lalu perbaiki bagian yang terlalu panjang atau belum punya
+            bukti konkret.
+          </p>
+        </div>
+      </div>
     </div>
   );
 }
 
 function TipsLoading() {
   return (
-    <main className="overflow-x-clip bg-background">
-      <section className="border-b border-border/70">
+    <div className="overflow-x-clip bg-white">
+      <section className="border-b border-gray-100">
         <div className="container-page py-16 md:py-24">
-          <div className="h-9 w-64 animate-pulse rounded-full bg-muted" />
-          <div className="mt-8 h-14 max-w-3xl animate-pulse rounded-lg bg-muted" />
-          <div className="mt-4 h-8 max-w-2xl animate-pulse rounded-lg bg-muted" />
+          <div className="h-9 w-64 animate-pulse rounded-full bg-gray-100" />
+          <div className="mt-8 h-14 max-w-3xl animate-pulse rounded-lg bg-gray-100" />
+          <div className="mt-4 h-8 max-w-2xl animate-pulse rounded-lg bg-gray-100" />
         </div>
       </section>
       <div className="container-page py-16">
@@ -538,6 +536,6 @@ function TipsLoading() {
           ))}
         </div>
       </div>
-    </main>
+    </div>
   );
 }
