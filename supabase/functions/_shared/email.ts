@@ -95,7 +95,7 @@ function parseFrom(from: string): { name: string; email: string } {
 export async function sendEmail(msg: EmailMessage): Promise<boolean> {
   const apiKey = Deno.env.get("BREVO_API_KEY");
   if (!apiKey) {
-    console.warn("sendEmail: BREVO_API_KEY belum diset, email dilewati");
+    console.error("sendEmail: BREVO_API_KEY belum diset, email TIDAK terkirim");
     return false;
   }
 
@@ -121,6 +121,7 @@ export async function sendEmail(msg: EmailMessage): Promise<boolean> {
       console.error(`sendEmail via Brevo gagal (${res.status}):`, (await res.text()).slice(0, 500));
       return false;
     }
+    console.log(`sendEmail: terkirim via Brevo (${res.status}) — "${msg.subject}"`);
     return true;
   } catch (e) {
     console.error("sendEmail via Brevo gagal:", e instanceof Error ? e.message : e);
@@ -316,16 +317,18 @@ export async function sendPaymentEmail(
   userId: string,
   kind: "pending" | "success",
   order: PaymentEmailOrder,
-): Promise<void> {
+): Promise<boolean> {
   try {
+    console.log(`sendPaymentEmail(${kind}): mulai untuk order ${order.order_id}`);
     const account = await getAccountEmail(admin, userId);
-    if (!account) return;
+    if (!account) return false;
     const content =
       kind === "pending"
         ? paymentPendingEmail(order, account.name)
         : paymentSuccessEmail(order, account.name);
-    await sendEmail({ to: account.email, ...content });
+    return await sendEmail({ to: account.email, ...content });
   } catch (e) {
     console.error(`sendPaymentEmail(${kind}) failed:`, e);
+    return false;
   }
 }

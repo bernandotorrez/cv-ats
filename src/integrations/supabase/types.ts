@@ -276,6 +276,7 @@ export type Database = {
           net_amount_idr: number | null;
           order_id: string;
           paid_at: string | null;
+          payment_email_sent_at: string | null;
           payment_link_url: string | null;
           payment_method: string | null;
           product_name: string;
@@ -301,6 +302,7 @@ export type Database = {
           net_amount_idr?: number | null;
           order_id: string;
           paid_at?: string | null;
+          payment_email_sent_at?: string | null;
           payment_link_url?: string | null;
           payment_method?: string | null;
           product_name: string;
@@ -326,6 +328,7 @@ export type Database = {
           net_amount_idr?: number | null;
           order_id?: string;
           paid_at?: string | null;
+          payment_email_sent_at?: string | null;
           payment_link_url?: string | null;
           payment_method?: string | null;
           product_name?: string;

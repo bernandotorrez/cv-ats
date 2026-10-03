@@ -48,6 +48,7 @@ const RETURN_ORIGINS = new Set([
 ]);
 
 const EXPIRES_IN_HOURS = 24;
+const EMAIL_RESEND_INTERVAL_MS = 30 * 60 * 1000;
 const MAX_ORDERS_PER_10_MIN = 10;
 const REUSE_MIN_REMAINING_MS = 15 * 60 * 1000;
 
@@ -91,7 +92,9 @@ Deno.serve(async (req: Request) => {
     // Pakai ulang order pending yang sama & masih lama berlakunya (hindari spam order)
     const { data: existing } = await admin
       .from("payment_orders")
-      .select("order_id, amount_idr, gateway_amount_idr, payment_link_url, expires_at")
+      .select(
+        "order_id, product_name, product_type, amount_idr, gateway_amount_idr, payment_link_url, expires_at, payment_email_sent_at",
+      )
       .eq("user_id", userId)
       .eq("status", "pending")
       .eq("product_type", product.type)
@@ -105,6 +108,19 @@ Deno.serve(async (req: Request) => {
       .maybeSingle();
 
     if (existing?.payment_link_url) {
+      // Kirim ulang detail pembayaran bila belum pernah terkirim / sudah >30 menit
+      const lastSent = existing.payment_email_sent_at
+        ? new Date(existing.payment_email_sent_at).getTime()
+        : 0;
+      if (Date.now() - lastSent > EMAIL_RESEND_INTERVAL_MS) {
+        runInBackground(
+          markEmailSent(
+            admin,
+            existing.order_id,
+            sendPaymentEmail(admin, userId, "pending", existing),
+          ),
+        );
+      }
       return json(req, {
         order_id: existing.order_id,
         amount: existing.gateway_amount_idr ?? existing.amount_idr,
@@ -233,15 +249,19 @@ Deno.serve(async (req: Request) => {
 
     // Email detail pembayaran + link bayar (tidak menahan/menggagalkan respons)
     runInBackground(
-      sendPaymentEmail(admin, userId, "pending", {
-        order_id: orderId,
-        product_name: product.name,
-        product_type: product.type,
-        amount_idr: product.amount,
-        gateway_amount_idr: chargedAmount,
-        payment_link_url: payment.payment_link_url,
-        expires_at: expiresAt,
-      }),
+      markEmailSent(
+        admin,
+        orderId,
+        sendPaymentEmail(admin, userId, "pending", {
+          order_id: orderId,
+          product_name: product.name,
+          product_type: product.type,
+          amount_idr: product.amount,
+          gateway_amount_idr: chargedAmount,
+          payment_link_url: payment.payment_link_url,
+          expires_at: expiresAt,
+        }),
+      ),
     );
 
     return json(req, {
@@ -260,6 +280,20 @@ Deno.serve(async (req: Request) => {
     return json(req, { error: "Terjadi kesalahan. Coba lagi." }, 500);
   }
 });
+
+/** Catat waktu email terkirim (hanya jika benar-benar terkirim). */
+async function markEmailSent(
+  admin: ReturnType<typeof getAdminClient>,
+  orderId: string,
+  sending: Promise<boolean>,
+) {
+  if (!(await sending)) return;
+  const { error } = await admin
+    .from("payment_orders")
+    .update({ payment_email_sent_at: new Date().toISOString() })
+    .eq("order_id", orderId);
+  if (error) console.error("markEmailSent failed:", error.message);
+}
 
 function json(req: Request, body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
