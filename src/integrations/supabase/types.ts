@@ -269,6 +269,7 @@ export type Database = {
           fulfilled_at: string | null;
           fulfillment_result: Json | null;
           gateway: string;
+          gateway_amount_idr: number | null;
           gateway_payment_id: string | null;
           id: string;
           last_event: string | null;
@@ -293,6 +294,7 @@ export type Database = {
           fulfilled_at?: string | null;
           fulfillment_result?: Json | null;
           gateway?: string;
+          gateway_amount_idr?: number | null;
           gateway_payment_id?: string | null;
           id?: string;
           last_event?: string | null;
@@ -317,6 +319,7 @@ export type Database = {
           fulfilled_at?: string | null;
           fulfillment_result?: Json | null;
           gateway?: string;
+          gateway_amount_idr?: number | null;
           gateway_payment_id?: string | null;
           id?: string;
           last_event?: string | null;

@@ -17,6 +17,7 @@ type Order = {
   product_type: string;
   product_name: string;
   amount_idr: number;
+  gateway_amount_idr: number | null;
   status: PaymentOrderStatus;
   payment_link_url: string | null;
   expires_at: string | null;
@@ -66,7 +67,7 @@ export function PaymentResult({
       const { data } = await supabase
         .from("payment_orders")
         .select(
-          "order_id, product_type, product_name, amount_idr, status, payment_link_url, expires_at",
+          "order_id, product_type, product_name, amount_idr, gateway_amount_idr, status, payment_link_url, expires_at",
         )
         .eq("order_id", orderId)
         .maybeSingle();
@@ -173,7 +174,9 @@ export function PaymentResult({
               </div>
               <div className="mt-2 flex justify-between gap-4">
                 <dt className="text-muted-foreground">Total</dt>
-                <dd className="font-medium">{formatIdr(order.amount_idr)}</dd>
+                <dd className="font-medium">
+                  {formatIdr(order.gateway_amount_idr ?? order.amount_idr)}
+                </dd>
               </div>
               <div className="mt-2 flex justify-between gap-4">
                 <dt className="text-muted-foreground">No. Order</dt>

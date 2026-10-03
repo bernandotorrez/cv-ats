@@ -35,9 +35,11 @@ export async function createPayment(
   });
   const json = (await res.json().catch(() => ({}))) as Partial<CreatePaymentResult> & {
     error?: string;
+    code?: string;
   };
   if (!res.ok || !json.payment_link_url) {
-    throw new Error(json.error || `Gagal membuat pembayaran (${res.status})`);
+    const message = json.error || `Gagal membuat pembayaran (${res.status})`;
+    throw new Error(json.code ? `${message} [${json.code}]` : message);
   }
   return json as CreatePaymentResult;
 }

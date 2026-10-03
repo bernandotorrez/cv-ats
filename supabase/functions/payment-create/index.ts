@@ -23,6 +23,18 @@ import { resolveProduct } from "../_shared/payment-products.ts";
 const SUMOPOD_API_URL =
   Deno.env.get("SUMOPOD_PAY_API_URL") || "https://api-pay.sumopod.com/api/v1/payments";
 const SITE_URL = (Deno.env.get("SITE_URL") || "https://cvpintar.web.id").replace(/\/+$/, "");
+// Host halaman bayar yang dipercaya (SumoPod memakai checkout.pymnt.app).
+// Tambahan bisa diset via secret SUMOPOD_PAY_LINK_HOSTS="host1,host2".
+const TRUSTED_PAYMENT_HOSTS = [
+  "sumopod.com",
+  "pymnt.app",
+  ...(Deno.env.get("SUMOPOD_PAY_LINK_HOSTS") || "")
+    .split(",")
+    .map((h) => h.trim().toLowerCase())
+    .filter(Boolean),
+];
+// Opsional: kode metode bayar (mis. "qris"). Kosong = halaman bayar SumoPod menampilkan metode yang tersedia.
+const PAYMENT_METHOD_CODE = Deno.env.get("SUMOPOD_PAY_METHOD") || "";
 
 // Origin yang boleh dipakai sebagai base redirect (selain SITE_URL)
 const RETURN_ORIGINS = new Set([
@@ -78,7 +90,7 @@ Deno.serve(async (req: Request) => {
     // Pakai ulang order pending yang sama & masih lama berlakunya (hindari spam order)
     const { data: existing } = await admin
       .from("payment_orders")
-      .select("order_id, amount_idr, payment_link_url, expires_at")
+      .select("order_id, amount_idr, gateway_amount_idr, payment_link_url, expires_at")
       .eq("user_id", userId)
       .eq("status", "pending")
       .eq("product_type", product.type)
@@ -94,7 +106,7 @@ Deno.serve(async (req: Request) => {
     if (existing?.payment_link_url) {
       return json(req, {
         order_id: existing.order_id,
-        amount: existing.amount_idr,
+        amount: existing.gateway_amount_idr ?? existing.amount_idr,
         payment_link_url: existing.payment_link_url,
         expires_at: existing.expires_at,
         reused: true,
@@ -108,7 +120,11 @@ Deno.serve(async (req: Request) => {
       .eq("user_id", userId)
       .gte("created_at", new Date(Date.now() - 10 * 60 * 1000).toISOString());
     if ((count ?? 0) >= MAX_ORDERS_PER_10_MIN) {
-      return json(req, { error: "Terlalu banyak permintaan pembayaran. Coba lagi beberapa menit lagi." }, 429);
+      return json(
+        req,
+        { error: "Terlalu banyak permintaan pembayaran. Coba lagi beberapa menit lagi." },
+        429,
+      );
     }
 
     const orderId = generateOrderId();
@@ -140,7 +156,7 @@ Deno.serve(async (req: Request) => {
           expires_in_hours: EXPIRES_IN_HOURS,
           success_return_url: `${returnBase}/payment/success?${query}`,
           cancel_return_url: `${returnBase}/payment/cancel?${query}`,
-          payment_method_type_code: "QRIS",
+          ...(PAYMENT_METHOD_CODE ? { payment_method_type_code: PAYMENT_METHOD_CODE } : {}),
         }),
         signal: AbortSignal.timeout(15000),
       });
@@ -151,26 +167,51 @@ Deno.serve(async (req: Request) => {
     }
 
     const rawText = await gatewayRes.text();
-    let payment: SumopodPaymentResponse = {};
+    let parsed: Record<string, unknown> = {};
     try {
-      payment = JSON.parse(rawText);
+      parsed = JSON.parse(rawText);
     } catch {
       // handled below
     }
+    // Terima respons datar maupun dibungkus { data: {...} }
+    const payment: SumopodPaymentResponse =
+      !parsed.payment_id && parsed.data && typeof parsed.data === "object"
+        ? (parsed.data as SumopodPaymentResponse)
+        : (parsed as SumopodPaymentResponse);
 
-    if (!gatewayRes.ok || !payment.payment_id || !isTrustedPaymentUrl(payment.payment_link_url)) {
-      await markCancelled(admin, orderId, `gateway_error_${gatewayRes.status}`);
-      console.error(`payment-create: gateway error (${gatewayRes.status}):`, rawText.slice(0, 500));
-      return json(req, { error: "Gagal membuat pembayaran. Coba lagi." }, 502);
-    }
+    // Biaya bisa ditanggung pembeli (amount = harga + fee, net_amount = harga)
+    // atau oleh merchant (amount = harga). Keduanya valid selama harga kita utuh.
+    const chargedAmount = payment.amount != null ? Number(payment.amount) : product.amount;
+    const netAmount = payment.net_amount != null ? Number(payment.net_amount) : null;
+    const amountOk =
+      chargedAmount >= product.amount &&
+      (chargedAmount === product.amount || netAmount === product.amount);
 
-    if (
-      (payment.order_id != null && payment.order_id !== orderId) ||
-      (payment.amount != null && Number(payment.amount) !== product.amount)
-    ) {
-      await markCancelled(admin, orderId, "gateway_response_mismatch");
-      console.error("payment-create: response mismatch", { orderId, payment });
-      return json(req, { error: "Gagal membuat pembayaran. Coba lagi." }, 502);
+    let failure: string | null = null;
+    if (!gatewayRes.ok) failure = `gateway_http_${gatewayRes.status}`;
+    else if (!payment.payment_id) failure = "gateway_missing_payment_id";
+    else if (!isTrustedPaymentUrl(payment.payment_link_url)) failure = "gateway_untrusted_link";
+    else if (payment.order_id != null && payment.order_id !== orderId)
+      failure = "gateway_order_mismatch";
+    else if (!amountOk) failure = "gateway_amount_mismatch";
+
+    if (failure) {
+      const gatewayMessage = extractGatewayMessage(parsed);
+      await markCancelled(
+        admin,
+        orderId,
+        gatewayMessage ? `${failure}: ${gatewayMessage}` : failure,
+      );
+      console.error(`payment-create: ${failure}`, rawText.slice(0, 1000));
+      return json(
+        req,
+        {
+          error: "Gagal membuat pembayaran. Coba lagi.",
+          code: failure,
+          ...(gatewayMessage && !gatewayRes.ok ? { detail: gatewayMessage } : {}),
+        },
+        502,
+      );
     }
 
     const expiresAt =
@@ -180,6 +221,7 @@ Deno.serve(async (req: Request) => {
       .from("payment_orders")
       .update({
         gateway_payment_id: payment.payment_id,
+        gateway_amount_idr: chargedAmount,
         payment_link_url: payment.payment_link_url,
         fee_idr: typeof payment.fee === "number" ? payment.fee : null,
         net_amount_idr: typeof payment.net_amount === "number" ? payment.net_amount : null,
@@ -190,7 +232,7 @@ Deno.serve(async (req: Request) => {
 
     return json(req, {
       order_id: orderId,
-      amount: product.amount,
+      amount: chargedAmount,
       payment_link_url: payment.payment_link_url,
       expires_at: expiresAt,
       reused: false,
@@ -228,11 +270,26 @@ function getReturnBase(req: Request): string {
   return RETURN_ORIGINS.has(origin) ? origin : SITE_URL;
 }
 
+function extractGatewayMessage(body: Record<string, unknown>): string {
+  const candidates = [
+    body.message,
+    body.error,
+    body.detail,
+    (body.error as Record<string, unknown>)?.message,
+  ];
+  const msg = candidates.find((v) => typeof v === "string" && v.trim());
+  return typeof msg === "string" ? msg.slice(0, 200) : "";
+}
+
 function isTrustedPaymentUrl(url: unknown): url is string {
   if (typeof url !== "string") return false;
   try {
     const u = new URL(url);
-    return u.protocol === "https:" && (u.hostname === "sumopod.com" || u.hostname.endsWith(".sumopod.com"));
+    const host = u.hostname.toLowerCase();
+    return (
+      u.protocol === "https:" &&
+      TRUSTED_PAYMENT_HOSTS.some((h) => host === h || host.endsWith(`.${h}`))
+    );
   } catch {
     return false;
   }
