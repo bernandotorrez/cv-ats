@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton-loading";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
+import type { TryoutRpcClient } from "@/lib/tryout-types";
 import {
   CreditBalance,
   AttemptHistoryList,
@@ -78,6 +79,7 @@ function TryoutDashboardPage() {
   const [examSets, setExamSets] = useState<ExamSetRow[]>([]);
   const [attempts, setAttempts] = useState<AttemptRow[]>([]);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [leaderboardLocked, setLeaderboardLocked] = useState(false);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -135,13 +137,23 @@ function TryoutDashboardPage() {
       .limit(10);
     setAttempts((attemptsData as AttemptRow[]) || []);
 
-    // Fetch leaderboard (global top 10)
-    const { data: lbData } = await supabase
-      .from("tryout_leaderboard")
-      .select("*")
-      .order("ranking", { ascending: true })
-      .limit(10);
-    setLeaderboard((lbData as unknown as LeaderboardEntry[]) || []);
+    // Fetch leaderboard (global top 10) via RPC — tanpa UUID user, cek entitlement
+    const { data: lbData, error: lbError } = await (supabase as unknown as TryoutRpcClient).rpc(
+      "get_tryout_leaderboard",
+      {
+        p_exam_set_id: null,
+        p_limit: 10,
+      },
+    );
+    if (lbError) {
+      console.warn("Leaderboard error:", lbError.message);
+      setLeaderboard([]);
+      setLeaderboardLocked(false);
+    } else {
+      const lb = (lbData || {}) as { entitled?: boolean; entries?: LeaderboardEntry[] };
+      setLeaderboardLocked(lb.entitled === false);
+      setLeaderboard(lb.entries || []);
+    }
 
     setLoading(false);
   }
@@ -170,8 +182,8 @@ function TryoutDashboardPage() {
               Halo, {user?.user_metadata?.full_name?.split(" ")[0] || "Pejuang SKD"}! 👋
             </h1>
             <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
-              Simulasi ujian SKD yang realistis. Mulai tryout, cek skor, dan
-              bersaing di leaderboard untuk persiapan maksimal.
+              Simulasi ujian SKD yang realistis. Mulai tryout, cek skor, dan bersaing di leaderboard
+              untuk persiapan maksimal.
             </p>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row lg:flex-col lg:justify-end xl:flex-row">
@@ -180,7 +192,11 @@ function TryoutDashboardPage() {
                 Info Lengkap <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
-            <Button asChild size="sm" className="h-10 gap-2 rounded-xl bg-gradient-to-r from-primary to-primary/80 px-5 text-primary-foreground shadow-md transition-all hover:scale-[1.02] hover:from-primary/90 hover:to-primary">
+            <Button
+              asChild
+              size="sm"
+              className="h-10 gap-2 rounded-xl bg-gradient-to-r from-primary to-primary/80 px-5 text-primary-foreground shadow-md transition-all hover:scale-[1.02] hover:from-primary/90 hover:to-primary"
+            >
               <Link to={"/tryout/beli" as never}>
                 <Plus className="h-4 w-4" /> Beli Kredit
               </Link>
@@ -246,7 +262,8 @@ function TryoutDashboardPage() {
                         {es.name}
                       </h3>
                       <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
-                        {es.description || `${es.total_questions} soal · ${es.duration_minutes} menit`}
+                        {es.description ||
+                          `${es.total_questions} soal · ${es.duration_minutes} menit`}
                       </p>
                       <div className="mt-4 flex flex-col items-start gap-2.5 sm:flex-row sm:items-center sm:justify-between">
                         <p className="text-[10px] text-muted-foreground/70 leading-tight">
@@ -255,7 +272,12 @@ function TryoutDashboardPage() {
                         <Button
                           size="sm"
                           disabled={!hasCredits && !lastAttempt?.id}
-                          onClick={() => navigate({ to: "/tryout/$examId" as never, params: { examId: es.id } as never })}
+                          onClick={() =>
+                            navigate({
+                              to: "/tryout/$examId" as never,
+                              params: { examId: es.id } as never,
+                            })
+                          }
                           className="gap-1.5 w-full sm:w-auto"
                         >
                           Lihat Detail
@@ -315,9 +337,9 @@ function TryoutDashboardPage() {
             </div>
             <LeaderboardTable
               entries={leaderboard}
-              currentUserId={user?.id}
               loading={loading}
               limit={5}
+              locked={leaderboardLocked}
             />
           </section>
         </aside>

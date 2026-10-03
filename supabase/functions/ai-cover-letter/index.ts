@@ -4,17 +4,23 @@
  */
 import {
   aiComplete,
-  checkAndTrackQuota,
   corsResponse,
   errorResponse,
   getAdminClient,
   getUserId,
   getLanguageInstruction,
+  reserveQuota,
   type CvUiLang,
 } from "../_shared/ai-common.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 import { checkRateLimit, createRateLimitedResponse } from "../_shared/rate-limit.ts";
-
+import {
+  LIMITS,
+  limitJson,
+  limitText,
+  readJsonBody,
+  ValidationError,
+} from "../_shared/validation.ts";
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders(req) });
@@ -26,7 +32,11 @@ Deno.serve(async (req: Request) => {
     const rateLimitKey = `ai-cover-letter:${userId}`;
     const rl = checkRateLimit(rateLimitKey, 30, 60 * 1000);
     if (!rl.allowed) {
-      return createRateLimitedResponse(rl, JSON.stringify({ error: "Terlalu banyak request. Silakan coba lagi nanti." }), corsHeaders(req));
+      return createRateLimitedResponse(
+        rl,
+        JSON.stringify({ error: "Terlalu banyak request. Silakan coba lagi nanti." }),
+        corsHeaders(req),
+      );
     }
     const admin = getAdminClient();
 
@@ -42,7 +52,8 @@ Deno.serve(async (req: Request) => {
     if (!enabled) {
       return corsResponse(
         {
-          error: "Fitur Cover Letter AI hanya tersedia untuk paket Starter ke atas. Silakan upgrade.",
+          error:
+            "Fitur Cover Letter AI hanya tersedia untuk paket Starter ke atas. Silakan upgrade.",
           requiresUpgrade: true,
           upgradeUrl: "/harga",
         },
@@ -51,12 +62,17 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    const { cvId, cvData, jobDescription, companyName, positionName, language, jobSource } =
-      await req.json();
-    const lang: CvUiLang = language === "en" ? "en" : "id";
+    const body = await readJsonBody(req, 300_000);
+    const lang: CvUiLang = body.language === "en" ? "en" : "id";
+    const cvId = limitText(body.cvId, 100, "cvId");
+    const cvData = limitJson(body.cvData, LIMITS.json, "cvData");
+    const jobDescription = limitText(body.jobDescription, LIMITS.jobDescription, "jobDescription");
+    const companyName = limitText(body.companyName, LIMITS.shortText, "companyName");
+    const positionName = limitText(body.positionName, LIMITS.shortText, "positionName");
+    const jobSource = limitText(body.jobSource, LIMITS.shortText, "jobSource");
 
     if (!cvId || !cvData || !jobDescription)
-      throw new Error("cvId, cvData, dan jobDescription diperlukan");
+      throw new ValidationError("cvId, cvData, dan jobDescription diperlukan");
 
     const cvText = JSON.stringify(cvData, null, 2);
 
@@ -81,13 +97,21 @@ PEDOMAN:
 
 OUTPUT: HANYA teks surat polos (plain text) tanpa format markdown seperti **, tanpa kata pembuka/penutup tambahan.`;
 
-    const result = await aiComplete(
-      [{ role: "user", content: prompt }],
-      { temperature: 0.7, maxTokens: 2000 },
-      lang,
-    );
+    // H3: reservasi kuota SEBELUM memanggil AI (estimasi token = maxTokens)
+    const MAX_TOKENS = 2000;
+    const reservation = await reserveQuota(admin, userId, "cover_letter", MAX_TOKENS);
 
-    await checkAndTrackQuota(admin, userId, "cover_letter", result.length);
+    let result: string;
+    try {
+      result = await aiComplete(
+        [{ role: "user", content: prompt }],
+        { temperature: 0.7, maxTokens: MAX_TOKENS },
+        lang,
+      );
+    } catch (e) {
+      await reservation.release();
+      throw e;
+    }
 
     return corsResponse({ coverLetter: result.trim() }, 200, req);
   } catch (e) {

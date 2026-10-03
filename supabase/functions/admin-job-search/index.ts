@@ -272,7 +272,10 @@ Deno.serve(async (req: Request) => {
   } catch (error) {
     const message = error instanceof Error ? error.message : "Internal server error";
     log.error("unhandled_exception", { message, total_ms: log.elapsed() });
-    return json(req, { error: message }, message.startsWith("Unauthorized") ? 401 : 500);
+    if (message.startsWith("Unauthorized")) {
+      return json(req, { error: "Unauthorized" }, 401);
+    }
+    return json(req, { error: "Internal server error" }, 500);
   }
 });
 
@@ -1723,7 +1726,7 @@ function cleanText(value: unknown, maxLength: number) {
  */
 function cleanJobTitle(value: unknown) {
   return (
-    String(value || "")
+    stripAngleBrackets(String(value || ""))
       .replace(/\s+/g, " ")
       .trim()
       // Hapus timestamp relatif di awal (misal: "2 hari yang lalu Backend Developer")
@@ -1740,7 +1743,7 @@ function cleanJobTitle(value: unknown) {
 }
 
 function cleanJobText(value: unknown, maxLength: number) {
-  return String(value || "")
+  return stripAngleBrackets(String(value || ""))
     .replace(/\s+/g, " ")
     .trim()
     .replace(/^\d+\s+(?:menit|jam|hari|minggu|bulan|tahun)\s+yang\s+lalu\s*/gi, "")
@@ -1802,7 +1805,7 @@ function cleanContent(value: unknown, maxLength: number) {
 }
 
 function cleanListText(value: unknown, maxLength: number) {
-  return decodeHtmlEntities(String(value || ""))
+  return stripAngleBrackets(decodeHtmlEntities(String(value || "")))
     .replace(/\r/g, "\n")
     .replace(/[ \t]+/g, " ")
     .replace(/\n{3,}/g, "\n\n")
@@ -1833,17 +1836,53 @@ function decodeHtmlEntities(value: string) {
     .replace(/&#39;/g, "'");
 }
 
+/**
+ * SECURITY (defense in depth): scraped text is rendered on public job pages
+ * (incl. JSON-LD). decodeHtmlEntities turns "&lt;" back into "<", so strip
+ * angle brackets from every stored text field.
+ */
+function stripAngleBrackets(value: string) {
+  return value.replace(/[<>]/g, " ");
+}
+
 function clampNumber(value: number, min: number, max: number) {
   if (!Number.isFinite(value)) return min;
   return Math.min(Math.max(Math.floor(value), min), max);
 }
 
+/**
+ * Cron auth: compare the x-cron-secret header with JOB_SEARCH_CRON_SECRET
+ * (edge function secret). Falls back to the Vault RPC (service_role only) when
+ * the env var is not configured. Constant-time comparison; fails closed when
+ * either side is missing or shorter than 16 characters.
+ */
 async function isValidCronRequest(req: Request, admin: ReturnType<typeof getAdminClient>) {
   const providedSecret = req.headers.get("x-cron-secret");
   if (!providedSecret) return false;
-  const { data, error } = await admin.rpc("get_job_search_cron_secret");
-  if (error || !data) return false;
-  return providedSecret === data;
+
+  let expectedSecret = Deno.env.get("JOB_SEARCH_CRON_SECRET") || "";
+  if (!expectedSecret) {
+    const { data, error } = await admin.rpc("get_job_search_cron_secret");
+    if (error || typeof data !== "string") return false;
+    expectedSecret = data;
+  }
+  if (expectedSecret.length < 16) return false;
+
+  return await timingSafeEqualStrings(providedSecret, expectedSecret);
+}
+
+/** Constant-time string comparison (hash both sides so length is not leaked). */
+async function timingSafeEqualStrings(a: string, b: string) {
+  const enc = new TextEncoder();
+  const [ha, hb] = await Promise.all([
+    crypto.subtle.digest("SHA-256", enc.encode(a)),
+    crypto.subtle.digest("SHA-256", enc.encode(b)),
+  ]);
+  const va = new Uint8Array(ha);
+  const vb = new Uint8Array(hb);
+  let diff = 0;
+  for (let i = 0; i < va.length; i++) diff |= va[i] ^ vb[i];
+  return diff === 0;
 }
 
 function json(req: Request, body: unknown, status = 200) {

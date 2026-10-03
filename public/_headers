@@ -1,11 +1,14 @@
 # Cloudflare Pages / Workers static asset headers
-# Applied to all static files served from /public
+# Applied to all static files served from /public.
+# NOTE: Content-Security-Policy is set only by src/lib/security-headers.ts (via
+# src/server.ts) on SSR responses — do not add a second/looser CSP here.
+# Keep these values in sync with SECURITY_HEADERS and vercel.json.
 
 /*
   X-Frame-Options: DENY
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
-  Permissions-Policy: camera=(), microphone=(self), geolocation=()
+  Permissions-Policy: camera=(), microphone=(self), geolocation=(), interest-cohort=()
   Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
 
 # Font files — allow CORS

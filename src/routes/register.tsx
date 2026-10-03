@@ -26,49 +26,22 @@ const referralCodeSchema = z
   .max(20);
 
 /**
- * Safely track referral signup with validation and rate limiting
- * SECURITY: Validates referral code format before sending to server
+ * Ambil kode referral dari query string (?ref=...) jika formatnya valid.
+ * SECURITY: atribusi referral dilakukan di server (trigger signup membaca
+ * raw_user_meta_data.referral_code), bukan lewat RPC dari client — sehingga
+ * tetap berjalan saat konfirmasi email aktif dan tidak bisa dipakai untuk
+ * mengatribusikan user lain.
  */
-async function trackReferralSafely(
-  code: string,
-  userId: string,
-): Promise<{ success: boolean; error?: string }> {
-  // Step 1: Validate referral code format (client-side validation)
-  const validation = referralCodeSchema.safeParse(code);
+function getValidReferralCode(): string | undefined {
+  if (typeof window === "undefined") return undefined;
+  const refCode = new URLSearchParams(window.location.search).get("ref");
+  if (!refCode) return undefined;
+  const validation = referralCodeSchema.safeParse(refCode);
   if (!validation.success) {
-    console.warn("[Referral] Invalid referral code format rejected:", code);
-    return { success: false, error: "Invalid code format" };
+    console.warn("[Referral] Invalid referral code format rejected");
+    return undefined;
   }
-
-  const validatedCode = validation.data;
-
-  // Step 2: Validate userId format (defense in depth)
-  const userIdRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  if (!userIdRegex.test(userId)) {
-    console.error("[Referral] Invalid userId format:", userId);
-    return { success: false, error: "Invalid user ID" };
-  }
-
-  // Step 3: Track via RPC with validated inputs
-  try {
-    const { error } = await (supabase as any).rpc("track_referral_signup", {
-      p_code: validatedCode,
-      p_user_id: userId,
-    });
-
-    if (error) {
-      // Log error but don't fail registration
-      console.error("[Referral] Tracking failed:", error.message);
-      return { success: false, error: error.message };
-    }
-
-    console.log("[Referral] Successfully tracked for user:", userId.slice(0, 8));
-    return { success: true };
-  } catch (err) {
-    // Network or unexpected errors - log but don't fail registration
-    console.error("[Referral] Unexpected error:", err);
-    return { success: false, error: "Failed to track referral" };
-  }
+  return validation.data;
 }
 
 const schema = z.object({
@@ -166,13 +139,17 @@ function RegisterPage() {
     setCaptchaError(null);
     setLoading(true);
 
-    const { data, error } = await supabase.auth.signUp({
+    const referralCode = getValidReferralCode();
+    const { error } = await supabase.auth.signUp({
       email: parsed.data.email,
       password: parsed.data.password,
       options: {
         captchaToken,
         emailRedirectTo: `${window.location.origin}/verify-email?confirmed=true`,
-        data: { full_name: parsed.data.fullName },
+        data: {
+          full_name: parsed.data.fullName,
+          ...(referralCode ? { referral_code: referralCode } : {}),
+        },
       },
     });
 
@@ -188,18 +165,6 @@ function RegisterPage() {
         toast.error(error.message);
       }
       return;
-    }
-
-    // Track referral from URL param with VALIDATION
-    const refCode = new URLSearchParams(window.location.search).get("ref");
-    if (refCode && data?.user?.id) {
-      // Fire and forget - don't block the flow for referral tracking
-      trackReferralSafely(refCode, data.user.id).then(({ success, error }) => {
-        if (success) {
-          console.log("[Referral] Signup tracked successfully");
-        }
-        // Error is already logged in the function, no need to show toast
-      });
     }
 
     setCaptchaToken(null);

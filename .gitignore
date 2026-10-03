@@ -70,3 +70,6 @@ dist-ssr
 *.sln
 *.sw?
 .freebuff/
+
+# Supabase CLI local state (project ref, pooler URL, versions)
+supabase/.temp/

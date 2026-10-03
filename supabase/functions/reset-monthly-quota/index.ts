@@ -19,11 +19,17 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    // Verify cron secret for security
-    const cronSecret = req.headers.get("x-cron-secret");
-    const expectedSecret = Deno.env.get("CRON_SECRET");
-    
-    if (!cronSecret || cronSecret !== expectedSecret) {
+    // Verify cron secret (constant-time). This function is invoked by pg_cron via
+    // pg_net without a JWT (verify_jwt = false in config.toml), so this check is
+    // the only authentication — it fails closed if CRON_SECRET is unset/short.
+    const cronSecret = req.headers.get("x-cron-secret") || "";
+    const expectedSecret = Deno.env.get("CRON_SECRET") || "";
+
+    if (
+      !cronSecret ||
+      expectedSecret.length < 16 ||
+      !(await timingSafeEqualStrings(cronSecret, expectedSecret))
+    ) {
       return json(req, { error: "Unauthorized" }, 401);
     }
 
@@ -116,9 +122,9 @@ Deno.serve(async (req: Request) => {
       results,
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Internal server error";
+    const message = error instanceof Error ? error.message : String(error);
     console.error("reset-monthly-quota error:", message);
-    return json(req, { error: message }, 500);
+    return json(req, { error: "Internal server error" }, 500);
   }
 });
 
@@ -133,6 +139,20 @@ async function getFreeTierId(admin: ReturnType<typeof getAdminClient>): Promise<
     throw new Error("Free tier not found in subscription_tiers");
   }
   return data.id;
+}
+
+/** Constant-time string comparison (hash both sides so length is not leaked). */
+async function timingSafeEqualStrings(a: string, b: string) {
+  const enc = new TextEncoder();
+  const [ha, hb] = await Promise.all([
+    crypto.subtle.digest("SHA-256", enc.encode(a)),
+    crypto.subtle.digest("SHA-256", enc.encode(b)),
+  ]);
+  const va = new Uint8Array(ha);
+  const vb = new Uint8Array(hb);
+  let diff = 0;
+  for (let i = 0; i < va.length; i++) diff |= va[i] ^ vb[i];
+  return diff === 0;
 }
 
 function json(req: Request, body: unknown, status = 200) {

@@ -6,19 +6,25 @@
 
 // CSP directives tailored for cvpintar.web.id
 //
-// SECURITY NOTE: These directives contain 'unsafe-inline' and 'unsafe-eval' for the following reasons:
-// - 'unsafe-inline': Required by Tailwind CSS and inline styles used by shadcn/ui components
-// - 'unsafe-eval': Required by the template system for dynamic component compilation
-// - AI Gateway: Required for AI feature connectivity
-//
-// If a future refactor can eliminate these, security posture would be significantly improved.
+// SECURITY NOTES:
+// - 'unsafe-eval' removed: nothing in the client bundle needs it. pdfjs-dist 5.x
+//   contains no eval/new Function; bluebird (via mammoth) only uses
+//   `new Function` outside the browser (canEvaluate = no navigator).
+// - 'unsafe-inline' is still required in script-src: TanStack Start injects
+//   inline hydration/dehydration scripts during SSR, and the gtag bootstrap in
+//   __root.tsx is inline. Moving to a per-request nonce (router `ssr.nonce` +
+//   'strict-dynamic') is the follow-up; JSON-LD output is escaped (seo.ts) to
+//   close the known injection path in the meantime.
+// - style-src keeps 'unsafe-inline' for Tailwind/shadcn inline styles.
+// - The frontend never calls the AI gateway directly (all AI goes through
+//   Supabase edge functions), so it is not in connect-src.
 const CSP_DIRECTIVES = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.hcaptcha.com https://*.hcaptcha.com https://va.vercel-scripts.com https://www.googletagmanager.com https://static.cloudflareinsights.com https://benixai.web.id https://www.benixai.web.id https://*.benixai.web.id",
+  "script-src 'self' 'unsafe-inline' https://js.hcaptcha.com https://*.hcaptcha.com https://va.vercel-scripts.com https://www.googletagmanager.com https://static.cloudflareinsights.com https://benixai.web.id https://www.benixai.web.id https://*.benixai.web.id",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.hcaptcha.com",
   "font-src 'self' https://fonts.gstatic.com",
   "img-src 'self' data: blob: https://*.supabase.co https://lh3.googleusercontent.com https://*.hcaptcha.com https://www.google-analytics.com https://*.google-analytics.com https://benixai.web.id https://www.benixai.web.id https://*.benixai.web.id",
-  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://ai.sumopod.com https://*.hcaptcha.com https://analytics.google.com https://www.google-analytics.com https://*.google-analytics.com https://www.googletagmanager.com https://cloudflareinsights.com https://*.cloudflareinsights.com https://csp-reporting.cloudflare.com https://benixai.web.id https://www.benixai.web.id https://*.benixai.web.id wss://benixai.web.id wss://www.benixai.web.id wss://*.benixai.web.id",
+  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.hcaptcha.com https://analytics.google.com https://www.google-analytics.com https://*.google-analytics.com https://www.googletagmanager.com https://cloudflareinsights.com https://*.cloudflareinsights.com https://csp-reporting.cloudflare.com https://benixai.web.id https://www.benixai.web.id https://*.benixai.web.id wss://benixai.web.id wss://www.benixai.web.id wss://*.benixai.web.id",
   "frame-src https://*.hcaptcha.com https://newassets.hcaptcha.com https://benixai.web.id https://www.benixai.web.id https://*.benixai.web.id",
   "object-src 'none'",
   "base-uri 'self'",

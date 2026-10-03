@@ -3,110 +3,223 @@
  *
  * POST /ai-interview - Generate interview questions or evaluate answers
  *
- * Body: { action: "generate" | "evaluate", position, level, industry?, questions?, answers?, cv?: object }
+ * Body: { action: "generate" | "evaluate" | "save_session", position, level, industry?, questions?, answers?, language? }
  */
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders } from "../_shared/cors.ts";
 import {
   aiComplete,
-  checkAndTrackQuota,
+  corsResponse,
+  errorResponse,
   getAdminClient,
+  getUserId,
+  reserveQuota,
   type AiMessage,
   getLanguageInstruction,
   type CvUiLang,
 } from "../_shared/ai-common.ts";
-
-const supabase = createClient(
-  Deno.env.get("SUPABASE_URL") ?? "",
-  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-);
-
 import { checkRateLimit, createRateLimitedResponse } from "../_shared/rate-limit.ts";
+import {
+  LIMITS,
+  limitJson,
+  limitText,
+  readJsonBody,
+  ValidationError,
+} from "../_shared/validation.ts";
+
+// ─── Input limits (M2) ─────────────────────────────────────────────
+
+const MAX_QUESTIONS = 20;
+const MAX_QUESTION_CHARS = 1_000;
+const MAX_ANSWER_CHARS = 5_000;
+const MAX_FEEDBACK_CHARS = 20_000;
+
+type Question = { id: string; question: string };
+type Answer = { id: string; answer: string };
+
+function readContext(body: Record<string, unknown>) {
+  const position = limitText(body.position, LIMITS.shortText, "position").trim();
+  const level = limitText(body.level, 100, "level").trim();
+  const industry = limitText(body.industry, LIMITS.shortText, "industry").trim() || undefined;
+  return { position, level, industry };
+}
+
+function readQuestions(value: unknown): Question[] {
+  if (value === undefined || value === null) return [];
+  if (!Array.isArray(value) || value.length > MAX_QUESTIONS) {
+    throw new ValidationError("Input questions tidak valid.");
+  }
+  return value.map((q) => {
+    if (!q || typeof q !== "object") throw new ValidationError("Input questions tidak valid.");
+    const item = q as Record<string, unknown>;
+    return {
+      id: limitText(String(item.id ?? ""), 50, "questions.id"),
+      question: limitText(item.question, MAX_QUESTION_CHARS, "questions.question"),
+    };
+  });
+}
+
+function readAnswers(value: unknown): Answer[] {
+  if (value === undefined || value === null) return [];
+  if (!Array.isArray(value) || value.length > MAX_QUESTIONS) {
+    throw new ValidationError("Input answers tidak valid.");
+  }
+  return value.map((a) => {
+    if (!a || typeof a !== "object") throw new ValidationError("Input answers tidak valid.");
+    const item = a as Record<string, unknown>;
+    return {
+      id: limitText(String(item.id ?? ""), 50, "answers.id"),
+      answer: limitText(item.answer, MAX_ANSWER_CHARS, "answers.answer"),
+    };
+  });
+}
+
+/**
+ * L6: hanya kolom interview_sessions yang boleh diisi user (allow-list eksplisit).
+ * Kolom id, user_id, created_at tidak pernah diambil dari body.
+ */
+function readSessionFields(body: Record<string, unknown>): Record<string, unknown> {
+  const fields: Record<string, unknown> = {};
+  if (body.position !== undefined) {
+    fields.position = limitText(body.position, LIMITS.shortText, "position");
+  }
+  if (body.level !== undefined) fields.level = limitText(body.level, 100, "level");
+  if (body.industry !== undefined) {
+    fields.industry =
+      body.industry === null ? null : limitText(body.industry, LIMITS.shortText, "industry");
+  }
+  if (body.questions !== undefined) fields.questions = readQuestions(body.questions);
+  if (body.answers !== undefined) fields.answers = readAnswers(body.answers);
+  if (body.scores !== undefined) {
+    if (body.scores !== null && !Array.isArray(body.scores)) {
+      throw new ValidationError("Input scores tidak valid.");
+    }
+    fields.scores = limitJson(body.scores ?? [], 50_000, "scores");
+  }
+  if (body.overall_score !== undefined) {
+    const score = body.overall_score;
+    if (score !== null && (typeof score !== "number" || !Number.isFinite(score))) {
+      throw new ValidationError("Input overall_score tidak valid.");
+    }
+    fields.overall_score = score === null ? null : Math.max(0, Math.min(100, Math.round(score)));
+  }
+  if (body.feedback !== undefined) {
+    fields.feedback =
+      body.feedback === null ? null : limitText(body.feedback, MAX_FEEDBACK_CHARS, "feedback");
+  }
+  return fields;
+}
 
 Deno.serve(async (req: Request) => {
-  const ip = req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || "unknown";
-
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders(req), status: 204 });
   }
 
   try {
-    const token = req.headers.get("Authorization")?.replace("Bearer ", "");
-    if (!token) throw new Error("Unauthorized");
+    const userId = await getUserId(req);
 
-    const {
-      data: { user },
-      error: authErr,
-    } = await supabase.auth.getUser(token);
-    if (authErr || !user) throw new Error("Unauthorized");
-
-    const rateLimitKey = `ai-interview:${user.id}`;
+    const rateLimitKey = `ai-interview:${userId}`;
     const rl = checkRateLimit(rateLimitKey, 30, 60 * 1000);
     if (!rl.allowed) {
-      return createRateLimitedResponse(rl, JSON.stringify({ error: "Terlalu banyak request. Coba lagi nanti." }), corsHeaders(req));
+      return createRateLimitedResponse(
+        rl,
+        JSON.stringify({ error: "Terlalu banyak request. Coba lagi nanti." }),
+        corsHeaders(req),
+      );
     }
-
-    // Check feature flag
-    const { data: sub } = await (supabase as any)
-      .from("user_subscriptions")
-      .select("subscription_tiers!inner(slug, enable_interview_simulator)")
-      .eq("user_id", user.id)
-      .eq("status", "active")
-      .single();
-
-    if (!sub?.subscription_tiers?.enable_interview_simulator) {
-      return new Response(JSON.stringify({ error: "Fitur ini hanya untuk pengguna Pro." }), {
-        status: 403,
-        headers: { ...corsHeaders(req), "Content-Type": "application/json" },
-      });
-    }
-
-    const body = await req.json();
-    const { action, position, level, industry, questions, answers, cv, language } = body;
-    const lang: CvUiLang = language === "en" ? "en" : "id";
 
     const admin = getAdminClient();
 
-    if (action === "generate") {
-      await checkAndTrackQuota(admin, user.id, "interview_simulator", 400);
-      const result = await generateQuestions(position, level, industry, lang);
-      return new Response(JSON.stringify(result), {
-        headers: { ...corsHeaders(req), "Content-Type": "application/json" },
-      });
+    // Check feature flag
+    const { data: sub } = await admin
+      .from("user_subscriptions")
+      .select("subscription_tiers!inner(slug, enable_interview_simulator)")
+      .eq("user_id", userId)
+      .eq("status", "active")
+      .maybeSingle();
+
+    const tier = (sub as { subscription_tiers?: { enable_interview_simulator?: boolean } } | null)
+      ?.subscription_tiers;
+    if (!tier?.enable_interview_simulator) {
+      return corsResponse({ error: "Fitur ini hanya untuk pengguna Pro." }, 403, req);
     }
 
-    if (action === "evaluate") {
-      await checkAndTrackQuota(admin, user.id, "interview_simulator", 600);
-      const result = await evaluateAnswers(position, level, industry, questions, answers, lang);
-      return new Response(JSON.stringify(result), {
-        headers: { ...corsHeaders(req), "Content-Type": "application/json" },
-      });
+    const body = await readJsonBody(req, 200_000);
+    const action = body.action;
+    const lang: CvUiLang = body.language === "en" ? "en" : "id";
+
+    if (action === "generate" || action === "evaluate") {
+      const { position, level, industry } = readContext(body);
+      if (!position || !level) throw new ValidationError("position dan level diperlukan");
+
+      const questions = action === "evaluate" ? readQuestions(body.questions) : [];
+      const answers = action === "evaluate" ? readAnswers(body.answers) : [];
+      if (action === "evaluate" && questions.length === 0) {
+        throw new ValidationError("questions diperlukan");
+      }
+
+      // H3: reservasi kuota SEBELUM memanggil AI; dikembalikan jika AI/parsing gagal
+      const reservation = await reserveQuota(
+        admin,
+        userId,
+        "interview_simulator",
+        action === "generate" ? 400 : 600,
+      );
+
+      let result: unknown;
+      try {
+        result =
+          action === "generate"
+            ? await generateQuestions(position, level, industry, lang)
+            : await evaluateAnswers(position, level, industry, questions, answers, lang);
+      } catch (e) {
+        await reservation.release();
+        throw e;
+      }
+      return corsResponse(result, 200, req);
     }
 
     if (action === "save_session") {
-      const { sessionId, ...sessionData } = body;
+      const sessionId = limitText(body.sessionId, 100, "sessionId");
+      const fields = readSessionFields(body);
+
       if (sessionId) {
-        await (supabase as any)
+        if (Object.keys(fields).length === 0) {
+          throw new ValidationError("Tidak ada data sesi untuk disimpan.");
+        }
+        const { data: updated, error } = await admin
           .from("interview_sessions")
-          .update({ ...sessionData })
+          .update(fields)
           .eq("id", sessionId)
-          .eq("user_id", user.id);
-      } else {
-        await (supabase as any)
-          .from("interview_sessions")
-          .insert({ ...sessionData, user_id: user.id });
+          .eq("user_id", userId)
+          .select("id");
+        if (error) {
+          console.error("ai-interview save_session update failed:", error);
+          throw new Error("Gagal menyimpan sesi wawancara.");
+        }
+        if (!updated || updated.length === 0) {
+          return corsResponse({ error: "Sesi wawancara tidak ditemukan." }, 404, req);
+        }
+        return corsResponse({ success: true, id: sessionId }, 200, req);
       }
-      return new Response(JSON.stringify({ success: true }), {
-        headers: { ...corsHeaders(req), "Content-Type": "application/json" },
-      });
+
+      if (!fields.position || !fields.level) {
+        throw new ValidationError("position dan level diperlukan");
+      }
+      const { data: inserted, error } = await admin
+        .from("interview_sessions")
+        .insert({ ...fields, user_id: userId })
+        .select("id")
+        .single();
+      if (error) {
+        console.error("ai-interview save_session insert failed:", error);
+        throw new Error("Gagal menyimpan sesi wawancara.");
+      }
+      return corsResponse({ success: true, id: inserted?.id }, 200, req);
     }
 
-    throw new Error("Invalid action");
-  } catch (err: any) {
-    return new Response(JSON.stringify({ error: err.message }), {
-      status: err.message === "Unauthorized" ? 401 : 400,
-      headers: { ...corsHeaders(req), "Content-Type": "application/json" },
-    });
+    throw new ValidationError("Invalid action");
+  } catch (err) {
+    return errorResponse(err, req);
   }
 });
 
@@ -161,7 +274,7 @@ ${languageInstruction}`,
   ];
 
   const result = await aiComplete(messages, { temperature: 0.8, jsonMode: true }, lang);
-  const parsed = JSON.parse(result);
+  const parsed = parseAiJson<unknown[] | { questions?: unknown[] }>(result);
   return { questions: Array.isArray(parsed) ? parsed : (parsed.questions ?? []) };
 }
 
@@ -169,8 +282,8 @@ async function evaluateAnswers(
   position: string,
   level: string,
   industry: string | undefined,
-  questions: Array<{ id: string; question: string }>,
-  answers: Array<{ id: string; answer: string }>,
+  questions: Question[],
+  answers: Answer[],
   lang: CvUiLang,
 ) {
   const targetIndustry = industry?.trim() || "umum / lintas industri";
@@ -236,5 +349,13 @@ ${languageInstruction}`,
     { temperature: 0.5, jsonMode: true, maxTokens: 3000 },
     lang,
   );
-  return JSON.parse(result);
+  return parseAiJson<Record<string, unknown>>(result);
+}
+
+function parseAiJson<T>(result: string): T {
+  try {
+    return JSON.parse(result);
+  } catch {
+    throw new Error("AI gagal memproses permintaan. Silakan coba lagi.");
+  }
 }

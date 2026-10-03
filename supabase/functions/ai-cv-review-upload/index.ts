@@ -9,17 +9,17 @@
 import {
   aiComplete,
   CV_AI_MODEL,
-  checkAndTrackQuota,
   corsResponse,
   errorResponse,
   getAdminClient,
   getUserId,
   getLanguageInstruction,
+  reserveQuota,
   type CvUiLang,
 } from "../_shared/ai-common.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 import { checkRateLimit, createRateLimitedResponse } from "../_shared/rate-limit.ts";
-
+import { LIMITS, limitText, readJsonBody, ValidationError } from "../_shared/validation.ts";
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders(req) });
@@ -31,7 +31,11 @@ Deno.serve(async (req: Request) => {
     const rateLimitKey = `ai-cv-review-upload:${userId}`;
     const rl = checkRateLimit(rateLimitKey, 30, 60 * 1000);
     if (!rl.allowed) {
-      return createRateLimitedResponse(rl, JSON.stringify({ error: "Terlalu banyak request. Silakan coba lagi nanti." }), corsHeaders(req));
+      return createRateLimitedResponse(
+        rl,
+        JSON.stringify({ error: "Terlalu banyak request. Silakan coba lagi nanti." }),
+        corsHeaders(req),
+      );
     }
     const admin = getAdminClient();
 
@@ -56,11 +60,14 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    const { rawText, targetRole, jobDescription, language } = await req.json();
-    const lang: CvUiLang = language === "en" ? "en" : "id";
+    const body = await readJsonBody(req, 200_000);
+    const lang: CvUiLang = body.language === "en" ? "en" : "id";
+    const rawText = limitText(body.rawText, LIMITS.longText, "rawText");
+    const targetRole = limitText(body.targetRole, LIMITS.shortText, "targetRole");
+    const jobDescription = limitText(body.jobDescription, LIMITS.jobDescription, "jobDescription");
 
-    if (!rawText || typeof rawText !== "string" || rawText.trim().length === 0) {
-      throw new Error(
+    if (rawText.trim().length === 0) {
+      throw new ValidationError(
         "Teks CV tidak ditemukan. Pastikan file CV berhasil diupload dan teks terekstrak.",
       );
     }
@@ -163,33 +170,24 @@ ${cvText}
 
 ${hrPersonaPrompt}`;
 
-    const result = await aiComplete(
-      [{ role: "user", content: analysisPrompt }],
-      // Upload CV: model terpisah (AI_MODEL_CV, default Gemini)
-      { model: CV_AI_MODEL, temperature: 0.4, maxTokens: 4000, jsonMode: true },
-      lang,
-    );
+    // H3: reservasi kuota SEBELUM memanggil AI; dikembalikan jika AI/parsing gagal
+    const reservation = await reserveQuota(admin, userId, "cv_review", 800);
 
     let parsed: Record<string, unknown>;
     try {
-      parsed = JSON.parse(result);
-    } catch {
-      const match = result.match(/\{[\s\S]*\}/);
-      if (match) {
-        try {
-          parsed = JSON.parse(match[0]);
-        } catch {
-          throw new Error("Gagal parse hasil review CV. Silakan coba lagi.");
-        }
-      } else {
-        throw new Error("Format respons tidak valid. Silakan coba lagi.");
-      }
+      const result = await aiComplete(
+        [{ role: "user", content: analysisPrompt }],
+        // Upload CV: model terpisah (AI_MODEL_CV, default Gemini)
+        { model: CV_AI_MODEL, temperature: 0.4, maxTokens: 4000, jsonMode: true },
+        lang,
+      );
+      parsed = parseReviewJson(result);
+    } catch (e) {
+      await reservation.release();
+      throw e;
     }
 
-    // Track usage
-    await checkAndTrackQuota(admin, userId, "cv_review", 800);
-
-    // Save review to database
+    // Save review to database (setelah kuota tereservasi & AI berhasil)
     const { error: insertError } = await admin.from("cv_reviews").insert({
       user_id: userId,
       cv_id: null,
@@ -250,3 +248,19 @@ ${hrPersonaPrompt}`;
     return errorResponse(e, req);
   }
 });
+
+function parseReviewJson(result: string): Record<string, unknown> {
+  try {
+    return JSON.parse(result);
+  } catch {
+    const match = result.match(/\{[\s\S]*\}/);
+    if (match) {
+      try {
+        return JSON.parse(match[0]);
+      } catch {
+        throw new Error("Gagal parse hasil review CV. Silakan coba lagi.");
+      }
+    }
+    throw new Error("Format respons tidak valid. Silakan coba lagi.");
+  }
+}

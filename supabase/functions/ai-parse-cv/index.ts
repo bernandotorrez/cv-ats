@@ -9,17 +9,19 @@
 import {
   aiComplete,
   CV_AI_MODEL,
-  checkAndTrackQuota,
   corsResponse,
   errorResponse,
   getAdminClient,
   getUserId,
-  getLanguageInstruction,
+  reserveQuota,
   type CvUiLang,
 } from "../_shared/ai-common.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 import { checkRateLimit, createRateLimitedResponse } from "../_shared/rate-limit.ts";
+import { LIMITS, limitText, readJsonBody, ValidationError } from "../_shared/validation.ts";
 
+const UPLOAD_DENIED_MESSAGE =
+  "Fitur Upload CV hanya untuk pengguna berbayar. Silakan Upgrade Tier atau beli fitur Upload CV.";
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders(req) });
@@ -31,9 +33,24 @@ Deno.serve(async (req: Request) => {
     const rateLimitKey = `ai-parse-cv:${userId}`;
     const rl = checkRateLimit(rateLimitKey, 30, 60 * 1000);
     if (!rl.allowed) {
-      return createRateLimitedResponse(rl, JSON.stringify({ error: "Terlalu banyak request. Silakan coba lagi nanti." }), corsHeaders(req));
+      return createRateLimitedResponse(
+        rl,
+        JSON.stringify({ error: "Terlalu banyak request. Silakan coba lagi nanti." }),
+        corsHeaders(req),
+      );
     }
     const admin = getAdminClient();
+
+    // Validasi input dulu (sebelum kuota dikonsumsi)
+    const body = await readJsonBody(req, 200_000);
+    const rawText = limitText(body.rawText, LIMITS.longText, "teks CV");
+    const lang: CvUiLang = body.language === "en" ? "en" : "id";
+
+    if (rawText.trim().length < 30) {
+      throw new ValidationError("Teks CV terlalu pendek. Pastikan file CV berisi data yang cukup.");
+    }
+
+    const cvText = rawText.trim();
 
     // Check user tier and has_upload_cv feature
     const { data: profile } = await admin
@@ -49,7 +66,8 @@ Deno.serve(async (req: Request) => {
       .eq("status", "active")
       .maybeSingle();
 
-    const tierSlug = (sub as any)?.subscription_tiers?.slug as string | undefined;
+    const tierSlug = (sub as { subscription_tiers?: { slug?: string } } | null)?.subscription_tiers
+      ?.slug;
     const TIER_UPLOAD_CV_QUOTA: Record<string, number> = { starter: 10, pro: 20 };
 
     let hasUploadCvAddon = profile?.has_upload_cv || false;
@@ -67,41 +85,62 @@ Deno.serve(async (req: Request) => {
       : null;
     const needsReset = !lastReset || lastReset < monthStart;
 
-    let effectiveQuota = profile?.quota_upload_cv || 0;
-
     if (needsReset) {
       const tierAllocation = tierSlug ? TIER_UPLOAD_CV_QUOTA[tierSlug] : null;
       if (tierAllocation !== null && tierAllocation !== undefined) {
-        effectiveQuota = tierAllocation;
+        // Kondisional: hanya satu request paralel yang melakukan reset bulan ini
         await admin
           .from("profiles")
           .update({
-            quota_upload_cv: effectiveQuota,
+            quota_upload_cv: tierAllocation,
             quota_upload_cv_reset_at: new Date().toISOString(),
           })
-          .eq("id", userId);
+          .eq("id", userId)
+          .or(
+            `quota_upload_cv_reset_at.is.null,quota_upload_cv_reset_at.lt."${monthStart.toISOString()}"`,
+          );
       }
     }
 
-    // A user can upload CV if they have the add-on OR they have quota > 0
-    const canUpload = hasUploadCvAddon || effectiveQuota > 0;
-
-    if (!canUpload) {
-      throw new Error(
-        "Fitur Upload CV hanya untuk pengguna berbayar. Silakan Upgrade Tier atau beli fitur Upload CV.",
-      );
+    // A user can upload CV if they have the add-on OR they have quota > 0.
+    // Tanpa add-on: kuota dikurangi ATOMIK sebelum AI dipanggil (refund jika gagal).
+    let consumedUploadQuota = false;
+    if (!hasUploadCvAddon) {
+      const { data: consumed, error: consumeError } = await admin.rpc("consume_profile_quota", {
+        p_user: userId,
+        p_column: "quota_upload_cv",
+      });
+      if (consumeError) {
+        console.error("consume_profile_quota failed:", consumeError);
+        throw new Error("Gagal memverifikasi kuota. Silakan coba lagi.");
+      }
+      if (consumed !== true) {
+        return corsResponse({ error: UPLOAD_DENIED_MESSAGE }, 403, req);
+      }
+      consumedUploadQuota = true;
     }
 
-    const { rawText, language } = await req.json();
-    const lang: CvUiLang = language === "en" ? "en" : "id";
+    const refundUploadQuota = async () => {
+      if (!consumedUploadQuota) return;
+      consumedUploadQuota = false;
+      const { error } = await admin.rpc("refund_profile_quota", {
+        p_user: userId,
+        p_column: "quota_upload_cv",
+      });
+      if (error) console.error("refund_profile_quota failed:", error);
+    };
 
-    if (!rawText || typeof rawText !== "string" || rawText.trim().length < 30) {
-      throw new Error("Teks CV terlalu pendek. Pastikan file CV berisi data yang cukup.");
+    // Catat pemakaian (tanpa limit; kuota ditegakkan lewat profiles.quota_upload_cv)
+    let usage: Awaited<ReturnType<typeof reserveQuota>>;
+    try {
+      usage = await reserveQuota(admin, userId, "parse_cv", 600, { limit: null });
+    } catch (e) {
+      await refundUploadQuota();
+      throw e;
     }
 
-    const cvText = rawText.trim();
-
-    const parsePrompt = `Kamu adalah AI parser profesional untuk CV. Tugasmu: membaca teks CV mentah (hasil ekstraksi dari PDF/DOCX) dan mengubahnya menjadi JSON terstruktur.
+    try {
+      const parsePrompt = `Kamu adalah AI parser profesional untuk CV. Tugasmu: membaca teks CV mentah (hasil ekstraksi dari PDF/DOCX) dan mengubahnya menjadi JSON terstruktur.
 
 ATURAN PARSING:
 1. PERSONAL:
@@ -149,97 +188,86 @@ PENTING:
 - ${lang === "en" ? "All text MUST be in English (except company names/skills that are originally in other languages)" : "Semua teks WAJIB Bahasa Indonesia (kecuali nama perusahaan/skill yang memang Bahasa Inggris)"}
 - Output WAJIB JSON valid`;
 
-    const result = await aiComplete(
-      [
-        { role: "system", content: parsePrompt },
-        {
-          role: "user",
-          content: `CV TEXT:\n\n${cvText}\n\nParse CV ini menjadi JSON terstruktur sesuai format yang dijelaskan.`,
-        },
-      ],
-      // Upload CV otomatis: model terpisah (AI_MODEL_CV, default Gemini)
-      { model: CV_AI_MODEL, temperature: 0.2, maxTokens: 4000, jsonMode: true },
-      lang,
-    );
+      const result = await aiComplete(
+        [
+          { role: "system", content: parsePrompt },
+          {
+            role: "user",
+            content: `CV TEXT:\n\n${cvText}\n\nParse CV ini menjadi JSON terstruktur sesuai format yang dijelaskan.`,
+          },
+        ],
+        // Upload CV otomatis: model terpisah (AI_MODEL_CV, default Gemini)
+        { model: CV_AI_MODEL, temperature: 0.2, maxTokens: 4000, jsonMode: true },
+        lang,
+      );
 
-    let parsed: Record<string, unknown>;
-    try {
-      parsed = JSON.parse(result);
-    } catch {
-      const match = result.match(/\{[\s\S]*\}/);
-      if (match) {
-        try {
-          parsed = JSON.parse(match[0]);
-        } catch {
-          throw new Error("Gagal parse hasil AI. Silakan coba lagi.");
+      let parsed: Record<string, unknown>;
+      try {
+        parsed = JSON.parse(result);
+      } catch {
+        const match = result.match(/\{[\s\S]*\}/);
+        if (match) {
+          try {
+            parsed = JSON.parse(match[0]);
+          } catch {
+            throw new Error("Gagal parse hasil AI. Silakan coba lagi.");
+          }
+        } else {
+          throw new Error("Format respons AI tidak valid. Silakan coba lagi.");
         }
-      } else {
-        throw new Error("Format respons AI tidak valid. Silakan coba lagi.");
       }
-    }
 
-    // Add IDs to array items
-    const uid = () => Math.random().toString(36).slice(2, 10);
-    const cvData: Record<string, unknown> = {};
+      // Add IDs to array items
+      const uid = () => Math.random().toString(36).slice(2, 10);
+      const cvData: Record<string, unknown> = {};
 
-    if (parsed.personal && typeof parsed.personal === "object") {
-      cvData.personal = parsed.personal;
-    }
-
-    if (Array.isArray(parsed.experiences)) {
-      cvData.experiences = parsed.experiences.map((exp: any) => ({
-        ...exp,
-        id: exp.id || uid(),
-      }));
-    }
-
-    if (Array.isArray(parsed.educations)) {
-      cvData.educations = parsed.educations.map((edu: any) => ({
-        ...edu,
-        id: edu.id || uid(),
-      }));
-    }
-
-    if (Array.isArray(parsed.skills)) {
-      cvData.skills = parsed.skills.map((sk: any) => ({
-        ...sk,
-        id: sk.id || uid(),
-        level: sk.level || "Intermediate",
-      }));
-    }
-
-    if (Array.isArray(parsed.languages)) {
-      cvData.languages = parsed.languages.map((lang: any) => ({
-        ...lang,
-        id: lang.id || uid(),
-        level: lang.level || "Intermediate",
-      }));
-    }
-
-    if (Array.isArray(parsed.certificates)) {
-      cvData.certificates = parsed.certificates.map((cert: any) => ({
-        ...cert,
-        id: cert.id || uid(),
-      }));
-    }
-
-    // Track usage with dedicated feature key (quota enforced separately via profiles.quota_upload_cv)
-    await admin.from("ai_usage").insert({ user_id: userId, feature: "parse_cv", tokens_used: 600 });
-
-    // If they don't have the addon, decrement the tier quota atomically
-    if (!hasUploadCvAddon && effectiveQuota > 0) {
-      const { error: decrementError } = await admin
-        .from("profiles")
-        .update({ quota_upload_cv: effectiveQuota - 1 })
-        .eq("id", userId)
-        .eq("quota_upload_cv", effectiveQuota); // Atomic: prevents race-condition double-decrement
-
-      if (decrementError) {
-        console.error("Failed to decrement upload quota:", decrementError);
+      if (parsed.personal && typeof parsed.personal === "object") {
+        cvData.personal = parsed.personal;
       }
-    }
 
-    return corsResponse({ success: true, cvData }, 200, req);
+      if (Array.isArray(parsed.experiences)) {
+        cvData.experiences = parsed.experiences.map((exp: Record<string, unknown>) => ({
+          ...exp,
+          id: exp.id || uid(),
+        }));
+      }
+
+      if (Array.isArray(parsed.educations)) {
+        cvData.educations = parsed.educations.map((edu: Record<string, unknown>) => ({
+          ...edu,
+          id: edu.id || uid(),
+        }));
+      }
+
+      if (Array.isArray(parsed.skills)) {
+        cvData.skills = parsed.skills.map((sk: Record<string, unknown>) => ({
+          ...sk,
+          id: sk.id || uid(),
+          level: sk.level || "Intermediate",
+        }));
+      }
+
+      if (Array.isArray(parsed.languages)) {
+        cvData.languages = parsed.languages.map((lang: Record<string, unknown>) => ({
+          ...lang,
+          id: lang.id || uid(),
+          level: lang.level || "Intermediate",
+        }));
+      }
+
+      if (Array.isArray(parsed.certificates)) {
+        cvData.certificates = parsed.certificates.map((cert: Record<string, unknown>) => ({
+          ...cert,
+          id: cert.id || uid(),
+        }));
+      }
+
+      return corsResponse({ success: true, cvData }, 200, req);
+    } catch (e) {
+      await refundUploadQuota();
+      await usage.release();
+      throw e;
+    }
   } catch (e) {
     return errorResponse(e, req);
   }

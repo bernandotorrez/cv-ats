@@ -4,17 +4,24 @@
  */
 import {
   aiComplete,
-  checkAndTrackQuota,
   corsResponse,
   errorResponse,
   getAdminClient,
   getLanguageInstruction,
   getUserId,
+  reserveQuota,
   type CvUiLang,
 } from "../_shared/ai-common.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 import { checkRateLimit, createRateLimitedResponse } from "../_shared/rate-limit.ts";
-
+import { assertSafeUrlSyntax, SafeFetchError, safeFetchText } from "../_shared/safe-fetch.ts";
+import {
+  LIMITS,
+  limitJson,
+  limitText,
+  readJsonBody,
+  ValidationError,
+} from "../_shared/validation.ts";
 
 type CvRow = {
   id: string;
@@ -40,6 +47,14 @@ type JobRow = {
   work_mode: string | null;
 };
 
+type JobInput = {
+  jobId?: string;
+  jobDescription?: string;
+  jobUrl?: string;
+  jobTitle?: string;
+  companyName?: string;
+};
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders(req) });
 
@@ -50,7 +65,11 @@ Deno.serve(async (req: Request) => {
     const rateLimitKey = `ai-job-match:${userId}`;
     const rl = checkRateLimit(rateLimitKey, 30, 60 * 1000);
     if (!rl.allowed) {
-      return createRateLimitedResponse(rl, JSON.stringify({ error: "Terlalu banyak request. Silakan coba lagi nanti." }), corsHeaders(req));
+      return createRateLimitedResponse(
+        rl,
+        JSON.stringify({ error: "Terlalu banyak request. Silakan coba lagi nanti." }),
+        corsHeaders(req),
+      );
     }
     const admin = getAdminClient();
     // Check feature flag — job match available for all tiers but verify DB state
@@ -59,9 +78,11 @@ Deno.serve(async (req: Request) => {
       .select("subscription_tiers!inner(slug, quota_ai_job_match)")
       .eq("user_id", userId)
       .eq("status", "active")
-      .single();
+      .maybeSingle();
 
-    const matchQuota = (userSub as any)?.subscription_tiers?.quota_ai_job_match ?? null;
+    const matchQuota =
+      (userSub as { subscription_tiers?: { quota_ai_job_match?: number | null } } | null)
+        ?.subscription_tiers?.quota_ai_job_match ?? null;
     if (matchQuota !== null && matchQuota <= 0) {
       return corsResponse(
         {
@@ -74,13 +95,21 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    const { cvId, jobId, jobDescription, jobUrl, jobTitle, companyName, language } =
-      await req.json();
-    const lang: CvUiLang = language === "en" ? "en" : "id";
+    const body = await readJsonBody(req, 200_000);
+    const cvId = limitText(body.cvId, 100, "cvId");
+    const input: JobInput = {
+      jobId: limitText(body.jobId, 100, "jobId") || undefined,
+      jobDescription:
+        limitText(body.jobDescription, LIMITS.jobDescription, "job description") || undefined,
+      jobUrl: normalizeJobUrl(limitText(body.jobUrl, 2_000, "URL lowongan")),
+      jobTitle: limitText(body.jobTitle, LIMITS.shortText, "posisi") || undefined,
+      companyName: limitText(body.companyName, LIMITS.shortText, "perusahaan") || undefined,
+    };
+    const lang: CvUiLang = body.language === "en" ? "en" : "id";
 
-    if (!cvId) throw new Error("cvId diperlukan.");
-    if (!jobId && !jobDescription && !jobUrl) {
-      throw new Error("Pilih lowongan, isi job description, atau masukkan URL lowongan.");
+    if (!cvId) throw new ValidationError("cvId diperlukan.");
+    if (!input.jobId && !input.jobDescription && !input.jobUrl) {
+      throw new ValidationError("Pilih lowongan, isi job description, atau masukkan URL lowongan.");
     }
 
     const { data: cv, error: cvError } = await admin
@@ -93,16 +122,16 @@ Deno.serve(async (req: Request) => {
     if (cvError || !cv) throw new Error("CV tidak ditemukan atau bukan milik user.");
 
     const cvRow = cv as CvRow;
-    const jobContext = await resolveJobContext(admin, {
-      jobId,
-      jobDescription,
-      jobUrl,
-      jobTitle,
-      companyName,
-    });
+    limitJson(cvRow.data, LIMITS.json, "data CV");
     const cvText = JSON.stringify(cvRow.data, null, 2);
 
-    const prompt = `Kamu adalah career coach dan recruiter ATS specialist.
+    // Reservasi kuota SEBELUM fetch URL & panggilan AI; dikembalikan jika gagal.
+    const reservation = await reserveQuota(admin, userId, "job_match", 700);
+    let parsed: Record<string, unknown>;
+    try {
+      const jobContext = await resolveJobContext(admin, input);
+
+      const prompt = `Kamu adalah career coach dan recruiter ATS specialist.
 Analisis kecocokan CV user terhadap lowongan kerja berikut ${getLanguageInstruction(lang)}.
 
 Jangan mengarang isi lowongan. Gunakan hanya data lowongan dan CV yang diberikan.
@@ -137,22 +166,17 @@ Output HARUS JSON valid saja tanpa markdown:
   ]
 }`;
 
-    const raw = await aiComplete(
-      [{ role: "user", content: prompt }],
-      { temperature: 0.25, maxTokens: 3500, jsonMode: true },
-      lang,
-    );
+      const raw = await aiComplete(
+        [{ role: "user", content: prompt }],
+        { temperature: 0.25, maxTokens: 3500, jsonMode: true },
+        lang,
+      );
 
-    let parsed: Record<string, unknown>;
-    try {
-      parsed = JSON.parse(raw);
-    } catch {
-      const match = raw.match(/\{[\s\S]*\}/);
-      if (!match) throw new Error("Gagal parse hasil job match.");
-      parsed = JSON.parse(match[0]);
+      parsed = parseJsonObject(raw, "Gagal parse hasil job match.");
+    } catch (e) {
+      await reservation.release();
+      throw e;
     }
-
-    await checkAndTrackQuota(admin, userId, "job_match", 700);
 
     return corsResponse(
       {
@@ -174,16 +198,39 @@ Output HARUS JSON valid saja tanpa markdown:
   }
 });
 
-async function resolveJobContext(
-  admin: ReturnType<typeof getAdminClient>,
-  input: {
-    jobId?: string;
-    jobDescription?: string;
-    jobUrl?: string;
-    jobTitle?: string;
-    companyName?: string;
-  },
-) {
+function parseJsonObject(raw: string, failMessage: string): Record<string, unknown> {
+  try {
+    return JSON.parse(raw);
+  } catch {
+    const match = raw.match(/\{[\s\S]*\}/);
+    if (match) {
+      try {
+        return JSON.parse(match[0]);
+      } catch {
+        // fallthrough
+      }
+    }
+    throw new Error(failMessage);
+  }
+}
+
+/** Normalisasi & validasi sintaks URL lowongan (tanpa DNS) sebelum reservasi kuota. */
+function normalizeJobUrl(value: string): string | undefined {
+  let url = value.trim();
+  if (!url) return undefined;
+  if (!/^[a-z][a-z0-9+.-]*:\/\//i.test(url)) url = `https://${url}`;
+  // Fetch hanya via https; tautan http di-upgrade.
+  url = url.replace(/^http:\/\//i, "https://");
+  try {
+    return assertSafeUrlSyntax(url).toString();
+  } catch (e) {
+    throw new ValidationError(
+      `URL lowongan tidak valid${e instanceof SafeFetchError ? `: ${e.message}` : "."}`,
+    );
+  }
+}
+
+async function resolveJobContext(admin: ReturnType<typeof getAdminClient>, input: JobInput) {
   if (input.jobId) {
     const { data: job, error: jobError } = await admin
       .from("job_listings")
@@ -221,30 +268,25 @@ async function resolveJobContext(
     .join("\n\n");
 }
 
-async function fetchJobUrlText(value: string) {
-  let url: URL;
+async function fetchJobUrlText(url: string) {
+  let html: string;
   try {
-    url = new URL(value);
-  } catch {
-    throw new Error("URL lowongan tidak valid.");
-  }
-
-  if (!["http:", "https:"].includes(url.protocol)) {
-    throw new Error("URL lowongan harus http atau https.");
-  }
-
-  const res = await fetch(url.toString(), {
-    headers: {
-      "User-Agent": "Mozilla/5.0 (compatible; CVPintarJobMatch/1.0; +https://www.cvpintar.web.id)",
-      Accept: "text/html,application/xhtml+xml,text/plain;q=0.9,*/*;q=0.8",
-    },
-  });
-
-  if (!res.ok) {
+    const res = await safeFetchText(url, {
+      maxBytes: 1_000_000,
+      timeoutMs: 10_000,
+      maxRedirects: 3,
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (compatible; CVPintarJobMatch/1.0; +https://www.cvpintar.web.id)",
+        Accept: "text/html,application/xhtml+xml,text/plain;q=0.9,*/*;q=0.8",
+      },
+    });
+    html = res.text;
+  } catch (e) {
+    console.error("Job URL fetch failed:", e instanceof Error ? e.message : e);
     throw new Error("Gagal mengambil detail lowongan dari URL. Coba paste job description manual.");
   }
 
-  const html = await res.text();
   const text = html
     .replace(/<script[\s\S]*?<\/script>/gi, " ")
     .replace(/<style[\s\S]*?<\/style>/gi, " ")

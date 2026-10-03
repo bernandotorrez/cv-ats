@@ -2,15 +2,20 @@
  * LeaderboardTable — Tabel leaderboard tryout per exam set.
  * Dark mode & responsive support.
  */
-import { Trophy, Medal, Award, User } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { Trophy, Medal, Award, User, Lock } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton-loading";
 import { formatDuration } from "@/lib/tryout-scoring";
 import { cn } from "@/lib/utils";
 
+/**
+ * Baris leaderboard dari RPC `get_tryout_leaderboard` (tanpa UUID user).
+ * `is_me` = baris milik user yang sedang login.
+ */
 export type LeaderboardEntry = {
   ranking: number;
-  user_id: string;
   full_name: string | null;
   avatar_url: string | null;
   exam_set_id: string;
@@ -22,27 +27,39 @@ export type LeaderboardEntry = {
   pass_overall: boolean;
   duration_seconds: number | null;
   finished_at: string | null;
+  is_me: boolean;
 };
 
 type Props = {
   entries: LeaderboardEntry[];
-  currentUserId?: string;
   loading?: boolean;
   limit?: number;
+  /** User belum punya paket dengan akses leaderboard. */
+  locked?: boolean;
 };
 
-export function LeaderboardTable({
-  entries,
-  currentUserId,
-  loading = false,
-  limit,
-}: Props) {
+export function LeaderboardTable({ entries, loading = false, limit, locked = false }: Props) {
   if (loading) {
     return (
       <div className="space-y-2">
         {Array.from({ length: 5 }).map((_, idx) => (
           <Skeleton key={idx} className="h-14 w-full rounded-xl" />
         ))}
+      </div>
+    );
+  }
+
+  if (locked) {
+    return (
+      <div className="rounded-2xl border bg-card p-6 text-center sm:p-8">
+        <Lock className="mx-auto h-10 w-10 text-muted-foreground sm:h-12 sm:w-12" />
+        <h3 className="mt-3 font-display text-lg font-bold">Leaderboard terkunci</h3>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Akses leaderboard nasional tersedia di Paket Lengkap.
+        </p>
+        <Button asChild size="sm" className="mt-4">
+          <Link to={"/tryout/beli" as never}>Lihat Paket</Link>
+        </Button>
       </div>
     );
   }
@@ -63,11 +80,11 @@ export function LeaderboardTable({
 
   return (
     <div className="space-y-2">
-      {displayEntries.map((entry) => {
-        const isCurrentUser = entry.user_id === currentUserId;
+      {displayEntries.map((entry, idx) => {
+        const isCurrentUser = entry.is_me === true;
         return (
           <div
-            key={`${entry.user_id}-${entry.exam_set_id}`}
+            key={`${entry.exam_set_id}-${entry.ranking}-${idx}`}
             className={cn(
               "flex items-center gap-2.5 rounded-2xl border bg-card p-3 transition hover:border-primary/40 hover:shadow-md sm:gap-3 sm:p-4",
               isCurrentUser
@@ -103,7 +120,7 @@ export function LeaderboardTable({
                 <User className="h-5 w-5 text-muted-foreground" />
               </AvatarFallback>
             </Avatar>
-            
+
             <div className="min-w-0 flex-1 pl-1">
               <div className="flex flex-wrap items-center gap-1.5">
                 <span className="truncate text-xs font-bold text-foreground sm:text-sm">
@@ -120,7 +137,7 @@ export function LeaderboardTable({
                   </span>
                 )}
               </div>
-              
+
               <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] text-muted-foreground sm:text-[11px]">
                 <div className="flex items-center gap-1">
                   <span className="font-medium text-foreground">TWK</span> {entry.score_twk}
@@ -132,7 +149,7 @@ export function LeaderboardTable({
                   <span className="font-medium text-foreground">TKP</span> {entry.score_tkp}
                 </div>
               </div>
-              
+
               <div className="mt-1 flex items-center gap-1.5 text-[9px] text-muted-foreground/80 sm:text-[10px]">
                 <span>{formatDuration(entry.duration_seconds)}</span>
                 {entry.finished_at && (
@@ -142,7 +159,7 @@ export function LeaderboardTable({
                       {new Date(entry.finished_at).toLocaleDateString("id-ID", {
                         day: "numeric",
                         month: "short",
-                        year: "numeric"
+                        year: "numeric",
                       })}
                     </span>
                   </>

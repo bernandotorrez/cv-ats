@@ -4,16 +4,16 @@
  */
 import {
   aiComplete,
-  checkAndTrackQuota,
   corsResponse,
   errorResponse,
   getAdminClient,
   getUserId,
+  reserveQuota,
   type CvUiLang,
 } from "../_shared/ai-common.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 import { checkRateLimit, createRateLimitedResponse } from "../_shared/rate-limit.ts";
-
+import { LIMITS, limitText, readJsonBody, ValidationError } from "../_shared/validation.ts";
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders(req) });
@@ -25,13 +25,19 @@ Deno.serve(async (req: Request) => {
     const rateLimitKey = `ai-keywords:${userId}`;
     const rl = checkRateLimit(rateLimitKey, 30, 60 * 1000);
     if (!rl.allowed) {
-      return createRateLimitedResponse(rl, JSON.stringify({ error: "Terlalu banyak request. Silakan coba lagi nanti." }), corsHeaders(req));
+      return createRateLimitedResponse(
+        rl,
+        JSON.stringify({ error: "Terlalu banyak request. Silakan coba lagi nanti." }),
+        corsHeaders(req),
+      );
     }
     const admin = getAdminClient();
-    const { jobDescription, targetRole, language } = await req.json();
-    const lang: CvUiLang = language === "en" ? "en" : "id";
+    const body = await readJsonBody(req, 100_000);
+    const lang: CvUiLang = body.language === "en" ? "en" : "id";
+    const jobDescription = limitText(body.jobDescription, LIMITS.jobDescription, "jobDescription");
+    const targetRole = limitText(body.targetRole, LIMITS.shortText, "targetRole");
 
-    if (!jobDescription) throw new Error("jobDescription diperlukan");
+    if (!jobDescription) throw new ValidationError("jobDescription diperlukan");
 
     // Check feature flag before processing
     const { data: userSub } = await admin
@@ -61,22 +67,21 @@ Output JSON:
   "keywords_summary": string (2 kalimat strategi keyword)
 }`;
 
-    const result = await aiComplete(
-      [{ role: "user", content: prompt }],
-      { temperature: 0.3, maxTokens: 1500, jsonMode: true },
-      lang,
-    );
+    // H3: reservasi kuota SEBELUM memanggil AI; dikembalikan jika AI/parsing gagal
+    const reservation = await reserveQuota(admin, userId, "keyword_extract", 300);
 
     let parsed: Record<string, unknown>;
     try {
-      parsed = JSON.parse(result);
-    } catch {
-      const match = result.match(/\{[\s\S]*\}/);
-      if (match) parsed = JSON.parse(match[0]);
-      else throw new Error("Gagal parse hasil keyword");
+      const result = await aiComplete(
+        [{ role: "user", content: prompt }],
+        { temperature: 0.3, maxTokens: 1500, jsonMode: true },
+        lang,
+      );
+      parsed = parseJsonObject(result);
+    } catch (e) {
+      await reservation.release();
+      throw e;
     }
-
-    await checkAndTrackQuota(admin, userId, "keyword_extract", 300);
 
     return corsResponse(
       {
@@ -93,3 +98,19 @@ Output JSON:
     return errorResponse(e, req);
   }
 });
+
+function parseJsonObject(result: string): Record<string, unknown> {
+  try {
+    return JSON.parse(result);
+  } catch {
+    const match = result.match(/\{[\s\S]*\}/);
+    if (match) {
+      try {
+        return JSON.parse(match[0]);
+      } catch {
+        // fall through
+      }
+    }
+    throw new Error("Gagal parse hasil keyword. Silakan coba lagi.");
+  }
+}

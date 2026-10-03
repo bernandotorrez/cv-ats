@@ -34,14 +34,33 @@ import { downloadPdf } from "@/lib/cv-export";
 import { emptyCv, type CvData, type CvExperience, type TemplateId } from "@/lib/cv-types";
 import { buildSeo, SITE_URL } from "@/lib/seo";
 
+interface SharedPortfolioRow {
+  id: string;
+  user_id: string | null;
+  title: string;
+  template_id: string;
+  data: unknown;
+  created_at: string;
+  updated_at: string;
+}
+
+// RPC belum ada di types.ts hasil generate — tipe minimal untuk pemanggilan ini.
+interface SharedRpcClient {
+  rpc: (
+    fn: "get_shared_portfolio",
+    args: { p_token: string },
+  ) => PromiseLike<{ data: SharedPortfolioRow[] | SharedPortfolioRow | null; error: unknown }>;
+}
+
 export const Route = createFileRoute("/portfolio/$token")({
   loader: async ({ params }) => {
-    const { data, error } = await supabase
-      .from("cvs")
-      .select("id, user_id, title, template_id, data, created_at, updated_at, share_token")
-      .eq("share_token", params.token)
-      .eq("share_enabled", true)
-      .single();
+    // SECURITY: CV yang dibagikan hanya bisa dibaca lewat RPC per-token.
+    // user_id hanya terisi bila pemirsa adalah pemilik CV.
+    const { data: rows, error } = await (supabase as unknown as SharedRpcClient).rpc(
+      "get_shared_portfolio",
+      { p_token: params.token },
+    );
+    const data = (Array.isArray(rows) ? rows[0] : rows) as SharedPortfolioRow | undefined;
 
     if (error || !data) throw notFound();
 
@@ -197,7 +216,12 @@ function SharePage() {
               </div>
 
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                <Button onClick={handlePrint} disabled={downloading} size="lg" className="h-12 gap-2">
+                <Button
+                  onClick={handlePrint}
+                  disabled={downloading}
+                  size="lg"
+                  className="h-12 gap-2"
+                >
                   {downloading ? (
                     <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
                   ) : (
@@ -400,7 +424,12 @@ function SharePage() {
                   Versi ini bisa dicetak atau disimpan sebagai PDF oleh penerima link.
                 </p>
               </div>
-              <Button onClick={handlePrint} disabled={downloading} variant="outline" className="gap-2">
+              <Button
+                onClick={handlePrint}
+                disabled={downloading}
+                variant="outline"
+                className="gap-2"
+              >
                 {downloading ? (
                   <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
                 ) : (

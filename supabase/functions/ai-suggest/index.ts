@@ -4,17 +4,17 @@
  */
 import {
   aiComplete,
-  checkAndTrackQuota,
   corsResponse,
   errorResponse,
   getAdminClient,
   getUserId,
   getLanguageInstruction,
+  reserveQuota,
   type CvUiLang,
 } from "../_shared/ai-common.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 import { checkRateLimit, createRateLimitedResponse } from "../_shared/rate-limit.ts";
-
+import { limitText, readJsonBody, ValidationError } from "../_shared/validation.ts";
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders(req) });
@@ -26,7 +26,11 @@ Deno.serve(async (req: Request) => {
     const rateLimitKey = `ai-suggest:${userId}`;
     const rl = checkRateLimit(rateLimitKey, 30, 60 * 1000);
     if (!rl.allowed) {
-      return createRateLimitedResponse(rl, JSON.stringify({ error: "Terlalu banyak request. Silakan coba lagi nanti." }), corsHeaders(req));
+      return createRateLimitedResponse(
+        rl,
+        JSON.stringify({ error: "Terlalu banyak request. Silakan coba lagi nanti." }),
+        corsHeaders(req),
+      );
     }
     const admin = getAdminClient();
 
@@ -51,18 +55,22 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    const {
-      cvId,
-      section,
-      targetRole,
-      currentContent,
-      additionalContext,
-      regenerateIndex,
-      language,
-    } = await req.json();
-    const lang: CvUiLang = language === "en" ? "en" : "id";
+    const body = await readJsonBody(req, 100_000);
+    const lang: CvUiLang = body.language === "en" ? "en" : "id";
+    const cvId = limitText(body.cvId, 100, "cvId");
+    const section = limitText(body.section, 50, "section");
+    const targetRole = limitText(body.targetRole, 500, "targetRole");
+    const currentContent = limitText(body.currentContent, 10_000, "currentContent");
+    const additionalContext = limitText(body.additionalContext, 5_000, "additionalContext");
+    const regenerateIndex =
+      typeof body.regenerateIndex === "number" &&
+      Number.isInteger(body.regenerateIndex) &&
+      body.regenerateIndex >= 0 &&
+      body.regenerateIndex < 20
+        ? body.regenerateIndex
+        : undefined;
 
-    if (!cvId || !section) throw new Error("cvId dan section diperlukan");
+    if (!cvId || !section) throw new ValidationError("cvId dan section diperlukan");
 
     const languageRule =
       lang === "en"
@@ -150,10 +158,18 @@ OUTPUT FORMAT (JSON):
 HANYA JSON array, tanpa markdown.`,
     };
 
-    const prompt = prompts[section] || prompts.summary;
-    const result = await aiComplete([{ role: "user", content: prompt }], {}, lang);
+    const prompt = Object.hasOwn(prompts, section) ? prompts[section] : prompts.summary;
 
-    await checkAndTrackQuota(admin, userId, "suggest", result.length);
+    // H3: reservasi kuota SEBELUM memanggil AI (estimasi token = maxTokens default 2048)
+    const reservation = await reserveQuota(admin, userId, "suggest", 2048);
+
+    let result: string;
+    try {
+      result = await aiComplete([{ role: "user", content: prompt }], {}, lang);
+    } catch (e) {
+      await reservation.release();
+      throw e;
+    }
 
     // Parse JSON response
     let suggestions: Array<{ option: string; explanation: string }>;

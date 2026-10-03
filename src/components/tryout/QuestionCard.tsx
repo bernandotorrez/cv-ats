@@ -4,11 +4,9 @@
  */
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { sanitizeTryoutHtml } from "@/lib/sanitize";
 import { Flag, Check, X } from "lucide-react";
-import type {
-  TryoutQuestionFull,
-  TryoutQuestionPublic,
-} from "@/lib/tryout-types";
+import type { TryoutQuestionFull, TryoutQuestionPublic } from "@/lib/tryout-types";
 
 type QuestionProps = {
   question: TryoutQuestionPublic;
@@ -47,9 +45,7 @@ export function QuestionCard({
           <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary text-sm font-bold text-primary-foreground">
             {questionNumber}
           </span>
-          <span className="text-xs text-muted-foreground">
-            dari {totalQuestions} soal
-          </span>
+          <span className="text-xs text-muted-foreground">dari {totalQuestions} soal</span>
           {question.category && (
             <span className="hidden rounded-md bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground sm:inline">
               {question.category}
@@ -95,7 +91,7 @@ export function QuestionCard({
       {/* Question text */}
       <div
         className="prose prose-sm dark:prose-invert mb-5 max-w-none text-foreground sm:mb-6 sm:text-base"
-        dangerouslySetInnerHTML={{ __html: question.question_text }}
+        dangerouslySetInnerHTML={{ __html: sanitizeTryoutHtml(question.question_text) }}
       />
 
       {/* Options */}
@@ -104,10 +100,8 @@ export function QuestionCard({
           const isStringOpt = typeof opt === "string";
           // Asumsi format string: "A. Teks opsi..."
           const parsedKey = isStringOpt ? opt.split(".")[0].trim() : opt.key;
-          const parsedText = isStringOpt 
-            ? opt.substring(opt.indexOf(".") + 1).trim() 
-            : opt.text;
-          
+          const parsedText = isStringOpt ? opt.substring(opt.indexOf(".") + 1).trim() : opt.text;
+
           const fallbackKey = String.fromCharCode(65 + index); // A, B, C, D, E fallback
           const finalKey = parsedKey || fallbackKey;
           const finalText = parsedText || opt;
@@ -193,17 +187,15 @@ export function QuestionResultCard({
 
       <div
         className="prose prose-sm dark:prose-invert mb-5 max-w-none text-foreground sm:text-base"
-        dangerouslySetInnerHTML={{ __html: question.question_text }}
+        dangerouslySetInnerHTML={{ __html: sanitizeTryoutHtml(question.question_text) }}
       />
 
       <div className="space-y-2">
         {question.options.map((opt: any, index: number) => {
           const isStringOpt = typeof opt === "string";
           const parsedKey = isStringOpt ? opt.split(".")[0].trim() : opt.key;
-          const parsedText = isStringOpt 
-            ? opt.substring(opt.indexOf(".") + 1).trim() 
-            : opt.text;
-          
+          const parsedText = isStringOpt ? opt.substring(opt.indexOf(".") + 1).trim() : opt.text;
+
           const fallbackKey = String.fromCharCode(65 + index);
           const finalKey = parsedKey || fallbackKey;
           const finalText = parsedText || opt;
@@ -278,7 +270,7 @@ export function QuestionResultCard({
           <h4 className="mb-2 text-sm font-bold text-primary">Pembahasan</h4>
           <div
             className="prose prose-sm dark:prose-invert max-w-none text-foreground"
-            dangerouslySetInnerHTML={{ __html: question.explanation }}
+            dangerouslySetInnerHTML={{ __html: sanitizeTryoutHtml(question.explanation) }}
           />
         </div>
       )}

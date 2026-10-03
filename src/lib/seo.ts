@@ -16,6 +16,19 @@ type SeoInput = {
   articleModifiedTime?: string;
 };
 
+/**
+ * Serialize JSON-LD for an inline <script type="application/ld+json">.
+ * SECURITY: JSON.stringify does not escape "<", so data containing "</script>"
+ * (e.g. scraped job titles) could break out of the tag (stored XSS). Escape "<"
+ * and the U+2028/U+2029 line separators; the result is still valid JSON.
+ */
+export function serializeJsonLd(data: unknown): string {
+  return JSON.stringify(data)
+    .replace(/</g, "\\u003c")
+    .replace(/\u2028/g, "\\u2028")
+    .replace(/\u2029/g, "\\u2029");
+}
+
 export function buildSeo({
   title,
   description,
@@ -66,7 +79,7 @@ export function buildSeo({
   const scripts = jsonLd
     ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]).map((data) => ({
         type: "application/ld+json",
-        children: JSON.stringify(data),
+        children: serializeJsonLd(data),
       }))
     : [];
   return { meta, links, scripts };

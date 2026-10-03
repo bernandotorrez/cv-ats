@@ -2,13 +2,72 @@
  * LinkedIn Import — scrape LinkedIn profile via Apify & map to CV data
  * POST /linkedin-import
  */
-import { corsResponse, errorResponse, getUserId } from "../_shared/ai-common.ts";
+import {
+  corsResponse,
+  errorResponse,
+  getAdminClient,
+  getUserId,
+  reserveQuota,
+} from "../_shared/ai-common.ts";
 import { corsHeaders } from "../_shared/cors.ts";
-import { checkRateLimit } from "../_shared/rate-limit.ts";
+import { checkRateLimit, createRateLimitedResponse } from "../_shared/rate-limit.ts";
+import { limitText, readJsonBody, ValidationError } from "../_shared/validation.ts";
 
 const APIFY_API_KEY = Deno.env.get("APIFY_API_KEY") || "";
 const APIFY_ACTOR_ID = "2SyF0bVxmgGr8IVCZ";
 const APIFY_BASE = "https://api.apify.com/v2";
+
+// Kuota import LinkedIn per bulan (setiap import menjalankan Apify berbayar)
+const LINKEDIN_IMPORT_LIMITS: Record<string, number> = {
+  free: 2,
+  starter: 10,
+  pro: 30,
+  pro_plus: 30,
+};
+
+/** Error setelah Apify run dimulai (biaya sudah terjadi → kuota tidak dikembalikan). */
+class ApifyRunError extends Error {}
+
+/**
+ * Validasi ketat URL profil LinkedIn & kembalikan URL kanonik.
+ * Hanya https://(www.|xx.)linkedin.com/in/<slug>.
+ */
+function normalizeLinkedInUrl(value: string): string {
+  let input = value.trim();
+  if (!/^[a-z][a-z0-9+.-]*:\/\//i.test(input)) input = `https://${input}`;
+  input = input.replace(/^http:\/\//i, "https://");
+
+  let url: URL;
+  try {
+    url = new URL(input);
+  } catch {
+    throw new ValidationError("URL tidak valid. Gunakan format linkedin.com/in/username");
+  }
+
+  const host = url.hostname.toLowerCase();
+  const hostOk = host === "linkedin.com" || /^[a-z0-9-]+\.linkedin\.com$/.test(host);
+  if (url.protocol !== "https:" || !hostOk || url.port || url.username || url.password) {
+    throw new ValidationError("URL tidak valid. Gunakan format linkedin.com/in/username");
+  }
+
+  const match = url.pathname.match(/^\/in\/([A-Za-z0-9\-_%.]{3,100})\/?$/);
+  if (!match) {
+    throw new ValidationError("URL tidak valid. Gunakan format linkedin.com/in/username");
+  }
+  return `https://www.linkedin.com/in/${match[1]}/`;
+}
+
+async function getTierSlug(admin: ReturnType<typeof getAdminClient>, userId: string) {
+  const { data: sub } = await admin
+    .from("user_subscriptions")
+    .select("subscription_tiers!inner(slug)")
+    .eq("user_id", userId)
+    .eq("status", "active")
+    .maybeSingle();
+  return (
+    (sub as { subscription_tiers?: { slug?: string } } | null)?.subscription_tiers?.slug || "free"
+  );
+}
 
 const MONTH_NAMES: Record<string, string> = {
   "01": "Jan",
@@ -35,6 +94,10 @@ function formatDate(ym: string | null | undefined): string {
   return ym;
 }
 
+// Data Apify tidak bertipe; akses properti longgar.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Loose = any;
+
 function mapProfileToCvData(profile: Record<string, unknown>) {
   const p = (key: string, fallback?: string) =>
     (profile[key] ?? (fallback ? profile[fallback] : undefined)) as string | undefined;
@@ -52,7 +115,7 @@ function mapProfileToCvData(profile: Record<string, unknown>) {
   if (p("linkedinUrl", "url")) personal.linkedin = p("linkedinUrl", "url")!;
   if (p("about", "summary")) personal.summary = p("about", "summary")!;
 
-  const experiences = a("experiences", "experience").map((e: any, i: number) => ({
+  const experiences = a("experiences", "experience").map((e: Loose, i: number) => ({
     id: `import-${i}`,
     company: e.companyName || e.company || "",
     position: e.title || e.position || "",
@@ -64,7 +127,7 @@ function mapProfileToCvData(profile: Record<string, unknown>) {
     description: e.jobDescription || e.description || "",
   }));
 
-  const educations = a("educations", "education").map((e: any, i: number) => {
+  const educations = a("educations", "education").map((e: Loose, i: number) => {
     const subtitle = (e.subtitle || e.degree || "") as string;
     const [degree, field] = subtitle.split(",").map((s: string) => s.trim());
     return {
@@ -78,19 +141,19 @@ function mapProfileToCvData(profile: Record<string, unknown>) {
     };
   });
 
-  const skills = a("skills", "skill").map((s: any, i: number) => ({
+  const skills = a("skills", "skill").map((s: Loose, i: number) => ({
     id: `import-skill-${i}`,
     name: s.title || s.name || "",
   }));
 
-  const certificates = a("licenseAndCertificates", "certificates").map((c: any, i: number) => ({
+  const certificates = a("licenseAndCertificates", "certificates").map((c: Loose, i: number) => ({
     id: `import-cert-${i}`,
     name: c.title || c.name || "",
     issuer: c.subtitle || c.issuer || "",
     date: (c.issued || c.date || "").replace("Issued ", ""),
   }));
 
-  const languages = a("languages", "language").map((l: any, i: number) => ({
+  const languages = a("languages", "language").map((l: Loose, i: number) => ({
     id: `import-lang-${i}`,
     name: l.name || l.title || l.language || "",
     level: l.proficiency || l.level || "Intermediate",
@@ -121,8 +184,9 @@ async function runApifyActor(linkedinUrl: string): Promise<Record<string, unknow
   });
 
   if (!runRes.ok) {
-    const errText = await runRes.text();
-    throw new Error(`Gagal memulai Apify run: ${runRes.status} ${errText}`);
+    const errText = await runRes.text().catch(() => "");
+    console.error("Apify run start error:", runRes.status, errText);
+    throw new Error("Gagal memulai import LinkedIn. Silakan coba lagi nanti.");
   }
 
   const runJson = await runRes.json();
@@ -130,8 +194,28 @@ async function runApifyActor(linkedinUrl: string): Promise<Record<string, unknow
   const runId = run.id;
   const datasetId = run.defaultDatasetId;
 
-  if (!runId) throw new Error("Gagal mendapatkan run ID dari Apify.");
+  if (!runId) {
+    console.error("Apify run response without id:", JSON.stringify(runJson).slice(0, 500));
+    throw new Error("Gagal memulai import LinkedIn. Silakan coba lagi nanti.");
+  }
 
+  try {
+    return await pollApifyRun(runId, datasetId);
+  } catch (e) {
+    // Run sudah berjalan (biaya Apify sudah terjadi) → tandai agar kuota tidak di-release
+    // Hanya pesan yang kita buat sendiri (Error biasa) yang diteruskan ke user.
+    const isOwnMessage = e instanceof Error && e.constructor === Error;
+    if (!isOwnMessage) console.error("Apify polling error:", e);
+    throw new ApifyRunError(
+      isOwnMessage ? e.message : "Import LinkedIn gagal. Silakan coba lagi nanti.",
+    );
+  }
+}
+
+async function pollApifyRun(
+  runId: string,
+  datasetId: string | undefined,
+): Promise<Record<string, unknown>> {
   // Step 2: Poll until finished (max 90 seconds)
   let succeeded = false;
   const maxAttempts = 45;
@@ -153,7 +237,8 @@ async function runApifyActor(linkedinUrl: string): Promise<Record<string, unknow
       break;
     }
     if (status === "FAILED" || status === "ABORTED" || status === "TIMED-OUT") {
-      throw new Error(`Scraping LinkedIn gagal (status: ${status}). Coba lagi nanti.`);
+      console.error("Apify run ended with status:", status);
+      throw new Error("Import LinkedIn gagal. Profil mungkin private atau tidak ditemukan.");
     }
   }
 
@@ -234,17 +319,36 @@ Deno.serve(async (req: Request) => {
     const rateLimitKey = `linkedin-import:${userId}`;
     const rl = checkRateLimit(rateLimitKey, 10, 60 * 60 * 1000);
     if (!rl.allowed) {
-      throw new Error("Terlalu banyak request. Silakan coba lagi dalam 1 jam.");
+      return createRateLimitedResponse(
+        rl,
+        JSON.stringify({ error: "Terlalu banyak request. Silakan coba lagi dalam 1 jam." }),
+        corsHeaders(req),
+      );
     }
 
-    const { linkedinUrl } = await req.json();
-    if (!linkedinUrl?.trim()) throw new Error("URL LinkedIn diperlukan.");
+    const body = await readJsonBody(req, 10_000);
+    const rawUrl = limitText(body.linkedinUrl, 500, "URL LinkedIn");
+    if (!rawUrl.trim()) throw new ValidationError("URL LinkedIn diperlukan.");
+    const linkedinUrl = normalizeLinkedInUrl(rawUrl);
 
-    if (!linkedinUrl.includes("linkedin.com/in/")) {
-      throw new Error("URL tidak valid. Gunakan format linkedin.com/in/username");
+    if (!APIFY_API_KEY) throw new Error("APIFY_API_KEY tidak dikonfigurasi.");
+
+    const admin = getAdminClient();
+    const tierSlug = await getTierSlug(admin, userId);
+    const limit = LINKEDIN_IMPORT_LIMITS[tierSlug] ?? LINKEDIN_IMPORT_LIMITS.free;
+
+    // Reservasi kuota SEBELUM Apify run berbayar dimulai.
+    const reservation = await reserveQuota(admin, userId, "linkedin_import", 0, { limit });
+
+    let profile: Record<string, unknown>;
+    try {
+      profile = await runApifyActor(linkedinUrl);
+    } catch (e) {
+      // Kembalikan kuota hanya jika run belum sempat dimulai (belum ada biaya).
+      if (!(e instanceof ApifyRunError)) await reservation.release();
+      // ApifyRunError (subclass) akan disamarkan errorResponse → pakai Error biasa
+      throw e instanceof ApifyRunError ? new Error(e.message) : e;
     }
-
-    const profile = await runApifyActor(linkedinUrl.trim());
     const cvData = mapProfileToCvData(profile);
 
     return corsResponse({ data: cvData }, 200, req);

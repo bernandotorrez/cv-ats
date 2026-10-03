@@ -4,10 +4,51 @@
  * Provides XSS protection for user-generated content.
  * All CV data and user inputs should be sanitized before rendering.
  *
- * Last Updated: 2026-05-12
+ * SSR safety: `isomorphic-dompurify` is NOT used here. Under the Cloudflare
+ * Workers build (resolve conditions workerd/worker/browser) it resolves to its
+ * browser entry, which throws at import time when no DOM is available. We use
+ * `dompurify` directly and only call it when a DOM exists (browser). On the
+ * server the HTML helpers fall back to fully escaped text, which is always
+ * safe to inject (tryout content is only rendered client-side anyway).
+ *
+ * Last Updated: 2026-10-04
  */
 
-import DOMPurify from "isomorphic-dompurify";
+import DOMPurify, { type Config } from "dompurify";
+
+function canPurify(): boolean {
+  return (
+    typeof window !== "undefined" &&
+    !!DOMPurify &&
+    DOMPurify.isSupported === true &&
+    typeof DOMPurify.sanitize === "function"
+  );
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+/** Server fallback for plain-text helpers (result is rendered as React text). */
+function stripTagsFallback(value: string): string {
+  return value.replace(/<[^>]*>/g, "");
+}
+
+function purifyText(dirty: string, config: Config): string {
+  if (!canPurify()) return stripTagsFallback(dirty);
+  return DOMPurify.sanitize(dirty, config);
+}
+
+/** For HTML that will be injected with dangerouslySetInnerHTML. */
+function purifyHtml(dirty: string, config: Config): string {
+  if (!canPurify()) return escapeHtml(stripTagsFallback(dirty));
+  return DOMPurify.sanitize(dirty, config);
+}
 
 /**
  * Sanitize plain text - removes all HTML tags
@@ -15,7 +56,7 @@ import DOMPurify from "isomorphic-dompurify";
  */
 export function sanitizeText(text: string): string {
   if (!text) return "";
-  return DOMPurify.sanitize(text, {
+  return purifyText(text, {
     ALLOWED_TAGS: [],
     ALLOWED_ATTR: [],
   }).trim();
@@ -29,12 +70,63 @@ export function sanitizeText(text: string): string {
  */
 export function sanitizeRichText(html: string): string {
   if (!html) return "";
-  return DOMPurify.sanitize(html, {
+  return purifyHtml(html, {
     ALLOWED_TAGS: ["p", "br", "strong", "em", "b", "i", "ul", "ol", "li", "a", "span"],
     ALLOWED_ATTR: ["href", "target", "rel"],
-    // Force all links to open in new tab with security attributes
-    FORCE_BODY: false,
+    ALLOW_DATA_ATTR: false,
   }).trim();
+}
+
+const TRYOUT_ALLOWED_TAGS = [
+  "p",
+  "br",
+  "hr",
+  "strong",
+  "b",
+  "em",
+  "i",
+  "u",
+  "s",
+  "sub",
+  "sup",
+  "small",
+  "mark",
+  "span",
+  "div",
+  "blockquote",
+  "code",
+  "pre",
+  "ul",
+  "ol",
+  "li",
+  "h3",
+  "h4",
+  "h5",
+  "h6",
+  "table",
+  "thead",
+  "tbody",
+  "tfoot",
+  "tr",
+  "th",
+  "td",
+  "caption",
+  "img",
+];
+
+/**
+ * Sanitize HTML for tryout questions & explanations (admin / LLM generated).
+ * Allows formatting, lists, tables and images; strips scripts, event handlers,
+ * styles, forms, iframes, links and javascript: URLs.
+ */
+export function sanitizeTryoutHtml(html: string | null | undefined): string {
+  if (!html) return "";
+  return purifyHtml(html, {
+    ALLOWED_TAGS: TRYOUT_ALLOWED_TAGS,
+    ALLOWED_ATTR: ["src", "alt", "title", "colspan", "rowspan", "width", "height"],
+    ALLOW_DATA_ATTR: false,
+    ALLOW_ARIA_ATTR: false,
+  });
 }
 
 /**
@@ -45,7 +137,7 @@ export function sanitizeUrl(url: string | null | undefined): string {
   if (!url) return "";
 
   try {
-    const sanitized = DOMPurify.sanitize(url, {
+    const sanitized = purifyText(url, {
       ALLOWED_TAGS: [],
       ALLOWED_ATTR: [],
     });
@@ -68,7 +160,7 @@ export function sanitizeUrl(url: string | null | undefined): string {
 export function sanitizeEmail(email: string): string {
   if (!email) return "";
 
-  const sanitized = DOMPurify.sanitize(email, {
+  const sanitized = purifyText(email, {
     ALLOWED_TAGS: [],
     ALLOWED_ATTR: [],
   }).trim();
@@ -89,11 +181,11 @@ export function sanitizeEmail(email: string): string {
 export function sanitizePhone(phone: string): string {
   if (!phone) return "";
 
-  return DOMPurify.sanitize(phone, {
+  return purifyText(phone, {
     ALLOWED_TAGS: [],
     ALLOWED_ATTR: [],
   })
-    .replace(/[^\d\s\-\(\)\+]/g, "") // Keep only valid phone characters
+    .replace(/[^\d\s\-()+]/g, "") // Keep only valid phone characters
     .trim();
 }
 
@@ -104,12 +196,9 @@ export function sanitizePhone(phone: string): string {
 export function sanitizeUuid(id: string): string | null {
   if (!id) return null;
 
-  const sanitized = DOMPurify.sanitize(id, {
-    ALLOWED_TAGS: [],
-    ALLOWED_ATTR: [],
-  }).trim();
+  const sanitized = id.trim();
 
-  // UUID v4 format validation
+  // UUID format validation
   const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   if (!uuidPattern.test(sanitized)) {
     return null;
@@ -173,12 +262,12 @@ export function sanitizeFilename(filename: string): string {
   if (!filename) return "";
 
   // Remove path traversal and dangerous characters
-  return DOMPurify.sanitize(filename, {
+  return purifyText(filename, {
     ALLOWED_TAGS: [],
     ALLOWED_ATTR: [],
   })
     .replace(/\.\./g, "") // Remove path traversal
-    .replace(/[<>:\"\/\\|?*]/g, "") // Remove invalid filename chars
+    .replace(/[<>:"/\\|?*]/g, "") // Remove invalid filename chars
     .trim()
     .slice(0, 255); // Limit length
 }
@@ -188,7 +277,8 @@ export function sanitizeFilename(filename: string): string {
  * Alias for sanitizeText with additional script removal
  */
 export function stripHtml(html: string): string {
-  return DOMPurify.sanitize(html, {
+  if (!html) return "";
+  return purifyText(html, {
     ALLOWED_TAGS: [],
     ALLOWED_ATTR: [],
     KEEP_CONTENT: true,

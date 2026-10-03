@@ -9,17 +9,17 @@
  */
 import {
   aiComplete,
-  checkAndTrackQuota,
   corsResponse,
   errorResponse,
   getAdminClient,
   getUserId,
   getActionVerbExamples,
+  reserveQuota,
   type CvUiLang,
 } from "../_shared/ai-common.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 import { checkRateLimit, createRateLimitedResponse } from "../_shared/rate-limit.ts";
-
+import { LIMITS, limitText, readJsonBody, ValidationError } from "../_shared/validation.ts";
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders(req) });
@@ -31,7 +31,11 @@ Deno.serve(async (req: Request) => {
     const rateLimitKey = `ai-polish:${userId}`;
     const rl = checkRateLimit(rateLimitKey, 30, 60 * 1000);
     if (!rl.allowed) {
-      return createRateLimitedResponse(rl, JSON.stringify({ error: "Terlalu banyak request. Silakan coba lagi nanti." }), corsHeaders(req));
+      return createRateLimitedResponse(
+        rl,
+        JSON.stringify({ error: "Terlalu banyak request. Silakan coba lagi nanti." }),
+        corsHeaders(req),
+      );
     }
     const admin = getAdminClient();
 
@@ -44,7 +48,10 @@ Deno.serve(async (req: Request) => {
       .single();
 
     const tier = (userSub as any)?.subscription_tiers;
-    if (tier?.enable_text_polish === false || (tier?.quota_ai_polish !== null && tier?.quota_ai_polish <= 0)) {
+    if (
+      tier?.enable_text_polish === false ||
+      (tier?.quota_ai_polish !== null && tier?.quota_ai_polish <= 0)
+    ) {
       return corsResponse(
         {
           error: "Fitur Perbaiki Teks tidak tersedia di paket kamu. Silakan upgrade.",
@@ -56,12 +63,14 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    const { text, context, language, variants } = await req.json();
-    const lang: CvUiLang = language === "en" ? "en" : "id";
-    const wantVariants = typeof variants === "number" && variants > 1;
+    const body = await readJsonBody(req, 50_000);
+    const lang: CvUiLang = body.language === "en" ? "en" : "id";
+    const wantVariants = typeof body.variants === "number" && body.variants > 1;
+    const text = limitText(body.text, LIMITS.text, "text");
+    const context = limitText(body.context, 2_000, "context");
 
-    if (!text || typeof text !== "string" || text.trim().length < 5) {
-      throw new Error("Teks terlalu pendek untuk diperbaiki (minimal 5 karakter).");
+    if (text.trim().length < 5) {
+      throw new ValidationError("Teks terlalu pendek untuk diperbaiki (minimal 5 karakter).");
     }
 
     const ctxLine = context ? `\nKONTEKS: ${context}` : "";
@@ -75,14 +84,38 @@ Deno.serve(async (req: Request) => {
       const tones =
         lang === "en"
           ? [
-              { key: "impactful", label: "Impactful", desc: "Focus on strong action verbs and quantifiable achievements." },
-              { key: "clear", label: "Clear & Concise", desc: "Simple, direct language. Easy to read and ATS-optimised." },
-              { key: "creative", label: "Creative", desc: "Engaging and memorable phrasing while staying professional." },
+              {
+                key: "impactful",
+                label: "Impactful",
+                desc: "Focus on strong action verbs and quantifiable achievements.",
+              },
+              {
+                key: "clear",
+                label: "Clear & Concise",
+                desc: "Simple, direct language. Easy to read and ATS-optimised.",
+              },
+              {
+                key: "creative",
+                label: "Creative",
+                desc: "Engaging and memorable phrasing while staying professional.",
+              },
             ]
           : [
-              { key: "impactful", label: "Impactful", desc: "Fokus pada kata kerja aktif kuat dan pencapaian terukur (angka/metrik)." },
-              { key: "clear", label: "Jelas & Ringkas", desc: "Bahasa simpel, langsung ke inti, dan mudah dibaca ATS." },
-              { key: "creative", label: "Kreatif", desc: "Kalimat menarik dan berkesan namun tetap profesional." },
+              {
+                key: "impactful",
+                label: "Impactful",
+                desc: "Fokus pada kata kerja aktif kuat dan pencapaian terukur (angka/metrik).",
+              },
+              {
+                key: "clear",
+                label: "Jelas & Ringkas",
+                desc: "Bahasa simpel, langsung ke inti, dan mudah dibaca ATS.",
+              },
+              {
+                key: "creative",
+                label: "Kreatif",
+                desc: "Kalimat menarik dan berkesan namun tetap profesional.",
+              },
             ];
 
       const prompt = `Kamu adalah penulis CV profesional. Buatkan 3 versi perbaikan teks berikut dengan gaya berbeda.${ctxLine}
@@ -107,22 +140,29 @@ Buatkan TEPAT 3 versi dalam format JSON berikut (tanpa markdown, hanya JSON ment
   ]
 }`;
 
-      const raw = await aiComplete(
-        [{ role: "user", content: prompt }],
-        { temperature: 0.7, maxTokens: 1500, jsonMode: true },
-        lang,
-      );
+      // H3: reservasi kuota SEBELUM memanggil AI; dikembalikan jika AI/parsing gagal
+      const reservation = await reserveQuota(admin, userId, "polish", 300);
 
       let parsed: { variants: { polished: string; tone: string }[] };
       try {
-        const cleaned = raw.replace(/^```json\s*/i, "").replace(/\s*```$/, "").trim();
-        parsed = JSON.parse(cleaned);
-      } catch {
-        throw new Error("AI gagal menghasilkan variasi teks. Silakan coba lagi.");
+        const raw = await aiComplete(
+          [{ role: "user", content: prompt }],
+          { temperature: 0.7, maxTokens: 1500, jsonMode: true },
+          lang,
+        );
+        try {
+          const cleaned = raw
+            .replace(/^```json\s*/i, "")
+            .replace(/\s*```$/, "")
+            .trim();
+          parsed = JSON.parse(cleaned);
+        } catch {
+          throw new Error("AI gagal menghasilkan variasi teks. Silakan coba lagi.");
+        }
+      } catch (e) {
+        await reservation.release();
+        throw e;
       }
-
-      // Track quota usage
-      await checkAndTrackQuota(admin, userId, "polish", 300);
 
       return corsResponse(
         {
@@ -152,11 +192,20 @@ ${text}
 
 TEKS PERBAIKAN:`;
 
-    const result = await aiComplete(
-      [{ role: "user", content: prompt }],
-      { temperature: 0.3, maxTokens: 800 },
-      lang,
-    );
+    // H3: reservasi kuota SEBELUM memanggil AI; dikembalikan jika AI gagal
+    const reservation = await reserveQuota(admin, userId, "polish", 300);
+
+    let result: string;
+    try {
+      result = await aiComplete(
+        [{ role: "user", content: prompt }],
+        { temperature: 0.3, maxTokens: 800 },
+        lang,
+      );
+    } catch (e) {
+      await reservation.release();
+      throw e;
+    }
 
     // Clean up any markdown or quotes
     const polished = result
@@ -165,9 +214,6 @@ TEKS PERBAIKAN:`;
       .replace(/\n?```$/, "")
       .replace(/^\* /gm, "- ") // normalize markdown bullet * → -
       .trim();
-
-    // Track quota usage
-    await checkAndTrackQuota(admin, userId, "polish", 300);
 
     return corsResponse(
       {

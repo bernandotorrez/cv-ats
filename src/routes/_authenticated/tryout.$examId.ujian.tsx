@@ -39,6 +39,7 @@ import type {
   TryoutQuestionPublic,
   TryoutExamSet,
   TryoutSubtest,
+  TryoutRpcClient,
 } from "@/lib/tryout-types";
 
 export const Route = createFileRoute("/_authenticated/tryout/$examId/ujian")({
@@ -115,9 +116,7 @@ function TryoutExamPage() {
       const data: StartResponse = await res.json();
 
       if (!res.ok) {
-        throw new Error(
-          (data as any).error || "Gagal memulai tryout",
-        );
+        throw new Error((data as any).error || "Gagal memulai tryout");
       }
 
       setAttemptId(data.attempt_id);
@@ -127,12 +126,12 @@ function TryoutExamPage() {
       setDurationMinutes(data.duration_minutes);
 
       // Load jawaban: prefer localStorage (faster) > server
-      const localAnswers = safeParseLocal(
-        `${LOCAL_STORAGE_PREFIX}${data.attempt_id}`,
-      ) as Record<string, string> | null;
-      const localFlagged = safeParseLocal(
-        `${LOCAL_FLAGGED_PREFIX}${data.attempt_id}`,
-      ) as string[] | null;
+      const localAnswers = safeParseLocal(`${LOCAL_STORAGE_PREFIX}${data.attempt_id}`) as Record<
+        string,
+        string
+      > | null;
+      const localFlagged = safeParseLocal(`${LOCAL_FLAGGED_PREFIX}${data.attempt_id}`) as
+        string[] | null;
 
       const serverAnswers = (data.answers || {}) as Record<string, string>;
       const merged = { ...serverAnswers, ...(localAnswers || {}) };
@@ -182,10 +181,7 @@ function TryoutExamPage() {
         const next = prev.includes(questionId)
           ? prev.filter((id) => id !== questionId)
           : [...prev, questionId];
-        localStorage.setItem(
-          `${LOCAL_FLAGGED_PREFIX}${attemptId}`,
-          JSON.stringify(next),
-        );
+        localStorage.setItem(`${LOCAL_FLAGGED_PREFIX}${attemptId}`, JSON.stringify(next));
         return next;
       });
     },
@@ -204,16 +200,20 @@ function TryoutExamPage() {
         const token = sessionData.session?.access_token;
 
         if (!token) {
-          toast.error("Sesi login Anda telah habis! Silakan buka tab baru, login kembali, lalu tekan Submit lagi di sini.", { duration: 8000 });
+          toast.error(
+            "Sesi login Anda telah habis! Silakan buka tab baru, login kembali, lalu tekan Submit lagi di sini.",
+            { duration: 8000 },
+          );
           submittingRef.current = false;
           setSubmitting(false);
           return;
         }
 
         // Flush latest local answers before submit
-        const latestAnswers = safeParseLocal(
-          `${LOCAL_STORAGE_PREFIX}${attemptId}`,
-        ) as Record<string, string> | null;
+        const latestAnswers = safeParseLocal(`${LOCAL_STORAGE_PREFIX}${attemptId}`) as Record<
+          string,
+          string
+        > | null;
         const finalAnswers = latestAnswers || answers;
 
         const res = await fetch(`${supabaseUrl}/functions/v1/tryout-submit`, {
@@ -231,6 +231,16 @@ function TryoutExamPage() {
         });
 
         const data = await res.json();
+        if (res.status === 409) {
+          // Attempt sudah disubmit sebelumnya (mis. double submit) → tampilkan hasil.
+          localStorage.removeItem(`${LOCAL_STORAGE_PREFIX}${attemptId}`);
+          localStorage.removeItem(`${LOCAL_FLAGGED_PREFIX}${attemptId}`);
+          navigate({
+            to: "/tryout/$examId/hasil/$attemptId" as never,
+            params: { examId, attemptId } as never,
+          });
+          return;
+        }
         if (!res.ok) {
           throw new Error(data.error || "Gagal submit");
         }
@@ -239,7 +249,13 @@ function TryoutExamPage() {
         localStorage.removeItem(`${LOCAL_STORAGE_PREFIX}${attemptId}`);
         localStorage.removeItem(`${LOCAL_FLAGGED_PREFIX}${attemptId}`);
 
-        toast.success(autoSubmit ? "Waktu habis. Ujian disubmit." : "Ujian disubmit!");
+        toast.success(
+          data.answers_source === "autosave"
+            ? "Waktu habis. Jawaban yang tersimpan otomatis telah dinilai."
+            : autoSubmit
+              ? "Waktu habis. Ujian disubmit."
+              : "Ujian disubmit!",
+        );
         navigate({
           to: "/tryout/$examId/hasil/$attemptId" as never,
           params: { examId, attemptId } as never,
@@ -256,9 +272,7 @@ function TryoutExamPage() {
 
   // Filtered questions
   const visibleQuestions =
-    activeSubtest === "all"
-      ? questions
-      : questions.filter((q) => q.subtest === activeSubtest);
+    activeSubtest === "all" ? questions : questions.filter((q) => q.subtest === activeSubtest);
 
   const subtestCounts = {
     all: { total: questions.length, answered: Object.keys(answers).length },
@@ -476,25 +490,25 @@ function TryoutExamPage() {
     if (!attemptId) return;
     // LocalStorage selalu diupdate untuk backup
     try {
-      localStorage.setItem(
-        `${LOCAL_STORAGE_PREFIX}${attemptId}`,
-        JSON.stringify(nextAnswers),
-      );
-      localStorage.setItem(
-        `${LOCAL_FLAGGED_PREFIX}${attemptId}`,
-        JSON.stringify(currentFlagged),
-      );
+      localStorage.setItem(`${LOCAL_STORAGE_PREFIX}${attemptId}`, JSON.stringify(nextAnswers));
+      localStorage.setItem(`${LOCAL_FLAGGED_PREFIX}${attemptId}`, JSON.stringify(currentFlagged));
     } catch {}
 
     // Debounced server save
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
     saveTimeoutRef.current = setTimeout(() => {
-      void supabase
-        .from("tryout_attempts")
-        .update({ answers: nextAnswers, flagged_questions: currentFlagged })
-        .eq("id", attemptId)
-        .then(({ error }) => {
+      // Autosave lewat RPC: hanya answers & flagged_questions, hanya untuk
+      // attempt in_progress milik sendiri dan sebelum batas waktu (+60 detik).
+      void (supabase as unknown as TryoutRpcClient)
+        .rpc("save_tryout_answers", {
+          p_attempt_id: attemptId,
+          p_answers: nextAnswers,
+          p_flagged: currentFlagged,
+        })
+        .then(({ data, error }) => {
           if (error) console.warn("Auto-save error:", error.message);
+          else if (data === false)
+            console.warn("Auto-save ditolak: waktu habis atau attempt sudah selesai.");
         });
     }, 3000);
   }

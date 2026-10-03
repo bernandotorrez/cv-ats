@@ -7,8 +7,8 @@ import { Trophy } from "lucide-react";
 import { buildSeo } from "@/lib/seo";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LeaderboardTable, type LeaderboardEntry } from "@/components/tryout";
-import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
+import type { TryoutRpcClient } from "@/lib/tryout-types";
 import { BackButton } from "@/components/ui/back-button";
 
 export const Route = createFileRoute("/_authenticated/tryout/leaderboard")({
@@ -25,11 +25,11 @@ export const Route = createFileRoute("/_authenticated/tryout/leaderboard")({
 type ExamSet = { id: string; name: string };
 
 function TryoutLeaderboardPage() {
-  const { user } = useAuth();
   const [examSets, setExamSets] = useState<ExamSet[]>([]);
   const [activeSet, setActiveSet] = useState<string>("all");
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [locked, setLocked] = useState(false);
 
   useEffect(() => {
     void supabase
@@ -50,16 +50,23 @@ function TryoutLeaderboardPage() {
 
   async function loadLeaderboard() {
     setLoading(true);
-    let query = supabase
-      .from("tryout_leaderboard")
-      .select("*")
-      .order("ranking", { ascending: true })
-      .limit(50);
-    if (activeSet !== "all") {
-      query = query.eq("exam_set_id", activeSet);
+    // RPC SECURITY DEFINER: tanpa UUID user + cek entitlement has_leaderboard.
+    const { data, error } = await (supabase as unknown as TryoutRpcClient).rpc(
+      "get_tryout_leaderboard",
+      {
+        p_exam_set_id: activeSet === "all" ? null : activeSet,
+        p_limit: 50,
+      },
+    );
+    if (error) {
+      console.warn("Leaderboard error:", error.message);
+      setEntries([]);
+      setLocked(false);
+    } else {
+      const res = (data || {}) as { entitled?: boolean; entries?: LeaderboardEntry[] };
+      setLocked(res.entitled === false);
+      setEntries(res.entries || []);
     }
-    const { data } = await query;
-    setEntries((data as unknown as LeaderboardEntry[]) || []);
     setLoading(false);
   }
 
@@ -72,12 +79,10 @@ function TryoutLeaderboardPage() {
           <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-white/20 px-3 py-1 text-xs font-semibold">
             <Trophy className="h-3.5 w-3.5" /> Leaderboard
           </div>
-          <h1 className="font-display text-3xl font-bold sm:text-4xl">
-            Top Pejuang SKD
-          </h1>
+          <h1 className="font-display text-3xl font-bold sm:text-4xl">Top Pejuang SKD</h1>
           <p className="mt-2 max-w-2xl text-sm opacity-90">
-            Bersaing sehat dengan pejuang SKD se-Indonesia. Selesaikan tryout dan
-            masuk papan peringkat.
+            Bersaing sehat dengan pejuang SKD se-Indonesia. Selesaikan tryout dan masuk papan
+            peringkat.
           </p>
         </div>
       </section>
@@ -96,11 +101,7 @@ function TryoutLeaderboardPage() {
       )}
 
       <section>
-        <LeaderboardTable
-          entries={entries}
-          currentUserId={user?.id}
-          loading={loading}
-        />
+        <LeaderboardTable entries={entries} loading={loading} locked={locked} />
       </section>
 
       <section className="rounded-2xl border bg-muted/30 p-5 text-center text-sm text-muted-foreground">

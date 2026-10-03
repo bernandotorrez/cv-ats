@@ -1,14 +1,19 @@
 /**
- * tryout-submit — Submit jawaban tryout & hitung skor.
+ * tryout-submit — Submit jawaban tryout & hitung skor (server-authoritative).
  *
  * Flow:
- * 1. Validasi user own attempt.
- * 2. Validasi attempt status = `in_progress`.
- * 3. Validasi waktu: now() - started_at <= duration + 30s tolerance.
- * 4. Fetch semua soal + jawaban benar.
- * 5. Hitung skor (server-side).
- * 6. Update attempt: status, scores, pass flags, duration, finished_at.
- * 7. Return: skor + soal lengkap (untuk pembahasan jika paket lengkap).
+ * 1. Validasi user own attempt & status `in_progress`.
+ * 2. Validasi waktu: deadline = started_at + duration. Jika submit datang
+ *    setelah deadline + 60 detik, payload jawaban DIABAIKAN dan yang dinilai
+ *    hanya jawaban yang sudah tersimpan lewat autosave (save_tryout_answers);
+ *    status menjadi `timed_out`.
+ * 3. Fetch soal + kunci (kolom eksplisit), hitung skor di server.
+ * 4. Update attempt dengan guard `status = in_progress` (cegah double submit),
+ *    pastikan tepat 1 baris berubah.
+ * 5. Return skor. Kunci jawaban, skor TKP & pembahasan hanya dikirim jika
+ *    paket attempt punya `has_pembahasan`.
+ *
+ * Skor, durasi, dan status TIDAK pernah diambil dari client.
  */
 
 import { corsHeaders } from "../_shared/cors.ts";
@@ -16,12 +21,38 @@ import { getAdminClient, getUserId } from "../_shared/ai-common.ts";
 
 type SubmitBody = {
   attempt_id?: string;
-  answers?: Record<string, string>;
-  flagged_questions?: string[];
+  answers?: unknown;
+  flagged_questions?: unknown;
   auto_submit?: boolean;
 };
 
-const TIME_TOLERANCE_SECONDS = 30;
+type QuestionRow = {
+  id: string;
+  subtest: "twk" | "tiu" | "tkp";
+  question_number: number;
+  question_text: string;
+  question_image_url: string | null;
+  options: unknown;
+  category: string | null;
+  difficulty: string | null;
+  correct_answer: string | null;
+  scores: Record<string, number> | null;
+  explanation?: string | null;
+  explanation_image_url?: string | null;
+};
+
+/** Toleransi jaringan setelah waktu habis (auto-submit client). */
+const GRACE_SECONDS = 60;
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+const EXAM_SET_COLUMNS =
+  "id, slug, name, description, total_questions, duration_minutes, twk_count, tiu_count, tkp_count, passing_grade_twk, passing_grade_tiu, passing_grade_tkp, is_active, is_free_preview, sort_order";
+
+const SCORING_QUESTION_COLUMNS =
+  "id, subtest, question_number, question_text, question_image_url, options, category, difficulty, correct_answer, scores";
+
+const PEMBAHASAN_COLUMNS = ", explanation, explanation_image_url";
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
@@ -37,18 +68,17 @@ Deno.serve(async (req: Request) => {
     const admin = getAdminClient();
 
     const body = (await req.json().catch(() => ({}))) as SubmitBody;
-    const attemptId = (body.attempt_id || "").trim();
-    if (!attemptId) {
+    const attemptId = typeof body.attempt_id === "string" ? body.attempt_id.trim() : "";
+    if (!attemptId || !UUID_RE.test(attemptId)) {
       return json(req, { error: "attempt_id wajib diisi." }, 400);
     }
-
-    const answers = body.answers || {};
-    const flagged = body.flagged_questions || [];
 
     // 1. Ambil attempt
     const { data: attempt, error: attErr } = await admin
       .from("tryout_attempts")
-      .select("*, tryout_exam_sets!inner(*)")
+      .select(
+        `id, user_id, exam_set_id, credit_id, status, started_at, answers, flagged_questions, tryout_exam_sets!inner(${EXAM_SET_COLUMNS})`,
+      )
       .eq("id", attemptId)
       .maybeSingle();
     if (attErr) throw attErr;
@@ -59,37 +89,51 @@ Deno.serve(async (req: Request) => {
       return json(req, { error: "Forbidden: bukan attempt kamu." }, 403);
     }
     if (attempt.status !== "in_progress") {
-      return json(req, { error: `Attempt sudah ${attempt.status}.` }, 400);
+      return json(req, { error: `Attempt sudah ${attempt.status}.` }, 409);
     }
+
+    // deno-lint-ignore no-explicit-any
+    const examSet = attempt.tryout_exam_sets as any;
+    const durationMinutes: number = examSet.duration_minutes ?? 100;
 
     // 2. Validasi waktu (server-side anti-cheat)
-    const examSet = attempt.tryout_exam_sets;
-    const startedAt = new Date(attempt.started_at).getTime();
-    const maxDurationMs = (examSet.duration_minutes + TIME_TOLERANCE_SECONDS / 60) * 60_000;
-    const elapsedMs = Date.now() - startedAt;
-    const timedOut = elapsedMs > maxDurationMs;
-    if (timedOut && Object.keys(answers).length === 0) {
-      // Server-side auto-submit dengan jawaban kosong jika client tidak sempat kirim
-      return json(req, { error: "Waktu habis dan tidak ada jawaban tersimpan." }, 400);
-    }
+    const startedAtMs = new Date(attempt.started_at).getTime();
+    const deadlineMs = startedAtMs + durationMinutes * 60_000;
+    const nowMs = Date.now();
+    const pastGrace = nowMs > deadlineMs + GRACE_SECONDS * 1000;
 
-    // 3. Fetch semua soal + jawaban benar (full)
-    const { data: questions, error: qErr } = await admin
+    // 3. Paket: apakah termasuk pembahasan?
+    const hasPembahasan = await fetchHasPembahasan(admin, attempt.credit_id);
+
+    // 4. Fetch soal + kunci (kolom eksplisit)
+    const { data: questionsData, error: qErr } = await admin
       .from("tryout_questions")
-      .select("*")
+      .select(SCORING_QUESTION_COLUMNS + (hasPembahasan ? PEMBAHASAN_COLUMNS : ""))
       .eq("exam_set_id", examSet.id)
       .order("question_number", { ascending: true });
     if (qErr) throw qErr;
 
-    // 4. Hitung skor
-    const normalizedQuestions = (questions || []).map((q) => ({
+    const questions = ((questionsData || []) as unknown as QuestionRow[]).map((q) => ({
       ...q,
       options: Array.isArray(q.options) ? q.options : [],
     }));
+    const questionIds = new Set(questions.map((q) => q.id));
 
-    const scoreTwk = computeBinary(normalizedQuestions, answers, "twk", 5);
-    const scoreTiu = computeBinary(normalizedQuestions, answers, "tiu", 5);
-    const scoreTkp = computeTkp(normalizedQuestions, answers);
+    // Setelah deadline + grace: payload diabaikan, hanya jawaban autosave.
+    const storedAnswers = cleanAnswers(attempt.answers, questionIds);
+    const storedFlagged = cleanFlagged(attempt.flagged_questions, questionIds);
+    const payloadIsValid = isPlainObject(body.answers);
+    const answers =
+      !pastGrace && payloadIsValid ? cleanAnswers(body.answers, questionIds) : storedAnswers;
+    const flagged =
+      !pastGrace && Array.isArray(body.flagged_questions)
+        ? cleanFlagged(body.flagged_questions, questionIds)
+        : storedFlagged;
+
+    // 5. Hitung skor
+    const scoreTwk = computeBinary(questions, answers, "twk", 5);
+    const scoreTiu = computeBinary(questions, answers, "tiu", 5);
+    const scoreTkp = computeTkp(questions, answers);
     const scoreTotal = scoreTwk + scoreTiu + scoreTkp;
 
     const passTwk = scoreTwk >= examSet.passing_grade_twk;
@@ -97,17 +141,17 @@ Deno.serve(async (req: Request) => {
     const passTkp = scoreTkp >= examSet.passing_grade_tkp;
     const passOverall = passTwk && passTiu && passTkp;
 
-    const finishedAt = new Date().toISOString();
-    const durationSeconds = Math.min(
-      examSet.duration_minutes * 60,
-      Math.floor(elapsedMs / 1000),
+    const finishedAt = new Date(nowMs).toISOString();
+    const durationSeconds = Math.max(
+      0,
+      Math.min(durationMinutes * 60, Math.floor((nowMs - startedAtMs) / 1000)),
     );
 
-    const stats = computeStats(normalizedQuestions, answers);
+    const stats = computeStats(questions, answers);
 
-    // 5. Update attempt
-    const updateStatus = timedOut ? "timed_out" : "completed";
-    const { error: updateErr } = await admin
+    // 6. Update attempt — hanya jika masih in_progress (cegah double submit)
+    const updateStatus = pastGrace ? "timed_out" : "completed";
+    const { data: updatedRows, error: updateErr } = await admin
       .from("tryout_attempts")
       .update({
         status: updateStatus,
@@ -125,20 +169,13 @@ Deno.serve(async (req: Request) => {
         finished_at: finishedAt,
         duration_seconds: durationSeconds,
       })
-      .eq("id", attemptId);
+      .eq("id", attemptId)
+      .eq("user_id", userId)
+      .eq("status", "in_progress")
+      .select("id");
     if (updateErr) throw updateErr;
-
-    // 6. Cek apakah paket user termasuk pembahasan (paket lengkap)
-    let hasPembahasan = false;
-    if (attempt.credit_id) {
-      const { data: credit } = await admin
-        .from("tryout_credits")
-        .select("tryout_packages!inner(has_pembahasan)")
-        .eq("id", attempt.credit_id)
-        .maybeSingle();
-      // Relasi many-to-one: runtime berupa object, bukan array
-      const pkg = (credit as { tryout_packages?: { has_pembahasan?: boolean } } | null)?.tryout_packages;
-      hasPembahasan = !!pkg?.has_pembahasan;
+    if (!updatedRows || updatedRows.length !== 1) {
+      return json(req, { error: "Attempt sudah disubmit." }, 409);
     }
 
     return json(req, {
@@ -157,17 +194,21 @@ Deno.serve(async (req: Request) => {
         started_at: attempt.started_at,
         finished_at: finishedAt,
         duration_seconds: durationSeconds,
+        answers,
         stats,
       },
       exam_set: examSet,
-      questions: normalizedQuestions,
+      questions: questions.map((q) => shapeQuestion(q, hasPembahasan)),
       has_pembahasan: hasPembahasan,
+      answers_source: pastGrace ? "autosave" : "submit",
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Internal server error";
     console.error("tryout-submit error:", message);
-    const status = message.startsWith("Unauthorized") ? 401 : 500;
-    return json(req, { error: message }, status);
+    if (message.startsWith("Unauthorized")) {
+      return json(req, { error: message }, 401);
+    }
+    return json(req, { error: "Gagal submit tryout. Coba lagi." }, 500);
   }
 });
 
@@ -178,10 +219,76 @@ function json(req: Request, body: unknown, status = 200) {
   });
 }
 
+// deno-lint-ignore no-explicit-any
+async function fetchHasPembahasan(admin: any, creditId: string | null): Promise<boolean> {
+  if (!creditId) return false;
+  const { data: credit } = await admin
+    .from("tryout_credits")
+    .select("tryout_packages!inner(has_pembahasan)")
+    .eq("id", creditId)
+    .maybeSingle();
+  // Relasi many-to-one: runtime berupa object, bukan array
+  const pkg = (credit as { tryout_packages?: { has_pembahasan?: boolean } } | null)
+    ?.tryout_packages;
+  return !!pkg?.has_pembahasan;
+}
+
+/**
+ * Tanpa pembahasan: kirim soal tanpa kunci jawaban, skor TKP, dan pembahasan
+ * (halaman hasil hanya menampilkan soal jika paket punya pembahasan).
+ */
+function shapeQuestion(q: QuestionRow & { options: unknown[] }, hasPembahasan: boolean) {
+  const base = {
+    id: q.id,
+    subtest: q.subtest,
+    question_number: q.question_number,
+    question_text: q.question_text,
+    question_image_url: q.question_image_url,
+    options: q.options,
+    category: q.category,
+    difficulty: q.difficulty,
+  };
+  if (!hasPembahasan) return base;
+  return {
+    ...base,
+    correct_answer: q.correct_answer,
+    scores: q.scores,
+    explanation: q.explanation ?? null,
+    explanation_image_url: q.explanation_image_url ?? null,
+  };
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+/** Hanya id soal milik set ini, nilai berupa string pendek (kunci opsi). */
+function cleanAnswers(raw: unknown, questionIds: Set<string>): Record<string, string> {
+  const out: Record<string, string> = {};
+  if (!isPlainObject(raw)) return out;
+  for (const [key, value] of Object.entries(raw)) {
+    if (!questionIds.has(key)) continue;
+    if (typeof value !== "string") continue;
+    const v = value.trim();
+    if (v.length < 1 || v.length > 8) continue;
+    out[key] = v;
+  }
+  return out;
+}
+
+function cleanFlagged(raw: unknown, questionIds: Set<string>): string[] {
+  if (!Array.isArray(raw)) return [];
+  const out = new Set<string>();
+  for (const v of raw) {
+    if (typeof v === "string" && questionIds.has(v)) out.add(v);
+  }
+  return [...out];
+}
+
 // ─── Scoring helpers (duplikasi dari tryout-scoring.ts karena Deno tidak resolve TS file dari FE) ───
 
 function computeBinary(
-  questions: any[],
+  questions: QuestionRow[],
   answers: Record<string, string>,
   subtest: "twk" | "tiu",
   perCorrect: number,
@@ -197,7 +304,7 @@ function computeBinary(
   return score;
 }
 
-function computeTkp(questions: any[], answers: Record<string, string>): number {
+function computeTkp(questions: QuestionRow[], answers: Record<string, string>): number {
   let score = 0;
   for (const q of questions) {
     if (q.subtest !== "tkp") continue;
@@ -213,7 +320,8 @@ function computeTkp(questions: any[], answers: Record<string, string>): number {
   return score;
 }
 
-function computeStats(questions: any[], answers: Record<string, string>) {
+function computeStats(questions: QuestionRow[], answers: Record<string, string>) {
+  // deno-lint-ignore no-explicit-any
   const stats: any = {};
 
   for (const subtest of ["twk", "tiu", "tkp"]) {
@@ -235,7 +343,7 @@ function computeStats(questions: any[], answers: Record<string, string>) {
       stats.tkp = { answered, by_category: byCategory };
     } else {
       const correct = subset.filter(
-        (q: any) => q.correct_answer && answers[q.id] === q.correct_answer,
+        (q) => q.correct_answer && answers[q.id] === q.correct_answer,
       ).length;
       const wrong = answered - correct;
       const byCategory: Record<string, { correct: number; total: number }> = {};

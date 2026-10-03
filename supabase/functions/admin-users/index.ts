@@ -86,7 +86,7 @@ Deno.serve(async (req: Request) => {
     const sortOrder = sort === "asc" ? "asc" : "desc";
 
     if (perPage > 100) {
-      let allAuthUsers: AuthUser[] = [];
+      const allAuthUsers: AuthUser[] = [];
       let currentPage = 1;
       let hasMore = true;
 
@@ -164,7 +164,9 @@ Deno.serve(async (req: Request) => {
       if (userIds.length > 0) {
         const { data: profiles } = await admin
           .from("profiles")
-          .select("id, has_upload_cv, upload_cv_end_date, quota_pro_photo, quota_pro_photo_purchased, quota_upload_cv")
+          .select(
+            "id, has_upload_cv, upload_cv_end_date, quota_pro_photo, quota_pro_photo_purchased, quota_upload_cv",
+          )
           .in("id", userIds);
         profileMap = new Map((profiles || []).map((p) => [p.id, p]));
       }
@@ -219,164 +221,237 @@ Deno.serve(async (req: Request) => {
       totalPages: Math.ceil((authData.total || users.length) / perPage),
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Internal server error";
+    const message = error instanceof Error ? error.message : String(error);
     console.error("admin-users error:", message);
-    return json(req, { error: message }, message.startsWith("Unauthorized") ? 401 : 500);
+    if (error instanceof BadRequestError) {
+      return json(req, { error: message }, 400);
+    }
+    if (message.startsWith("Unauthorized")) {
+      return json(req, { error: "Unauthorized" }, 401);
+    }
+    return json(req, { error: "Internal server error" }, 500);
   }
 });
 
-async function updateUser(req: Request, admin: ReturnType<typeof getAdminClient>, requesterId: string) {
+class BadRequestError extends Error {}
+
+/**
+ * PATCH /admin-users — partial update.
+ *
+ * The admin UI always sends every field, so each field is compared with the
+ * user's current state and only written when it actually changes. This keeps
+ * unrelated edits (e.g. a quota change) from resetting the subscription
+ * date_end or the upload-CV unlock.
+ */
+async function updateUser(
+  req: Request,
+  admin: ReturnType<typeof getAdminClient>,
+  requesterId: string,
+) {
   const body = (await req.json().catch(() => ({}))) as UpdateUserRequest;
-  const userId = (body.userId || "").trim();
-  const tier = (body.tier || "").trim().toLowerCase();
-  const role = (body.role || "").trim().toLowerCase();
-  const has_upload_cv = typeof body.has_upload_cv === "boolean" ? body.has_upload_cv : false;
+  const userId = typeof body.userId === "string" ? body.userId.trim() : "";
+  const tier = typeof body.tier === "string" ? body.tier.trim().toLowerCase() : undefined;
+  const role = typeof body.role === "string" ? body.role.trim().toLowerCase() : undefined;
+  const hasUploadCv = typeof body.has_upload_cv === "boolean" ? body.has_upload_cv : undefined;
   const quota_pro_photo =
     typeof body.quota_pro_photo === "number" ? body.quota_pro_photo : undefined;
   const quota_upload_cv =
     typeof body.quota_upload_cv === "number" ? body.quota_upload_cv : undefined;
+  const tryoutCredits = typeof body.tryout_credits === "number" ? body.tryout_credits : undefined;
 
-  // Admin can update their own profile (including tryout credits, tier, etc.)
-
-  // SECURITY: Validate upper bounds for quota values
+  // SECURITY: Validate everything before writing anything
   const MAX_QUOTA_PRO_PHOTO = 100;
   const MAX_QUOTA_UPLOAD_CV = 200;
 
+  if (!isUuid(userId)) {
+    throw new BadRequestError("User ID tidak valid");
+  }
+  if (tier !== undefined && !VALID_TIERS.has(tier)) {
+    throw new BadRequestError("Tier tidak valid");
+  }
+  if (role !== undefined && !VALID_ROLES.has(role)) {
+    throw new BadRequestError("Role tidak valid");
+  }
   if (quota_pro_photo !== undefined) {
-    if (!Number.isInteger(quota_pro_photo) || quota_pro_photo < 0 || quota_pro_photo > MAX_QUOTA_PRO_PHOTO) {
-      throw new Error(`Kuota Pro Photo harus antara 0-${MAX_QUOTA_PRO_PHOTO}`);
+    if (
+      !Number.isInteger(quota_pro_photo) ||
+      quota_pro_photo < 0 ||
+      quota_pro_photo > MAX_QUOTA_PRO_PHOTO
+    ) {
+      throw new BadRequestError(`Kuota Pro Photo harus antara 0-${MAX_QUOTA_PRO_PHOTO}`);
     }
   }
   if (quota_upload_cv !== undefined) {
-    if (!Number.isInteger(quota_upload_cv) || quota_upload_cv < 0 || quota_upload_cv > MAX_QUOTA_UPLOAD_CV) {
-      throw new Error(`Kuota Upload CV harus antara 0-${MAX_QUOTA_UPLOAD_CV}`);
+    if (
+      !Number.isInteger(quota_upload_cv) ||
+      quota_upload_cv < 0 ||
+      quota_upload_cv > MAX_QUOTA_UPLOAD_CV
+    ) {
+      throw new BadRequestError(`Kuota Upload CV harus antara 0-${MAX_QUOTA_UPLOAD_CV}`);
+    }
+  }
+  if (tryoutCredits !== undefined) {
+    if (!Number.isInteger(tryoutCredits) || tryoutCredits < 0 || tryoutCredits > 100) {
+      throw new BadRequestError("Kuota Tryout harus antara 0-100");
     }
   }
 
-  if (!isUuid(userId)) {
-    throw new Error("User ID tidak valid");
-  }
-  if (!VALID_TIERS.has(tier)) {
-    throw new Error("Tier tidak valid");
-  }
-  if (!VALID_ROLES.has(role)) {
-    throw new Error("Role tidak valid");
-  }
-
-  const { data: tierData, error: tierError } = await admin
-    .from("subscription_tiers")
-    .select("id")
-    .eq("slug", tier)
-    .single();
-
-  if (tierError || !tierData) {
-    throw new Error("Tier subscription tidak ditemukan");
-  }
-
+  const changes: string[] = [];
   const now = new Date();
-  let defaultEnd: Date | null = new Date(now);
-  
-  if (tier === "free") {
-    // Free tier: no expiration (null = never expires, auto-renew)
-    defaultEnd = null;
-  } else {
-    // Paid tiers: expire in 30 days
-    defaultEnd.setDate(defaultEnd.getDate() + 30);
-  }
 
-  const { data: activeSub, error: activeSubError } = await admin
-    .from("user_subscriptions")
-    .select("id")
-    .eq("user_id", userId)
-    .eq("status", "active")
-    .order("date_end", { ascending: false, nullsFirst: false })
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (activeSubError) throw activeSubError;
-
-  if (activeSub?.id) {
-    const subscriptionUpdate: Record<string, string | null> = {
-      tier_id: tierData.id,
-      status: "active",
-      date_end: defaultEnd ? defaultEnd.toISOString() : null,
-      date_start: now.toISOString(),
-    };
-
-    const { error: updateSubError } = await admin
-      .from("user_subscriptions")
-      .update(subscriptionUpdate)
-      .eq("id", activeSub.id);
-
-    if (updateSubError) throw updateSubError;
-  } else {
-    const { error: insertSubError } = await admin.from("user_subscriptions").insert({
-      user_id: userId,
-      tier_id: tierData.id,
-      status: "active",
-      date_start: now.toISOString(),
-      date_end: defaultEnd ? defaultEnd.toISOString() : null,
-      provider: "manual",
-    });
-
-    if (insertSubError) throw insertSubError;
-  }
-
-  // Update role: first get current role to know what to replace
-  const { data: currentRoles } = await admin
+  // ── Role (validated first so a forbidden demotion changes nothing) ──────────
+  const { data: currentRoles, error: currentRolesError } = await admin
     .from("user_roles")
     .select("role")
     .eq("user_id", userId);
+  if (currentRolesError) throw currentRolesError;
 
-  const currentRole = (currentRoles || []).length > 0 ? (currentRoles || [])[0].role : null;
+  const roleRows = (currentRoles || []) as Array<{ role: string }>;
+  const currentRole = roleRows.some((r) => r.role === "admin")
+    ? "admin"
+    : (roleRows[0]?.role ?? null);
+  const roleChanged = role !== undefined && (currentRole !== role || roleRows.length > 1);
 
-  // If role changed, remove old role and insert new one
-  if (currentRole !== role) {
-    // Delete all existing roles for this user (clean slate)
-    const { error: deleteRolesError } = await admin
+  if (roleChanged && currentRole === "admin" && role !== "admin") {
+    const { count: adminCount, error: adminCountError } = await admin
+      .from("user_roles")
+      .select("user_id", { count: "exact", head: true })
+      .eq("role", "admin");
+    if (adminCountError) throw adminCountError;
+    if ((adminCount ?? 0) <= 1) {
+      throw new BadRequestError(
+        userId === requesterId
+          ? "Anda adalah admin terakhir — tidak bisa menurunkan role sendiri."
+          : "Tidak bisa menghapus admin terakhir.",
+      );
+    }
+  }
+
+  // ── Subscription tier (only when provided and different) ───────────────────
+  if (tier !== undefined) {
+    const { data: activeSub, error: activeSubError } = await admin
+      .from("user_subscriptions")
+      .select("id, tier_id, subscription_tiers(slug)")
+      .eq("user_id", userId)
+      .eq("status", "active")
+      .order("date_end", { ascending: false, nullsFirst: false })
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (activeSubError) throw activeSubError;
+
+    const currentTier = activeSub
+      ? ((activeSub as unknown as { subscription_tiers?: { slug?: string } | null })
+          .subscription_tiers?.slug ?? null)
+      : null;
+
+    if (!activeSub || currentTier !== tier) {
+      const { data: tierData, error: tierError } = await admin
+        .from("subscription_tiers")
+        .select("id")
+        .eq("slug", tier)
+        .single();
+      if (tierError || !tierData) {
+        throw new BadRequestError("Tier subscription tidak ditemukan");
+      }
+
+      // date_end NOT NULL: free tier "tidak kedaluwarsa" = +100 tahun (sama dengan handle_new_user);
+      // paid tiers granted manually run 30 days.
+      const end = new Date(now);
+      if (tier === "free") end.setFullYear(end.getFullYear() + 100);
+      else end.setDate(end.getDate() + 30);
+      const dateEnd = end.toISOString();
+
+      if (activeSub?.id) {
+        const { error: updateSubError } = await admin
+          .from("user_subscriptions")
+          .update({
+            tier_id: tierData.id,
+            status: "active",
+            date_start: now.toISOString(),
+            date_end: dateEnd,
+          })
+          .eq("id", activeSub.id);
+        if (updateSubError) throw updateSubError;
+      } else {
+        const { error: insertSubError } = await admin.from("user_subscriptions").insert({
+          user_id: userId,
+          tier_id: tierData.id,
+          status: "active",
+          date_start: now.toISOString(),
+          date_end: dateEnd,
+          provider: "manual",
+        });
+        if (insertSubError) throw insertSubError;
+      }
+      changes.push("tier");
+    }
+  }
+
+  // ── Role change: add the new role first, then remove the others, so the user
+  //    is never left without a role if a step fails. ──────────────────────────
+  if (roleChanged && role !== undefined) {
+    const { error: upsertRoleError } = await admin
+      .from("user_roles")
+      .upsert({ user_id: userId, role }, { onConflict: "user_id,role", ignoreDuplicates: true });
+    if (upsertRoleError) throw upsertRoleError;
+
+    const { error: deleteOtherRolesError } = await admin
       .from("user_roles")
       .delete()
-      .eq("user_id", userId);
-    if (deleteRolesError) throw deleteRolesError;
-
-    // Insert new role
-    const { error: insertNewRoleError } = await admin
-      .from("user_roles")
-      .insert({ user_id: userId, role });
-    if (insertNewRoleError) throw insertNewRoleError;
+      .eq("user_id", userId)
+      .neq("role", role);
+    if (deleteOtherRolesError) throw deleteOtherRolesError;
+    changes.push("role");
   }
 
-  // Update has_upload_cv and upload_cv_end_date
-  let endDateIso = null;
-  if (has_upload_cv) {
-    const d = new Date();
-    d.setMonth(d.getMonth() + 1);
-    endDateIso = d.toISOString();
-  }
-
-  const profilePayload: any = {
-    has_upload_cv,
-    upload_cv_end_date: endDateIso,
-  };
-  if (quota_pro_photo !== undefined) profilePayload.quota_pro_photo = quota_pro_photo;
-  if (quota_upload_cv !== undefined) profilePayload.quota_upload_cv = quota_upload_cv;
-
-  const { error: profileUpdateError } = await admin
+  // ── Profile flags & quotas (only fields that were provided and differ) ──────
+  const { data: profile, error: profileError } = await admin
     .from("profiles")
-    .update(profilePayload)
-    .eq("id", userId);
-  if (profileUpdateError) throw profileUpdateError;
+    .select("has_upload_cv, upload_cv_end_date, quota_pro_photo, quota_upload_cv")
+    .eq("id", userId)
+    .maybeSingle();
+  if (profileError) throw profileError;
 
-  // Handle tryout credits
-  const tryoutCredits = typeof body.tryout_credits === "number" ? body.tryout_credits : undefined;
+  const currentUploadCvEnd = (profile?.upload_cv_end_date as string | null | undefined) ?? null;
+  const currentUploadCvUnlocked = currentUploadCvEnd
+    ? new Date(currentUploadCvEnd) > now
+    : Boolean(profile?.has_upload_cv);
+
+  const profilePayload: Record<string, unknown> = {};
+  let uploadCvEndDate: string | null = currentUploadCvEnd;
+
+  if (hasUploadCv !== undefined && hasUploadCv !== currentUploadCvUnlocked) {
+    if (hasUploadCv) {
+      const end = new Date(now);
+      end.setMonth(end.getMonth() + 1);
+      uploadCvEndDate = end.toISOString();
+    } else {
+      uploadCvEndDate = null;
+    }
+    profilePayload.has_upload_cv = hasUploadCv;
+    profilePayload.upload_cv_end_date = uploadCvEndDate;
+  }
+  if (quota_pro_photo !== undefined && quota_pro_photo !== profile?.quota_pro_photo) {
+    profilePayload.quota_pro_photo = quota_pro_photo;
+  }
+  if (quota_upload_cv !== undefined && quota_upload_cv !== profile?.quota_upload_cv) {
+    profilePayload.quota_upload_cv = quota_upload_cv;
+  }
+
+  if (Object.keys(profilePayload).length > 0) {
+    const { error: profileUpdateError } = await admin
+      .from("profiles")
+      .update(profilePayload)
+      .eq("id", userId);
+    if (profileUpdateError) throw profileUpdateError;
+    changes.push(...Object.keys(profilePayload));
+  }
+
+  // ── Tryout credits ──────────────────────────────────────────────────────────
   let tryoutCreditsResult = null;
 
   if (tryoutCredits !== undefined) {
-    if (!Number.isInteger(tryoutCredits) || tryoutCredits < 0 || tryoutCredits > 100) {
-      throw new Error("Kuota Tryout harus antara 0-100");
-    }
-
     // Get the tryout package "satuan" for credit reference
     const { data: tryoutPackage } = await admin
       .from("tryout_packages")
@@ -396,46 +471,62 @@ async function updateUser(req: Request, admin: ReturnType<typeof getAdminClient>
         .maybeSingle();
 
       if (existingCredits) {
-        // Update existing credits - set total_credits to new value, preserve used_credits
-        const newUsed = Math.min(existingCredits.used_credits, tryoutCredits);
-        const { error: updateCreditsError } = await admin
-          .from("tryout_credits")
-          .update({
-            total_credits: tryoutCredits,
-            used_credits: newUsed,
-          })
-          .eq("id", existingCredits.id);
-        if (updateCreditsError) throw updateCreditsError;
-        tryoutCreditsResult = { total: tryoutCredits, used: newUsed, remaining: tryoutCredits - newUsed };
+        if (existingCredits.total_credits !== tryoutCredits) {
+          // Set total_credits to new value, preserve used_credits
+          const newUsed = Math.min(existingCredits.used_credits, tryoutCredits);
+          const { error: updateCreditsError } = await admin
+            .from("tryout_credits")
+            .update({
+              total_credits: tryoutCredits,
+              used_credits: newUsed,
+            })
+            .eq("id", existingCredits.id);
+          if (updateCreditsError) throw updateCreditsError;
+          tryoutCreditsResult = {
+            total: tryoutCredits,
+            used: newUsed,
+            remaining: tryoutCredits - newUsed,
+          };
+          changes.push("tryout_credits");
+        }
       } else if (tryoutCredits > 0) {
-        // Create new credits
-        const { error: insertCreditsError } = await admin
-          .from("tryout_credits")
-          .insert({
-            user_id: userId,
-            package_id: tryoutPackage.id,
-            total_credits: tryoutCredits,
-            used_credits: 0,
-            payment_method: "manual",
-            status: "active",
-            activated_at: new Date().toISOString(),
-          });
+        const { error: insertCreditsError } = await admin.from("tryout_credits").insert({
+          user_id: userId,
+          package_id: tryoutPackage.id,
+          total_credits: tryoutCredits,
+          used_credits: 0,
+          payment_method: "manual",
+          status: "active",
+          activated_at: new Date().toISOString(),
+        });
         if (insertCreditsError) throw insertCreditsError;
         tryoutCreditsResult = { total: tryoutCredits, used: 0, remaining: tryoutCredits };
+        changes.push("tryout_credits");
       }
     }
   }
+
+  // Audit trail (server logs)
+  console.log(
+    JSON.stringify({
+      event: "admin_user_update",
+      admin_id: requesterId,
+      target_user_id: userId,
+      changes,
+    }),
+  );
 
   return {
     ok: true,
     userId,
     tier,
     role,
-    has_upload_cv,
-    upload_cv_end_date: endDateIso,
+    has_upload_cv: hasUploadCv,
+    upload_cv_end_date: uploadCvEndDate,
     quota_pro_photo,
     quota_upload_cv,
     tryout_credits: tryoutCreditsResult,
+    changes,
   };
 }
 
@@ -446,7 +537,9 @@ async function buildUserRows(admin: ReturnType<typeof getAdminClient>, authUsers
     userIds.length
       ? admin
           .from("profiles")
-          .select("id, full_name, created_at, has_upload_cv, upload_cv_end_date, quota_pro_photo, quota_pro_photo_purchased, quota_upload_cv")
+          .select(
+            "id, full_name, created_at, has_upload_cv, upload_cv_end_date, quota_pro_photo, quota_pro_photo_purchased, quota_upload_cv",
+          )
           .in("id", userIds)
       : Promise.resolve({ data: [] }),
     userIds.length
@@ -496,16 +589,13 @@ async function buildUserRows(admin: ReturnType<typeof getAdminClient>, authUsers
     (roles.data || []).map((role: { user_id: string; role: string }) => [role.user_id, role.role]),
   );
   const subMap = new Map(
-    ((subs.data || []) as unknown as Array<{
-      user_id: string;
-      status: string;
-      subscription_tiers?: { slug?: string };
-    }>).map(
-      (sub) => [
-        sub.user_id,
-        sub,
-      ],
-    ),
+    (
+      (subs.data || []) as unknown as Array<{
+        user_id: string;
+        status: string;
+        subscription_tiers?: { slug?: string };
+      }>
+    ).map((sub) => [sub.user_id, sub]),
   );
   const cvCountMap = countByUser(cvs.data || []);
   const aiCountMap = countByUser(aiUsage.data || []);

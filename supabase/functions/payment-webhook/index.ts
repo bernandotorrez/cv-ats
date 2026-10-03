@@ -14,6 +14,7 @@
  */
 
 import { getAdminClient } from "../_shared/ai-common.ts";
+import { runInBackground, sendPaymentEmail } from "../_shared/email.ts";
 
 const TIMESTAMP_TOLERANCE_SEC = 5 * 60;
 
@@ -48,7 +49,9 @@ Deno.serve(async (req: Request) => {
   const signingSecret = Deno.env.get("SUMOPOD_PAY_WEBHOOK_SECRET") || "";
   const webhookToken = Deno.env.get("SUMOPOD_PAY_WEBHOOK_TOKEN") || "";
   if (!signingSecret && !webhookToken) {
-    console.error("payment-webhook: SUMOPOD_PAY_WEBHOOK_SECRET / SUMOPOD_PAY_WEBHOOK_TOKEN belum diset");
+    console.error(
+      "payment-webhook: SUMOPOD_PAY_WEBHOOK_SECRET / SUMOPOD_PAY_WEBHOOK_TOKEN belum diset",
+    );
     return text("Webhook not configured", 503);
   }
 
@@ -66,7 +69,13 @@ Deno.serve(async (req: Request) => {
   }
 
   if (signingSecret) {
-    const valid = await verifySvixSignature(signingSecret, svixId, svixTimestamp, svixSignature, rawBody);
+    const valid = await verifySvixSignature(
+      signingSecret,
+      svixId,
+      svixTimestamp,
+      svixSignature,
+      rawBody,
+    );
     if (!valid) {
       console.warn("payment-webhook: invalid signature");
       return text("Invalid signature", 401);
@@ -102,10 +111,12 @@ Deno.serve(async (req: Request) => {
     return text("ok (duplicate)", 200);
   }
 
-  const { error: logError } = await admin.from("payment_webhook_events").upsert(
-    { svix_id: eventKey, event_type: eventType, order_id: orderId, payload: event, error: null },
-    { onConflict: "svix_id" },
-  );
+  const { error: logError } = await admin
+    .from("payment_webhook_events")
+    .upsert(
+      { svix_id: eventKey, event_type: eventType, order_id: orderId, payload: event, error: null },
+      { onConflict: "svix_id" },
+    );
   if (logError) {
     console.error("payment-webhook: gagal mencatat event", logError);
     return text("Temporary error", 500);
@@ -127,6 +138,11 @@ Deno.serve(async (req: Request) => {
       });
       if (error) throw new Error(error.message);
       console.log(`payment-webhook: ${orderId} fulfilled`, result);
+
+      // Email konfirmasi hanya saat aktivasi pertama (bukan webhook ulang)
+      if (result && (result as { already_fulfilled?: boolean }).already_fulfilled === false) {
+        runInBackground(sendSuccessEmail(admin, orderId));
+      }
     } else if (eventType === "payment.failed" || eventType === "payment.expired") {
       const newStatus = eventType === "payment.failed" ? "failed" : "expired";
       let query = admin
@@ -149,7 +165,8 @@ Deno.serve(async (req: Request) => {
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
     const nonRetryable =
-      NON_RETRYABLE.some((code) => message.includes(code)) || message.startsWith("unexpected_status");
+      NON_RETRYABLE.some((code) => message.includes(code)) ||
+      message.startsWith("unexpected_status");
     console.error(`payment-webhook: ${eventType} ${orderId} gagal:`, message);
 
     await admin
@@ -169,6 +186,18 @@ Deno.serve(async (req: Request) => {
     return text("Temporary error", 500);
   }
 });
+
+async function sendSuccessEmail(admin: ReturnType<typeof getAdminClient>, orderId: string) {
+  const { data: order } = await admin
+    .from("payment_orders")
+    .select(
+      "order_id, user_id, product_name, product_type, amount_idr, gateway_amount_idr, paid_at, fulfillment_result",
+    )
+    .eq("order_id", orderId)
+    .maybeSingle();
+  if (!order) return;
+  await sendPaymentEmail(admin, order.user_id, "success", order);
+}
 
 function text(body: string, status: number) {
   return new Response(body, { status, headers: { "Content-Type": "text/plain" } });

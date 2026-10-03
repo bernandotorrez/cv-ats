@@ -2,3 +2,14 @@ project_id = "nfdrkuvyowaydjkhfvrr"
 
 [functions.payment-webhook]
 verify_jwt = false
+
+# Invoked by pg_cron via pg_net with an x-cron-secret header and no JWT.
+# The function itself verifies the cron secret (constant-time) or, for manual
+# runs, the caller's JWT + admin role.
+[functions.admin-job-search]
+verify_jwt = false
+
+# Invoked by pg_cron via pg_net with an x-cron-secret header and no JWT.
+# The function rejects every request without a valid CRON_SECRET.
+[functions.reset-monthly-quota]
+verify_jwt = false

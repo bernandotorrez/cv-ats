@@ -4,17 +4,31 @@
  */
 import {
   aiComplete,
-  checkAndTrackQuota,
   corsResponse,
   errorResponse,
   getAdminClient,
   getUserId,
+  reserveQuota,
   type CvUiLang,
 } from "../_shared/ai-common.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 import type { AiMessage } from "../_shared/ai-common.ts";
 import { checkRateLimit, createRateLimitedResponse } from "../_shared/rate-limit.ts";
+import { limitText, readJsonBody, ValidationError } from "../_shared/validation.ts";
 
+// ─── Input limits (M2) ─────────────────────────────────────────────
+
+/** Jumlah pesan riwayat maksimum yang diteruskan ke AI (pesan lama dibuang). */
+const MAX_MESSAGES = 30;
+/** Panjang maksimum tiap pesan riwayat (pesan lebih lama dipotong). */
+const MAX_HISTORY_MESSAGE_CHARS = 4_000;
+/**
+ * Pesan terakhir (input user saat ini) membawa konteks CV dari frontend
+ * (AiChatPanel: ringkasan + skill; guided-mode: draft CV dalam JSON + instruksi),
+ * sehingga batasnya lebih longgar. Melebihi batas → 400.
+ */
+const MAX_LAST_MESSAGE_CHARS = { chat: 12_000, guided: 20_000 } as const;
+const MAX_BODY_BYTES = 300_000;
 
 // ─── Jailbreak Detection ───────────────────────────────────────────
 
@@ -84,13 +98,19 @@ Deno.serve(async (req: Request) => {
     const rateLimitKey = `ai-chat:${userId}`;
     const rl = checkRateLimit(rateLimitKey, 30, 60 * 1000);
     if (!rl.allowed) {
-      return createRateLimitedResponse(rl, JSON.stringify({ error: "Terlalu banyak request. Silakan coba lagi nanti." }), corsHeaders(req));
+      return createRateLimitedResponse(
+        rl,
+        JSON.stringify({ error: "Terlalu banyak request. Silakan coba lagi nanti." }),
+        corsHeaders(req),
+      );
     }
     const admin = getAdminClient();
-    const { messages, jsonMode, mode, language } = await req.json();
+    const { messages, jsonMode, mode, language } = await readJsonBody(req, MAX_BODY_BYTES);
     const lang: CvUiLang = language === "en" ? "en" : "id";
 
-    if (!messages || !Array.isArray(messages)) throw new Error("messages diperlukan");
+    if (!messages || !Array.isArray(messages) || messages.length === 0) {
+      throw new ValidationError("messages diperlukan");
+    }
 
     const isGuidedMode = mode === "guided";
     const feature = isGuidedMode ? "guided" : "chat";
@@ -117,13 +137,23 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    // Validate and sanitize messages
+    // Validate and sanitize messages — hanya MAX_MESSAGES pesan terakhir yang dipakai
+    const recentMessages = messages.slice(-MAX_MESSAGES);
+    const lastIndex = recentMessages.length - 1;
     const sanitizedMessages: AiMessage[] = [];
-    for (const msg of messages) {
+    for (const [index, msg] of recentMessages.entries()) {
+      if (!msg || typeof msg !== "object") continue;
       if (!msg.content || typeof msg.content !== "string") continue;
 
+      let content: string = msg.content;
+      if (index === lastIndex) {
+        limitText(content, MAX_LAST_MESSAGE_CHARS[isGuidedMode ? "guided" : "chat"], "pesan");
+      } else if (content.length > MAX_HISTORY_MESSAGE_CHARS) {
+        content = content.slice(0, MAX_HISTORY_MESSAGE_CHARS);
+      }
+
       // Detect jailbreak attempts
-      if (detectJailbreakAttempt(msg.content)) {
+      if (detectJailbreakAttempt(content)) {
         return corsResponse(
           {
             reply:
@@ -135,33 +165,42 @@ Deno.serve(async (req: Request) => {
       }
 
       // Sanitize content
-      const sanitized = sanitizeMessage(msg.content);
+      const sanitized = sanitizeMessage(content);
 
       // Skip empty messages
       if (!sanitized) continue;
 
       sanitizedMessages.push({
-        role: msg.role === "system" ? "user" : msg.role, // Force system to user
+        // L2: hanya role "user" | "assistant"; role lain (system/developer/tool/...) → user
+        role: msg.role === "assistant" ? "assistant" : "user",
         content: sanitized,
       });
     }
 
     if (sanitizedMessages.length === 0) {
-      throw new Error("Tidak ada pesan yang valid");
+      throw new ValidationError("Tidak ada pesan yang valid");
     }
 
-    const result = await aiComplete(
-      sanitizedMessages,
-      {
-        temperature: 0.7,
-        maxTokens: 2000,
-        jsonMode: jsonMode || false,
-        useGuidedPrompt: true, // Use specialized CV chat prompt with stronger guardrails
-      },
-      lang,
-    );
+    // H3: reservasi kuota SEBELUM memanggil AI (estimasi token = maxTokens)
+    const MAX_TOKENS = 2000;
+    const reservation = await reserveQuota(admin, userId, feature, MAX_TOKENS);
 
-    await checkAndTrackQuota(admin, userId, feature, result.length);
+    let result: string;
+    try {
+      result = await aiComplete(
+        sanitizedMessages,
+        {
+          temperature: 0.7,
+          maxTokens: MAX_TOKENS,
+          jsonMode: jsonMode === true,
+          useGuidedPrompt: true, // Use specialized CV chat prompt with stronger guardrails
+        },
+        lang,
+      );
+    } catch (e) {
+      await reservation.release();
+      throw e;
+    }
 
     return corsResponse({ reply: result.trim() }, 200, req);
   } catch (e) {

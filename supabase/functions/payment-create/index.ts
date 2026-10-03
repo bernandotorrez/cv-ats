@@ -19,6 +19,7 @@
 import { corsHeaders } from "../_shared/cors.ts";
 import { getAdminClient, getUserId } from "../_shared/ai-common.ts";
 import { resolveProduct } from "../_shared/payment-products.ts";
+import { runInBackground, sendPaymentEmail } from "../_shared/email.ts";
 
 const SUMOPOD_API_URL =
   Deno.env.get("SUMOPOD_PAY_API_URL") || "https://api-pay.sumopod.com/api/v1/payments";
@@ -229,6 +230,19 @@ Deno.serve(async (req: Request) => {
       })
       .eq("order_id", orderId);
     if (updateError) throw updateError;
+
+    // Email detail pembayaran + link bayar (tidak menahan/menggagalkan respons)
+    runInBackground(
+      sendPaymentEmail(admin, userId, "pending", {
+        order_id: orderId,
+        product_name: product.name,
+        product_type: product.type,
+        amount_idr: product.amount,
+        gateway_amount_idr: chargedAmount,
+        payment_link_url: payment.payment_link_url,
+        expires_at: expiresAt,
+      }),
+    );
 
     return json(req, {
       order_id: orderId,

@@ -201,7 +201,17 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 });
 
 // Query params yang dianggap tracking/marketing dan harus di-strip dari canonical
-const TRACKING_PARAMS = new Set(["ref", "utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "fbclid", "gclid", "msclkid"]);
+const TRACKING_PARAMS = new Set([
+  "ref",
+  "utm_source",
+  "utm_medium",
+  "utm_campaign",
+  "utm_term",
+  "utm_content",
+  "fbclid",
+  "gclid",
+  "msclkid",
+]);
 
 function CanonicalUpdater() {
   const { location } = useRouterState();
@@ -365,7 +375,7 @@ function RootComponent() {
         </div>
         <Toaster />
         <Analytics />
-        <BenixCsWidget disabled={isSharePage} hidden={isCvBuilderPage} />
+        <BenixCsWidget disabled={isSharePage || isAuthenticatedRoute} hidden={isCvBuilderPage} />
         <FakeBuyerCard disabled={isSharePage || isAuthenticatedRoute} />
       </AuthProvider>
     </QueryClientProvider>

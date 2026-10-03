@@ -103,7 +103,7 @@ export function isNewVisitor(): boolean {
 export function getDeviceType(): "mobile" | "tablet" | "desktop" {
   if (typeof window === "undefined" || typeof navigator === "undefined") return "desktop";
   const ua = navigator.userAgent.toLowerCase();
-  
+
   const isTablet =
     /(ipad|tablet|(android(?!.*mobile))|(windows(?!.*phone)(.*touch))|kindle|playbook|silk|(puffin(?!.*(IP|AP|WP))))/.test(
       ua,
@@ -227,7 +227,8 @@ export function getHumanPageTitle(path: string, fallbackTitle?: string): string 
   if (path.startsWith("/register")) return "Halaman Pendaftaran";
   if (path.startsWith("/dashboard")) return "User Dashboard";
   if (path.startsWith("/cv/")) return "CV Editor & Builder";
-  if (path.startsWith("/admin/analytics") || path.startsWith("/admin/analitik")) return "Admin - Analitik Pengunjung";
+  if (path.startsWith("/admin/analytics") || path.startsWith("/admin/analitik"))
+    return "Admin - Analitik Pengunjung";
   if (path.startsWith("/admin")) return "Admin Panel";
   if (path.startsWith("/score")) return "Cek Skor ATS CV";
   if (path.startsWith("/simulasi-wawancara")) return "Simulasi Wawancara AI";
@@ -306,61 +307,25 @@ export async function trackEvent(payload: AnalyticsEventPayload): Promise<void> 
     const referrer = typeof document !== "undefined" ? document.referrer || "direct" : "direct";
     const referrerChannel = getReferrerChannel();
 
-    // Get current auth user ID if available
-    let userId: string | null = null;
-    try {
-      const { data } = await supabase.auth.getSession();
-      if (data?.session?.user?.id) {
-        userId = data.session.user.id;
-      }
-    } catch {
-      // ignore auth check error
-    }
+    // Insert langsung ke visitor_events tidak diizinkan (RLS); hanya lewat RPC
+    // yang memaksa user_id = auth.uid() dan membatasi ukuran field.
+    const { error: rpcError } = await (supabase as any).rpc("log_visitor_event", {
+      p_visitor_id: visitorId,
+      p_session_id: sessionId,
+      p_event_name: payload.eventName,
+      p_page_path: currentPath,
+      p_page_title: currentTitle,
+      p_referrer: referrer.slice(0, 500),
+      p_referrer_channel: referrerChannel,
+      p_device_type: deviceType,
+      p_browser: browser,
+      p_os: os,
+      p_duration_seconds: payload.durationSeconds || 0,
+      p_metadata: payload.metadata || {},
+    });
 
-    const row: Record<string, any> = {
-      visitor_id: visitorId,
-      session_id: sessionId,
-      event_name: payload.eventName,
-      page_path: currentPath,
-      page_title: currentTitle,
-      referrer: referrer.slice(0, 500),
-      referrer_channel: referrerChannel,
-      device_type: deviceType,
-      browser,
-      os,
-      duration_seconds: payload.durationSeconds || 0,
-      metadata: payload.metadata || {},
-    };
-
-    if (userId) {
-      row.user_id = userId;
-    }
-
-    // 1. Try direct Supabase insert
-    const { error: insertError } = await (supabase as any)
-      .from("visitor_events")
-      .insert(row);
-
-    if (insertError) {
-      // 2. Fallback to SECURITY DEFINER RPC
-      const { error: rpcError } = await (supabase as any).rpc("log_visitor_event", {
-        p_visitor_id: visitorId,
-        p_session_id: sessionId,
-        p_event_name: payload.eventName,
-        p_page_path: currentPath,
-        p_page_title: currentTitle,
-        p_referrer: referrer.slice(0, 500),
-        p_referrer_channel: referrerChannel,
-        p_device_type: deviceType,
-        p_browser: browser,
-        p_os: os,
-        p_duration_seconds: payload.durationSeconds || 0,
-        p_metadata: payload.metadata || {},
-      });
-
-      if (rpcError && import.meta.env.DEV) {
-        console.warn("[Analytics] Track event failed:", insertError.message || rpcError.message);
-      }
+    if (rpcError && import.meta.env.DEV) {
+      console.warn("[Analytics] Track event failed:", rpcError.message);
     }
   } catch (err) {
     if (import.meta.env.DEV) {

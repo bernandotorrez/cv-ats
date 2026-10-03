@@ -1,5 +1,7 @@
 # Security Audit Report — CV Pintar
 
+> **Superseded:** laporan Mei 2026 ini sudah digantikan oleh audit yang lebih baru (Oktober 2026). Jangan gunakan sebagai acuan status keamanan saat ini. Nilai kunci yang sebelumnya tercantum di sini telah disamarkan dan harus dianggap bocor (wajib dirotasi).
+
 > **Auditor**: AI Security Expert  
 > **Tanggal**: 2026-05-08  
 > **Scope**: Edge Functions, Frontend, Database, Infrastructure  
@@ -133,7 +135,7 @@ Midtrans signature verification SHA-512 diimplementasikan dengan benar. Idempote
 **File**: `.env` (root)
 
 ```
-AI_API_KEY="sk-7n1yRLsYTpv79wVZpXL_tQ"
+AI_API_KEY="<redacted>"
 ```
 
 **Dampak**: API key adalah secret yang tidak boleh di-commit ke source control. Jika file ini masuk git repo, key sudah compromised.

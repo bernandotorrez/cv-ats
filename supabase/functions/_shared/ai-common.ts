@@ -3,6 +3,7 @@
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders, corsHeadersStatic } from "./cors.ts";
+import { ValidationError } from "./validation.ts";
 import {
   type CvUiLang,
   getSystemPrompt,
@@ -92,67 +93,96 @@ export function getAdminClient() {
 
 // ─── Quota ─────────────────────────────────────────────────────────
 
+export interface QuotaReservation {
+  /** Kembalikan kuota (hapus catatan pemakaian) jika layanan berbayar gagal. */
+  release: () => Promise<void>;
+}
+
+/** Limit bulanan dari tier aktif user (null = tanpa batas). */
+async function getTierLimit(
+  adminClient: ReturnType<typeof getAdminClient>,
+  userId: string,
+  quotaColumn: string,
+): Promise<number | null> {
+  const { data: userSub } = await adminClient
+    .from("user_subscriptions")
+    .select(`subscription_tiers!inner(${quotaColumn}, slug, name)`)
+    .eq("user_id", userId)
+    .eq("status", "active")
+    .maybeSingle();
+
+  if (userSub) {
+    // deno-lint-ignore no-explicit-any
+    const tier = (userSub as any).subscription_tiers;
+    const value = tier?.[quotaColumn];
+    return value === null || value === undefined ? null : Number(value);
+  }
+
+  const { data: freeTier } = await adminClient
+    .from("subscription_tiers")
+    .select(`${quotaColumn}, name`)
+    .eq("slug", "free")
+    .maybeSingle();
+  // deno-lint-ignore no-explicit-any
+  const value = (freeTier as any)?.[quotaColumn];
+  return value === null || value === undefined ? 0 : Number(value);
+}
+
+/**
+ * Reservasi kuota AI secara atomik SEBELUM memanggil layanan berbayar.
+ * - Limit diambil dari kolom tier (FEATURE_QUOTA_MAP) atau dari `options.limit`.
+ * - Melempar error "Kuota ... habis" (→ HTTP 429 via errorResponse) jika habis.
+ * - Panggil `release()` di catch bila layanan gagal, agar kuota tidak terpotong.
+ */
+export async function reserveQuota(
+  adminClient: ReturnType<typeof getAdminClient>,
+  userId: string,
+  feature: string,
+  tokensUsed: number,
+  options: { limit?: number | null } = {},
+): Promise<QuotaReservation> {
+  const quotaColumn = FEATURE_QUOTA_MAP[feature];
+  let limit: number | null = null;
+  if (options.limit !== undefined) {
+    limit = options.limit;
+  } else if (quotaColumn) {
+    limit = await getTierLimit(adminClient, userId, quotaColumn);
+  }
+
+  const { data: usageId, error } = await adminClient.rpc("reserve_ai_quota", {
+    p_user: userId,
+    p_feature: feature,
+    p_limit: limit,
+    p_tokens: tokensUsed,
+  });
+
+  if (error) {
+    console.error("reserve_ai_quota failed:", error);
+    throw new Error("Gagal memverifikasi kuota. Silakan coba lagi.");
+  }
+  if (!usageId) {
+    throw new Error(`Kuota ${feature} bulan ini habis (${limit}). Silakan upgrade.`);
+  }
+
+  let released = false;
+  return {
+    release: async () => {
+      if (released) return;
+      released = true;
+      const { error: delError } = await adminClient.from("ai_usage").delete().eq("id", usageId);
+      if (delError) console.error("Failed to release quota:", delError);
+    },
+  };
+}
+
+/** @deprecated Pakai reserveQuota() sebelum memanggil AI. */
 export async function checkAndTrackQuota(
   adminClient: ReturnType<typeof getAdminClient>,
   userId: string,
   feature: string,
   tokensUsed: number,
 ): Promise<void> {
-  const quotaColumn = FEATURE_QUOTA_MAP[feature];
-  if (!quotaColumn) return;
-
-  // Get user's active tier quota
-  const { data: userSub } = await adminClient
-    .from("user_subscriptions")
-    .select(`subscription_tiers!inner(${quotaColumn}, slug, name)`)
-    .eq("user_id", userId)
-    .eq("status", "active")
-    .single();
-
-  let limit: number | null = null;
-  let tierName = "Free";
-
-  if (userSub) {
-    const tier = (userSub as any).subscription_tiers;
-    limit = tier?.[quotaColumn] ?? 0;
-    tierName = tier?.name || "Free";
-  } else {
-    // Fallback to free tier
-    const { data: freeTier } = await adminClient
-      .from("subscription_tiers")
-      .select(`${quotaColumn}, name`)
-      .eq("slug", "free")
-      .single();
-    if (freeTier) {
-      limit = (freeTier as any)[quotaColumn] ?? 0;
-      tierName = (freeTier as any).name || "Free";
-    }
-  }
-
-  if (limit === null) limit = 9999; // null = unlimited, treat as high number
-
-  // Count usage this month
-  const monthStart = new Date();
-  monthStart.setDate(1);
-  monthStart.setHours(0, 0, 0, 0);
-
-  const { count, error } = await adminClient
-    .from("ai_usage")
-    .select("*", { count: "exact", head: true })
-    .eq("user_id", userId)
-    .eq("feature", feature)
-    .gte("created_at", monthStart.toISOString());
-
-  if (error) {
-    console.error("Failed to check usage:", error);
-    throw new Error("Gagal memverifikasi kuota. Silakan coba lagi.");
-  }
-  if (count !== null && count >= limit) {
-    throw new Error(`Kuota ${feature} bulan ini habis (${count}/${limit}). Silakan upgrade.`);
-  }
-
-  // Track usage
-  await adminClient.from("ai_usage").insert({ user_id: userId, feature, tokens_used: tokensUsed });
+  await reserveQuota(adminClient, userId, feature, tokensUsed);
 }
 
 // ─── AI Gateway ────────────────────────────────────────────────────
@@ -220,9 +250,26 @@ export function corsResponse(body: unknown, status = 200, req?: Request) {
   });
 }
 
+// Pesan yang terlihat seperti detail internal (DB, parser, konfigurasi) tidak dikirim ke client
+const INTERNAL_ERROR_PATTERN =
+  /relation|column|violates|duplicate key|PGRST|syntax|JSON|Unexpected token|AI_API_KEY|APIFY|KIE_AI|stack|undefined|null value/i;
+
 export function errorResponse(e: unknown, req?: Request) {
   const message = e instanceof Error ? e.message : "Internal server error";
-  const status = message.startsWith("Unauthorized") ? 401 : message.includes("Kuota") ? 429 : 500;
-  console.error("Edge Function error:", message);
-  return corsResponse({ error: message }, status, req);
+  console.error("Edge Function error:", e);
+
+  if (e instanceof ValidationError) return corsResponse({ error: message }, 400, req);
+  if (message.startsWith("Unauthorized")) return corsResponse({ error: "Unauthorized" }, 401, req);
+  if (message.includes("Kuota")) return corsResponse({ error: message }, 429, req);
+
+  const isDeveloperMessage =
+    e instanceof Error &&
+    e.constructor === Error &&
+    !INTERNAL_ERROR_PATTERN.test(message) &&
+    message.length <= 300;
+  return corsResponse(
+    { error: isDeveloperMessage ? message : "Terjadi kesalahan. Silakan coba lagi." },
+    500,
+    req,
+  );
 }

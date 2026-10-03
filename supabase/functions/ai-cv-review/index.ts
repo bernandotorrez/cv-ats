@@ -9,17 +9,23 @@
 
 import {
   aiComplete,
-  checkAndTrackQuota,
   corsResponse,
   errorResponse,
   getAdminClient,
   getUserId,
   getLanguageInstruction,
+  reserveQuota,
   type CvUiLang,
 } from "../_shared/ai-common.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 import { checkRateLimit, createRateLimitedResponse } from "../_shared/rate-limit.ts";
-
+import {
+  LIMITS,
+  limitJson,
+  limitText,
+  readJsonBody,
+  ValidationError,
+} from "../_shared/validation.ts";
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders(req) });
@@ -31,7 +37,11 @@ Deno.serve(async (req: Request) => {
     const rateLimitKey = `ai-cv-review:${userId}`;
     const rl = checkRateLimit(rateLimitKey, 30, 60 * 1000);
     if (!rl.allowed) {
-      return createRateLimitedResponse(rl, JSON.stringify({ error: "Terlalu banyak request. Silakan coba lagi nanti." }), corsHeaders(req));
+      return createRateLimitedResponse(
+        rl,
+        JSON.stringify({ error: "Terlalu banyak request. Silakan coba lagi nanti." }),
+        corsHeaders(req),
+      );
     }
     const admin = getAdminClient();
 
@@ -57,17 +67,35 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    const { cvId, cvData, targetRole, jobDescription, language } = await req.json();
-    const lang: CvUiLang = language === "en" ? "en" : "id";
+    const body = await readJsonBody(req, 300_000);
+    const lang: CvUiLang = body.language === "en" ? "en" : "id";
+    const cvId = limitText(body.cvId, 100, "cvId");
+    const cvData = limitJson(body.cvData, LIMITS.json, "cvData");
+    const targetRole = limitText(body.targetRole, LIMITS.shortText, "targetRole");
+    const jobDescription = limitText(body.jobDescription, LIMITS.jobDescription, "jobDescription");
 
-    if (!cvData) {
-      throw new Error("Data CV diperlukan untuk review");
+    if (!cvData || typeof cvData !== "object" || Array.isArray(cvData)) {
+      throw new ValidationError("Data CV diperlukan untuk review");
+    }
+
+    // L7: hanya simpan cv_id jika CV memang milik user (review tetap jalan tanpa cv_id)
+    let ownedCvId: string | null = null;
+    if (cvId) {
+      const { data: ownedCv, error: cvError } = await admin
+        .from("cvs")
+        .select("id")
+        .eq("id", cvId)
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (cvError) console.error("ai-cv-review: CV ownership check failed:", cvError);
+      if (ownedCv) ownedCvId = ownedCv.id;
+      else console.warn("ai-cv-review: cvId not owned by user, saving review without cv_id");
     }
 
     const tierSlug = (tier as any)?.slug || "free";
 
     // Convert CV data to text for analysis
-    const cvText = extractCvText(cvData);
+    const cvText = extractCvText(cvData as Record<string, unknown>);
     const jdText = jobDescription ? `\n\nLOWONGAN YANG DITARGET:\n${jobDescription}` : "";
     const roleText = targetRole ? `\nPosisi yang dilamar: ${targetRole}` : "";
 
@@ -188,37 +216,26 @@ ${cvText}
 
 ${hrPersonaPrompt}`;
 
-    const result = await aiComplete(
-      [{ role: "user", content: analysisPrompt }],
-      { temperature: 0.4, maxTokens: 4000, jsonMode: true },
-      lang,
-    );
+    // H3: reservasi kuota SEBELUM memanggil AI; dikembalikan jika AI/parsing gagal
+    const reservation = await reserveQuota(admin, userId, "cv_review", 800);
 
     let parsed: Record<string, unknown>;
     try {
-      // Try direct parse first
-      parsed = JSON.parse(result);
-    } catch {
-      // Try to extract JSON from response
-      const match = result.match(/\{[\s\S]*\}/);
-      if (match) {
-        try {
-          parsed = JSON.parse(match[0]);
-        } catch {
-          throw new Error("Gagal parse hasil review CV. Silakan coba lagi.");
-        }
-      } else {
-        throw new Error("Format respons tidak valid. Silakan coba lagi.");
-      }
+      const result = await aiComplete(
+        [{ role: "user", content: analysisPrompt }],
+        { temperature: 0.4, maxTokens: 4000, jsonMode: true },
+        lang,
+      );
+      parsed = parseReviewJson(result);
+    } catch (e) {
+      await reservation.release();
+      throw e;
     }
 
-    // Track usage
-    await checkAndTrackQuota(admin, userId, "cv_review", 800);
-
-    // Save review to database
+    // Save review to database (setelah kuota tereservasi & AI berhasil)
     const { error: insertError } = await admin.from("cv_reviews").insert({
       user_id: userId,
-      cv_id: cvId || null,
+      cv_id: ownedCvId,
       target_role: targetRole || null,
       job_description: jobDescription || null,
       overall_score: parsed.overallScore || 0,
@@ -286,6 +303,24 @@ ${hrPersonaPrompt}`;
   }
 });
 
+function parseReviewJson(result: string): Record<string, unknown> {
+  try {
+    // Try direct parse first
+    return JSON.parse(result);
+  } catch {
+    // Try to extract JSON from response
+    const match = result.match(/\{[\s\S]*\}/);
+    if (match) {
+      try {
+        return JSON.parse(match[0]);
+      } catch {
+        throw new Error("Gagal parse hasil review CV. Silakan coba lagi.");
+      }
+    }
+    throw new Error("Format respons tidak valid. Silakan coba lagi.");
+  }
+}
+
 /**
  * Extract readable text from CV data object
  * Sesuai dengan tipe CvData dari cv-types.ts:
@@ -321,7 +356,9 @@ function extractCvText(cvData: Record<string, unknown>): string {
       );
       if (exp.description) {
         // Show description with bullet indices for AI to reference
-        const descLines = (exp.description as string).split("\n").filter(line => line.trim() !== "");
+        const descLines = (exp.description as string)
+          .split("\n")
+          .filter((line) => line.trim() !== "");
         lines.push(`   Deskripsi (${descLines.length} bullet points):`);
         descLines.forEach((line, bulletIdx) => {
           lines.push(`     [Bullet ${bulletIdx}] ${line}`);

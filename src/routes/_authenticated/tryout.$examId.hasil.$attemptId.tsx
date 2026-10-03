@@ -3,25 +3,14 @@
  */
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import {
-  ArrowLeft,
-  Trophy,
-  RotateCcw,
-  Home,
-  BookOpen,
-  ChevronDown,
-} from "lucide-react";
+import { ArrowLeft, Trophy, RotateCcw, Home, BookOpen, ChevronDown } from "lucide-react";
 import { buildSeo } from "@/lib/seo";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton-loading";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  ScoreCard,
-  ScoreBreakdown,
-  QuestionResultCard,
-} from "@/components/tryout";
+import { ScoreCard, ScoreBreakdown, QuestionResultCard } from "@/components/tryout";
 import { formatDuration } from "@/lib/tryout-scoring";
 import type {
   TryoutAttempt,
@@ -84,32 +73,20 @@ function TryoutResultPage() {
     } catch (error) {
       console.error("Load result error:", error);
 
-      // Fallback: load attempt langsung dari DB (untuk attempt lama)
+      // Fallback: tampilkan skor dari attempt milik sendiri (RLS SELECT).
+      // Soal, kunci jawaban & pembahasan HANYA lewat edge function tryout-result.
       const { data: att } = await supabase
         .from("tryout_attempts")
         .select("*, tryout_exam_sets(*)")
         .eq("id", attemptId)
+        .neq("status", "in_progress")
         .maybeSingle();
 
       if (att) {
         setAttempt(att as unknown as TryoutAttempt);
         setExamSet((att as any).tryout_exam_sets as TryoutExamSet);
-
-        const { data: qs } = await supabase
-          .from("tryout_questions")
-          .select("*")
-          .eq("exam_set_id", examId)
-          .order("question_number", { ascending: true });
-        setQuestions((qs as unknown as TryoutQuestionFull[]) || []);
-
-        if ((att as any).credit_id) {
-          const { data: credit } = await supabase
-            .from("tryout_credits")
-            .select("tryout_packages!inner(has_pembahasan)")
-            .eq("id", (att as any).credit_id)
-            .maybeSingle();
-          setHasPembahasan(!!(credit as any)?.tryout_packages?.has_pembahasan);
-        }
+        setQuestions([]);
+        setHasPembahasan(false);
       }
     } finally {
       setLoading(false);
@@ -173,9 +150,7 @@ function TryoutResultPage() {
           <Trophy className="h-3 w-3" /> {examSet.name}
         </Badge>
         <div className="flex flex-wrap items-baseline gap-3">
-          <h1 className="font-display text-2xl font-bold sm:text-3xl">
-            Hasil Tryout
-          </h1>
+          <h1 className="font-display text-2xl font-bold sm:text-3xl">Hasil Tryout</h1>
           <span className="text-sm text-muted-foreground">
             {new Date(attempt.started_at).toLocaleDateString("id-ID", {
               day: "numeric",
@@ -221,9 +196,7 @@ function TryoutResultPage() {
             <h2 className="flex items-center gap-2 font-display text-lg font-bold">
               <BookOpen className="h-4 w-4 text-primary" /> Pembahasan
             </h2>
-            <span className="text-xs text-muted-foreground">
-              Klik untuk membuka
-            </span>
+            <span className="text-xs text-muted-foreground">Klik untuk membuka</span>
           </div>
 
           <div className="space-y-3">
@@ -241,9 +214,7 @@ function TryoutResultPage() {
                     className="flex w-full items-center justify-between px-5 py-4"
                   >
                     <div className="flex items-center gap-3">
-                      <span className="font-display text-lg font-bold uppercase">
-                        {sub}
-                      </span>
+                      <span className="font-display text-lg font-bold uppercase">{sub}</span>
                       <span className="text-sm text-muted-foreground">
                         {subQuestions.length} soal · {correct} benar
                       </span>

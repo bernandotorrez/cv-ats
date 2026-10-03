@@ -1,4 +1,6 @@
 import { useEffect } from "react";
+import { useRouterState } from "@tanstack/react-router";
+import { useAuth } from "@/lib/auth-context";
 
 declare global {
   interface Window {
@@ -22,12 +24,74 @@ const BENIX_WIDGET_SELECTORS = [
   'iframe[src*="benix-cs-widget" i]',
 ].join(",");
 
+/**
+ * SECURITY: the Benix widget is a third-party script with full access to the
+ * page (including the Supabase session in localStorage). Only load it on public
+ * marketing pages for signed-out visitors — never on authenticated areas
+ * (dashboard, admin, tryout, CV editor), payment pages, auth pages (password
+ * entry), or shared CV pages.
+ */
+const BENIX_BLOCKED_PREFIXES = [
+  // authenticated area (src/routes/_authenticated/*)
+  "/admin",
+  "/akun",
+  "/analitik",
+  "/compare",
+  "/cv",
+  "/cv-review",
+  "/dashboard",
+  "/job-match",
+  "/lamaran",
+  "/referral",
+  "/score",
+  "/simulasi-wawancara",
+  "/tools",
+  "/tryout",
+  // payment
+  "/payment",
+  // auth flows
+  "/login",
+  "/register",
+  "/lupa-password",
+  "/reset-password",
+  "/verify-email",
+  "/auth",
+  // shared CVs
+  "/share",
+  "/portfolio",
+  // server routes
+  "/api",
+];
+
+function isBenixWidgetAllowedPath(pathname: string): boolean {
+  const path = (pathname || "/").toLowerCase();
+  // Segment-exact match: "/tryout" and "/tryout/..." are blocked, while the
+  // public marketing page "/tryout-cpns" is not.
+  return !BENIX_BLOCKED_PREFIXES.some((prefix) => path === prefix || path.startsWith(`${prefix}/`));
+}
+
 type BenixCsWidgetProps = {
   disabled?: boolean;
   hidden?: boolean;
 };
 
 export function BenixCsWidget({ disabled = false, hidden = false }: BenixCsWidgetProps) {
+  const { user, loading } = useAuth();
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  // Only on public marketing pages, and never for signed-in users (their
+  // session token lives in localStorage).
+  const blocked = disabled || !isBenixWidgetAllowedPath(pathname) || loading || Boolean(user);
+
+  // If the script was already loaded on a public page and the visitor moves to a
+  // blocked page (client-side navigation or sign-in), a third-party script cannot
+  // be unloaded — do a one-time full reload so the blocked page runs without it.
+  useEffect(() => {
+    if (!blocked || typeof window === "undefined") return;
+    if (document.getElementById(BENIX_WIDGET_SCRIPT_ID) || window.BenixCSWidget) {
+      window.location.reload();
+    }
+  }, [blocked]);
+
   useEffect(() => {
     if (typeof document === "undefined") return;
 
@@ -39,7 +103,7 @@ export function BenixCsWidget({ disabled = false, hidden = false }: BenixCsWidge
   }, [hidden]);
 
   useEffect(() => {
-    if (disabled || typeof window === "undefined") return;
+    if (blocked || typeof window === "undefined") return;
 
     const token = import.meta.env.VITE_BENIX_CS_WIDGET_TOKEN;
 
@@ -115,7 +179,7 @@ export function BenixCsWidget({ disabled = false, hidden = false }: BenixCsWidge
       script.onload = null;
       document.removeEventListener("click", handleWidgetClick);
     };
-  }, [disabled, hidden]);
+  }, [blocked, hidden]);
 
   return null;
 }

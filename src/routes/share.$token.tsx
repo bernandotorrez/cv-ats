@@ -11,20 +11,38 @@ import { downloadPdf } from "@/lib/cv-export";
 import { emptyCv, type CvData, type TemplateId } from "@/lib/cv-types";
 import { buildSeo, SITE_URL } from "@/lib/seo";
 
+interface SharedCvRow {
+  id: string;
+  user_id: string | null;
+  title: string;
+  template_id: string;
+  data: unknown;
+  created_at: string;
+  updated_at: string;
+}
+
+// RPC belum ada di types.ts hasil generate — tipe minimal untuk pemanggilan ini.
+interface SharedRpcClient {
+  rpc: (
+    fn: "get_shared_cv",
+    args: { p_token: string },
+  ) => PromiseLike<{ data: SharedCvRow[] | SharedCvRow | null; error: unknown }>;
+}
+
 export const Route = createFileRoute("/share/$token")({
   loader: async ({ params }) => {
-    const { data, error } = await supabase
-      .from("cvs")
-      .select("id, user_id, title, template_id, data, created_at, share_token")
-      .eq("share_token", params.token)
-      .eq("share_enabled", true)
-      .single();
+    // SECURITY: CV yang dibagikan hanya bisa dibaca lewat RPC per-token.
+    // LinkedIn & website sudah disamarkan di server (get_shared_cv);
+    // user_id hanya terisi bila pemirsa adalah pemilik CV.
+    const { data: rows, error } = await (supabase as unknown as SharedRpcClient).rpc(
+      "get_shared_cv",
+      { p_token: params.token },
+    );
+    const data = (Array.isArray(rows) ? rows[0] : rows) as SharedCvRow | undefined;
 
     if (error || !data) throw notFound();
 
     const cvData = { ...emptyCv, ...(data.data as unknown as CvData) };
-    cvData.personal.linkedin = "";
-    cvData.personal.website = "";
 
     return {
       title: data.title,

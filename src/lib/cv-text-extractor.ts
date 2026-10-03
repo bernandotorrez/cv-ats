@@ -11,6 +11,10 @@ function extractDocxText(arrayBuffer: ArrayBuffer): Promise<string> {
   );
 }
 
+// SECURITY NOTE (H6): pdfjs-dist 5.x no longer evaluates code from PDFs (the
+// `isEvalSupported` option was removed upstream, and the build contains no
+// eval/new Function), so there is nothing to disable here. Upgrading to
+// >= 6.3.289 for the remaining advisories is tracked separately.
 async function extractPdfText(
   arrayBuffer: ArrayBuffer,
 ): Promise<{ text: string; pageCount: number }> {
@@ -27,7 +31,7 @@ async function extractPdfText(
     const page = await pdf.getPage(i);
     const content = await page.getTextContent();
     const pageText = content.items
-      .map((item: any) => item.str)
+      .map((item) => ("str" in item ? item.str : ""))
       .join(" ")
       .replace(/\s+/g, " ")
       .trim();
@@ -81,8 +85,11 @@ export async function renderPdfToImages(file: File): Promise<string[]> {
     canvas.width = viewport.width;
     canvas.height = viewport.height;
 
-    await page.render({ canvasContext: ctx, viewport } as any).promise;
-    const base64 = canvas.toDataURL("image/png").replace(/^data:image\/png;base64,/, "");
+    await page.render({ canvasContext: ctx, viewport } as unknown as Parameters<
+      typeof page.render
+    >[0]).promise;
+    // JPEG jauh lebih kecil dari PNG; ai-extract-text membatasi ±2 MB per halaman
+    const base64 = canvas.toDataURL("image/jpeg", 0.85).replace(/^data:image\/jpeg;base64,/, "");
     images.push(base64);
   }
 

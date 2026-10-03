@@ -5,11 +5,7 @@
 
 export type TryoutSubtest = "twk" | "tiu" | "tkp";
 
-export type TryoutAttemptStatus =
-  | "in_progress"
-  | "completed"
-  | "timed_out"
-  | "abandoned";
+export type TryoutAttemptStatus = "in_progress" | "completed" | "timed_out" | "abandoned";
 
 export type TryoutDifficulty = "easy" | "medium" | "hard";
 
@@ -176,11 +172,10 @@ export type TryoutSubmitResponse = {
 };
 
 /**
- * Leaderboard entry.
+ * Leaderboard entry (RPC `get_tryout_leaderboard`; tidak memuat UUID user).
  */
 export type TryoutLeaderboardEntry = {
   ranking: number;
-  user_id: string;
   full_name: string | null;
   avatar_url: string | null;
   exam_set_id: string;
@@ -192,6 +187,27 @@ export type TryoutLeaderboardEntry = {
   pass_overall: boolean;
   duration_seconds: number | null;
   finished_at: string | null;
+  is_me: boolean;
+};
+
+/**
+ * Respons RPC `get_tryout_leaderboard`.
+ */
+export type TryoutLeaderboardResponse = {
+  entitled: boolean;
+  entries: TryoutLeaderboardEntry[];
+};
+
+/**
+ * Minimal client shape untuk memanggil RPC tryout yang belum ada di
+ * `integrations/supabase/types.ts` (save_tryout_answers, get_tryout_leaderboard).
+ * Pakai: `(supabase as unknown as TryoutRpcClient).rpc(...)`.
+ */
+export type TryoutRpcClient = {
+  rpc: (
+    fn: "save_tryout_answers" | "get_tryout_leaderboard",
+    args: Record<string, unknown>,
+  ) => PromiseLike<{ data: unknown; error: { message: string } | null }>;
 };
 
 /**
