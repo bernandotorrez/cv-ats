@@ -82,14 +82,18 @@ export function BenixCsWidget({ disabled = false, hidden = false }: BenixCsWidge
   // session token lives in localStorage).
   const blocked = disabled || !isBenixWidgetAllowedPath(pathname) || loading || Boolean(user);
 
-  // If the script was already loaded on a public page and the visitor moves to a
-  // blocked page (client-side navigation or sign-in), a third-party script cannot
-  // be unloaded — do a one-time full reload so the blocked page runs without it.
+  // Visitor pindah ke halaman yang diblokir (mis. /login) setelah widget sempat
+  // dimuat di halaman publik: copot widget dari DOM. Sengaja TIDAK memakai
+  // window.location.reload() — reload di tengah inisialisasi sesi Supabase
+  // memicu error "Navigator LockManager lock ... immediately failed" dan
+  // membuat halaman login bermasalah.
   useEffect(() => {
-    if (!blocked || typeof window === "undefined") return;
-    if (document.getElementById(BENIX_WIDGET_SCRIPT_ID) || window.BenixCSWidget) {
-      window.location.reload();
-    }
+    if (!blocked || typeof document === "undefined") return;
+    document.getElementById(BENIX_WIDGET_SCRIPT_ID)?.remove();
+    document.querySelectorAll(BENIX_WIDGET_SELECTORS).forEach((element) => {
+      if (element.tagName !== "SCRIPT") element.remove();
+    });
+    window.__benixCsWidgetReady = false;
   }, [blocked]);
 
   useEffect(() => {
