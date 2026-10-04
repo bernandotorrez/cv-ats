@@ -64,6 +64,7 @@ import {
   ArrowRight,
   Check,
   Trophy,
+  Receipt,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -722,6 +723,16 @@ function DashboardPage() {
       locked: false,
       gradient: "bg-gradient-to-r from-amber-500 to-orange-500",
     },
+    {
+      icon: Receipt,
+      label: "Riwayat Pembayaran",
+      desc: "Lihat semua pembelianmu, lanjutkan pembayaran yang tertunda, dan unduh invoice.",
+      action: "pembayaran",
+      badge: "Invoice",
+      visible: true,
+      locked: false,
+      gradient: "bg-gradient-to-r from-slate-600 to-gray-700",
+    },
   ];
 
   const CV_PICKER_ACTIONS = [
@@ -752,6 +763,7 @@ function DashboardPage() {
       analitik: "/analitik",
       admin: "/admin",
       tryout: "/tryout",
+      pembayaran: "/pembayaran",
     };
     if (routes[action]) navigate({ to: routes[action] as never });
   };
