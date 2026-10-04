@@ -345,6 +345,7 @@ function RootComponent() {
     "/dashboard",
     "/job-match",
     "/lamaran",
+    "/pembayaran",
     "/referral",
     "/score",
     "/simulasi-wawancara",

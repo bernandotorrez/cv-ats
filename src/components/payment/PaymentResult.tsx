@@ -216,6 +216,16 @@ export function PaymentResult({
             </Button>
           )}
 
+          {user && order && (
+            <Button asChild size="sm" variant="ghost" className="w-full">
+              <Link to="/pembayaran">
+                {order.status === "paid"
+                  ? "Lihat riwayat & unduh invoice"
+                  : "Lihat riwayat pembayaran"}
+              </Link>
+            </Button>
+          )}
+
           <p className="pt-1 text-xs text-muted-foreground">
             Ada kendala?{" "}
             <Link to="/kontak" className="text-primary underline">

@@ -37,6 +37,7 @@ import { Route as AuthenticatedCompareRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedJobMatchRouteImport } from './routes/_authenticated/job-match'
 import { Route as AuthenticatedLamaranRouteImport } from './routes/_authenticated/lamaran'
+import { Route as AuthenticatedPembayaranRouteImport } from './routes/_authenticated/pembayaran'
 import { Route as AuthenticatedReferralRouteImport } from './routes/_authenticated/referral'
 import { Route as AuthenticatedSimulasiWawancaraRouteImport } from './routes/_authenticated/simulasi-wawancara'
 import { Route as AuthenticatedTryoutRouteImport } from './routes/_authenticated/tryout'
@@ -213,6 +214,11 @@ const AuthenticatedJobMatchRoute = AuthenticatedJobMatchRouteImport.update({
 const AuthenticatedLamaranRoute = AuthenticatedLamaranRouteImport.update({
   id: '/lamaran',
   path: '/lamaran',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedPembayaranRoute = AuthenticatedPembayaranRouteImport.update({
+  id: '/pembayaran',
+  path: '/pembayaran',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedReferralRoute = AuthenticatedReferralRouteImport.update({
@@ -448,6 +454,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/job-match': typeof AuthenticatedJobMatchRoute
   '/lamaran': typeof AuthenticatedLamaranRoute
+  '/pembayaran': typeof AuthenticatedPembayaranRoute
   '/referral': typeof AuthenticatedReferralRoute
   '/simulasi-wawancara': typeof AuthenticatedSimulasiWawancaraRouteWithChildren
   '/tryout': typeof AuthenticatedTryoutRouteWithChildren
@@ -514,6 +521,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/job-match': typeof AuthenticatedJobMatchRoute
   '/lamaran': typeof AuthenticatedLamaranRoute
+  '/pembayaran': typeof AuthenticatedPembayaranRoute
   '/referral': typeof AuthenticatedReferralRoute
   '/simulasi-wawancara': typeof AuthenticatedSimulasiWawancaraRouteWithChildren
   '/tryout': typeof AuthenticatedTryoutRouteWithChildren
@@ -583,6 +591,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/job-match': typeof AuthenticatedJobMatchRoute
   '/_authenticated/lamaran': typeof AuthenticatedLamaranRoute
+  '/_authenticated/pembayaran': typeof AuthenticatedPembayaranRoute
   '/_authenticated/referral': typeof AuthenticatedReferralRoute
   '/_authenticated/simulasi-wawancara': typeof AuthenticatedSimulasiWawancaraRouteWithChildren
   '/_authenticated/tryout': typeof AuthenticatedTryoutRouteWithChildren
@@ -652,6 +661,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/job-match'
     | '/lamaran'
+    | '/pembayaran'
     | '/referral'
     | '/simulasi-wawancara'
     | '/tryout'
@@ -718,6 +728,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/job-match'
     | '/lamaran'
+    | '/pembayaran'
     | '/referral'
     | '/simulasi-wawancara'
     | '/tryout'
@@ -786,6 +797,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/job-match'
     | '/_authenticated/lamaran'
+    | '/_authenticated/pembayaran'
     | '/_authenticated/referral'
     | '/_authenticated/simulasi-wawancara'
     | '/_authenticated/tryout'
@@ -1056,6 +1068,13 @@ declare module '@tanstack/react-router' {
       path: '/lamaran'
       fullPath: '/lamaran'
       preLoaderRoute: typeof AuthenticatedLamaranRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/pembayaran': {
+      id: '/_authenticated/pembayaran'
+      path: '/pembayaran'
+      fullPath: '/pembayaran'
+      preLoaderRoute: typeof AuthenticatedPembayaranRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/referral': {
@@ -1403,6 +1422,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedJobMatchRoute: typeof AuthenticatedJobMatchRoute
   AuthenticatedLamaranRoute: typeof AuthenticatedLamaranRoute
+  AuthenticatedPembayaranRoute: typeof AuthenticatedPembayaranRoute
   AuthenticatedReferralRoute: typeof AuthenticatedReferralRoute
   AuthenticatedSimulasiWawancaraRoute: typeof AuthenticatedSimulasiWawancaraRouteWithChildren
   AuthenticatedTryoutRoute: typeof AuthenticatedTryoutRouteWithChildren
@@ -1426,6 +1446,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedJobMatchRoute: AuthenticatedJobMatchRoute,
   AuthenticatedLamaranRoute: AuthenticatedLamaranRoute,
+  AuthenticatedPembayaranRoute: AuthenticatedPembayaranRoute,
   AuthenticatedReferralRoute: AuthenticatedReferralRoute,
   AuthenticatedSimulasiWawancaraRoute:
     AuthenticatedSimulasiWawancaraRouteWithChildren,

@@ -28,6 +28,7 @@ import {
   Star,
   Target,
   LayoutTemplate,
+  Receipt,
   TrendingUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -518,6 +519,7 @@ export function AkunPage() {
                 { icon: FileText, label: "CV Saya", to: "/cv" as const },
                 { icon: Sparkles, label: "AI Tools", to: "/cv" as const },
                 { icon: BarChart3, label: "Skor CV", to: "/cv" as const },
+                { icon: Receipt, label: "Riwayat Pembayaran", to: "/pembayaran" as const },
                 { icon: Crown, label: "Lihat Harga", to: "/harga" as const },
               ].map((link) => (
                 <Button

@@ -42,6 +42,7 @@ const BENIX_BLOCKED_PREFIXES = [
   "/dashboard",
   "/job-match",
   "/lamaran",
+  "/pembayaran",
   "/referral",
   "/score",
   "/simulasi-wawancara",
