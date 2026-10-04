@@ -1,23 +1,19 @@
-import { useState } from "react";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
 import { ArrowRight, Lock } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+export type FeatureGroup = "improve" | "apply" | "more";
 
 interface PowerFeature {
   icon: LucideIcon;
   label: string;
   desc: string;
   action: string;
-  badge: string;
+  group: FeatureGroup;
   isNew?: boolean;
-  badgeColor?: string;
   visible: boolean;
   locked: boolean;
   upgradeTier?: string;
-  gradient?: string;
-  usageCount?: number;
-  popular?: boolean;
 }
 
 interface PowerFeaturesProps {
@@ -26,126 +22,101 @@ interface PowerFeaturesProps {
   onUpgrade: () => void;
 }
 
+const GROUPS: Array<{ key: FeatureGroup; title: string; desc: string }> = [
+  { key: "improve", title: "Tingkatkan CV", desc: "Ukur, review, dan sesuaikan CV-mu." },
+  { key: "apply", title: "Siap melamar", desc: "Dari lowongan sampai wawancara." },
+  { key: "more", title: "Lainnya", desc: "Pantau progres dan kelola akun." },
+];
+
+function FeatureCard({ f, onClick }: { f: PowerFeature; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "group flex w-full items-start gap-3 rounded-2xl border bg-card p-4 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+        f.locked
+          ? "border-dashed hover:border-amber-400 hover:bg-amber-50/40"
+          : "hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md",
+      )}
+    >
+      <span
+        className={cn(
+          "grid h-10 w-10 shrink-0 place-items-center rounded-xl",
+          f.locked ? "bg-muted text-muted-foreground" : "bg-primary/10 text-primary",
+        )}
+      >
+        <f.icon aria-hidden="true" className="h-5 w-5" />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="flex flex-wrap items-center gap-1.5">
+          <span
+            className={cn(
+              "text-sm font-bold",
+              f.locked ? "text-muted-foreground" : "text-foreground group-hover:text-primary",
+            )}
+          >
+            {f.label}
+          </span>
+          {f.locked ? (
+            <span className="inline-flex items-center gap-0.5 rounded-md bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-800">
+              <Lock aria-hidden="true" className="h-2.5 w-2.5" />
+              {f.upgradeTier}
+            </span>
+          ) : f.isNew ? (
+            <span className="rounded-md bg-yellow-300 px-1.5 py-0.5 text-[10px] font-bold text-gray-950">
+              Baru
+            </span>
+          ) : null}
+        </span>
+        <span className="mt-1 block text-xs leading-5 text-muted-foreground line-clamp-2">
+          {f.locked ? `Tersedia di paket ${f.upgradeTier}. ${f.desc}` : f.desc}
+        </span>
+      </span>
+      <ArrowRight
+        aria-hidden="true"
+        className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground/50 transition-transform group-hover:translate-x-0.5 group-hover:text-primary"
+      />
+    </button>
+  );
+}
+
 export function PowerFeatures({ features, onFeatureClick, onUpgrade }: PowerFeaturesProps) {
-  const [expanded, setExpanded] = useState(false);
   const visible = features.filter((f) => f.visible);
   if (visible.length === 0) return null;
 
-  const displayed = expanded ? visible : visible.slice(0, 4);
-  const hasMore = visible.length > 4;
-
   return (
-    <section className="space-y-4">
-      {/* Section Header */}
+    <section aria-labelledby="tools-title" className="space-y-5">
       <div>
-        <h2 className="font-display text-lg font-bold text-foreground">Tools AI untuk CV-mu</h2>
-        <p className="text-sm text-muted-foreground mt-1">
-          Manfaatkan AI untuk membuat CV yang lebih kuat dan relevan.
+        <h2 id="tools-title" className="font-display text-xl font-extrabold tracking-tight">
+          Tools AI
+        </h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Semua alat untuk membuat CV-mu lebih kuat dan lamaranmu lebih siap.
         </p>
       </div>
 
-      {/* 2×2 Grid */}
-      <div className="grid gap-3 sm:gap-4 sm:grid-cols-2">
-        {displayed.map((f) => (
-          <button
-            key={f.label}
-            type="button"
-            onClick={() => (f.locked ? onUpgrade() : onFeatureClick(f.action))}
-            className="group text-left w-full"
-          >
-            <article
-              className={cn(
-                "relative flex items-start gap-3 sm:gap-4 rounded-2xl border bg-card p-4 sm:p-5 transition-all duration-200 shadow-sm",
-                f.locked
-                  ? "border-dashed opacity-75 hover:border-amber-400/60 hover:bg-amber-50/30"
-                  : "hover:border-emerald-300/50 hover:shadow-md hover:-translate-y-px",
-              )}
-            >
-              {/* Icon */}
-              <div
-                className={cn(
-                  "flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-xl transition-transform group-hover:scale-105",
-                  f.locked
-                    ? "bg-muted text-muted-foreground"
-                    : f.gradient
-                      ? `${f.gradient} text-white shadow-sm`
-                      : "bg-primary/10 text-primary",
-                )}
-              >
-                <f.icon className="h-5 w-5" />
-              </div>
-
-              {/* Content */}
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  <h3
-                    className={cn(
-                      "text-sm font-bold truncate transition-colors",
-                      f.locked
-                        ? "text-muted-foreground"
-                        : "text-foreground group-hover:text-emerald-700",
-                    )}
-                  >
-                    {f.label}
-                  </h3>
-                  {f.locked ? (
-                    <Badge
-                      variant="outline"
-                      className="gap-0.5 border-amber-400/50 text-amber-700 text-[10px] py-0 px-1.5 shrink-0"
-                    >
-                      <Lock className="h-2.5 w-2.5" />
-                      {f.upgradeTier}
-                    </Badge>
-                  ) : f.isNew ? (
-                    <span className="inline-flex items-center rounded-md bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700">
-                      New
-                    </span>
-                  ) : null}
-                </div>
-                <p className="mt-1 text-xs leading-5 text-muted-foreground line-clamp-2">
-                  {f.desc}
-                </p>
-
-                {/* Action link */}
-                {!f.locked ? (
-                  <div className="mt-3 flex items-center gap-1 text-xs font-semibold text-emerald-700 group-hover:text-emerald-800 transition-colors">
-                    {f.label === "CV Review AI"
-                      ? "Review Sekarang"
-                      : f.label === "CV Scoring"
-                        ? "Cek Skor ATS"
-                        : f.label === "AI Job Match Score"
-                          ? "Cek Kecocokan"
-                          : f.label === "Auto Tailor CV"
-                            ? "Auto Tailor"
-                            : "Mulai sekarang"}
-                    <ArrowRight className="h-3 w-3" />
-                  </div>
-                ) : (
-                  <p className="mt-2 text-[10px] font-medium text-amber-700">
-                    Upgrade ke {f.upgradeTier} untuk akses →
-                  </p>
-                )}
-              </div>
-            </article>
-          </button>
-        ))}
-      </div>
-
-      {/* Show more / less */}
-      {hasMore && (
-        <div className="text-center">
-          <button
-            type="button"
-            onClick={() => setExpanded((v) => !v)}
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-emerald-700 hover:text-emerald-800 transition-colors"
-          >
-            {expanded ? "Sembunyikan" : "Lihat semua tools AI"}
-            <ArrowRight
-              className={cn("h-3.5 w-3.5 transition-transform", expanded && "rotate-90")}
-            />
-          </button>
-        </div>
-      )}
+      {GROUPS.map((g) => {
+        const items = visible.filter((f) => f.group === g.key);
+        if (items.length === 0) return null;
+        return (
+          <div key={g.key}>
+            <div className="mb-2.5 flex items-baseline gap-2">
+              <h3 className="text-sm font-bold">{g.title}</h3>
+              <span className="text-xs text-muted-foreground">{g.desc}</span>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {items.map((f) => (
+                <FeatureCard
+                  key={f.label}
+                  f={f}
+                  onClick={() => (f.locked ? onUpgrade() : onFeatureClick(f.action))}
+                />
+              ))}
+            </div>
+          </div>
+        );
+      })}
     </section>
   );
 }

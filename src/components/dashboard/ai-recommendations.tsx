@@ -37,103 +37,91 @@ export function AiRecommendations({ recommendations, onAction }: AiRecommendatio
 
   if (recommendations.length === 0) return null;
 
-  const current = recommendations[currentIndex];
-
+  const current = recommendations[Math.min(currentIndex, recommendations.length - 1)];
+  const Icon = current.icon;
   const goNext = () => setCurrentIndex((i) => (i + 1) % recommendations.length);
   const goPrev = () =>
     setCurrentIndex((i) => (i - 1 + recommendations.length) % recommendations.length);
 
   return (
-    <aside className="rounded-3xl bg-[#061d13] p-4 sm:p-5 shadow-xl text-white flex flex-col justify-between min-h-[320px] sm:min-h-[340px] min-w-0 overflow-hidden">
-      <div>
-        {/* Header row — "AI Rekomendasi" + badge */}
-        <div className="flex items-center justify-between mb-5">
-          <div className="flex items-center gap-2">
-            {/* Custom Circuit-like Brain Mascot Icon */}
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#0e3020]">
-              <Sparkles className="h-4 w-4 text-[#94d152]" />
-            </div>
-            <span className="font-display font-bold text-[15px] tracking-tight">
-              AI Rekomendasi
-            </span>
-          </div>
-          {current.badge && (
-            <span className="inline-flex items-center rounded-full bg-[#143224] px-2.5 py-0.5 text-[10px] font-bold text-[#94d152] border border-[#214b37]">
-              {current.badge}
-            </span>
-          )}
-        </div>
-
-        {/* Content Block: Robot on Left, Text on Right */}
-        <div className="flex items-start gap-3 xs:gap-4 mb-4">
-          {/* Robot image container */}
-          <div className="shrink-0 w-20 h-20 xs:w-24 xs:h-24 rounded-2xl bg-[#0c2f20] p-1.5 flex items-center justify-center border border-[#143d2a]">
-            <img
-              src="/green-robot-ats.png"
-              alt="AI Robot"
-              className="w-full h-full object-cover rounded-xl"
-            />
-          </div>
-
-          {/* Heading Text */}
-          <div className="flex-1 min-w-0 pt-1">
-            <h4 className="font-bold text-white text-sm xs:text-base leading-snug tracking-tight">
-              {current.title}
-            </h4>
-          </div>
-        </div>
-
-        {/* Description Text */}
-        <p className="text-[13px] leading-relaxed text-[#a3b8ad] mb-5">{current.description}</p>
-
-        {/* Action Button */}
-        <button
-          type="button"
-          onClick={() => onAction(current.action)}
-          className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-[#94d152] hover:bg-[#85c044] active:bg-[#72a439] py-3.5 text-sm font-bold text-[#0c2415] transition-all shadow-md active:scale-[0.99]"
-        >
-          {current.cta}
-          <ArrowRight className="h-4 w-4" strokeWidth={2.5} />
-        </button>
+    <section
+      aria-labelledby="reco-title"
+      aria-roledescription="carousel"
+      className="rounded-3xl border bg-card p-5 shadow-sm sm:p-6"
+    >
+      <div className="flex items-center justify-between gap-2">
+        <h2 id="reco-title" className="flex items-center gap-2 text-sm font-bold">
+          <Sparkles aria-hidden="true" className="h-4 w-4 text-primary" />
+          Rekomendasi untukmu
+        </h2>
+        {current.badge && (
+          <span className="rounded-full bg-yellow-300/70 px-2 py-0.5 text-[10px] font-bold text-gray-900">
+            {current.badge}
+          </span>
+        )}
       </div>
 
-      {/* Carousel navigation / dots / arrows */}
+      <div className="mt-4 flex items-start gap-3" aria-live="polite">
+        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-primary/10 text-primary">
+          <Icon aria-hidden="true" className="h-5 w-5" />
+        </span>
+        <div className="min-w-0">
+          <h3 className="font-bold leading-snug">{current.title}</h3>
+          <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+            {current.description}
+          </p>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        onClick={() => onAction(current.action)}
+        className="mt-4 inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border-2 border-primary/30 text-sm font-bold text-primary transition-colors hover:border-primary hover:bg-primary/5"
+      >
+        {current.cta}
+        <ArrowRight aria-hidden="true" className="h-4 w-4" />
+      </button>
+
       {recommendations.length > 1 && (
-        <div className="flex items-center justify-between mt-5 pt-1">
-          {/* Dot indicators */}
+        <div className="mt-4 flex items-center justify-between">
           <div className="flex items-center gap-1.5">
-            {recommendations.map((_, i) => (
+            {recommendations.map((r, i) => (
               <button
-                key={i}
+                key={r.id}
+                type="button"
                 className={cn(
-                  "h-2 rounded-full transition-all duration-300",
-                  i === currentIndex ? "w-7 bg-[#94d152]" : "w-2 bg-[#214b37] hover:bg-[#346a51]",
+                  "h-1.5 rounded-full transition-all",
+                  i === currentIndex
+                    ? "w-6 bg-primary"
+                    : "w-1.5 bg-border hover:bg-muted-foreground/40",
                 )}
                 onClick={() => setCurrentIndex(i)}
-                aria-label={`Rekomendasi ${i + 1}`}
+                aria-label={`Rekomendasi ${i + 1} dari ${recommendations.length}`}
+                aria-current={i === currentIndex}
               />
             ))}
           </div>
-          {/* Arrow buttons */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             <button
-              className="flex h-9 w-9 items-center justify-center rounded-full border border-[#1b3d2c] bg-[#072418] text-[#a3b8ad] hover:text-white hover:bg-[#0d3624] transition-all"
+              type="button"
+              className="grid h-8 w-8 place-items-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground"
               onClick={goPrev}
-              aria-label="Sebelumnya"
+              aria-label="Rekomendasi sebelumnya"
             >
-              <ChevronLeft className="h-5 w-5" />
+              <ChevronLeft aria-hidden="true" className="h-4 w-4" />
             </button>
             <button
-              className="flex h-9 w-9 items-center justify-center rounded-full border border-[#1b3d2c] bg-[#072418] text-[#a3b8ad] hover:text-white hover:bg-[#0d3624] transition-all"
+              type="button"
+              className="grid h-8 w-8 place-items-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground"
               onClick={goNext}
-              aria-label="Selanjutnya"
+              aria-label="Rekomendasi berikutnya"
             >
-              <ChevronRight className="h-5 w-5" />
+              <ChevronRight aria-hidden="true" className="h-4 w-4" />
             </button>
           </div>
         </div>
       )}
-    </aside>
+    </section>
   );
 }
 
