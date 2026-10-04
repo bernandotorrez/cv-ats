@@ -241,7 +241,8 @@ export function paymentPendingEmail(order: PaymentEmailOrder, name: string) {
     ...(fee > 0 ? ([["Biaya layanan", formatIdr(fee)]] as Array<[string, string]>) : []),
     ["Total bayar", formatIdr(total)],
     ["Metode", "QRIS (m-banking / e-wallet)"],
-    ["Bayar sebelum", formatDateTimeWib(order.expires_at)],
+    ["Masa berlaku QR", "7 hari (168 jam) setelah link dibuka"],
+    ["Link bisa dibuka sampai", formatDateTimeWib(order.expires_at)],
     ["No. Order", order.order_id],
   ];
   const greeting = name ? `Hai ${escapeHtml(name)}, ` : "Hai, ";
@@ -252,7 +253,7 @@ export function paymentPendingEmail(order: PaymentEmailOrder, name: string) {
     summaryTitle: "Detail Pembayaran",
     rows,
     button: { label: "Bayar Sekarang", url: order.payment_link_url || `${SITE_URL}/harga` },
-    noteHtml: `Link pembayaran berlaku sampai ${escapeHtml(formatDateTimeWib(order.expires_at))}. Abaikan email ini jika kamu tidak merasa membuat pesanan.`,
+    noteHtml: `Link pembayaran bisa dibuka sampai ${escapeHtml(formatDateTimeWib(order.expires_at))}. Setelah dibuka, kode QR berlaku 7 hari (168 jam) — ikuti hitung mundur di halaman pembayaran. Abaikan email ini jika kamu tidak merasa membuat pesanan.`,
   };
   return {
     subject: `Menunggu pembayaran: ${order.product_name} (${order.order_id})`,
