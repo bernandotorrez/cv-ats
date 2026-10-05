@@ -1,23 +1,28 @@
 import { createFileRoute } from "@tanstack/react-router";
 import {
   BadgeCheck,
+  BarChart3,
   Bug,
   CalendarDays,
   CheckCircle2,
   Chrome,
   CreditCard,
+  Crosshair,
   FileSearch,
   FileText,
   GitBranch,
   Highlighter,
   LayoutDashboard,
   Mail,
+  Maximize2,
   QrCode,
   RefreshCw,
   Rocket,
   Share2,
   ShieldCheck,
+  Smartphone,
   Sparkles,
+  Target,
   Wrench,
   Zap,
 } from "lucide-react";
@@ -65,6 +70,53 @@ type Release = {
 const changelog: Release[] = [
   {
     version: APP_VERSION,
+    date: "6 Oktober 2026",
+    title: "Editor CV Baru & Skor ATS yang Lebih Akurat",
+    summary:
+      "Halaman pembuatan CV kini tampil layar penuh dengan satu toolbar yang ringkas, preview yang otomatis pas di layar mana pun, dan skor ATS yang menilai isi CV-mu dengan lebih jujur, lengkap dengan saran perbaikan yang spesifik.",
+    highlights: [
+      {
+        icon: LayoutDashboard,
+        type: "Peningkatan",
+        short: "Editor layar penuh yang lebih lega",
+        text: "Editor CV kini layar penuh dengan satu toolbar ringkas: judul, status simpan, template, bahasa, dan aksi penting ada di satu baris. Ruang untuk menulis jauh lebih lega, terutama di HP.",
+      },
+      {
+        icon: Maximize2,
+        type: "Fitur baru",
+        short: "Preview otomatis pas di layar",
+        text: 'Mode zoom "Pas" menyesuaikan preview A4 dengan lebar layar, jadi CV langsung terlihat utuh tanpa perlu digeser ke samping, bahkan di HP.',
+      },
+      {
+        icon: BarChart3,
+        type: "Peningkatan",
+        short: "Skor ATS lebih akurat & jujur",
+        text: "Skor ATS cepat kini dinilai dari isi CV: kata kerja aksi di setiap bullet, pencapaian yang terukur dengan angka, dan skill yang benar-benar terbukti di pengalaman. Skor bisa berbeda dari sebelumnya, dan itu normal karena penilaiannya kini lebih ketat.",
+      },
+      {
+        icon: Target,
+        type: "Peningkatan",
+        text: 'Saran perbaikan jadi konkret, misalnya "23 dari 32 bullet belum ada angka" atau "pangkas skill ke ±20 yang paling relevan", sehingga kamu tahu persis bagian mana yang perlu diperbaiki.',
+      },
+      {
+        icon: Crosshair,
+        type: "Peningkatan",
+        text: "Kolom Target Posisi pindah ke atas panel isi CV dan kini tersedia juga di HP, karena dipakai untuk menghitung relevansi dan keyword.",
+      },
+      {
+        icon: Smartphone,
+        type: "Peningkatan",
+        text: "Di HP dan tablet, editor memakai tab Isi CV, Preview, dan Skor, dengan skor ATS yang selalu terlihat di tab bawah.",
+      },
+      {
+        icon: Wrench,
+        type: "Perbaikan",
+        text: 'Skor ATS tidak lagi menutupi preview CV, daftar bagian CV lebih ringkas, tombol sembunyikan panel kini benar-benar memberi fokus ke preview, dan label "1 items" kini "1 item".',
+      },
+    ],
+  },
+  {
+    version: "v1.9.0-live",
     date: "6 Oktober 2026",
     title: "Payment Gateway: Upgrade Paket Kini Instan",
     summary:
@@ -422,7 +474,7 @@ function ChangelogPage() {
           <>
             Semua fitur baru, peningkatan, dan perbaikan CV Pintar tercatat di sini.{" "}
             <strong className="font-semibold text-gray-900">
-              Terbaru: upgrade paket kini instan lewat QRIS.
+              Terbaru: editor CV yang lebih lega dan skor ATS yang lebih akurat.
             </strong>
           </>
         }
@@ -490,7 +542,7 @@ function ChangelogPage() {
             <div>
               <Eyebrow>
                 <Sparkles aria-hidden="true" className="h-3.5 w-3.5" />
-                Baru di {latest.version.replace("-live", "")}
+                Sorotan v1.9.0
               </Eyebrow>
               <h2
                 id="spotlight-heading"

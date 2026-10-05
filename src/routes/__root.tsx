@@ -377,13 +377,14 @@ function RootComponent() {
           Lewati ke konten utama
         </a>
         <div className="flex min-h-screen flex-col">
-          {!isSharePage && <SiteHeader />}
+          {/* CV builder punya header sendiri (EditorToolbar) dan tampil layar penuh */}
+          {!isSharePage && !isCvBuilderPage && <SiteHeader />}
           <main id="main" className="flex-1">
             <Suspense fallback={<PageLoadingFallback />}>
               <Outlet />
             </Suspense>
           </main>
-          {!isSharePage && <SiteFooter />}
+          {!isSharePage && !isCvBuilderPage && <SiteFooter />}
         </div>
         <Toaster />
         <Analytics />

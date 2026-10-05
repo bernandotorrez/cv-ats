@@ -18,12 +18,12 @@ export function AiSuggestBtn({
       size="sm"
       onClick={onClick}
       disabled={loading}
-      className="h-7 gap-1 text-xs text-secondary-foreground hover:text-primary hover:bg-primary/5 rounded-lg transition-all"
+      className="h-8 gap-1 rounded-lg px-2 text-xs font-semibold text-green-800 transition-colors hover:bg-green-50 hover:text-green-900"
     >
       {loading ? (
         <Loader2 className="h-3 w-3 animate-spin" />
       ) : (
-        <Sparkles className="h-3 w-3 text-violet-500" />
+        <Sparkles className="h-3.5 w-3.5 text-amber-500" />
       )}
       {loading ? "Memuat..." : label}
     </Button>

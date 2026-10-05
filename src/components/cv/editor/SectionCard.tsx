@@ -9,38 +9,27 @@ interface SectionCardProps {
   className?: string;
   headerExtra?: ReactNode;
   children: ReactNode;
+  /** @deprecated Kept for API compatibility; cards now use one neutral header style. */
   accentColor?: string;
 }
 
-export function SectionCard({
-  title,
-  icon,
-  className,
-  headerExtra,
-  children,
-  accentColor = "from-primary/10 to-secondary/10",
-}: SectionCardProps) {
+export function SectionCard({ title, icon, className, headerExtra, children }: SectionCardProps) {
   return (
     <Card
       className={cn(
-        "overflow-hidden rounded-2xl border border-border/80 bg-card shadow-sm transition-all duration-300 hover:border-primary/25",
+        "overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-none",
         className,
       )}
     >
-      <CardHeader className={cn("border-b border-border/70 bg-gradient-to-r pb-4", accentColor)}>
+      <CardHeader className="border-b border-gray-100 px-4 py-3 sm:px-5">
         <div className="flex items-center justify-between gap-3">
-          <div className="flex min-w-0 items-center gap-3">
+          <div className="flex min-w-0 items-center gap-2.5">
             {icon && (
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-background/85 text-primary shadow-sm">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-green-100 text-green-800">
                 {icon}
               </span>
             )}
-            <div className="min-w-0">
-              <h3 className="truncate font-display text-base font-bold text-foreground">{title}</h3>
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                Buat jelas, ringkas, dan mudah dipindai rekruter.
-              </p>
-            </div>
+            <h3 className="truncate font-display text-base font-bold text-gray-900">{title}</h3>
           </div>
           {headerExtra}
         </div>
@@ -86,7 +75,7 @@ export function ListSectionCard<T>({
           <button
             type="button"
             onClick={onAdd}
-            className="inline-flex min-h-9 items-center gap-1.5 rounded-xl bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-sm transition-all hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:scale-[0.98]"
+            className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-green-700 px-3 text-sm font-bold text-white transition-colors hover:bg-green-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-700 focus-visible:ring-offset-2 active:scale-[0.98]"
           >
             <Plus className="h-3.5 w-3.5" />
             Tambah
@@ -95,22 +84,29 @@ export function ListSectionCard<T>({
       }
     >
       {items.length === 0 && (
-        <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-border bg-muted/30 px-4 py-8 text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-background shadow-sm">
-            {icon || <FileText className="h-6 w-6 text-muted-foreground" />}
-          </div>
-          <p className="max-w-sm text-sm leading-relaxed text-muted-foreground">
+        <button
+          type="button"
+          onClick={onAdd}
+          className="flex w-full flex-col items-center gap-3 rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50 px-4 py-8 text-center transition-colors hover:border-green-600 hover:bg-green-50"
+        >
+          <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-white text-green-700 shadow-sm">
+            {icon || <FileText className="h-6 w-6" />}
+          </span>
+          <span className="max-w-sm text-sm leading-relaxed text-gray-600">
             Belum ada data. Tambahkan poin yang paling relevan dengan posisi incaranmu.
-          </p>
-        </div>
+          </span>
+          <span className="inline-flex items-center gap-1 text-sm font-bold text-green-800">
+            <Plus className="h-4 w-4" /> Tambah data
+          </span>
+        </button>
       )}
       <div className="space-y-4">
         {items.map((item, i) => (
           <div
             key={(item as { id?: Key }).id ?? i}
             className={cn(
-              "group relative rounded-2xl border border-border/80 p-4 transition-all hover:border-primary/30 hover:shadow-sm",
-              compact ? "bg-background" : "bg-muted/25",
+              "group relative rounded-xl border border-gray-200 p-4 transition-colors hover:border-green-300",
+              compact ? "bg-white" : "bg-gray-50/70",
             )}
           >
             <div className="absolute right-3 top-3 z-10 flex items-center gap-1 opacity-100 sm:opacity-0 sm:transition-opacity sm:group-focus-within:opacity-100 sm:group-hover:opacity-100">
@@ -120,7 +116,7 @@ export function ListSectionCard<T>({
                   onClick={() => onMoveUp(i)}
                   disabled={i === 0}
                   className={cn(
-                    "flex h-7 w-7 items-center justify-center rounded-full bg-background text-muted-foreground shadow-sm ring-1 ring-border transition-transform hover:scale-105 hover:bg-primary/10 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:scale-95",
+                    "flex h-7 w-7 items-center justify-center rounded-full bg-background text-muted-foreground shadow-sm ring-1 ring-border transition-transform hover:scale-105 hover:bg-green-50 hover:text-green-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-700 active:scale-95",
                     i === 0 &&
                       "cursor-not-allowed opacity-30 hover:bg-background hover:text-muted-foreground",
                   )}
@@ -135,7 +131,7 @@ export function ListSectionCard<T>({
                   onClick={() => onMoveDown(i)}
                   disabled={i === items.length - 1}
                   className={cn(
-                    "flex h-7 w-7 items-center justify-center rounded-full bg-background text-muted-foreground shadow-sm ring-1 ring-border transition-transform hover:scale-105 hover:bg-primary/10 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:scale-95",
+                    "flex h-7 w-7 items-center justify-center rounded-full bg-background text-muted-foreground shadow-sm ring-1 ring-border transition-transform hover:scale-105 hover:bg-green-50 hover:text-green-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-700 active:scale-95",
                     i === items.length - 1 &&
                       "cursor-not-allowed opacity-30 hover:bg-background hover:text-muted-foreground",
                   )}

@@ -337,7 +337,7 @@ export function PhotoUpload({
           <div className="flex flex-col gap-1">
             <Button
               type="button"
-              className="w-fit gap-2 bg-blue-600 hover:bg-blue-700 text-white"
+              className="w-fit gap-2 bg-green-700 hover:bg-green-800 text-white"
               onClick={() => fileInputRef.current?.click()}
             >
               <Upload className="h-4 w-4" />
@@ -405,7 +405,7 @@ export function PhotoUpload({
               type="button"
               onClick={handleSaveCrop}
               disabled={uploading}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
+              className="bg-green-700 hover:bg-green-800 text-white"
             >
               {uploading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Simpan
@@ -460,7 +460,7 @@ export function PhotoUpload({
           {!photoUrl ? (
             <Button
               type="button"
-              className="w-fit gap-2 bg-blue-600 hover:bg-blue-700 text-white"
+              className="w-fit gap-2 bg-green-700 hover:bg-green-800 text-white"
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading || generatingProPhoto}
             >
@@ -565,7 +565,7 @@ export function PhotoUpload({
                 type="button"
                 onClick={() => checkout("addon:pro_photo", 2)}
                 disabled={!!checkoutPending}
-                className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-semibold"
+                className="w-full bg-yellow-300 hover:bg-yellow-200 text-gray-950 font-bold"
               >
                 {checkoutPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Beli 2 Kuota Foto Pro (Rp 10.000)
@@ -604,7 +604,7 @@ export function PhotoUpload({
             </div>
             <div className="flex flex-col gap-2">
               <Button
-                className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-semibold"
+                className="w-full bg-yellow-300 hover:bg-yellow-200 text-gray-950 font-bold"
                 onClick={executeGenerateProPhoto}
                 disabled={generatingProPhoto}
               >
