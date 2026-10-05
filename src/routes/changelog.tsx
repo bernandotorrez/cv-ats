@@ -1,15 +1,20 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import {
-  ArrowRight,
   BadgeCheck,
   Bug,
+  CalendarDays,
+  CheckCircle2,
   Chrome,
+  CreditCard,
   FileSearch,
   FileText,
   GitBranch,
   Highlighter,
   LayoutDashboard,
+  Mail,
+  QrCode,
   RefreshCw,
+  Rocket,
   Share2,
   ShieldCheck,
   Sparkles,
@@ -17,11 +22,17 @@ import {
   Zap,
 } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { APP_VERSION } from "@/lib/app-version";
 import { buildSeo } from "@/lib/seo";
+import {
+  CheckItem,
+  CtaBanner,
+  Eyebrow,
+  PageHero,
+  PrimaryCta,
+  SecondaryCta,
+  SectionHeader,
+} from "@/components/site/marketing";
 
 export const Route = createFileRoute("/changelog")({
   head: () =>
@@ -35,9 +46,72 @@ export const Route = createFileRoute("/changelog")({
   component: ChangelogPage,
 });
 
-const changelog = [
+type Highlight = {
+  icon: typeof FileText;
+  type: string;
+  text: string;
+  /** Label singkat untuk kartu "Rilis terbaru" di hero. */
+  short?: string;
+};
+
+type Release = {
+  version: string;
+  date: string;
+  title: string;
+  summary: string;
+  highlights: Highlight[];
+};
+
+const changelog: Release[] = [
   {
     version: APP_VERSION,
+    date: "6 Oktober 2026",
+    title: "Payment Gateway: Upgrade Paket Kini Instan",
+    summary:
+      "Upgrade ke Starter atau Pro, beli add-on, dan paket Tryout CPNS sekarang bisa langsung dari CV Pintar. Cukup scan QRIS dari m-banking atau e-wallet, dan paketmu aktif otomatis begitu pembayaran terkonfirmasi. Tanpa kirim bukti transfer, tanpa menunggu verifikasi manual.",
+    highlights: [
+      {
+        icon: CreditCard,
+        type: "Fitur baru",
+        short: "Checkout langsung di CV Pintar",
+        text: "Checkout langsung di CV Pintar untuk paket Starter, Pro, add-on Upload CV & Foto Pro, serta paket Tryout CPNS. Tidak perlu lagi pindah ke halaman toko pihak ketiga.",
+      },
+      {
+        icon: QrCode,
+        type: "Fitur baru",
+        short: "Bayar QRIS dari m-banking & e-wallet",
+        text: "Bayar pakai QRIS dari aplikasi m-banking atau e-wallet apa pun. Satu kode, semua aplikasi pembayaran favoritmu.",
+      },
+      {
+        icon: Zap,
+        type: "Peningkatan",
+        short: "Paket aktif otomatis, tanpa tunggu admin",
+        text: "Aktivasi otomatis: paket atau kuota langsung masuk ke akunmu begitu pembayaran terkonfirmasi, tanpa menunggu admin.",
+      },
+      {
+        icon: Mail,
+        type: "Peningkatan",
+        text: "Detail pembayaran dan bukti transaksi dikirim otomatis ke email, jadi riwayat pembelian selalu tersimpan rapi.",
+      },
+      {
+        icon: RefreshCw,
+        type: "Peningkatan",
+        text: "Tab tertutup sebelum sempat bayar? Tenang, link pembayaran yang sama tetap berlaku hingga 24 jam, jadi kamu bisa lanjut tanpa membuat pesanan baru.",
+      },
+      {
+        icon: ShieldCheck,
+        type: "Keamanan",
+        text: "Harga dihitung di server dan setiap notifikasi pembayaran diverifikasi tanda tangan digitalnya, sehingga transaksi aman dari manipulasi.",
+      },
+      {
+        icon: BadgeCheck,
+        type: "Subscription",
+        text: "Add-on Upload CV Rp 10.000 untuk 2 bulan dan Foto Pro Rp 5.000/kuota (min. 2 kuota). Kuota Foto Pro yang dibeli tidak ikut hangus saat reset bulanan.",
+      },
+    ],
+  },
+  {
+    version: "v1.8.0-live",
     date: "30 Juli 2026",
     title: "AI Smart Highlight & Apply Suggestion",
     summary:
@@ -278,132 +352,424 @@ const changelog = [
       },
     ],
   },
+];
+
+/** Warna chip per jenis perubahan (kontras teks ≥ 4.5:1 di atas latar chip). */
+const TYPE_STYLES: Record<string, string> = {
+  "Fitur baru": "bg-green-100 text-green-800",
+  Fitur: "bg-green-100 text-green-800",
+  Peningkatan: "bg-sky-100 text-sky-800",
+  Perbaikan: "bg-amber-100 text-amber-900",
+  Keamanan: "bg-gray-900 text-white",
+  Subscription: "bg-yellow-200 text-gray-900",
+  Pricing: "bg-yellow-200 text-gray-900",
+  Performa: "bg-violet-100 text-violet-800",
+};
+const DEFAULT_TYPE_STYLE = "bg-gray-100 text-gray-800";
+
+const legend = [
+  ["Fitur baru", "Kemampuan baru yang bisa langsung dipakai."],
+  ["Peningkatan", "Alur, tampilan, dan pengalaman yang lebih nyaman."],
+  ["Perbaikan", "Fix error, validasi, dan perilaku yang tidak sesuai."],
+  ["Keamanan", "Perlindungan data dan transaksi pengguna."],
 ] as const;
 
-const categories = [
-  ["Fitur baru", "Penambahan kemampuan baru yang bisa langsung dipakai pengguna."],
-  ["Peningkatan", "Perbaikan alur, tampilan, copy, dan pengalaman memakai produk."],
-  ["Perbaikan bug", "Fix error, validasi, loading state, atau perilaku yang tidak sesuai."],
-  ["Maintenance", "Update teknis, versi aplikasi, migration, dan optimasi sistem."],
-] as const;
+function TypeChip({ type }: { type: string }) {
+  return (
+    <span
+      className={`inline-flex w-fit items-center rounded-full px-2.5 py-1 text-xs font-bold ${TYPE_STYLES[type] ?? DEFAULT_TYPE_STYLE}`}
+    >
+      {type}
+    </span>
+  );
+}
+
+function versionAnchor(version: string) {
+  return `rilis-${version.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}`;
+}
 
 function ChangelogPage() {
-  return (
-    <>
-      <section className="overflow-hidden bg-background">
-        <div className="container-page grid gap-10 py-14 md:grid-cols-[1fr_0.9fr] md:items-center md:py-20 lg:py-24">
-          <div>
-            <Badge className="gap-1.5 bg-info text-info-foreground hover:bg-info">
-              <GitBranch className="h-3.5 w-3.5" aria-hidden />
-              Changelog CV Pintar
-            </Badge>
-            <h1 className="mt-5 max-w-3xl font-display text-4xl font-extrabold leading-tight tracking-tight text-foreground sm:text-5xl lg:text-6xl">
-              Catatan update produk, fitur baru, dan perbaikan aplikasi.
-            </h1>
-            <p className="mt-5 max-w-2xl text-base leading-8 text-muted-foreground sm:text-lg">
-              Kami terus mengembangkan CV Pintar agar proses membuat CV, mencari lowongan, dan
-              menyiapkan lamaran terasa lebih jelas, cepat, dan percaya diri.
-            </p>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Button asChild size="lg" className="h-12 px-6 text-base">
-                <Link to="/fitur">
-                  Lihat semua fitur
-                  <ArrowRight className="h-4 w-4" aria-hidden />
-                </Link>
-              </Button>
-              <Button asChild size="lg" variant="outline" className="h-12 px-6 text-base">
-                <Link to="/harga">Lihat paket</Link>
-              </Button>
-            </div>
-          </div>
+  const latest = changelog[0];
+  const totalUpdates = changelog.reduce((n, r) => n + r.highlights.length, 0);
+  const newFeatures = changelog.reduce(
+    (n, r) => n + r.highlights.filter((h) => h.type === "Fitur baru").length,
+    0,
+  );
 
-          <Card className="rounded-lg border-border bg-card shadow-xl shadow-primary/10">
-            <CardContent className="p-6">
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Current version
+  const stats = [
+    { icon: Rocket, stat: APP_VERSION.replace("-live", ""), label: "Versi live terbaru" },
+    { icon: GitBranch, stat: String(changelog.length), label: "Rilis tercatat" },
+    { icon: Sparkles, stat: `${newFeatures}+`, label: "Fitur baru" },
+    { icon: CheckCircle2, stat: `${totalUpdates}+`, label: "Total pembaruan" },
+  ];
+
+  return (
+    <div className="overflow-hidden bg-white">
+      <PageHero
+        eyebrow={
+          <>
+            <GitBranch aria-hidden="true" className="h-4 w-4" />
+            Changelog · {APP_VERSION}
+          </>
+        }
+        title={
+          <>
+            Terus berkembang,{" "}
+            <span className="text-green-700">supaya kamu makin dekat ke interview.</span>
+          </>
+        }
+        desc={
+          <>
+            Semua fitur baru, peningkatan, dan perbaikan CV Pintar tercatat di sini.{" "}
+            <strong className="font-semibold text-gray-900">
+              Terbaru: upgrade paket kini instan lewat QRIS.
+            </strong>
+          </>
+        }
+        aside={<LatestReleaseCard release={latest} />}
+      >
+        <div className="mt-8 flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
+          <PrimaryCta to="/harga">Lihat Paket & Upgrade</PrimaryCta>
+          <SecondaryCta to="/fitur">Lihat Semua Fitur</SecondaryCta>
+        </div>
+
+        <nav aria-label="Lompat ke rilis" className="mt-8 w-full border-t border-gray-200 pt-6">
+          <p className="text-sm font-semibold text-gray-900">Lompat ke rilis:</p>
+          <ul className="mt-3 flex flex-wrap gap-2">
+            {changelog.slice(0, 5).map((r) => (
+              <li key={r.version}>
+                <a
+                  href={`#${versionAnchor(r.version)}`}
+                  className="inline-flex min-h-11 items-center rounded-full border border-gray-300 bg-white px-4 font-mono text-sm font-semibold text-gray-800 transition-colors hover:border-green-700 hover:bg-green-50 hover:text-green-800"
+                >
+                  {r.version.replace("-live", "")}
+                </a>
+              </li>
+            ))}
+            <li>
+              <a
+                href="#riwayat-heading"
+                className="inline-flex min-h-11 items-center rounded-full px-4 text-sm font-bold text-green-800 underline-offset-4 hover:underline"
+              >
+                Semua rilis
+              </a>
+            </li>
+          </ul>
+        </nav>
+      </PageHero>
+
+      {/* Stats bar */}
+      <section
+        aria-label="Ringkasan changelog"
+        className="container-page relative z-10 -mt-6 lg:-mt-10"
+      >
+        <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-gray-200 bg-gray-200 shadow-lg md:grid-cols-4">
+          {stats.map((item) => (
+            <div
+              key={item.label}
+              className="flex flex-col items-start gap-3 bg-white p-5 sm:flex-row sm:items-center sm:gap-4 sm:p-6"
+            >
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-green-100 text-green-800">
+                <item.icon aria-hidden="true" className="h-6 w-6" />
+              </span>
+              <div className="flex min-w-0 flex-col-reverse">
+                <dt className="mt-1 text-sm font-medium text-gray-600">{item.label}</dt>
+                <dd className="font-display text-2xl font-extrabold leading-none text-gray-900">
+                  {item.stat}
+                </dd>
+              </div>
+            </div>
+          ))}
+        </dl>
+      </section>
+
+      {/* Spotlight: rilis terbaru */}
+      <section aria-labelledby="spotlight-heading" className="py-20 lg:py-28">
+        <div className="container-page">
+          <div className="grid items-center gap-12 lg:grid-cols-2">
+            <div>
+              <Eyebrow>
+                <Sparkles aria-hidden="true" className="h-3.5 w-3.5" />
+                Baru di {latest.version.replace("-live", "")}
+              </Eyebrow>
+              <h2
+                id="spotlight-heading"
+                className="mt-4 font-display text-3xl font-extrabold leading-tight tracking-tight text-gray-900 sm:text-4xl lg:text-5xl"
+              >
+                Scan, bayar, langsung Pro. <span className="text-green-700">Semudah itu.</span>
+              </h2>
+              <p className="mt-5 text-base leading-relaxed text-gray-600 sm:text-lg">
+                Dulu upgrade paket berarti pindah ke halaman lain, transfer, lalu menunggu
+                konfirmasi. Sekarang semuanya selesai di CV Pintar: pilih paket, scan QRIS, dan
+                fitur premium langsung terbuka saat itu juga.
               </p>
-              <div className="mt-3 rounded-lg bg-primary p-5 text-primary-foreground">
-                <p className="font-mono text-2xl font-bold">{APP_VERSION}</p>
-                <p className="mt-2 text-sm leading-6 text-primary-foreground/90">
-                  Versi live terbaru yang sedang berjalan di CV Pintar.
-                </p>
-              </div>
-              <div className="mt-5 grid gap-3">
-                {categories.map(([title, desc]) => (
-                  <div key={title} className="rounded-lg border border-border bg-background p-4">
-                    <p className="text-sm font-semibold text-foreground">{title}</p>
-                    <p className="mt-1 text-sm leading-6 text-muted-foreground">{desc}</p>
-                  </div>
+              <ul className="mt-8 grid gap-4 sm:grid-cols-2">
+                {[
+                  "QRIS dari m-banking atau e-wallet apa pun",
+                  "Paket & kuota aktif otomatis",
+                  "Bukti transaksi dikirim ke email",
+                  "Link bayar berlaku hingga 24 jam",
+                ].map((item) => (
+                  <CheckItem key={item}>{item}</CheckItem>
                 ))}
+              </ul>
+              <div className="mt-10">
+                <PrimaryCta to="/harga">Upgrade Sekarang</PrimaryCta>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+
+            <PaymentMockup />
+          </div>
         </div>
       </section>
 
-      <section className="bg-muted/45 py-16 md:py-24">
+      {/* Riwayat rilis */}
+      <section aria-labelledby="riwayat-heading" className="scroll-mt-28 bg-gray-50 py-20 lg:py-28">
         <div className="container-page">
-          <div className="mx-auto max-w-2xl text-center">
-            <Badge variant="secondary">Release Notes</Badge>
-            <h2 className="mt-3 font-display text-3xl font-bold tracking-tight md:text-4xl">
-              Perubahan terbaru
-            </h2>
-            <p className="mt-4 text-base leading-8 text-muted-foreground">
-              Ringkasan umum dari update produk. Beberapa perubahan teknis kecil digabung agar
-              changelog tetap mudah dibaca.
-            </p>
-          </div>
+          <SectionHeader
+            id="riwayat-heading"
+            eyebrow="Release notes"
+            title="Riwayat rilis CV Pintar."
+            desc="Ringkasan setiap update produk. Perubahan teknis kecil digabung agar tetap mudah dibaca."
+          />
 
-          <div className="mx-auto mt-12 max-w-4xl space-y-6">
-            {changelog.map((release) => (
-              <article
+          <ul
+            aria-label="Keterangan jenis perubahan"
+            className="mx-auto -mt-4 mb-14 grid max-w-4xl gap-3 sm:grid-cols-2 lg:grid-cols-4"
+          >
+            {legend.map(([type, desc]) => (
+              <li key={type} className="rounded-xl border border-gray-200 bg-white p-4">
+                <TypeChip type={type} />
+                <p className="mt-2 text-sm leading-relaxed text-gray-600">{desc}</p>
+              </li>
+            ))}
+          </ul>
+
+          <ol className="relative mx-auto max-w-5xl">
+            <div
+              aria-hidden="true"
+              className="absolute bottom-0 left-[1.4rem] top-2 border-l-2 border-dashed border-green-300 md:left-[11.4rem]"
+            />
+            {changelog.map((release, i) => (
+              <li
                 key={release.version}
-                className="rounded-lg border border-border bg-card p-6"
+                id={versionAnchor(release.version)}
+                className="relative scroll-mt-28 pb-12 pl-12 last:pb-0 md:grid md:grid-cols-[10rem_1fr] md:gap-12 md:pl-0"
               >
-                <div className="flex flex-col gap-3 border-b border-border pb-5 sm:flex-row sm:items-start sm:justify-between">
-                  <div>
-                    <Badge className="bg-primary text-primary-foreground hover:bg-primary">
-                      {release.version}
-                    </Badge>
-                    <h3 className="mt-4 font-display text-2xl font-bold text-foreground">
-                      {release.title}
-                    </h3>
-                    <p className="mt-2 text-sm leading-7 text-muted-foreground">
-                      {release.summary}
-                    </p>
-                  </div>
-                  <p className="shrink-0 text-sm font-medium text-muted-foreground">
+                {/* Penanda versi + tanggal */}
+                <div className="mb-4 md:mb-0 md:pr-5 md:pt-1 md:text-right">
+                  <span
+                    aria-hidden="true"
+                    className={`absolute left-0 top-0 flex h-11 w-11 items-center justify-center rounded-full ring-4 ring-gray-50 md:left-[10rem] md:ring-8 ${i === 0 ? "bg-green-700 text-white" : "border-2 border-green-300 bg-white text-green-800"}`}
+                  >
+                    {i === 0 ? <Rocket className="h-5 w-5" /> : <GitBranch className="h-4 w-4" />}
+                  </span>
+                  <p className="font-mono text-lg font-extrabold text-gray-900">
+                    {release.version}
+                  </p>
+                  <p className="mt-1 flex items-center gap-1.5 text-sm font-medium text-gray-600 md:justify-end">
+                    <CalendarDays aria-hidden="true" className="h-4 w-4" />
                     {release.date}
                   </p>
                 </div>
 
-                <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                  {release.highlights.map((item) => (
-                    <div
-                      key={`${release.version}-${item.text}`}
-                      className="rounded-lg bg-muted/55 p-4"
-                    >
-                      <div className="flex items-start gap-3">
-                        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
-                          <item.icon className="h-4 w-4" aria-hidden />
+                <article
+                  aria-labelledby={`${versionAnchor(release.version)}-title`}
+                  className={`rounded-2xl border bg-white p-5 sm:p-8 ${i === 0 ? "border-green-600 shadow-xl shadow-green-900/10" : "border-gray-200"} md:ml-8`}
+                >
+                  <div className="flex flex-wrap items-center gap-2">
+                    {i === 0 && (
+                      <span className="rounded-full bg-yellow-300 px-2.5 py-1 text-xs font-bold text-gray-900">
+                        Terbaru
+                      </span>
+                    )}
+                    <span className="text-xs font-semibold text-gray-600">
+                      {release.highlights.length} pembaruan
+                    </span>
+                  </div>
+                  <h3
+                    id={`${versionAnchor(release.version)}-title`}
+                    className="mt-3 font-display text-2xl font-extrabold tracking-tight text-gray-900"
+                  >
+                    {release.title}
+                  </h3>
+                  <p className="mt-2 text-base leading-relaxed text-gray-600">{release.summary}</p>
+
+                  <ul className="mt-6 grid gap-3 sm:grid-cols-2">
+                    {release.highlights.map((item) => (
+                      <li
+                        key={item.text}
+                        className="flex items-start gap-3 rounded-xl bg-gray-50 p-4"
+                      >
+                        <span className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-green-100 text-green-800 sm:flex">
+                          <item.icon aria-hidden="true" className="h-5 w-5" />
                         </span>
-                        <div>
-                          <p className="text-xs font-semibold uppercase tracking-wider text-primary">
-                            {item.type}
-                          </p>
-                          <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                            {item.text}
-                          </p>
+                        <div className="min-w-0">
+                          <TypeChip type={item.type} />
+                          <p className="mt-2 text-sm leading-relaxed text-gray-700">{item.text}</p>
                         </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </article>
+                      </li>
+                    ))}
+                  </ul>
+                </article>
+              </li>
             ))}
-          </div>
+          </ol>
         </div>
       </section>
-    </>
+
+      <CtaBanner
+        title="Fitur baru terus hadir. Mulai pakai hari ini."
+        desc="Buat CV pertamamu gratis, lalu upgrade kapan saja hanya dengan scan QRIS."
+        cta="Mulai Gratis Sekarang"
+        points={[
+          "Gratis selamanya",
+          "Upgrade instan via QRIS",
+          "ATS Friendly",
+          "Data aman & privat",
+        ]}
+      />
+    </div>
+  );
+}
+
+function LatestReleaseCard({ release }: { release: Release }) {
+  return (
+    <div className="relative mx-auto w-full max-w-md px-2 sm:px-0">
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 -z-0 translate-x-3 translate-y-3 rotate-2 rounded-3xl bg-green-700"
+      />
+      <div className="relative rounded-3xl border border-gray-200 bg-white p-6 shadow-2xl">
+        <div className="flex items-start justify-between gap-4 border-b border-gray-100 pb-5">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-wider text-gray-600">
+              Rilis terbaru
+            </p>
+            <p className="mt-1 font-mono text-2xl font-extrabold text-gray-900">
+              {release.version}
+            </p>
+            <p className="mt-1 text-sm text-gray-600">{release.date}</p>
+          </div>
+          <span className="flex items-center gap-1.5 rounded-full bg-green-100 px-2.5 py-1 text-xs font-bold text-green-800">
+            <span aria-hidden="true" className="h-2 w-2 rounded-full bg-green-600" />
+            Live
+          </span>
+        </div>
+
+        <p className="mt-5 font-display text-lg font-extrabold leading-snug text-gray-900">
+          {release.title}
+        </p>
+        <ul className="mt-4 grid gap-3">
+          {release.highlights.slice(0, 3).map((item) => (
+            <li key={item.text} className="flex items-center gap-3 rounded-xl bg-gray-50 p-3">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-green-100 text-green-800">
+                <item.icon aria-hidden="true" className="h-5 w-5" />
+              </span>
+              <p className="line-clamp-2 text-sm font-medium text-gray-800">
+                {item.short ?? item.text}
+              </p>
+            </li>
+          ))}
+        </ul>
+
+        <a
+          href={`#${versionAnchor(release.version)}`}
+          className="mt-5 flex min-h-11 items-center justify-between rounded-xl bg-green-800 p-4 text-sm font-bold text-white transition-colors hover:bg-green-900"
+        >
+          Baca catatan lengkap
+          <span aria-hidden="true">↓</span>
+        </a>
+      </div>
+    </div>
+  );
+}
+
+/** Pola QR dekoratif (bukan kode QR sungguhan). */
+const QR_SIZE = 13;
+const QR_CELLS = Array.from({ length: QR_SIZE * QR_SIZE }, (_, i) => {
+  const x = i % QR_SIZE;
+  const y = Math.floor(i / QR_SIZE);
+  const far = QR_SIZE - 4;
+  // Tiga "finder" 4x4 berongga di pojok kiri atas, kanan atas, dan kiri bawah.
+  if ((x < 4 || x >= far) && (y < 4 || y >= far) && !(x >= far && y >= far)) {
+    const lx = x < 4 ? x : x - far;
+    const ly = y < 4 ? y : y - far;
+    return lx === 0 || ly === 0 || lx === 3 || ly === 3;
+  }
+  return (x * 7 + y * 13 + x * y) % 3 === 0;
+});
+
+function PaymentMockup() {
+  return (
+    <div
+      role="img"
+      aria-label="Ilustrasi pembayaran: paket Pro dibayar lewat QRIS, lalu status berubah menjadi pembayaran berhasil dan paket Pro langsung aktif."
+      className="relative mx-auto w-full max-w-md"
+    >
+      <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-xl shadow-green-900/10">
+        <div className="flex items-center justify-between gap-4 border-b border-gray-100 pb-5">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-wider text-gray-600">Checkout</p>
+            <p className="mt-1 font-display text-xl font-extrabold text-gray-900">Paket Pro</p>
+            <p className="mt-1 text-sm text-gray-600">Akses 1 bulan</p>
+          </div>
+          <div className="rounded-2xl bg-green-800 px-4 py-2 text-center text-white">
+            <p className="text-xs font-semibold text-green-100">Total</p>
+            <p className="font-display text-xl font-extrabold">Rp 35rb</p>
+          </div>
+        </div>
+
+        <div className="mt-5 flex items-center gap-5">
+          <div
+            className="grid shrink-0 gap-px rounded-xl border border-gray-200 bg-white p-3"
+            style={{ gridTemplateColumns: `repeat(${QR_SIZE}, minmax(0, 1fr))` }}
+          >
+            {QR_CELLS.map((on, i) => (
+              <span
+                key={i}
+                className={`h-2 w-2 rounded-[1px] ${on ? "bg-gray-900" : "bg-white"}`}
+              />
+            ))}
+          </div>
+          <div className="min-w-0">
+            <p className="flex items-center gap-1.5 text-sm font-bold text-gray-900">
+              <QrCode aria-hidden="true" className="h-4 w-4 text-green-700" />
+              Scan QRIS
+            </p>
+            <p className="mt-1 text-sm leading-relaxed text-gray-600">
+              Buka m-banking atau e-wallet, lalu scan kode ini.
+            </p>
+          </div>
+        </div>
+
+        <ol className="mt-6 space-y-3">
+          {[
+            ["Pesanan dibuat", "Link bayar berlaku 24 jam"],
+            ["Pembayaran diterima", "Bukti dikirim ke email"],
+          ].map(([title, desc]) => (
+            <li
+              key={title}
+              className="flex items-start gap-3 rounded-xl border border-gray-200 p-3"
+            >
+              <CheckCircle2 aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-green-700" />
+              <div>
+                <p className="text-sm font-bold text-gray-900">{title}</p>
+                <p className="text-xs text-gray-600">{desc}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+
+        <div className="mt-5 rounded-xl bg-green-800 p-4 text-white">
+          <p className="flex items-center gap-2 text-sm font-bold">
+            <Sparkles aria-hidden="true" className="h-4 w-4 text-yellow-300" /> Paket Pro aktif!
+          </p>
+          <p className="mt-1 text-sm leading-relaxed text-green-50">
+            Semua fitur premium sudah bisa kamu pakai sekarang.
+          </p>
+        </div>
+      </div>
+    </div>
   );
 }
