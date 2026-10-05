@@ -137,7 +137,7 @@ function TentangPage() {
       </PageHero>
 
       {/* Stats */}
-      <section aria-label="Dampak CV Pintar" className="container-page -mt-6 lg:-mt-10">
+      <section aria-label="Dampak CV Pintar" className="container-page relative z-10 -mt-6 lg:-mt-10">
         <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-gray-200 bg-gray-200 shadow-lg md:grid-cols-4">
           {stats.map((item) => (
             <div key={item.label} className="flex items-center gap-4 bg-white p-5 sm:p-6">

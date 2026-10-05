@@ -187,7 +187,7 @@ function TemplatePage() {
         </PageHero>
 
         {/* How to choose */}
-        <section aria-labelledby="pilih-heading" className="container-page -mt-6 lg:-mt-10">
+        <section aria-labelledby="pilih-heading" className="container-page relative z-10 -mt-6 lg:-mt-10">
           <h2 id="pilih-heading" className="sr-only">
             Cara memilih template
           </h2>

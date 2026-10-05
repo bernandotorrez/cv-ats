@@ -987,8 +987,9 @@ function JobCard({
 
   const detailLink = isFallback ? buildSearchSources(job.title, job.location)[4].url : null;
   const titleId = `job-${job.id}`;
+  // md:flex-none: di layout kolom (desktop), flex-1 membuat tinggi tombol mengecil seukuran teks
   const actionBtn =
-    "inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-xl px-4 text-sm font-bold transition-colors";
+    "inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-xl px-5 text-[15px] font-bold transition-colors md:w-full md:flex-none";
 
   return (
     <article
