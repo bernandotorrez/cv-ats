@@ -44,6 +44,37 @@ import {
 // ─── Security: Pagination Constants ──────────────────────────────────────────────
 const PAGE_SIZE = 10;
 
+// ─── Subscription end date helpers (dates are YYYY-MM-DD in WIB) ────────────────
+const MAX_TIER_END_YEARS = 5;
+
+function toWibDate(value: string | Date) {
+  return new Date(new Date(value).getTime() + 7 * 3600_000).toISOString().slice(0, 10);
+}
+
+function addMonthsToWibDate(date: string, months: number) {
+  const d = new Date(`${date}T00:00:00Z`);
+  d.setUTCMonth(d.getUTCMonth() + months);
+  return d.toISOString().slice(0, 10);
+}
+
+function formatTierEnd(value: string) {
+  return new Date(value).toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: "Asia/Jakarta",
+  });
+}
+
+/** Paid tier end date that is in the future and within the allowed range. */
+function isReasonableTierEnd(value: string | null | undefined) {
+  if (!value) return false;
+  const end = new Date(value).getTime();
+  const max = new Date();
+  max.setFullYear(max.getFullYear() + MAX_TIER_END_YEARS);
+  return end > Date.now() && end <= max.getTime();
+}
+
 export const Route = createFileRoute("/_authenticated/admin/users")({
   beforeLoad: async () => {
     const { data: sessionData } = await supabase.auth.getSession();
@@ -73,6 +104,7 @@ interface UserRow {
   role: string;
   tier: string;
   tier_status: string;
+  tier_end_date?: string | null;
   cv_count: number;
   ai_count: number;
   created_at: string;
@@ -111,6 +143,7 @@ function AdminUsersPage() {
   const [sortOrder, setSortOrder] = useState("desc");
   const [editUser, setEditUser] = useState<UserRow | null>(null);
   const [editTier, setEditTier] = useState("");
+  const [editTierEnd, setEditTierEnd] = useState("");
   const [editRole, setEditRole] = useState("");
   const [editHasUploadCv, setEditHasUploadCv] = useState(false);
   const [editQuotaProPhoto, setEditQuotaProPhoto] = useState(0);
@@ -196,6 +229,9 @@ function AdminUsersPage() {
   const handleEdit = (u: UserRow) => {
     setEditUser(u);
     setEditTier(u.tier || "free");
+    setEditTierEnd(
+      u.tier && u.tier !== "free" && u.tier_end_date ? toWibDate(u.tier_end_date) : "",
+    );
     setEditRole(u.role || "user");
     setEditHasUploadCv(u.has_upload_cv || false);
     setEditQuotaProPhoto(u.quota_pro_photo || 0);
@@ -203,8 +239,32 @@ function AdminUsersPage() {
     setEditTryoutCredits(u.tryout_credits || 0);
   };
 
+  const handleTierChange = (tier: string) => {
+    setEditTier(tier);
+    if (tier === "free") {
+      setEditTierEnd("");
+    } else if (editUser?.tier !== "free" && isReasonableTierEnd(editUser?.tier_end_date)) {
+      // Paid → paid: keep the remaining period.
+      setEditTierEnd(toWibDate(editUser!.tier_end_date!));
+    } else {
+      setEditTierEnd(addMonthsToWibDate(toWibDate(new Date()), 1));
+    }
+  };
+
+  const extendTierEnd = (months: number) => {
+    const today = toWibDate(new Date());
+    // Extend from the current end date if it is still running (and sane), else from today.
+    const base =
+      editTierEnd && isReasonableTierEnd(`${editTierEnd}T23:59:59+07:00`) ? editTierEnd : today;
+    setEditTierEnd(addMonthsToWibDate(base, months));
+  };
+
   const handleSaveEdit = async () => {
     if (!editUser) return;
+    if (editTier !== "free" && !editTierEnd) {
+      toast.error("Isi tanggal aktif sampai untuk tier berbayar.");
+      return;
+    }
     setSaving(true);
 
     const { data: sessionData } = await supabase.auth.getSession();
@@ -226,6 +286,7 @@ function AdminUsersPage() {
       body: JSON.stringify({
         userId: editUser.id,
         tier: editTier,
+        tier_end_date: editTier !== "free" ? editTierEnd : undefined,
         role: editRole,
         has_upload_cv: editHasUploadCv,
         quota_pro_photo: editQuotaProPhoto,
@@ -350,6 +411,19 @@ function AdminUsersPage() {
                     <Crown className="h-3 w-3" />
                     {u.tier}
                   </Badge>
+                  {u.tier !== "free" && u.tier_end_date && (
+                    <Badge
+                      variant="outline"
+                      className={`text-xs ${isReasonableTierEnd(u.tier_end_date) ? "" : "text-destructive border-destructive"}`}
+                      title={
+                        isReasonableTierEnd(u.tier_end_date)
+                          ? undefined
+                          : "Tanggal tidak wajar — kemungkinan data lama, perbaiki lewat Edit"
+                      }
+                    >
+                      s/d {formatTierEnd(u.tier_end_date)}
+                    </Badge>
+                  )}
                   {u.tier_status !== "active" && (
                     <Badge variant="outline" className="text-xs text-destructive">
                       {u.tier_status}
@@ -496,7 +570,7 @@ function AdminUsersPage() {
 
               <div className="space-y-1.5">
                 <label className="text-sm font-medium">Subscription Tier</label>
-                <Select value={editTier} onValueChange={setEditTier}>
+                <Select value={editTier} onValueChange={handleTierChange}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -507,6 +581,47 @@ function AdminUsersPage() {
                   </SelectContent>
                 </Select>
               </div>
+
+              {editTier !== "free" && (
+                <div className="space-y-1.5">
+                  <Label htmlFor="tier-end-date" className="text-sm font-medium">
+                    Aktif sampai
+                  </Label>
+                  <Input
+                    id="tier-end-date"
+                    type="date"
+                    value={editTierEnd}
+                    min={toWibDate(new Date())}
+                    onChange={(e) => setEditTierEnd(e.target.value)}
+                  />
+                  <div className="flex flex-wrap gap-1.5">
+                    {[1, 3, 6, 12].map((m) => (
+                      <Button
+                        key={m}
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="h-7 px-2 text-xs"
+                        onClick={() => extendTierEnd(m)}
+                      >
+                        +{m} bln
+                      </Button>
+                    ))}
+                  </div>
+                  {editTier === editUser.tier &&
+                    editUser.tier_end_date &&
+                    !isReasonableTierEnd(editUser.tier_end_date) && (
+                      <p className="text-xs text-destructive">
+                        Tanggal saat ini ({formatTierEnd(editUser.tier_end_date)}) tidak wajar.
+                        Pilih tanggal baru lalu simpan.
+                      </p>
+                    )}
+                  <p className="text-xs text-muted-foreground">
+                    Berlaku sampai 23:59 WIB. Setelah lewat, user otomatis turun ke Free (dicek tiap
+                    jam).
+                  </p>
+                </div>
+              )}
 
               <div className="space-y-1.5">
                 <label className="text-sm font-medium">Role</label>

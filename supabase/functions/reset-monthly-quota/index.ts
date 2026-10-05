@@ -7,8 +7,7 @@
  * What it does:
  * 1. Archive old ai_usage records (older than 3 months) to ai_usage_archive
  * 2. Reset quota counters if needed
- * 3. Auto-renew free tier subscriptions
- * 4. Expire paid tier subscriptions that have passed date_end
+ * 3. Expire paid tier subscriptions past date_end (also runs hourly via pg_cron)
  */
 import { corsHeaders } from "../_shared/cors.ts";
 import { getAdminClient } from "../_shared/ai-common.ts";
@@ -38,44 +37,26 @@ Deno.serve(async (req: Request) => {
     const results = {
       timestamp: now.toISOString(),
       expired_subscriptions: 0,
-      renewed_free_subscriptions: 0,
       archived_usage_records: 0,
       errors: [] as string[],
     };
 
-    // 1. Expire paid subscriptions that have passed date_end
-    const { data: expiredSubs, error: expireError } = await admin
-      .from("user_subscriptions")
-      .update({ status: "expired" })
-      .neq("tier_id", await getFreeTierId(admin))
-      .eq("status", "active")
-      .lt("date_end", now.toISOString())
-      .select("id");
+    // 1. Expire paid subscriptions that have passed date_end and downgrade them
+    //    to Free. Also runs hourly via pg_cron (expire-due-subscriptions); this
+    //    is just a safety net.
+    const { data: expiredCount, error: expireError } = await admin.rpc(
+      "expire_due_subscriptions",
+    );
 
     if (expireError) {
       results.errors.push(`Failed to expire subscriptions: ${expireError.message}`);
     } else {
-      results.expired_subscriptions = expiredSubs?.length || 0;
+      results.expired_subscriptions = Number(expiredCount || 0);
     }
 
-    // 2. Auto-renew free tier subscriptions (set date_end to NULL = never expires)
+    // 2. Free tier rows never expire: date_end is NOT NULL and stored as +100 years,
+    //    so there is nothing to renew here.
     const freeTierId = await getFreeTierId(admin);
-    const { data: renewedFree, error: renewError } = await admin
-      .from("user_subscriptions")
-      .update({ 
-        status: "active",
-        date_end: null,  // Free tier never expires
-      })
-      .eq("tier_id", freeTierId)
-      .eq("status", "active")
-      .not("date_end", "is", null)  // Only update those that have a date_end set
-      .select("id");
-
-    if (renewError) {
-      results.errors.push(`Failed to renew free subscriptions: ${renewError.message}`);
-    } else {
-      results.renewed_free_subscriptions = renewedFree?.length || 0;
-    }
 
     // 3. Archive old ai_usage records (older than 3 months)
     const threeMonthsAgo = new Date(now);

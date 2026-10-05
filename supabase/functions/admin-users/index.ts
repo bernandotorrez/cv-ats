@@ -37,6 +37,8 @@ type AdminUsersPageRow = {
 type UpdateUserRequest = {
   userId?: string;
   tier?: string;
+  /** YYYY-MM-DD (WIB) — subscription end date for paid tiers. */
+  tier_end_date?: string;
   role?: string;
   has_upload_cv?: boolean;
   quota_pro_photo?: number;
@@ -46,6 +48,33 @@ type UpdateUserRequest = {
 
 const VALID_TIERS = new Set(["free", "starter", "pro"]);
 const VALID_ROLES = new Set(["user", "admin"]);
+const MAX_TIER_END_YEARS = 5;
+
+/** ISO timestamp → YYYY-MM-DD in WIB (UTC+7). */
+function toWibDate(iso: string) {
+  return new Date(new Date(iso).getTime() + 7 * 3600_000).toISOString().slice(0, 10);
+}
+
+/** YYYY-MM-DD (WIB) → end of that day, 23:59:59 WIB. */
+function wibEndOfDay(date: string) {
+  return new Date(`${date}T23:59:59+07:00`);
+}
+
+/** Active subscription end dates (user_id → date_end) for the listed users. */
+async function loadTierEndDates(admin: ReturnType<typeof getAdminClient>, userIds: string[]) {
+  if (userIds.length === 0) return new Map<string, string>();
+  const { data } = await admin
+    .from("user_subscriptions")
+    .select("user_id, date_end")
+    .in("user_id", userIds)
+    .eq("status", "active");
+  return new Map(
+    ((data || []) as Array<{ user_id: string; date_end: string }>).map((s) => [
+      s.user_id,
+      s.date_end,
+    ]),
+  );
+}
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
@@ -160,6 +189,7 @@ Deno.serve(async (req: Request) => {
       }));
 
       const userIds = rows.map((u) => u.id);
+      const tierEndMap = await loadTierEndDates(admin, userIds);
       let profileMap = new Map();
       if (userIds.length > 0) {
         const { data: profiles } = await admin
@@ -182,6 +212,7 @@ Deno.serve(async (req: Request) => {
 
         return {
           ...user,
+          tier_end_date: tierEndMap.get(user.id) || null,
           has_upload_cv: isUnlocked,
           upload_cv_end_date: endDateStr || null,
           quota_pro_photo: p?.quota_pro_photo || 0,
@@ -251,6 +282,10 @@ async function updateUser(
   const body = (await req.json().catch(() => ({}))) as UpdateUserRequest;
   const userId = typeof body.userId === "string" ? body.userId.trim() : "";
   const tier = typeof body.tier === "string" ? body.tier.trim().toLowerCase() : undefined;
+  const tierEndDate =
+    typeof body.tier_end_date === "string" && body.tier_end_date.trim()
+      ? body.tier_end_date.trim()
+      : undefined;
   const role = typeof body.role === "string" ? body.role.trim().toLowerCase() : undefined;
   const hasUploadCv = typeof body.has_upload_cv === "boolean" ? body.has_upload_cv : undefined;
   const quota_pro_photo =
@@ -268,6 +303,12 @@ async function updateUser(
   }
   if (tier !== undefined && !VALID_TIERS.has(tier)) {
     throw new BadRequestError("Tier tidak valid");
+  }
+  if (tierEndDate !== undefined && !/^\d{4}-\d{2}-\d{2}$/.test(tierEndDate)) {
+    throw new BadRequestError("Format tanggal aktif tidak valid (YYYY-MM-DD)");
+  }
+  if (tierEndDate !== undefined && Number.isNaN(wibEndOfDay(tierEndDate).getTime())) {
+    throw new BadRequestError("Tanggal aktif tidak valid");
   }
   if (role !== undefined && !VALID_ROLES.has(role)) {
     throw new BadRequestError("Role tidak valid");
@@ -327,11 +368,29 @@ async function updateUser(
     }
   }
 
-  // ── Subscription tier (only when provided and different) ───────────────────
-  if (tier !== undefined) {
+  // ── Subscription tier / end date (only when provided and different) ───────
+  // Paid tiers end at tier_end_date (23:59:59 WIB), default +1 month. Free is
+  // stored as +100 years (date_end NOT NULL, same as handle_new_user).
+  const resolveTierEnd = () => {
+    if (tierEndDate === undefined) {
+      const end = new Date(now);
+      end.setMonth(end.getMonth() + 1);
+      return end;
+    }
+    const end = wibEndOfDay(tierEndDate);
+    const max = new Date(now);
+    max.setFullYear(max.getFullYear() + MAX_TIER_END_YEARS);
+    if (end <= now) throw new BadRequestError("Tanggal aktif harus setelah hari ini");
+    if (end > max) {
+      throw new BadRequestError(`Tanggal aktif maksimal ${MAX_TIER_END_YEARS} tahun dari sekarang`);
+    }
+    return end;
+  };
+
+  if (tier !== undefined || tierEndDate !== undefined) {
     const { data: activeSub, error: activeSubError } = await admin
       .from("user_subscriptions")
-      .select("id, tier_id, subscription_tiers(slug)")
+      .select("id, tier_id, date_end, subscription_tiers(slug)")
       .eq("user_id", userId)
       .eq("status", "active")
       .order("date_end", { ascending: false, nullsFirst: false })
@@ -345,21 +404,25 @@ async function updateUser(
           .subscription_tiers?.slug ?? null)
       : null;
 
-    if (!activeSub || currentTier !== tier) {
+    const targetTier = tier ?? currentTier ?? "free";
+
+    if (!activeSub || currentTier !== targetTier) {
       const { data: tierData, error: tierError } = await admin
         .from("subscription_tiers")
         .select("id")
-        .eq("slug", tier)
+        .eq("slug", targetTier)
         .single();
       if (tierError || !tierData) {
         throw new BadRequestError("Tier subscription tidak ditemukan");
       }
 
-      // date_end NOT NULL: free tier "tidak kedaluwarsa" = +100 tahun (sama dengan handle_new_user);
-      // paid tiers granted manually run 30 days.
-      const end = new Date(now);
-      if (tier === "free") end.setFullYear(end.getFullYear() + 100);
-      else end.setDate(end.getDate() + 30);
+      let end: Date;
+      if (targetTier === "free") {
+        end = new Date(now);
+        end.setFullYear(end.getFullYear() + 100);
+      } else {
+        end = resolveTierEnd();
+      }
       const dateEnd = end.toISOString();
 
       if (activeSub?.id) {
@@ -385,6 +448,18 @@ async function updateUser(
         if (insertSubError) throw insertSubError;
       }
       changes.push("tier");
+    } else if (
+      targetTier !== "free" &&
+      tierEndDate !== undefined &&
+      toWibDate((activeSub as { date_end: string }).date_end) !== tierEndDate
+    ) {
+      // Same paid tier, new end date: extend/shorten without resetting date_start.
+      const { error: updateEndError } = await admin
+        .from("user_subscriptions")
+        .update({ date_end: resolveTierEnd().toISOString() })
+        .eq("id", activeSub.id);
+      if (updateEndError) throw updateEndError;
+      changes.push("tier_end_date");
     }
   }
 
@@ -520,6 +595,7 @@ async function updateUser(
     ok: true,
     userId,
     tier,
+    tier_end_date: tierEndDate,
     role,
     has_upload_cv: hasUploadCv,
     upload_cv_end_date: uploadCvEndDate,
@@ -548,7 +624,7 @@ async function buildUserRows(admin: ReturnType<typeof getAdminClient>, authUsers
     userIds.length
       ? admin
           .from("user_subscriptions")
-          .select("user_id, status, subscription_tiers!inner(slug)")
+          .select("user_id, status, date_end, subscription_tiers!inner(slug)")
           .in("user_id", userIds)
           .eq("status", "active")
       : Promise.resolve({ data: [] }),
@@ -593,6 +669,7 @@ async function buildUserRows(admin: ReturnType<typeof getAdminClient>, authUsers
       (subs.data || []) as unknown as Array<{
         user_id: string;
         status: string;
+        date_end?: string;
         subscription_tiers?: { slug?: string };
       }>
     ).map((sub) => [sub.user_id, sub]),
@@ -628,6 +705,7 @@ async function buildUserRows(admin: ReturnType<typeof getAdminClient>, authUsers
       role: roleMap.get(user.id) || "user",
       tier: sub?.subscription_tiers?.slug || "free",
       tier_status: sub?.status || "active",
+      tier_end_date: sub?.date_end || null,
       cv_count: cvCountMap[user.id] || 0,
       ai_count: aiCountMap[user.id] || 0,
       has_upload_cv: isUnlocked,
