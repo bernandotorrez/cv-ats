@@ -2,6 +2,13 @@
  * Local/Heuristic ATS Scoring — tanpa AI, instant
  * Digunakan sebagai fallback cepat atau preview skor real-time.
  * Breakdown keys diselaraskan dengan AI scoring: relevance, skills_match, experience, format, keywords
+ *
+ * Prinsip:
+ * - Bukti diambil dari ISI CV (ringkasan, judul & bullet pengalaman), bukan dari field yang
+ *   sedang dicocokkan. Mis. skill tidak dihitung "muncul di CV" hanya karena ada di daftar
+ *   skill, dan target posisi tidak dihitung cocok hanya karena sama dengan headline.
+ * - Kualitas pengalaman dinilai per bullet (kata kerja aksi di awal, angka/metrik, panjang).
+ * - Keyword stuffing (skill terlalu banyak, kata diulang berlebihan) diberi penalti.
  */
 import type { CvData } from "@/lib/cv-types";
 
@@ -19,346 +26,449 @@ export interface ScoreResult {
   suggestions: string[];
 }
 
-const ACTION_VERBS = [
-  "memimpin",
-  "mengembangkan",
-  "meningkatkan",
-  "mengelola",
-  "merancang",
-  "mengoptimalkan",
-  "membangun",
-  "mengimplementasikan",
-  "mengkoordinasi",
-  "menganalisis",
-  "menyusun",
-  "menginisiasi",
-  "menyelesaikan",
-  "mencapai",
-  "mengurangi",
-  "menghasilkan",
-  "mendapatkan",
-  "memperoleh",
-  "mendesain",
-  "lead",
-  "led",
-  "develop",
-  "developed",
-  "improve",
-  "improved",
-  "manage",
-  "managed",
-  "design",
-  "designed",
-  "build",
-  "built",
-  "implement",
-  "implemented",
-  "optimize",
-  "optimized",
-  "coordinate",
-  "coordinated",
-  "analyze",
-  "analyzed",
-  "achieve",
+// ─── Kamus ───────────────────────────────────────────────────────────────────
+
+const EN_ACTION_VERBS = new Set([
   "achieved",
-  "reduce",
-  "reduced",
-  "generate",
+  "analyzed",
+  "architected",
+  "automated",
+  "built",
+  "collaborated",
+  "coordinated",
+  "created",
+  "delivered",
+  "designed",
+  "developed",
+  "drove",
+  "enhanced",
+  "established",
+  "executed",
   "generated",
-];
+  "grew",
+  "implemented",
+  "improved",
+  "increased",
+  "initiated",
+  "launched",
+  "led",
+  "managed",
+  "mentored",
+  "migrated",
+  "negotiated",
+  "optimized",
+  "organized",
+  "owned",
+  "planned",
+  "produced",
+  "reduced",
+  "redesigned",
+  "resolved",
+  "scaled",
+  "shipped",
+  "simplified",
+  "spearheaded",
+  "streamlined",
+  "supervised",
+  "tested",
+  "trained",
+  "transformed",
+  "wrote",
+]);
 
-const METRIC_PATTERNS = [
-  /\d+%/,
-  /\d+\s*orang/,
-  /\d+\s*orang tim/,
-  /\d+\s*klien/,
-  /\d+\s*juta/,
-  /\d+\s*miliar/,
-  /\d+\s*Rp/,
-  /Rp\s*\d+/,
-  /\d+\s*proyek/,
-  /\d+\s*pengguna/,
-  /\d+\s*user/,
-  /\d+x/,
-  /\d+\s*kali/,
-  /meningkat.*\d+/,
-  /menurun.*\d+/,
-];
+/** Kata pembuka yang lemah / pasif — bukan kata kerja aksi. */
+const WEAK_OPENERS = new Set([
+  "bertanggung",
+  "membantu",
+  "mengerjakan",
+  "melakukan",
+  "responsible",
+  "helped",
+  "assisted",
+  "worked",
+  "involved",
+  "tasked",
+  "duties",
+]);
 
-/** Validasi email — support subdomain (contoh: user+tag@domain.co.id) */
+const STOPWORDS = new Set([
+  // id
+  "dan",
+  "atau",
+  "yang",
+  "untuk",
+  "dengan",
+  "dari",
+  "pada",
+  "dalam",
+  "ke",
+  "di",
+  "sebagai",
+  "serta",
+  "agar",
+  "oleh",
+  "para",
+  "ini",
+  "itu",
+  "juga",
+  "lebih",
+  "secara",
+  "telah",
+  "akan",
+  "bagi",
+  "hingga",
+  "antar",
+  "tim",
+  "kerja",
+  // en
+  "and",
+  "or",
+  "the",
+  "for",
+  "with",
+  "from",
+  "into",
+  "onto",
+  "of",
+  "to",
+  "in",
+  "on",
+  "at",
+  "as",
+  "by",
+  "an",
+  "a",
+  "is",
+  "are",
+  "was",
+  "were",
+  "be",
+  "this",
+  "that",
+  "team",
+  "work",
+  "senior",
+  "junior",
+  "staff",
+  "lead",
+  "head",
+]);
+
+/** Angka yang bermakna: persen, mata uang, jumlah + satuan, atau bilangan ≥ 2 digit (bukan tahun). */
+const METRIC_REGEX =
+  /(\d+([.,]\d+)?\s*(%|persen|x\b|kali|juta|jt|miliar|m\b|ribu|rb|k\b|orang|klien|client|clients|user|users|pengguna|proyek|project|projects|tim|team|jam|hours|hari|days|minggu|weeks|bulan|months|ms|detik|seconds|transaksi|transactions|request|requests|kueri|query|queries|outlet|cabang|toko|produk|products))|(rp\.?\s?\d)|(\$\s?\d)|(\b(?!(19|20)\d{2}\b)\d{2,}\b)/i;
+
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+(\.[^\s@]+)*$/;
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function asText(value: unknown): string {
+  if (typeof value === "string") return value;
+  if (Array.isArray(value)) return value.filter((v) => typeof v === "string").join("\n");
+  return "";
+}
+
+/** Pecah deskripsi jadi bullet: per baris, buang penanda bullet di awal. */
+function toBullets(description: unknown): string[] {
+  return asText(description)
+    .split(/\r?\n/)
+    .map((line) => line.replace(/^\s*([•●▪◦*\-–—]|\d+[.)])\s*/, "").trim())
+    .filter((line) => line.length >= 15);
+}
+
+function tokenize(text: string): string[] {
+  return text
+    .toLowerCase()
+    .split(/[^a-z0-9+#]+/)
+    .filter((t) => t.length >= 3 && !STOPWORDS.has(t));
+}
+
+function firstWord(bullet: string): string {
+  return (bullet.toLowerCase().match(/[a-z]+/) || [""])[0];
+}
+
+/** Kata kerja aksi di awal bullet: me-/mem-/men-/meng-/meny- (ID) atau kata kerja lampau (EN). */
+function startsWithActionVerb(bullet: string): boolean {
+  const word = firstWord(bullet);
+  if (!word || WEAK_OPENERS.has(word)) return false;
+  if (EN_ACTION_VERBS.has(word)) return true;
+  if (/^me(m|n|ng|ny)?[a-z]{3,}$/.test(word)) return true; // memimpin, mengembangkan, menyusun
+  return /^[a-z]{4,}ed$/.test(word); // EN past tense lain (deployed, refactored)
+}
+
+/** Cocokkan nama skill sebagai frasa utuh (bukan substring: "Go" ≠ "good"). */
+function mentions(text: string, phrase: string): boolean {
+  const p = phrase.trim().toLowerCase();
+  if (p.length < 2) return false;
+  const escaped = p.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`(^|[^a-z0-9])${escaped}($|[^a-z0-9])`, "i").test(text);
+}
+
+const clamp = (n: number) => Math.max(0, Math.min(100, Math.round(n)));
+
+// ─── Scoring ─────────────────────────────────────────────────────────────────
 
 export function scoreCvLocally(data: CvData, targetRole?: string): ScoreResult {
   const strengths: string[] = [];
   const weaknesses: string[] = [];
   const suggestions: string[] = [];
 
-  // ===== 1. FORMAT (0-100) — struktur CV & info kontak =====
-  let formatScore = 100;
+  const personal = data.personal || ({} as CvData["personal"]);
+  const experiences = data.experiences || [];
+  const internships = data.internships || [];
+  const organizations = data.organizations || [];
+  const educations = data.educations || [];
+  const skills = (data.skills || []).filter((s) => s?.name?.trim());
+  const summary = asText(personal.summary).trim();
 
-  const hasPersonal = !!(data.personal.fullName && data.personal.email && data.personal.phone);
-  const hasSummary = !!(data.personal.summary && data.personal.summary.length >= 100);
-  const hasExperience = data.experiences.length > 0;
-  const hasEducation = data.educations.length > 0;
-  const hasSkills = data.skills.length > 0;
-  const hasLanguages = data.languages.length > 0;
-  const hasCertificates = data.certificates.length > 0;
+  // Peran yang dinilai sebagai "pengalaman": kerja + magang (organisasi sebagai pelengkap)
+  const roles = [...experiences, ...internships];
+  const roleBullets = roles.map((r) => toBullets(r.description));
+  const bullets = roleBullets.flat();
+  const orgBullets = organizations.flatMap((o) => toBullets(o.description));
 
-  if (!hasPersonal) {
-    formatScore -= 25;
-    weaknesses.push("Informasi kontak tidak lengkap");
-  }
-  if (!hasSummary) {
-    formatScore -= 15;
-    weaknesses.push("Ringkasan profil minimal 100 karakter");
-  }
-  if (!hasExperience) {
-    formatScore -= 15;
-    weaknesses.push("Belum ada pengalaman kerja");
-  }
-  if (!hasEducation) {
-    formatScore -= 10;
-    weaknesses.push("Belum ada data pendidikan");
-  }
-  if (!hasSkills) {
-    formatScore -= 10;
-    weaknesses.push("Belum ada daftar keahlian");
-  }
-  if (hasLanguages) {
-    formatScore += 5;
-  }
-  if (hasCertificates) {
-    formatScore += 5;
-  }
-
-  // Contact completeness (bagian dari format)
-  if (!data.personal.fullName) formatScore -= 5;
-  if (!data.personal.email) formatScore -= 5;
-  else if (!EMAIL_REGEX.test(data.personal.email)) formatScore -= 5;
-  if (!data.personal.phone) formatScore -= 5;
-  if (!data.personal.location) formatScore -= 5;
-  if (!data.personal.linkedin) formatScore -= 5;
-
-  if (hasPersonal && hasSummary && hasExperience && hasEducation && hasSkills) {
-    strengths.push("Struktur CV lengkap (kontak, ringkasan, pengalaman, pendidikan, skill)");
-  }
-  if (data.personal.linkedin) {
-    strengths.push("Profil LinkedIn tercantum");
-  }
-  if (hasLanguages) {
-    strengths.push("Mencantumkan kemampuan bahasa");
-  }
-  if (hasCertificates) {
-    strengths.push("Mencantumkan sertifikasi");
-  }
-
-  formatScore = Math.max(0, Math.min(100, formatScore));
-
-  // ===== 2. EXPERIENCE (0-100) — kualitas deskripsi pengalaman =====
-  let experienceScore = 0;
-  const allDescriptions: string[] = [];
-
-  if (data.personal.summary && typeof data.personal.summary === "string")
-    allDescriptions.push(data.personal.summary);
-  for (const exp of data.experiences) {
-    if (exp.description) {
-      if (typeof exp.description === "string") allDescriptions.push(exp.description);
-      else if (Array.isArray(exp.description)) allDescriptions.push((exp.description as any).join("\n"));
-    }
-  }
-  for (const edu of data.educations) {
-    if (edu.description) {
-      if (typeof edu.description === "string") allDescriptions.push(edu.description);
-      else if (Array.isArray(edu.description)) allDescriptions.push((edu.description as any).join("\n"));
-    }
-  }
-
-  let totalActionVerbs = 0;
-  let totalMetrics = 0;
-  let totalPoints = 0;
-
-  for (const desc of allDescriptions) {
-    if (typeof desc !== "string") continue;
-    const lower = desc.toLowerCase();
-    for (const verb of ACTION_VERBS) {
-      if (lower.includes(verb)) totalActionVerbs++;
-    }
-    for (const pattern of METRIC_PATTERNS) {
-      if (pattern.test(lower)) totalMetrics++;
-    }
-    const points = desc.split(/\n|•|-|\*/).filter((p) => p.trim().length > 10);
-    totalPoints += points.length;
-  }
-
-  // Summary quality
-  if (data.personal.summary && data.personal.summary.length >= 100) {
-    experienceScore += 20;
-    strengths.push("Ringkasan profil cukup detail");
-  } else if (data.personal.summary && data.personal.summary.length > 0) {
-    experienceScore += 10;
-    weaknesses.push("Ringkasan profil terlalu pendek (minimal 100 karakter)");
-  }
-
-  // Action verbs in experience
-  if (totalActionVerbs >= 5) {
-    experienceScore += 30;
-    strengths.push("Menggunakan kata kerja aksi yang kuat");
-  } else if (totalActionVerbs > 0) {
-    experienceScore += 15;
-    suggestions.push(
-      "Gunakan lebih banyak kata kerja aksi (memimpin, mengembangkan, meningkatkan)",
-    );
-  } else if (data.experiences.length > 0) {
-    weaknesses.push("Deskripsi pengalaman tidak menggunakan kata kerja aksi");
-  }
-
-  // Metrics
-  if (totalMetrics >= 3) {
-    experienceScore += 30;
-    strengths.push("Mencantumkan metrik kuantitatif dalam pencapaian");
-  } else if (totalMetrics > 0) {
-    experienceScore += 15;
-    suggestions.push("Tambahkan lebih banyak metrik/angka pada pencapaian");
-  } else if (data.experiences.length > 0) {
-    weaknesses.push("Kurang metrik kuantitatif — tambahkan angka, persentase, atau jumlah");
-  }
-
-  // Bullet points quantity
-  if (totalPoints >= 8) {
-    experienceScore += 20;
-  } else if (totalPoints >= 4) {
-    experienceScore += 10;
-  }
-
-  experienceScore = Math.max(0, Math.min(100, experienceScore));
-
-  // ===== 3. RELEVANCE (0-100) — kecocokan dengan posisi target =====
-  let relevanceScore = 0;
-
-  const allText = [
-    data.personal.summary || "",
-    data.personal.headline || "",
-    ...data.experiences.map((e) => `${e.position} ${e.company} ${e.description || ""}`),
-    ...data.educations.map(
-      (e) => `${e.degree} ${e.school} ${e.field || ""} ${e.description || ""}`,
-    ),
-    ...data.skills.map((s) => s.name),
+  /** Bukti isi CV — sengaja TANPA headline & daftar skill (hindari mencocokkan diri sendiri). */
+  const evidenceText = [
+    summary,
+    ...roles.map((r) => r.position || ""),
+    ...bullets,
+    ...orgBullets,
+    ...educations.map((e) => asText(e.description)),
   ]
-    .join(" ")
+    .join("\n")
     .toLowerCase();
+  const evidenceTokens = tokenize(evidenceText);
+  /** Nilai dasar (netral / bebas stuffing) hanya diberikan kalau CV sudah berisi. */
+  const hasContent = evidenceTokens.length >= 10;
 
-  if (targetRole && targetRole.trim().length > 0) {
-    const positionWords = targetRole.toLowerCase().split(/\s+/);
-    const matched = positionWords.filter((w) => w.length > 3 && allText.includes(w));
-    relevanceScore += Math.min(matched.length * 20, 80);
-    if (matched.length >= 3) {
-      strengths.push(`Keyword posisi "${targetRole}" cocok dengan konten CV`);
-    } else {
-      suggestions.push(`Sesuaikan konten CV dengan keyword dari posisi "${targetRole}"`);
+  // ===== 1. FORMAT (0-100) — kelengkapan & keterbacaan struktur =====
+  let format = 0;
+  const contactMissing: string[] = [];
+  if (personal.fullName?.trim()) format += 8;
+  else contactMissing.push("nama");
+  if (personal.email && EMAIL_REGEX.test(personal.email)) format += 8;
+  else contactMissing.push(personal.email ? "email valid" : "email");
+  if (personal.phone?.trim()) format += 8;
+  else contactMissing.push("nomor HP");
+  if (personal.location?.trim()) format += 6;
+  else contactMissing.push("lokasi");
+  if (personal.linkedin?.trim() || personal.website?.trim()) format += 5;
+  else suggestions.push("Tambahkan link LinkedIn atau portfolio");
+  if (contactMissing.length) weaknesses.push(`Kontak belum lengkap: ${contactMissing.join(", ")}`);
+
+  if (personal.headline?.trim()) format += 5;
+  else suggestions.push("Isi headline/posisi di bawah nama agar rekruter langsung paham peranmu");
+
+  if (summary.length >= 200 && summary.length <= 800) {
+    format += 20;
+  } else if (summary.length >= 80) {
+    format += 10;
+    if (summary.length > 800)
+      suggestions.push("Ringkas ringkasan profil jadi 3-5 kalimat (maks. ±800 karakter)");
+    else suggestions.push("Perkuat ringkasan profil jadi 3-5 kalimat (±200-800 karakter)");
+  } else {
+    weaknesses.push(summary ? "Ringkasan profil terlalu pendek" : "Belum ada ringkasan profil");
+  }
+
+  if (roles.length > 0) {
+    const complete = roles.filter(
+      (r) => r.position?.trim() && r.company?.trim() && r.startDate?.trim(),
+    );
+    format += (complete.length / roles.length) * 15;
+    if (complete.length < roles.length) {
+      weaknesses.push(
+        `${roles.length - complete.length} pengalaman belum lengkap (posisi, perusahaan, atau tanggal mulai)`,
+      );
     }
   } else {
-    // No target role — partial score based on headline/summary alignment
-    relevanceScore = 50;
+    weaknesses.push("Belum ada pengalaman kerja atau magang");
   }
 
-  // Additional relevance: education & experience alignment
-  if (data.experiences.length >= 2) relevanceScore += 10;
-  if (data.educations.length > 0) relevanceScore += 10;
+  if (educations.some((e) => e.school?.trim() && e.degree?.trim())) format += 10;
+  else weaknesses.push("Belum ada data pendidikan yang lengkap");
 
-  relevanceScore = Math.max(0, Math.min(100, relevanceScore));
+  if (skills.length >= 5 && skills.length <= 25) format += 10;
+  else if (skills.length > 0) format += 5;
 
-  // ===== 4. SKILLS_MATCH (0-100) — kecocokan & kelengkapan skill =====
-  let skillsMatchScore = 0;
+  if ((data.languages?.length || 0) > 0 || (data.certificates?.length || 0) > 0) format += 5;
 
-  const skillCount = data.skills.length;
-  if (skillCount >= 12) {
-    skillsMatchScore = 100;
-    strengths.push("Daftar skill sangat lengkap");
-  } else if (skillCount >= 8) {
-    skillsMatchScore = 85;
-    strengths.push("Daftar skill lengkap dan beragam");
-  } else if (skillCount >= 5) {
-    skillsMatchScore = 65;
-  } else if (skillCount >= 3) {
-    skillsMatchScore = 45;
-  } else if (skillCount > 0) {
-    skillsMatchScore = 25;
-    suggestions.push("Tambahkan lebih banyak skill (target: 8-12 skill)");
+  if (
+    personal.fullName &&
+    personal.email &&
+    personal.phone &&
+    summary &&
+    roles.length &&
+    educations.length &&
+    skills.length
+  ) {
+    strengths.push("Struktur CV lengkap: kontak, ringkasan, pengalaman, pendidikan, skill");
+  }
+
+  // ===== 2. EXPERIENCE (0-100) — kualitas bullet pengalaman =====
+  let experience = 0;
+  if (bullets.length > 0) {
+    const actionCount = bullets.filter(startsWithActionVerb).length;
+    const metricCount = bullets.filter((b) => METRIC_REGEX.test(b)).length;
+    const goodLength = bullets.filter((b) => b.length >= 50 && b.length <= 260).length;
+    const actionRatio = actionCount / bullets.length;
+    const metricRatio = metricCount / bullets.length;
+
+    // Jumlah bullet per peran: ideal 3-6
+    const perRole = roleBullets.filter((b) => b.length > 0);
+    const avgPerRole = perRole.length ? bullets.length / perRole.length : 0;
+    if (avgPerRole >= 3 && avgPerRole <= 6) experience += 20;
+    else if (avgPerRole > 6) {
+      experience += 12;
+      suggestions.push("Pilih 3-6 bullet terkuat per pengalaman agar mudah dipindai");
+    } else {
+      experience += 10;
+      suggestions.push("Tulis 3-6 bullet pencapaian untuk setiap pengalaman");
+    }
+
+    experience += actionRatio * 35;
+    // Setengah bullet berisi angka sudah dianggap maksimal
+    experience += Math.min(1, metricRatio / 0.5) * 35;
+    experience += (goodLength / bullets.length) * 10;
+
+    if (actionRatio >= 0.7) strengths.push("Bullet pengalaman diawali kata kerja aksi");
+    else {
+      suggestions.push(
+        `${bullets.length - actionCount} dari ${bullets.length} bullet belum diawali kata kerja aksi (mis. Memimpin, Mengembangkan, Meningkatkan)`,
+      );
+    }
+
+    if (metricRatio >= 0.5) strengths.push("Banyak pencapaian sudah terukur dengan angka");
+    else if (metricCount === 0) weaknesses.push("Belum ada pencapaian dengan angka/metrik");
+    else {
+      suggestions.push(
+        `${bullets.length - metricCount} dari ${bullets.length} bullet belum ada angka — tambahkan %, jumlah, waktu, atau nilai Rp`,
+      );
+    }
+
+    const tooLong = bullets.filter((b) => b.length > 260).length;
+    if (tooLong > 0) suggestions.push(`${tooLong} bullet terlalu panjang — pecah jadi 1-2 baris`);
+  } else if (roles.length > 0) {
+    weaknesses.push("Pengalaman belum berisi deskripsi/bullet pencapaian");
+  }
+
+  // ===== 3. RELEVANCE (0-100) — kecocokan isi CV dengan target posisi =====
+  let relevance: number;
+  const roleTokens = [...new Set(tokenize(targetRole || ""))];
+  if (roleTokens.length > 0) {
+    const covered = roleTokens.filter((t) => evidenceTokens.includes(t));
+    const coverage = covered.length / roleTokens.length;
+    relevance = coverage * 60;
+
+    const latestTitle = tokenize(roles[0]?.position || "");
+    if (roleTokens.some((t) => latestTitle.includes(t))) relevance += 25;
+    if (roleTokens.some((t) => tokenize(summary).includes(t))) relevance += 15;
+
+    if (coverage >= 0.75) strengths.push(`Isi CV sudah selaras dengan posisi "${targetRole}"`);
+    else {
+      const missing = roleTokens.filter((t) => !covered.includes(t));
+      suggestions.push(
+        `Tunjukkan pengalaman yang relevan dengan "${targetRole}" di ringkasan/bullet (belum muncul: ${missing.join(", ")})`,
+      );
+    }
   } else {
-    skillsMatchScore = 0;
+    relevance = hasContent ? 60 : 0;
+    suggestions.push("Isi target posisi agar skor relevansi & keyword lebih akurat");
+  }
+
+  // ===== 4. SKILLS_MATCH (0-100) — jumlah wajar & terbukti di pengalaman =====
+  let skillsMatch = 0;
+  const uniqueSkillNames = [...new Set(skills.map((s) => s.name.trim().toLowerCase()))];
+  const duplicates = skills.length - uniqueSkillNames.length;
+
+  if (uniqueSkillNames.length === 0) {
     weaknesses.push("Belum ada daftar keahlian");
+  } else {
+    const n = uniqueSkillNames.length;
+    if (n >= 6 && n <= 20) skillsMatch += 40;
+    else if (n >= 3 && n < 6) {
+      skillsMatch += 25;
+      suggestions.push("Tambahkan skill hingga ±6-20 yang paling relevan");
+    } else if (n > 20 && n <= 30) {
+      skillsMatch += 30;
+      suggestions.push(`Ada ${n} skill — pangkas ke ±20 yang paling relevan dengan posisi`);
+    } else if (n > 30) {
+      skillsMatch += 18;
+      weaknesses.push(
+        `${n} skill terlalu banyak, terlihat seperti keyword stuffing — pilih ±20 terkuat`,
+      );
+    } else skillsMatch += 12;
+
+    const proven = uniqueSkillNames.filter((s) => mentions(evidenceText, s));
+    const provenRatio = proven.length / n;
+    skillsMatch += Math.min(1, provenRatio / 0.6) * 40;
+
+    const inSummary = uniqueSkillNames.filter((s) => mentions(summary.toLowerCase(), s)).length;
+    skillsMatch += inSummary >= 2 ? 20 : inSummary === 1 ? 10 : 0;
+
+    if (provenRatio >= 0.6) strengths.push("Sebagian besar skill terbukti di pengalaman kerja");
+    else {
+      suggestions.push(
+        `Baru ${proven.length} dari ${n} skill disebut di pengalaman — tunjukkan skill utama dipakai di bullet mana`,
+      );
+    }
+    if (duplicates > 0) {
+      skillsMatch -= 10;
+      weaknesses.push(`${duplicates} skill tercantum ganda`);
+    }
   }
 
-  // Bonus: skills with level specified
-  const skillsWithLevel = data.skills.filter((s) => s.level).length;
-  if (skillsWithLevel >= 5) skillsMatchScore += 5;
-  else if (skillsWithLevel > 0) skillsMatchScore += 2;
+  // ===== 5. KEYWORDS (0-100) — keyword tersebar wajar di isi CV =====
+  let keywords = 0;
+  const bulletText = bullets.join("\n").toLowerCase();
 
-  skillsMatchScore = Math.max(0, Math.min(100, skillsMatchScore));
-
-  // ===== 5. KEYWORDS (0-100) — optimasi keyword di seluruh CV =====
-  let keywordScore = 0;
-
-  // Position match keywords (dari target role)
-  if (targetRole && targetRole.trim().length > 0) {
-    const positionWords = targetRole.toLowerCase().split(/\s+/);
-    const matched = positionWords.filter((w) => w.length > 3 && allText.includes(w));
-    keywordScore += Math.min(matched.length * 15, 45);
+  if (roleTokens.length > 0) {
+    const inBullets = roleTokens.filter((t) => tokenize(bulletText).includes(t)).length;
+    keywords += (inBullets / roleTokens.length) * 40;
+  } else if (hasContent) {
+    keywords += 20;
   }
 
-  // Keyword density: skills mentioned in descriptions
-  const skillsMentionedInText = data.skills.filter((s) => {
-    const name = s.name.toLowerCase();
-    return name.length > 2 && allText.includes(name);
-  }).length;
-  if (skillsMentionedInText >= 5) {
-    keywordScore += 25;
-  } else if (skillsMentionedInText >= 3) {
-    keywordScore += 15;
-  } else if (skillsMentionedInText > 0) {
-    keywordScore += 5;
-  }
+  const skillsInBullets = uniqueSkillNames.filter((s) => mentions(bulletText, s)).length;
+  keywords += skillsInBullets >= 5 ? 30 : skillsInBullets >= 3 ? 20 : skillsInBullets >= 1 ? 10 : 0;
 
-  // Headline match
-  if (data.personal.headline && targetRole) {
-    const headlineWords = data.personal.headline.toLowerCase().split(/\s+/);
-    const targetWords = targetRole.toLowerCase().split(/\s+/);
-    const headlineMatch = headlineWords.filter((w) => targetWords.includes(w)).length;
-    if (headlineMatch >= 2) keywordScore += 15;
-    else if (headlineMatch > 0) keywordScore += 5;
-  }
+  const hardInSummary = uniqueSkillNames.filter((s) => mentions(summary.toLowerCase(), s)).length;
+  keywords += hardInSummary >= 3 ? 15 : hardInSummary >= 1 ? 8 : 0;
 
-  // Education keywords
-  for (const edu of data.educations) {
-    if (edu.field && allText.includes(edu.field.toLowerCase())) keywordScore += 5;
-    if (edu.degree && allText.includes(edu.degree.toLowerCase())) keywordScore += 3;
-  }
+  // Stuffing: satu kata mendominasi teks
+  const freq = new Map<string, number>();
+  for (const t of evidenceTokens) freq.set(t, (freq.get(t) || 0) + 1);
+  const [topWord, topCount] = [...freq.entries()].sort((a, b) => b[1] - a[1])[0] || ["", 0];
+  const stuffed = topCount >= 8 && topCount / Math.max(1, evidenceTokens.length) > 0.05;
+  if (stuffed)
+    weaknesses.push(
+      `Kata "${topWord}" diulang ${topCount}x — variasikan agar tidak terkesan keyword stuffing`,
+    );
+  else if (hasContent) keywords += 15;
 
-  keywordScore = Math.max(0, Math.min(100, keywordScore));
+  if (skillsInBullets >= 5 && !stuffed)
+    strengths.push("Keyword skill tersebar alami di pengalaman");
 
   // ===== Weighted Total =====
-  // format: 25%, experience: 25%, relevance: 15%, skills_match: 15%, keywords: 20%
-  const overallScore = Math.round(
-    formatScore * 0.25 +
-      experienceScore * 0.25 +
-      relevanceScore * 0.15 +
-      skillsMatchScore * 0.15 +
-      keywordScore * 0.2,
+  // experience: 30%, format: 20%, keywords: 20%, relevance: 15%, skills_match: 15%
+  const breakdown = {
+    relevance: clamp(relevance),
+    skills_match: clamp(skillsMatch),
+    experience: clamp(experience),
+    format: clamp(format),
+    keywords: clamp(keywords),
+  };
+  const overallScore = clamp(
+    breakdown.experience * 0.3 +
+      breakdown.format * 0.2 +
+      breakdown.keywords * 0.2 +
+      breakdown.relevance * 0.15 +
+      breakdown.skills_match * 0.15,
   );
 
-  // Pastikan strength/weakness/suggestions tidak terlalu banyak
-  const uniqueStrengths = [...new Set(strengths)].slice(0, 5);
-
   return {
-    overallScore: Math.min(100, Math.max(0, overallScore)),
-    breakdown: {
-      relevance: Math.min(100, Math.max(0, relevanceScore)),
-      skills_match: Math.min(100, Math.max(0, skillsMatchScore)),
-      experience: Math.min(100, Math.max(0, experienceScore)),
-      format: Math.min(100, Math.max(0, formatScore)),
-      keywords: Math.min(100, Math.max(0, keywordScore)),
-    },
-    strengths: uniqueStrengths,
+    overallScore,
+    breakdown,
+    strengths: [...new Set(strengths)].slice(0, 5),
     weaknesses: [...new Set(weaknesses)].slice(0, 5),
     suggestions: [...new Set(suggestions)].slice(0, 5),
   };
