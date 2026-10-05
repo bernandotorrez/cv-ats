@@ -25,6 +25,8 @@ import {
 import { ArticleCardSkeleton } from "@/components/ui/skeleton-loading";
 import { Button } from "@/components/ui/button";
 import { buildSectionHead } from "@/lib/seo";
+import { readingMinutes } from "@/lib/blog-posts";
+import { tipPosts, type TipIconName } from "@/lib/tips-posts";
 import {
   AnchorCta,
   CtaBanner,
@@ -34,8 +36,7 @@ import {
   TrustChecks,
 } from "@/components/site/marketing";
 
-type IconName =
-  "GraduationCap" | "MessageSquare" | "Laptop" | "CircleDollarSign" | "Sparkles" | "Target";
+type IconName = TipIconName;
 
 const iconMap: Record<IconName, React.ComponentType<{ className?: string }>> = {
   GraduationCap,
@@ -46,64 +47,15 @@ const iconMap: Record<IconName, React.ComponentType<{ className?: string }>> = {
   Target,
 };
 
-const tips = [
-  {
-    slug: "persiapan-interview-pertama",
-    category: "Fresh Graduate",
-    title: "Persiapan Interview Pertama untuk Fresh Graduate",
-    excerpt:
-      "Riset perusahaan, latihan jawaban STAR, dan tips berpakaian untuk interview pertamamu.",
-    icon: "GraduationCap" as IconName,
-    readTime: "5 menit",
-    level: "Pemula",
-  },
-  {
-    slug: "pertanyaan-hr-umum",
-    category: "HR Interview",
-    title: "10 Pertanyaan HR Paling Sering Ditanyakan & Cara Jawabnya",
-    excerpt:
-      "Dari 'Ceritakan tentang diri Anda' sampai 'Apa kelemahan Anda', lengkap dengan contoh jawaban.",
-    icon: "MessageSquare" as IconName,
-    readTime: "8 menit",
-    level: "Semua Level",
-  },
-  {
-    slug: "interview-technical-tech",
-    category: "Technical",
-    title: "Tips Interview Technical untuk Posisi Software Engineer",
-    excerpt: "Live coding, system design, dan behavioral di perusahaan tech Indonesia dan global.",
-    icon: "Laptop" as IconName,
-    readTime: "10 menit",
-    level: "Menengah",
-  },
-  {
-    slug: "negosiasi-gaji",
-    category: "Karier",
-    title: "Cara Negosiasi Gaji Tanpa Bikin Awkward",
-    excerpt: "Riset salary range, framing pertanyaan, dan kapan waktu yang tepat membahas gaji.",
-    icon: "CircleDollarSign" as IconName,
-    readTime: "6 menit",
-    level: "Semua Level",
-  },
-  {
-    slug: "pertanyaan-balik-ke-hr",
-    category: "HR Interview",
-    title: "5 Pertanyaan Cerdas yang Bikin HR Terkesan",
-    excerpt: "Pertanyaan yang menunjukkan kamu serius, matang, dan sudah riset perusahaan.",
-    icon: "Sparkles" as IconName,
-    readTime: "4 menit",
-    level: "Pemula",
-  },
-  {
-    slug: "behavioral-star-method",
-    category: "Behavioral",
-    title: "Metode STAR untuk Jawab Pertanyaan Behavioral",
-    excerpt: "Situation, Task, Action, Result: framework jawaban yang terstruktur dan meyakinkan.",
-    icon: "Target" as IconName,
-    readTime: "7 menit",
-    level: "Menengah",
-  },
-];
+const tips = tipPosts.map((post) => ({
+  slug: post.slug,
+  category: post.category,
+  title: post.title,
+  excerpt: post.excerpt,
+  icon: post.icon,
+  level: post.level,
+  readTime: `${readingMinutes(post)} menit`,
+}));
 
 const categories = [
   { name: "Fresh Graduate", icon: "GraduationCap" as IconName, count: 8 },

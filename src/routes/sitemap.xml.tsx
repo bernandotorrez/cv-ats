@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { blogPosts } from "@/lib/blog-posts";
+import { tipPosts } from "@/lib/tips-posts";
 
 const SITE_URL = "https://cvpintar.web.id";
 
@@ -28,16 +29,6 @@ const staticPaths: {
   { path: "/tryout-cpns", priority: "1.0", changefreq: "weekly" },
 ];
 
-// Mirror of content from tips-interview.$slug.tsx
-const tipsSlugs: { slug: string; date: string }[] = [
-  { slug: "persiapan-interview-pertama", date: "2026-05-01" },
-  { slug: "pertanyaan-hr-umum", date: "2026-05-02" },
-  { slug: "interview-technical-tech", date: "2026-05-03" },
-  { slug: "negosiasi-gaji", date: "2026-05-04" },
-  { slug: "pertanyaan-balik-ke-hr", date: "2026-05-05" },
-  { slug: "behavioral-star-method", date: "2026-05-06" },
-];
-
 export const Route = createFileRoute("/sitemap/xml")({
   server: {
     handlers: {
@@ -56,12 +47,12 @@ export const Route = createFileRoute("/sitemap/xml")({
         }
 
         // Tips interview detail pages
-        for (const t of tipsSlugs) {
+        for (const t of tipPosts) {
           urls.push({
             loc: `${SITE_URL}/tips-interview/${t.slug}`,
             priority: "0.6",
             changefreq: "monthly",
-            lastmod: t.date,
+            lastmod: t.updated,
           });
         }
 
