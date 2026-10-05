@@ -3,16 +3,23 @@ import { useState, type FormEvent, useEffect } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
 import { buildSeo } from "@/lib/seo";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { HCaptchaWidget } from "@/components/ui/hcaptcha";
-import { Loader2, Eye, EyeOff, ShieldAlert } from "lucide-react";
-import { FcGoogle } from "react-icons/fc";
+import {
+  AuthAside,
+  AuthDivider,
+  AuthLoading,
+  AuthShell,
+  AuthSubmit,
+  GoogleButton,
+  authInputClass,
+  authLabelClass,
+} from "@/components/auth/AuthShell";
+import { CheckCircle2, Eye, EyeOff, FileText, LogIn, ShieldAlert, Sparkles } from "lucide-react";
 
 const schema = z.object({
   email: z.string().email("Email tidak valid").max(255),
@@ -124,17 +131,7 @@ function LoginPage() {
 
   // During SSR or initial client render, show loading state to prevent flash of form
   if (!hydrated || authLoading) {
-    return (
-      <div className="container-page flex min-h-[80vh] items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
-          <div className="flex gap-1.5">
-            <div className="h-3 w-3 animate-pulse rounded-full bg-muted-foreground/30" />
-            <div className="h-3 w-3 animate-pulse rounded-full bg-muted-foreground/30" />
-            <div className="h-3 w-3 animate-pulse rounded-full bg-muted-foreground/30" />
-          </div>
-        </div>
-      </div>
-    );
+    return <AuthLoading />;
   }
 
   // Don't render form if user is already logged in (redirect happens via useEffect)
@@ -208,153 +205,210 @@ function LoginPage() {
     navigate({ href: target });
   };
 
+  const handleGoogle = async () => {
+    setGoogleLoading(true);
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
+    if (error) {
+      setGoogleLoading(false);
+      toast.error("Gagal masuk dengan Google");
+    }
+  };
+
   return (
-    <div className="container-page flex min-h-[80vh] items-center justify-center py-12">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle className="font-display text-2xl">Masuk</CardTitle>
-          <CardDescription>Lanjutkan ke akun CV Pintar.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {/* Lockout Warning */}
-          {lockout.locked && (
-            <div
-              className="mb-4 flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"
-              role="alert"
+    <AuthShell
+      eyebrow={
+        <>
+          <LogIn aria-hidden="true" className="h-4 w-4" />
+          Masuk ke CV Pintar
+        </>
+      }
+      title={
+        <>
+          Selamat datang kembali! <span className="text-green-700">Lanjutkan CV‑mu.</span>
+        </>
+      }
+      desc="Masuk untuk melanjutkan CV, cek skor ATS, dan lamaran yang sedang kamu siapkan."
+      aside={<LoginAside />}
+    >
+      {/* Lockout Warning */}
+      {lockout.locked && (
+        <div
+          className="mb-6 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800"
+          role="alert"
+        >
+          <ShieldAlert aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0" />
+          <div>
+            <p className="font-bold">Akun dikunci sementara</p>
+            <p className="mt-0.5">
+              Silakan coba lagi dalam {formatCountdown(lockout.remainingMs)}.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Google Sign-In */}
+      <GoogleButton
+        label="Masuk dengan Google"
+        loading={googleLoading}
+        disabled={googleLoading || lockout.locked}
+        onClick={handleGoogle}
+      />
+
+      <AuthDivider />
+
+      <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+        <div className="space-y-2">
+          <Label htmlFor="email" className={authLabelClass}>
+            Email
+          </Label>
+          <Input
+            id="email"
+            type="email"
+            autoComplete="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="nama@domain.com"
+            className={authInputClass}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="password" className={authLabelClass}>
+              Password
+            </Label>
+            <Link
+              to="/lupa-password"
+              className="text-sm font-semibold text-green-800 underline-offset-4 hover:underline"
             >
-              <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0" />
-              <div>
-                <p className="font-medium">Akun dikunci sementara</p>
-                <p className="text-xs">
-                  Silakan coba lagi dalam {formatCountdown(lockout.remainingMs)}.
-                </p>
-              </div>
-            </div>
-          )}
+              Lupa password?
+            </Link>
+          </div>
+          <div className="relative">
+            <Input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              autoComplete="current-password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Password kamu"
+              className={`${authInputClass} pr-12`}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((v) => !v)}
+              className="absolute right-1.5 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+              aria-label={showPassword ? "Sembunyikan password" : "Tampilkan password"}
+            >
+              {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+            </button>
+          </div>
+        </div>
 
-          {/* Google Sign-In */}
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full"
-            disabled={googleLoading || lockout.locked}
-            onClick={async () => {
-              setGoogleLoading(true);
-              const { error } = await supabase.auth.signInWithOAuth({
-                provider: "google",
-                options: {
-                  redirectTo: `${window.location.origin}/auth/callback`,
-                },
-              });
-              if (error) {
-                setGoogleLoading(false);
-                toast.error("Gagal masuk dengan Google");
-              }
-            }}
-          >
-            {googleLoading ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <FcGoogle className="mr-2 h-5 w-5" />
-            )}
-            Masuk dengan Google
-          </Button>
+        {/* hCaptcha */}
+        <HCaptchaWidget
+          onVerify={(token) => {
+            setCaptchaToken(token);
+            setCaptchaError(null);
+          }}
+          onExpire={() => {
+            setCaptchaToken(null);
+            setCaptchaError("Sesi captcha berakhir, harap verifikasi ulang");
+          }}
+          disabled={loading || lockout.locked}
+          error={captchaError}
+          resetKey={captchaResetKey}
+        />
 
-          <div className="relative my-4">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card px-2 text-muted-foreground">atau</span>
+        {/* Remember Me */}
+        <div className="flex items-center gap-3">
+          <Checkbox
+            id="rememberMe"
+            checked={rememberMe}
+            onCheckedChange={(c) => setRememberMe(c === true)}
+            className="h-5 w-5 rounded-md border-gray-400 data-[state=checked]:border-green-700 data-[state=checked]:bg-green-700"
+          />
+          <Label htmlFor="rememberMe" className="cursor-pointer text-sm text-gray-700">
+            Ingat saya (30 hari)
+          </Label>
+        </div>
+
+        <AuthSubmit loading={loading} disabled={loading || lockout.locked}>
+          Masuk
+        </AuthSubmit>
+      </form>
+
+      <p className="mt-6 border-t border-gray-100 pt-6 text-center text-sm text-gray-700">
+        Belum punya akun?{" "}
+        <Link
+          to="/register"
+          className="font-bold text-green-800 underline-offset-4 hover:underline"
+        >
+          Daftar gratis
+        </Link>
+      </p>
+    </AuthShell>
+  );
+}
+
+function LoginAside() {
+  return (
+    <AuthAside
+      eyebrow="Dashboard CV Pintar"
+      title="Semua CV, skor, dan lamaranmu menunggu di satu tempat."
+    >
+      <div
+        role="img"
+        aria-label="Contoh ringkasan dashboard: CV Product Designer dengan skor ATS 91 dan dua saran perbaikan."
+        className="mt-8 rounded-2xl bg-white p-5 text-gray-900 shadow-xl"
+      >
+        <div className="flex items-center justify-between gap-4 border-b border-gray-100 pb-4">
+          <div className="flex items-center gap-3">
+            <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100 text-green-800">
+              <FileText className="h-5 w-5" />
+            </span>
+            <div>
+              <p className="text-sm font-bold">CV Product Designer</p>
+              <p className="text-xs text-gray-600">Diedit 2 jam lalu</p>
             </div>
           </div>
-
-          <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                autoComplete="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="nama@domain.com"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password">Password</Label>
-                <Link
-                  to="/lupa-password"
-                  className="text-xs font-medium text-primary hover:underline"
-                >
-                  Lupa password?
-                </Link>
-              </div>
-              <div className="relative">
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  autoComplete="current-password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="pr-10"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((v) => !v)}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                  aria-label={showPassword ? "Sembunyikan password" : "Tampilkan password"}
-                >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
-              </div>
-            </div>
-
-            {/* hCaptcha */}
-            <HCaptchaWidget
-              onVerify={(token) => {
-                setCaptchaToken(token);
-                setCaptchaError(null);
-              }}
-              onExpire={() => {
-                setCaptchaToken(null);
-                setCaptchaError("Sesi captcha berakhir, harap verifikasi ulang");
-              }}
-              disabled={loading || lockout.locked}
-              error={captchaError}
-              resetKey={captchaResetKey}
-            />
-
-            {/* Remember Me */}
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id="rememberMe"
-                checked={rememberMe}
-                onCheckedChange={(c) => setRememberMe(c === true)}
-              />
-              <Label htmlFor="rememberMe" className="text-sm text-muted-foreground cursor-pointer">
-                Ingat saya (30 hari)
-              </Label>
-            </div>
-
-            <Button type="submit" className="w-full" disabled={loading || lockout.locked}>
-              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Masuk
-            </Button>
-
-            <p className="text-center text-sm text-muted-foreground">
-              Belum punya akun?{" "}
-              <Link to="/register" className="font-medium text-primary hover:underline">
-                Daftar gratis
-              </Link>
-            </p>
-          </form>
-        </CardContent>
-      </Card>
-    </div>
+          <div className="rounded-xl bg-green-800 px-3 py-1.5 text-center text-white">
+            <p className="text-[10px] font-semibold text-green-100">ATS</p>
+            <p className="font-display text-lg font-extrabold leading-none">91</p>
+          </div>
+        </div>
+        <ul className="mt-4 space-y-2.5 text-sm">
+          {["Ringkasan profil sudah kuat", "Keyword sesuai job description"].map((t) => (
+            <li key={t} className="flex items-center gap-2 text-gray-700">
+              <CheckCircle2 className="h-4 w-4 shrink-0 text-green-700" />
+              {t}
+            </li>
+          ))}
+          <li className="flex items-center gap-2 rounded-lg bg-yellow-100 px-2.5 py-2 font-medium text-gray-900">
+            <Sparkles className="h-4 w-4 shrink-0 text-amber-600" />
+            Tambahkan angka di 2 bullet pengalaman
+          </li>
+        </ul>
+      </div>
+      <ul className="mt-8 space-y-3 text-green-50">
+        {[
+          "Lanjutkan CV tepat di bagian terakhir kamu edit",
+          "Pantau sisa kuota AI dan masa aktif paket",
+          "Data tersimpan aman dan privat",
+        ].map((t) => (
+          <li key={t} className="flex items-start gap-3">
+            <CheckCircle2 aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-yellow-300" />
+            {t}
+          </li>
+        ))}
+      </ul>
+    </AuthAside>
   );
 }

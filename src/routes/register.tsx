@@ -3,17 +3,24 @@ import { useState, type FormEvent, useEffect } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
 import { buildSeo } from "@/lib/seo";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { PasswordStrength } from "@/components/ui/password-strength";
 import { HCaptchaWidget } from "@/components/ui/hcaptcha";
-import { Loader2, Eye, EyeOff } from "lucide-react";
-import { FcGoogle } from "react-icons/fc";
+import {
+  AuthAside,
+  AuthDivider,
+  AuthLoading,
+  AuthShell,
+  AuthSubmit,
+  GoogleButton,
+  authInputClass,
+  authLabelClass,
+} from "@/components/auth/AuthShell";
+import { CheckCircle2, Eye, EyeOff, FileText, Sparkles, Star, Target, Users } from "lucide-react";
 
 // ─── Security: Referral Code Validation ──────────────────────────────────────
 // Validates referral code format to prevent injection attacks
@@ -106,17 +113,7 @@ function RegisterPage() {
 
   // During SSR or initial client render, show loading state to prevent flash of form
   if (!hydrated || authLoading) {
-    return (
-      <div className="container-page flex min-h-[80vh] items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
-          <div className="flex gap-1.5">
-            <div className="h-3 w-3 animate-pulse rounded-full bg-muted-foreground/30" />
-            <div className="h-3 w-3 animate-pulse rounded-full bg-muted-foreground/30" />
-            <div className="h-3 w-3 animate-pulse rounded-full bg-muted-foreground/30" />
-          </div>
-        </div>
-      </div>
-    );
+    return <AuthLoading />;
   }
 
   // Don't render form if user is already logged in (redirect happens via useEffect)
@@ -173,160 +170,211 @@ function RegisterPage() {
     navigate({ to: "/verify-email", search: { confirmed: undefined } });
   };
 
+  const handleGoogle = async () => {
+    setGoogleLoading(true);
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
+    if (error) {
+      setGoogleLoading(false);
+      toast.error("Gagal masuk dengan Google");
+    }
+  };
+
   return (
-    <div className="container-page flex min-h-[80vh] items-center justify-center py-12">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle className="font-display text-2xl">Daftar Gratis</CardTitle>
-          <CardDescription>Mulai bikin CV ATS friendly dalam 1 menit.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {/* Google Sign-Up */}
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full"
-            disabled={googleLoading}
-            onClick={async () => {
-              setGoogleLoading(true);
-              const { error } = await supabase.auth.signInWithOAuth({
-                provider: "google",
-                options: {
-                  redirectTo: `${window.location.origin}/auth/callback`,
-                },
-              });
-              if (error) {
-                setGoogleLoading(false);
-                toast.error("Gagal masuk dengan Google");
-              }
-            }}
-          >
-            {googleLoading ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <FcGoogle className="mr-2 h-5 w-5" />
-            )}
-            Daftar dengan Google
-          </Button>
+    <AuthShell
+      eyebrow={
+        <>
+          <Sparkles aria-hidden="true" className="h-4 w-4" />
+          Gratis selamanya · tanpa kartu kredit
+        </>
+      }
+      title={
+        <>
+          Buat akun, <span className="text-green-700">CV ATS‑mu siap dalam menit.</span>
+        </>
+      }
+      desc="Daftar gratis untuk mulai menyusun CV, cek skor ATS, dan dapat saran AI yang langsung bisa dipakai."
+      aside={<RegisterAside />}
+    >
+      {/* Google Sign-Up */}
+      <GoogleButton
+        label="Daftar dengan Google"
+        loading={googleLoading}
+        disabled={googleLoading}
+        onClick={handleGoogle}
+      />
 
-          <div className="relative my-4">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card px-2 text-muted-foreground">atau</span>
-            </div>
-          </div>
+      <AuthDivider />
 
-          <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-            {/* Nama Lengkap */}
-            <div className="space-y-2">
-              <Label htmlFor="fullName">Nama Lengkap *</Label>
-              <Input
-                id="fullName"
-                autoComplete="name"
-                required
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                placeholder="Nama lengkap kamu"
-                aria-describedby="fullName-hint"
-              />
-            </div>
+      <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+        {/* Nama Lengkap */}
+        <div className="space-y-2">
+          <Label htmlFor="fullName" className={authLabelClass}>
+            Nama lengkap
+          </Label>
+          <Input
+            id="fullName"
+            autoComplete="name"
+            required
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+            placeholder="Nama lengkap kamu"
+            className={authInputClass}
+          />
+        </div>
 
-            {/* Email */}
-            <div className="space-y-2">
-              <Label htmlFor="email">Email *</Label>
-              <Input
-                id="email"
-                type="email"
-                autoComplete="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="nama@domain.com"
-              />
-            </div>
+        {/* Email */}
+        <div className="space-y-2">
+          <Label htmlFor="email" className={authLabelClass}>
+            Email
+          </Label>
+          <Input
+            id="email"
+            type="email"
+            autoComplete="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="nama@domain.com"
+            className={authInputClass}
+          />
+        </div>
 
-            {/* Password */}
-            <div className="space-y-2">
-              <Label htmlFor="password">Password *</Label>
-              <div className="relative">
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  autoComplete="new-password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Min. 8 karakter, huruf besar & kecil, angka"
-                  className="pr-10"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((v) => !v)}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                  aria-label={showPassword ? "Sembunyikan password" : "Tampilkan password"}
-                >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
-              </div>
-              <PasswordStrength password={password} />
-            </div>
-
-            {/* hCaptcha */}
-            <HCaptchaWidget
-              onVerify={(token) => {
-                setCaptchaToken(token);
-                setCaptchaError(null);
-              }}
-              onExpire={() => {
-                setCaptchaToken(null);
-                setCaptchaError("Sesi captcha berakhir, harap verifikasi ulang");
-              }}
-              disabled={loading}
-              error={captchaError}
-              resetKey={captchaResetKey}
+        {/* Password */}
+        <div className="space-y-2">
+          <Label htmlFor="password" className={authLabelClass}>
+            Password
+          </Label>
+          <div className="relative">
+            <Input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              autoComplete="new-password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Min. 8 karakter"
+              aria-describedby={password ? undefined : "password-hint"}
+              className={`${authInputClass} pr-12`}
             />
-
-            {/* TOS Checkbox */}
-            <div className="flex items-start gap-2">
-              <Checkbox
-                id="agreeTerms"
-                checked={agreeTerms}
-                onCheckedChange={(c) => setAgreeTerms(c === true)}
-                aria-describedby="agreeTerms-error"
-              />
-              <Label htmlFor="agreeTerms" className="text-xs leading-relaxed text-muted-foreground">
-                Dengan mendaftar, kamu setuju dengan{" "}
-                <Link to="/syarat-ketentuan" className="underline hover:text-foreground">
-                  Syarat &amp; Ketentuan
-                </Link>{" "}
-                dan{" "}
-                <Link to="/kebijakan-privasi" className="underline hover:text-foreground">
-                  Kebijakan Privasi
-                </Link>
-                . *
-              </Label>
-            </div>
-
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Daftar
-            </Button>
-
-            <p className="text-center text-sm text-muted-foreground">
-              Sudah punya akun?{" "}
-              <Link
-                to="/login"
-                search={{ redirect: "/dashboard" }}
-                className="font-medium text-primary hover:underline"
-              >
-                Masuk
-              </Link>
+            <button
+              type="button"
+              onClick={() => setShowPassword((v) => !v)}
+              className="absolute right-1.5 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+              aria-label={showPassword ? "Sembunyikan password" : "Tampilkan password"}
+            >
+              {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+            </button>
+          </div>
+          {!password && (
+            <p id="password-hint" className="text-xs text-gray-600">
+              Minimal 8 karakter, dengan huruf besar, huruf kecil, dan angka.
             </p>
-          </form>
-        </CardContent>
-      </Card>
-    </div>
+          )}
+          <PasswordStrength password={password} />
+        </div>
+
+        {/* hCaptcha */}
+        <HCaptchaWidget
+          onVerify={(token) => {
+            setCaptchaToken(token);
+            setCaptchaError(null);
+          }}
+          onExpire={() => {
+            setCaptchaToken(null);
+            setCaptchaError("Sesi captcha berakhir, harap verifikasi ulang");
+          }}
+          disabled={loading}
+          error={captchaError}
+          resetKey={captchaResetKey}
+        />
+
+        {/* TOS Checkbox */}
+        <div className="flex items-start gap-3">
+          <Checkbox
+            id="agreeTerms"
+            checked={agreeTerms}
+            onCheckedChange={(c) => setAgreeTerms(c === true)}
+            className="mt-0.5 h-5 w-5 rounded-md border-gray-400 data-[state=checked]:border-green-700 data-[state=checked]:bg-green-700"
+          />
+          <Label htmlFor="agreeTerms" className="text-sm font-normal leading-relaxed text-gray-700">
+            Saya setuju dengan{" "}
+            <Link
+              to="/syarat-ketentuan"
+              className="font-semibold text-green-800 underline underline-offset-4"
+            >
+              Syarat &amp; Ketentuan
+            </Link>{" "}
+            dan{" "}
+            <Link
+              to="/kebijakan-privasi"
+              className="font-semibold text-green-800 underline underline-offset-4"
+            >
+              Kebijakan Privasi
+            </Link>
+            .
+          </Label>
+        </div>
+
+        <AuthSubmit loading={loading} disabled={loading}>
+          Buat Akun Gratis
+        </AuthSubmit>
+      </form>
+
+      <p className="mt-6 border-t border-gray-100 pt-6 text-center text-sm text-gray-700">
+        Sudah punya akun?{" "}
+        <Link
+          to="/login"
+          search={{ redirect: "/dashboard" }}
+          className="font-bold text-green-800 underline-offset-4 hover:underline"
+        >
+          Masuk
+        </Link>
+      </p>
+    </AuthShell>
+  );
+}
+
+const registerStats = [
+  { icon: Users, stat: "5.000+", label: "Pengguna aktif" },
+  { icon: FileText, stat: "10.000+", label: "CV dibuat" },
+  { icon: Target, stat: "92%", label: "Skor ATS rata-rata" },
+  { icon: Star, stat: "4.9/5", label: "Rating pengguna" },
+] as const;
+
+function RegisterAside() {
+  return (
+    <AuthAside eyebrow="Kenapa CV Pintar?" title="Semua yang kamu butuhkan sebelum klik kirim.">
+      <ul className="mt-8 space-y-4">
+        {[
+          ["Template ATS-friendly", "Struktur rapi yang terbaca mesin dan rekruter."],
+          ["AI Bahasa Indonesia + Inggris", "Bantu tulis ringkasan, pengalaman, dan skill."],
+          ["Skor & saran perbaikan", "Tahu bagian mana yang perlu diperkuat."],
+        ].map(([title, desc]) => (
+          <li key={title} className="flex items-start gap-3">
+            <CheckCircle2 aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-yellow-300" />
+            <div>
+              <p className="font-bold">{title}</p>
+              <p className="text-sm text-green-50">{desc}</p>
+            </div>
+          </li>
+        ))}
+      </ul>
+      <dl className="mt-10 grid grid-cols-2 gap-3">
+        {registerStats.map((item) => (
+          <div key={item.label} className="flex flex-col-reverse rounded-2xl bg-white/10 p-4">
+            <dt className="mt-1 text-sm text-green-50">{item.label}</dt>
+            <dd className="flex items-center gap-2 font-display text-2xl font-extrabold">
+              <item.icon aria-hidden="true" className="h-5 w-5 text-yellow-300" />
+              {item.stat}
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </AuthAside>
   );
 }
