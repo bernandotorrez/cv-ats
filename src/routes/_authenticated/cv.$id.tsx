@@ -23,6 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { useCheckout } from "@/lib/payment";
@@ -63,7 +64,7 @@ import {
   getDefaultSections,
   PreviewToolbar,
 } from "@/components/cv/editor";
-import type { SectionDef, PreviewScale } from "@/components/cv/editor";
+import type { SectionDef, PreviewZoom } from "@/components/cv/editor";
 
 import {
   Plus,
@@ -128,6 +129,9 @@ const uid = () => Math.random().toString(36).slice(2, 10);
 type SuggestSection = "summary" | "headline" | "experience" | "education" | "skills";
 type EditorTab = "form" | "preview" | "score"; // mobile tabs
 
+/** 210mm at 96dpi — width of the A4 preview card. */
+const A4_WIDTH_PX = 793.7;
+
 function CvEditorPage() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
@@ -183,9 +187,37 @@ function CvEditorPage() {
   // ─── 3-Panel Layout State ─────────────────────────────────────
   const [activeSection, setActiveSection] = useState("personal");
   const [sections, setSections] = useState<SectionDef[]>(getDefaultSections());
-  const [previewScale, setPreviewScale] = useState<PreviewScale>(85);
+  const [previewZoom, setPreviewZoom] = useState<PreviewZoom>("fit");
   const [showNav, setShowNav] = useState(true);
   const [mobileTab, setMobileTab] = useState<EditorTab>("form");
+
+  // ─── Preview sizing ──────────────────────────────────────────
+  // "fit" scales the A4 page to the preview width. transform: scale() does not
+  // shrink the layout box, so negative margins remove the leftover whitespace /
+  // horizontal scroll (PDF export & print reset these margins).
+  const [previewViewport, setPreviewViewport] = useState<HTMLDivElement | null>(null);
+  const [previewCard, setPreviewCard] = useState<HTMLDivElement | null>(null);
+  const [fitScale, setFitScale] = useState(85);
+  const [previewCardHeight, setPreviewCardHeight] = useState(0);
+
+  useEffect(() => {
+    if (!previewViewport || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(([entry]) => {
+      const available = entry.contentRect.width - (entry.contentRect.width >= 640 ? 48 : 24);
+      setFitScale(Math.max(30, Math.min(100, Math.floor((available / A4_WIDTH_PX) * 100))));
+    });
+    ro.observe(previewViewport);
+    return () => ro.disconnect();
+  }, [previewViewport]);
+
+  useEffect(() => {
+    if (!previewCard || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(([entry]) => setPreviewCardHeight(entry.contentRect.height));
+    ro.observe(previewCard);
+    return () => ro.disconnect();
+  }, [previewCard]);
+
+  const previewScale = previewZoom === "fit" ? fitScale : previewZoom;
 
   // ─── Auto-save ───────────────────────────────────────────────
   const saveCvToDb = useCallback(
@@ -671,16 +703,69 @@ function CvEditorPage() {
 
   const canUploadCv = hasUploadCvFeature || quotaUploadCv > 0 || userTier === "starter" || userTier === "pro";
 
+  const scoreTone =
+    localScore.overallScore >= 80
+      ? "bg-green-100 text-green-800 ring-green-200"
+      : localScore.overallScore >= 60
+        ? "bg-amber-100 text-amber-900 ring-amber-200"
+        : "bg-red-100 text-red-800 ring-red-200";
+
+  const editorFormProps = {
+    data,
+    setData,
+    setActiveSection,
+    targetRole,
+    aiLoading,
+    handleAiSuggest,
+    handlePolishText,
+    polishingField,
+    updatePersonal,
+    handleLinkedInImport,
+    suggestionPanel,
+    onAcceptSuggestion: handleAcceptSuggestion,
+    onRegenerateSuggestion: handleRegenerateSuggestion,
+    onRegenerateAll: handleRegenerateAll,
+    onCloseSuggestion: closeSuggestionPanel,
+    localScore,
+    cvLanguage,
+    userId: user?.id,
+    cvId: id,
+    proPhotoQuota: quotaProPhoto,
+    isNeedLevelingSkill,
+  };
+
+  const targetRoleField = (
+    <label className="block rounded-2xl border border-gray-200 bg-white p-3 focus-within:border-green-700 focus-within:ring-2 focus-within:ring-green-700/20">
+      <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-gray-600">
+        <Crosshair aria-hidden="true" className="h-3.5 w-3.5 text-green-700" />
+        Target posisi
+      </span>
+      <input
+        value={targetRole}
+        onChange={(e) => setTargetRole(e.target.value)}
+        placeholder="Mis. Product Designer, Staff Akuntansi"
+        className="mt-1 h-8 w-full bg-transparent text-[15px] font-semibold text-gray-900 outline-none placeholder:font-normal placeholder:text-gray-500"
+      />
+      <span className="block text-xs text-gray-600">
+        Dipakai untuk menghitung skor ATS dan menyesuaikan saran AI.
+      </span>
+    </label>
+  );
+
+  const openCvUpload = () => {
+    setShowCvUpload(true);
+    setCvUploadFile(null);
+    setCvUploadError(null);
+  };
+
   return (
-    <div className="cv-editor-page flex h-[calc(100vh-4rem)] min-h-0 flex-col bg-muted/30">
+    <div className="cv-editor-page flex h-dvh min-h-0 flex-col bg-gray-100">
       <style>{cvPrintStyles}</style>
       {/* ─── TOOLBAR ─── */}
       <EditorToolbar
         id={id}
         title={title}
         onTitleChange={setTitle}
-        targetRole={targetRole}
-        onTargetRoleChange={setTargetRole}
         templateId={templateId}
         onOpenTemplatePicker={() => setShowTemplatePicker(!showTemplatePicker)}
         saveStatus={saveStatus}
@@ -696,86 +781,49 @@ function CvEditorPage() {
         cvData={data}
         userTier={userTier}
         userId={user?.id}
-        onOpenCvUpload={() => {
-          setShowCvUpload(true);
-          setCvUploadFile(null);
-          setCvUploadError(null);
-        }}
+        onOpenCvUpload={openCvUpload}
+        cvLanguage={cvLanguage}
+        onLanguageChange={setCvLanguage}
       />
 
-      {/* Language Selector */}
-      <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-border bg-background/90 px-4 py-3 print:hidden">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
-              <Sparkles className="h-3.5 w-3.5" />
-              Editor CV ATS
-            </span>
-            <span className="text-xs font-medium text-muted-foreground">
-              Skor cepat: {localScore.overallScore}/100
-            </span>
-          </div>
-          <p className="mt-1 hidden text-sm text-muted-foreground sm:block">
-            Rapikan isi, pilih bahasa, lalu cek preview sebelum dikirim ke rekruter.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="mr-1 text-xs font-medium text-muted-foreground">Bahasa CV</span>
-          <Button
-            variant={cvLanguage === "id" ? "default" : "outline"}
-            size="sm"
-            className="h-9 rounded-xl px-3 text-xs font-semibold"
-            onClick={() => setCvLanguage("id")}
-          >
-            ID
-          </Button>
-          <Button
-            variant={cvLanguage === "en" ? "default" : "outline"}
-            size="sm"
-            className="h-9 rounded-xl px-3 text-xs font-semibold"
-            onClick={() => setCvLanguage("en")}
-          >
-            EN
-          </Button>
-        </div>
-      </div>
-
-      {/* ─── MAIN CONTENT: 2-Column Layout ─── */}
-      <div className="flex flex-1 overflow-hidden print:block print:overflow-visible print:!visible">
+      {/* ─── MAIN CONTENT: 2-Column Layout (lg+) / tabs (mobile & tablet) ─── */}
+      <div className="flex min-h-0 flex-1 overflow-hidden print:block print:overflow-visible print:!visible">
         {/* Left Panel: Import + Accordion Sections */}
-        <div
+        <aside
+          aria-label="Isi CV"
           className={cn(
-            "hidden flex-col overflow-y-auto bg-background/80 print:hidden md:flex",
-            showNav
-              ? "w-[480px] shrink-0 border-r border-border"
-              : "w-[520px] shrink-0 border-r border-border",
+            "hidden w-[420px] shrink-0 flex-col overflow-y-auto border-r border-gray-200 bg-white print:hidden xl:w-[460px]",
+            showNav && "lg:flex",
           )}
         >
-          <div className="p-4 lg:p-5 space-y-4">
+          <div className="space-y-3 p-4 xl:p-5">
+            {targetRoleField}
+
             {/* Import dari CV Lama */}
-            <div className="rounded-2xl border-2 border-dashed border-primary/20 bg-gradient-to-br from-blue-50 to-indigo-50 p-4">
-              <div className="flex items-start gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                  <Upload className="h-5 w-5" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <h3 className="text-sm font-bold text-foreground">Import dari CV Lama</h3>
-                  <p className="mt-0.5 text-xs text-muted-foreground leading-relaxed">
-                    Upload PDF untuk mengisi profil otomatis dengan cepat.
-                  </p>
-                  <Button
-                    size="sm"
-                    className="mt-2 gap-1.5 rounded-xl"
-                    onClick={() => {
-                      setShowCvUpload(true);
-                      setCvUploadFile(null);
-                      setCvUploadError(null);
-                    }}
-                  >
-                    <Upload className="h-3.5 w-3.5" /> Upload
-                  </Button>
-                </div>
+            <div className="flex items-center gap-3 rounded-2xl border border-green-200 bg-green-50 p-3">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-green-700 shadow-sm">
+                <Upload className="h-5 w-5" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <h2 className="text-sm font-bold text-gray-900">Punya CV lama?</h2>
+                <p className="text-xs leading-relaxed text-gray-600">
+                  Upload PDF, isi otomatis dalam hitungan detik.
+                </p>
               </div>
+              <button
+                type="button"
+                onClick={openCvUpload}
+                className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-xl bg-green-700 px-3 text-sm font-bold text-white transition-colors hover:bg-green-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-700 focus-visible:ring-offset-2"
+              >
+                Import
+              </button>
+            </div>
+
+            <div className="flex items-baseline justify-between px-1 pt-2">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-gray-600">
+                Bagian CV
+              </h2>
+              <p className="text-xs text-gray-500">Seret ⋮⋮ untuk ubah urutan</p>
             </div>
 
             {/* Accordion Sections with Inline Forms */}
@@ -797,109 +845,94 @@ function CvEditorPage() {
               }}
               itemCounts={itemCounts}
               renderSectionContent={(sectionId) => (
-                <EditorForm
-                  data={data}
-                  setData={setData}
-                  activeSection={sectionId}
-                  setActiveSection={setActiveSection}
-                  targetRole={targetRole}
-                  aiLoading={aiLoading}
-                  handleAiSuggest={handleAiSuggest}
-                  handlePolishText={handlePolishText}
-                  polishingField={polishingField}
-                  updatePersonal={updatePersonal}
-                  handleLinkedInImport={handleLinkedInImport}
-                  suggestionPanel={suggestionPanel}
-                  onAcceptSuggestion={handleAcceptSuggestion}
-                  onRegenerateSuggestion={handleRegenerateSuggestion}
-                  onRegenerateAll={handleRegenerateAll}
-                  onCloseSuggestion={closeSuggestionPanel}
-                  localScore={localScore}
-                  cvLanguage={cvLanguage}
-                  userId={user?.id}
-                  cvId={id}
-                  proPhotoQuota={quotaProPhoto}
-                  isNeedLevelingSkill={isNeedLevelingSkill}
-                />
+                <EditorForm {...editorFormProps} activeSection={sectionId} />
               )}
             />
 
             {/* Tambah Bagian Button */}
             <button
               type="button"
-              className="w-full rounded-2xl border-2 border-dashed border-border py-4 text-sm font-medium text-muted-foreground transition-all hover:border-primary/40 hover:bg-primary/5 hover:text-primary"
+              className="flex w-full items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-gray-200 py-3 text-sm font-bold text-gray-600 transition-colors hover:border-green-600 hover:bg-green-50 hover:text-green-800"
               onClick={() => setShowAddSection(true)}
             >
-              <Plus className="mr-1.5 inline h-4 w-4" />
+              <Plus className="h-4 w-4" />
               Tambah Bagian
             </button>
           </div>
-        </div>
+        </aside>
 
-        {/* Mobile: Form */}
+        {/* Mobile & tablet: Form */}
         {mobileTab === "form" && (
-          <div className="flex-1 overflow-y-auto bg-background/85 p-4 print:hidden md:hidden">
-            <EditorForm
-              data={data}
-              setData={setData}
-              activeSection={activeSection}
-              setActiveSection={setActiveSection}
-              targetRole={targetRole}
-              aiLoading={aiLoading}
-              handleAiSuggest={handleAiSuggest}
-              handlePolishText={handlePolishText}
-              polishingField={polishingField}
-              updatePersonal={updatePersonal}
-              handleLinkedInImport={handleLinkedInImport}
-              suggestionPanel={suggestionPanel}
-              onAcceptSuggestion={handleAcceptSuggestion}
-              onRegenerateSuggestion={handleRegenerateSuggestion}
-              onRegenerateAll={handleRegenerateAll}
-              onCloseSuggestion={closeSuggestionPanel}
-              localScore={localScore}
-              cvLanguage={cvLanguage}
-              userId={user?.id}
-              cvId={id}
-              proPhotoQuota={quotaProPhoto}
-              isNeedLevelingSkill={isNeedLevelingSkill}
-            />
+          <div className="flex-1 overflow-y-auto bg-white p-4 print:hidden sm:p-6 lg:hidden">
+            <div className="mx-auto max-w-2xl space-y-4">
+              {targetRoleField}
+              <EditorForm {...editorFormProps} activeSection={activeSection} />
+            </div>
           </div>
         )}
 
         {/* Right Panel: Preview */}
-        <div
+        <section
+          aria-label="Preview CV"
           className={cn(
-            "flex flex-1 flex-col overflow-hidden print:flex print:overflow-visible print:!visible",
-            mobileTab !== "preview" && "hidden md:flex",
+            "flex min-w-0 flex-1 flex-col overflow-hidden print:flex print:overflow-visible print:!visible",
+            mobileTab !== "preview" && "hidden lg:flex",
           )}
         >
           {/* Preview Toolbar */}
-          <div className="flex shrink-0 items-center justify-between border-b border-border bg-background/80 px-4 py-3 print:hidden">
-            <span className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
-              <Eye className="h-3.5 w-3.5" /> Preview live
-            </span>
-            <PreviewToolbar scale={previewScale} onChange={setPreviewScale} />
+          <div className="flex h-14 shrink-0 items-center justify-between gap-3 border-b border-gray-200 bg-white px-3 sm:px-4 print:hidden">
+            <div className="flex min-w-0 items-center gap-2">
+              <span className="hidden items-center gap-1.5 text-sm font-bold text-gray-900 sm:flex">
+                <Eye className="h-4 w-4 text-green-700" /> Preview
+              </span>
+              <Popover>
+                <PopoverTrigger
+                  className={cn(
+                    "inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-xs font-bold ring-1 transition-shadow hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-700",
+                    scoreTone,
+                  )}
+                  aria-label={`Skor ATS ${localScore.overallScore} dari 100, lihat detail`}
+                >
+                  <BarChart3 className="h-3.5 w-3.5" />
+                  Skor ATS {localScore.overallScore}
+                </PopoverTrigger>
+                <PopoverContent align="start" sideOffset={8} className="w-80 rounded-2xl p-0">
+                  <AtsScoreWidget
+                    overallScore={localScore.overallScore}
+                    breakdown={localScore.breakdown}
+                    suggestions={localScore.suggestions}
+                    onFixWithAi={() => navigate({ to: "/cv-review/$cvId", params: { cvId: id } })}
+                    className="max-h-[70vh] overflow-y-auto border-0 shadow-none"
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+            <PreviewToolbar scale={previewZoom} onChange={setPreviewZoom} />
           </div>
 
           {/* Chat Panel */}
           {chatOpen && (
-            <div className="shrink-0 print:hidden border-b border-border">
-              <div className="p-3">
-                <AiChatPanel cvId={id} cvData={data} language={cvLanguage} />
-              </div>
+            <div className="shrink-0 border-b border-gray-200 bg-white p-3 print:hidden">
+              <AiChatPanel cvId={id} cvData={data} language={cvLanguage} />
             </div>
           )}
 
           {/* Preview Area */}
-          <div className="flex-1 overflow-auto bg-muted/50 print:bg-white print:overflow-visible">
-            <div className="cv-print-area flex justify-center p-4 sm:p-6 print:p-0">
+          <div
+            ref={setPreviewViewport}
+            className="flex-1 overflow-auto bg-gray-100 print:overflow-visible print:bg-white"
+          >
+            <div className="cv-print-area flex justify-center p-3 sm:p-6 print:p-0">
               <div
-                className="rounded-2xl border border-border bg-white shadow-xl shadow-slate-900/10 print:!h-auto print:!w-auto print:!min-w-0 print:!transform-none print:!rounded-none print:!border-0 print:!shadow-none"
+                ref={setPreviewCard}
+                className="rounded-sm bg-white shadow-xl shadow-gray-900/10 ring-1 ring-gray-200 print:!m-0 print:!h-auto print:!w-auto print:!min-w-0 print:!transform-none print:!rounded-none print:!border-0 print:!shadow-none print:!ring-0"
                 style={{
                   transform: `scale(${previewScale / 100})`,
                   transformOrigin: "top center",
                   width: "210mm",
                   minWidth: "210mm",
+                  marginInline: `${(-(1 - previewScale / 100) * A4_WIDTH_PX) / 2}px`,
+                  marginBottom: `${-(1 - previewScale / 100) * previewCardHeight}px`,
                 }}
               >
                 <div className="print:!transform-none print:!w-auto">
@@ -914,42 +947,39 @@ function CvEditorPage() {
               </div>
             </div>
           </div>
-        </div>
+        </section>
 
-        {/* Mobile: Score Tab */}
+        {/* Mobile & tablet: Score Tab */}
         {mobileTab === "score" && (
-          <div className="flex-1 overflow-y-auto bg-background/85 p-4 print:hidden md:hidden">
-            <AtsPreview data={data} />
-            <div className="mt-4">
-              <Button asChild variant="outline" size="sm" className="w-full gap-2">
-                <Link to="/score/$cvId" params={{ cvId: id }}>
-                  <BarChart3 className="h-4 w-4" /> Lihat Skor Lengkap
-                </Link>
-              </Button>
+          <div className="flex-1 overflow-y-auto bg-white p-4 print:hidden sm:p-6 lg:hidden">
+            <div className="mx-auto max-w-2xl space-y-4">
+              <AtsScoreWidget
+                overallScore={localScore.overallScore}
+                breakdown={localScore.breakdown}
+                suggestions={localScore.suggestions}
+                onFixWithAi={() => navigate({ to: "/cv-review/$cvId", params: { cvId: id } })}
+                className="rounded-2xl border-gray-200 shadow-none"
+              />
+              <AtsPreview data={data} />
+              <Link
+                to="/score/$cvId"
+                params={{ cvId: id }}
+                className="flex h-12 w-full items-center justify-center gap-2 rounded-xl border-2 border-gray-200 text-sm font-bold text-gray-800 transition-colors hover:border-green-700 hover:bg-green-50 hover:text-green-800"
+              >
+                <BarChart3 className="h-4 w-4" /> Lihat Skor Lengkap
+              </Link>
             </div>
           </div>
         )}
       </div>
 
-      {/* ─── FLOATING ATS SCORE CARD ─── */}
-      <div className="fixed bottom-20 right-4 z-40 print:hidden md:bottom-6">
-        <AtsScoreWidget
-          overallScore={localScore.overallScore}
-          breakdown={localScore.breakdown}
-          suggestions={localScore.suggestions}
-          onFixWithAi={() => navigate({ to: "/cv-review/$cvId", params: { cvId: id } })}
-          compact
-          className="w-72 shadow-xl shadow-slate-900/15 border-primary/20"
-        />
-      </div>
-
-      {/* ─── MOBILE TAB BAR ─── */}
+      {/* ─── MOBILE & TABLET TAB BAR ─── */}
       <nav
-        className="flex shrink-0 border-t border-border bg-background/95 shadow-[0_-4px_20px_rgba(15,23,42,0.08)] backdrop-blur-lg print:hidden md:hidden"
-        aria-label="Navigasi editor mobile"
+        className="grid shrink-0 grid-cols-3 gap-1 border-t border-gray-200 bg-white px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 print:hidden lg:hidden"
+        aria-label="Navigasi editor"
       >
         {[
-          { id: "form" as EditorTab, icon: FileText, label: "Form" },
+          { id: "form" as EditorTab, icon: FileText, label: "Isi CV" },
           { id: "preview" as EditorTab, icon: Eye, label: "Preview" },
           { id: "score" as EditorTab, icon: BarChart3, label: "Skor" },
         ].map((tab) => (
@@ -958,21 +988,25 @@ function CvEditorPage() {
             type="button"
             onClick={() => setMobileTab(tab.id)}
             className={cn(
-              "relative flex min-h-[64px] flex-1 flex-col items-center justify-center py-3 text-xs transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25",
+              "relative flex h-14 flex-col items-center justify-center gap-0.5 rounded-xl text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-700",
               mobileTab === tab.id
-                ? "text-primary font-semibold"
-                : "text-muted-foreground hover:text-foreground",
+                ? "bg-green-50 text-green-800"
+                : "text-gray-600 hover:bg-gray-50 hover:text-gray-900",
             )}
-            aria-label={tab.label}
             aria-pressed={mobileTab === tab.id}
           >
-            {mobileTab === tab.id && (
-              <span className="absolute -top-px left-1/4 right-1/4 h-0.5 rounded-full bg-primary" />
+            <tab.icon className="h-5 w-5" />
+            {tab.label}
+            {tab.id === "score" && (
+              <span
+                className={cn(
+                  "absolute right-[18%] top-1.5 rounded-full px-1.5 py-px text-[10px] font-extrabold ring-1",
+                  scoreTone,
+                )}
+              >
+                {localScore.overallScore}
+              </span>
             )}
-            <span className="mb-0.5 text-base">
-              <tab.icon className="h-5 w-5" />
-            </span>
-            <span className="text-[11px] font-semibold">{tab.label}</span>
           </button>
         ))}
       </nav>
@@ -1189,7 +1223,7 @@ function CvEditorPage() {
                 }}
                 className="flex items-start gap-4 rounded-xl border border-border p-4 text-left transition-all hover:border-primary/40 hover:bg-primary/5"
               >
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-green-100 text-green-800">
                   <Building2 className="h-5 w-5" />
                 </div>
                 <div>
@@ -1224,7 +1258,7 @@ function CvEditorPage() {
                 }}
                 className="flex items-start gap-4 rounded-xl border border-border p-4 text-left transition-all hover:border-primary/40 hover:bg-primary/5"
               >
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-purple-50 text-purple-600">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-green-100 text-green-800">
                   <Users className="h-5 w-5" />
                 </div>
                 <div>
@@ -1259,7 +1293,7 @@ function CvEditorPage() {
                 }}
                 className="flex items-start gap-4 rounded-xl border border-border p-4 text-left transition-all hover:border-primary/40 hover:bg-primary/5"
               >
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-rose-50 text-rose-600">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-green-100 text-green-800">
                   <Award className="h-5 w-5" />
                 </div>
                 <div>

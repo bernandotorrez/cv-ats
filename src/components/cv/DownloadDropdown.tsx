@@ -187,22 +187,25 @@ export function DownloadDropdown({
       <Button
         variant="outline"
         size="sm"
-        className="h-8 text-xs gap-1"
+        className="h-10 gap-1.5 rounded-xl border-gray-200 px-3 text-sm font-semibold text-gray-800 shadow-none hover:border-green-700 hover:bg-green-50 hover:text-green-800"
         onClick={() => setOpen(!open)}
+        aria-label="Unduh CV"
+        aria-expanded={open}
+        title="Unduh CV (PDF / DOCX)"
       >
-        <Download className="h-3.5 w-3.5" />
-
-        <ChevronDown className={`h-3 w-3 transition-transform ${open ? "rotate-180" : ""}`} />
+        <Download className="h-4 w-4" />
+        <span className="hidden 2xl:inline">Unduh</span>
+        <ChevronDown className={`h-3.5 w-3.5 transition-transform ${open ? "rotate-180" : ""}`} />
       </Button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-1 z-[100] bg-popover rounded-lg border border-border shadow-lg py-1 min-w-[160px]">
+        <div className="absolute right-0 top-full z-[100] mt-2 min-w-[220px] rounded-2xl border border-border bg-popover p-1.5 shadow-xl">
           {/* PDF Option */}
           <button
             onClick={handleDownloadPdf}
             disabled={loading === "pdf" || pdfLimitReached}
             title={pdfLimitReached ? "Upgrade ke Starter untuk download PDF lagi" : "Download PDF"}
-            className="w-full flex items-center gap-3 px-3 py-2.5 text-sm hover:bg-muted/50 transition-colors text-left disabled:cursor-not-allowed disabled:opacity-50"
+            className="w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm hover:bg-green-50 transition-colors text-left disabled:cursor-not-allowed disabled:opacity-50"
           >
             {loading === "pdf" ? (
               <Loader2 className="h-4 w-4 animate-spin text-red-500" />
@@ -224,7 +227,7 @@ export function DownloadDropdown({
             title={
               isFreeTier ? "DOCX tersedia untuk paket Starter ke atas" : "Download Microsoft Word"
             }
-            className="w-full flex items-center gap-3 px-3 py-2.5 text-sm hover:bg-muted/50 transition-colors text-left disabled:cursor-not-allowed disabled:opacity-50"
+            className="w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm hover:bg-green-50 transition-colors text-left disabled:cursor-not-allowed disabled:opacity-50"
           >
             {loading === "docx" ? (
               <Loader2 className="h-4 w-4 animate-spin text-blue-500" />

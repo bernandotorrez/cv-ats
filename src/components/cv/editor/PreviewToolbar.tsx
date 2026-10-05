@@ -1,46 +1,47 @@
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { ZoomIn, ZoomOut, Maximize } from "lucide-react";
 
 export type PreviewScale = 50 | 70 | 85 | 100;
+/** "fit" = scale the A4 page to the available preview width. */
+export type PreviewZoom = "fit" | PreviewScale;
 
 interface Props {
-  scale: PreviewScale;
-  onChange: (scale: PreviewScale) => void;
+  scale: PreviewZoom;
+  onChange: (scale: PreviewZoom) => void;
   className?: string;
 }
 
-const SCALES: { value: PreviewScale; label: string }[] = [
-  { value: 50, label: "50%" },
-  { value: 70, label: "70%" },
-  { value: 85, label: "85%" },
-  { value: 100, label: "100%" },
+const OPTIONS: { value: PreviewZoom; label: string; aria: string }[] = [
+  { value: "fit", label: "Pas", aria: "Sesuaikan dengan lebar layar" },
+  { value: 50, label: "50%", aria: "Preview skala 50%" },
+  { value: 70, label: "70%", aria: "Preview skala 70%" },
+  { value: 85, label: "85%", aria: "Preview skala 85%" },
+  { value: 100, label: "100%", aria: "Preview skala 100%" },
 ];
 
 export function PreviewToolbar({ scale, onChange, className }: Props) {
   return (
-    <div className={cn("flex items-center gap-1", className)} aria-label="Skala preview">
-      <ZoomOut className="h-3.5 w-3.5 text-muted-foreground" />
-      <div className="flex rounded-xl border border-border bg-background p-1 shadow-sm">
-        {SCALES.map((s) => (
-          <button
-            key={s.value}
-            type="button"
-            onClick={() => onChange(s.value)}
-            className={cn(
-              "min-h-8 rounded-lg px-2.5 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25",
-              scale === s.value
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground",
-            )}
-            aria-label={`Preview skala ${s.label}`}
-            aria-pressed={scale === s.value}
-          >
-            {s.label}
-          </button>
-        ))}
-      </div>
-      <ZoomIn className="h-3.5 w-3.5 text-muted-foreground" />
+    <div
+      role="group"
+      aria-label="Skala preview"
+      className={cn("flex rounded-xl border border-gray-200 bg-gray-50 p-0.5", className)}
+    >
+      {OPTIONS.map((o) => (
+        <button
+          key={o.value}
+          type="button"
+          onClick={() => onChange(o.value)}
+          className={cn(
+            "h-8 rounded-[10px] px-2 text-xs font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-700 sm:px-2.5",
+            scale === o.value
+              ? "bg-white text-green-800 shadow-sm ring-1 ring-gray-200"
+              : "text-gray-600 hover:text-gray-900",
+          )}
+          aria-label={o.aria}
+          aria-pressed={scale === o.value}
+        >
+          {o.label}
+        </button>
+      ))}
     </div>
   );
 }

@@ -78,10 +78,10 @@ function SortableSection({
       ref={setNodeRef}
       style={style}
       className={cn(
-        "flex min-h-[86px] cursor-pointer select-none items-center gap-4 rounded-2xl border px-4 py-4 text-base transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25",
-        "border-border bg-background shadow-sm shadow-slate-900/5 hover:border-primary/30 hover:bg-primary/5",
-        isActive && "border-primary/40 bg-primary/10 ring-1 ring-primary/15",
-        isDragging && "opacity-50 z-50 bg-card shadow-lg",
+        "flex min-h-14 cursor-pointer select-none items-center gap-3 rounded-xl border px-3 py-2.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-700",
+        "border-gray-200 bg-white hover:border-green-300 hover:bg-green-50/50",
+        isActive && "border-green-600 bg-green-50 hover:border-green-600 hover:bg-green-50",
+        isDragging && "relative z-50 opacity-80 shadow-xl",
       )}
       onClick={() => onSelect(isActive ? "" : section.id)}
       role="button"
@@ -100,52 +100,58 @@ function SortableSection({
         {...attributes}
         {...listeners}
         className={cn(
-          "shrink-0 cursor-grab rounded p-0.5 active:cursor-grabbing focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25",
-          isActive
-            ? "text-primary hover:text-primary"
-            : "text-muted-foreground hover:text-foreground",
+          "-ml-1 shrink-0 cursor-grab rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700 active:cursor-grabbing focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-700",
         )}
         aria-label={`Seret ${section.label}`}
         onClick={(e) => e.stopPropagation()}
       >
-        <GripVertical className="h-5 w-5" />
+        <GripVertical className="h-4 w-4" />
       </button>
 
       {/* Icon */}
       <span
         className={cn(
-          "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl",
-          isActive ? "bg-primary text-primary-foreground" : "bg-primary/10 text-primary",
+          "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg",
+          isActive ? "bg-green-700 text-white" : "bg-green-100 text-green-800",
         )}
       >
         {section.icon}
       </span>
 
       {/* Label */}
-      <span className="min-w-0 flex-1 truncate text-lg font-bold text-foreground">
+      <span className="min-w-0 flex-1 truncate text-[15px] font-bold text-gray-900">
         {section.label}
       </span>
 
       {typeof itemCount === "number" && section.id !== "personal" && section.id !== "ats" && (
         <span
           className={cn(
-            "shrink-0 rounded-full px-3 py-1 text-sm font-bold",
-            itemCount > 0 ? "bg-primary/10 text-primary" : "bg-rose-100 text-rose-600",
+            "shrink-0 rounded-full px-2.5 py-0.5 text-xs font-bold",
+            itemCount > 0 ? "bg-gray-100 text-gray-700" : "bg-amber-100 text-amber-900",
           )}
         >
-          {itemCount} items
+          {itemCount > 0 ? `${itemCount} item` : "Kosong"}
         </span>
       )}
 
       {section.id === "ats" && typeof itemCount === "number" && (
-        <span className="shrink-0 rounded-full bg-emerald-100 px-3 py-1 text-sm font-bold text-emerald-700">
-          {itemCount}
+        <span
+          className={cn(
+            "shrink-0 rounded-full px-2.5 py-0.5 text-xs font-bold",
+            itemCount >= 80
+              ? "bg-green-100 text-green-800"
+              : itemCount >= 60
+                ? "bg-amber-100 text-amber-900"
+                : "bg-red-100 text-red-800",
+          )}
+        >
+          Skor {itemCount}
         </span>
       )}
 
       {OPTIONAL_SECTIONS.includes(section.id) && onRemove && (
         <button
-          className="shrink-0 rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-rose-100 hover:text-rose-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500/25"
+          className="shrink-0 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-red-50 hover:text-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600"
           onClick={(e) => {
             e.stopPropagation();
             onRemove(section.id);
@@ -159,8 +165,8 @@ function SortableSection({
 
       <ChevronDown
         className={cn(
-          "h-5 w-5 shrink-0 transition-transform",
-          isActive ? "rotate-180 text-primary" : "text-muted-foreground",
+          "h-4 w-4 shrink-0 transition-transform",
+          isActive ? "rotate-180 text-green-700" : "text-gray-500",
         )}
       />
     </div>
@@ -200,10 +206,10 @@ export function SectionsNav({
   };
 
   return (
-    <nav className={cn("flex flex-col gap-3", className)} aria-label="Navigasi Section CV">
+    <nav className={cn("flex flex-col gap-2", className)} aria-label="Navigasi Section CV">
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={sections.map((s) => s.id)} strategy={verticalListSortingStrategy}>
-          <div className="space-y-4">
+          <div className="space-y-2">
             {sections.map((section) => (
               <div key={section.id}>
                 <SortableSection
@@ -214,7 +220,7 @@ export function SectionsNav({
                   onRemove={onRemoveSection}
                 />
                 {activeSection === section.id && (
-                  <div className="mt-4">
+                  <div className="mb-4 mt-2">
                     {renderSectionContent ? renderSectionContent(section.id) : children}
                   </div>
                 )}
