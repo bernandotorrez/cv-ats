@@ -1,45 +1,13 @@
 import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { buildSectionHead } from "@/lib/seo";
+import { blogPosts } from "@/lib/blog-posts";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, BookOpen, Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 import { ArticleCardSkeleton } from "@/components/ui/skeleton-loading";
 import { CtaBanner, PageHero } from "@/components/site/marketing";
 
-const posts = [
-  {
-    slug: "apa-itu-cv-ats",
-    category: "CV & Karier",
-    title: "Apa Itu CV ATS Friendly dan Kenapa Penting?",
-    excerpt:
-      "Pelajari apa itu Applicant Tracking System, bagaimana cara kerjanya, dan kenapa CV kamu harus lolos screening ATS.",
-    date: "2026-04-15",
-  },
-  {
-    slug: "keyword-cv-ats",
-    category: "CV & Karier",
-    title: "Cara Riset Keyword untuk CV ATS Friendly",
-    excerpt:
-      "Panduan lengkap riset keyword dari job description agar CV kamu muncul di pencarian rekruter.",
-    date: "2026-04-20",
-  },
-  {
-    slug: "template-cv-gratis-vs-premium",
-    category: "CV & Karier",
-    title: "Template CV Gratis vs Premium: Mana yang Kamu Butuhkan?",
-    excerpt:
-      "Perbandingan jujur template CV gratis dan premium, plus tips memilih yang tepat untuk jenjang kariermu.",
-    date: "2026-04-25",
-  },
-  {
-    slug: "cara-menulis-ringkasan-cv",
-    category: "CV & Karier",
-    title: "Cara Menulis Ringkasan CV yang Bikin Rekruter Berhenti Scroll",
-    excerpt:
-      "Ringkasan profil adalah bagian paling krusial di CV. Pelajari formula menulis ringkasan yang memikat.",
-    date: "2026-05-01",
-  },
-];
+const posts = blogPosts;
 
 export const Route = createFileRoute("/blog")({
   pendingComponent: BlogLoading,

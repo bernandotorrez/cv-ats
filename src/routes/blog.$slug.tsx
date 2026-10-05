@@ -1,103 +1,54 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { buildSeo, fitDescription, fitTitle } from "@/lib/seo";
+import { buildSeo, fitDescription, fitTitle, SITE_URL } from "@/lib/seo";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Calendar } from "lucide-react";
+import { ArrowLeft, ArrowRight, Calendar, Clock } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton-loading";
+import { RichText } from "@/components/blog/RichText";
+import {
+  blogPostsBySlug,
+  headingId,
+  readingMinutes,
+  type BlogBlock,
+  type BlogPost,
+} from "@/lib/blog-posts";
 
-// Blog content - mirrors DB seed data
-const posts: Record<
-  string,
-  { title: string; category: string; excerpt: string; body: string[]; date: string }
-> = {
-  "apa-itu-cv-ats": {
-    title: "Apa Itu CV ATS Friendly dan Kenapa Penting?",
-    category: "CV & Karier",
-    excerpt:
-      "Pelajari apa itu Applicant Tracking System, bagaimana cara kerjanya, dan kenapa CV kamu harus lolos screening ATS.",
-    date: "2026-04-15",
-    body: [
-      "ATS (Applicant Tracking System) adalah software yang digunakan perusahaan untuk menyaring ribuan CV secara otomatis sebelum dibaca manusia. Di era digital, hampir semua perusahaan menengah-besar menggunakan ATS untuk efisiensi proses rekrutmen.",
-      "Hampir 75% perusahaan besar di Indonesia dan global menggunakan ATS untuk proses rekrutmen. Jika CV kamu tidak ATS-friendly, besar kemungkinan CV langsung tersingkir sebelum dilihat oleh rekruter manusia. Ini adalah realita yang sering tidak disadari oleh pencari kerja.",
-      "ATS bekerja dengan cara mengekstrak teks dari CV, mencari keyword yang relevan dengan job description, dan memberi skor berdasarkan kecocokan. CV dengan skor rendah otomatis ditolak sistem. Karena itu, format CV tradisional dengan tabel, kolom, atau gambar sering gagal dibaca oleh ATS.",
-      "Tips utama membuat CV ATS-friendly: hindari tabel, gambar, kolom, dan font dekoratif. Gunakan heading standar seperti 'Pengalaman Kerja', 'Pendidikan', 'Keahlian'. Gunakan keyword yang relevan dengan posisi yang dilamar. Format single-column adalah yang paling aman.",
-      "Dengan CV Pintar, kamu bisa membuat CV ATS-friendly dalam hitungan menit. Template kami sudah dioptimasi untuk lolos screening ATS, lengkap dengan AI scoring dan saran perbaikan.",
-    ],
-  },
-  "keyword-cv-ats": {
-    title: "Cara Riset Keyword untuk CV ATS Friendly",
-    category: "CV & Karier",
-    excerpt:
-      "Panduan lengkap riset keyword dari job description agar CV kamu muncul di pencarian rekruter.",
-    date: "2026-04-20",
-    body: [
-      "Keyword adalah kunci agar CV kamu lolos ATS dan ditemukan rekruter. Tanpa keyword yang tepat, CV terbaik sekalipun bisa terlewat oleh sistem screening otomatis. Inilah kenapa riset keyword menjadi langkah krusial sebelum menulis CV.",
-      "Cara riset: baca 3-5 job description posisi yang kamu incar. Catat kata-kata yang sering muncul — itu keyword utama yang dicari ATS. Perhatikan juga sinonim dan variasi penulisan (contoh: 'project management' vs 'manajemen proyek').",
-      "Kelompokkan keyword menjadi tiga kategori: hard skills (tools, bahasa pemrograman, sertifikasi), soft skills (komunikasi, kepemimpinan), dan kualifikasi (pengalaman tahun, pendidikan). Pastikan kamu menyertakan semuanya secara natural di CV.",
-      "Taburkan keyword secara natural di ringkasan, pengalaman kerja, dan bagian skill. Jangan melakukan keyword stuffing — ATS modern bisa mendeteksi praktik ini dan malah menurunkan skor CV kamu.",
-      "Gunakan fitur Keyword Extractor di CV Pintar untuk otomatis mengekstrak keyword dari job description favoritmu. Fitur ini akan mengidentifikasi hard skills, soft skills, kualifikasi, dan action verbs yang harus ada di CV kamu.",
-    ],
-  },
-  "template-cv-gratis-vs-premium": {
-    title: "Template CV Gratis vs Premium: Mana yang Kamu Butuhkan?",
-    category: "CV & Karier",
-    excerpt:
-      "Perbandingan jujur template CV gratis dan premium, plus tips memilih yang tepat untuk jenjang kariermu.",
-    date: "2026-04-25",
-    body: [
-      "Template CV gratis biasanya cukup untuk fresh graduate atau yang baru pertama kali bikin CV. Namun ada keterbatasan: pilihan desain sedikit, fitur AI terbatas, dan sering ada watermark di hasil export PDF. Ini wajar untuk pemula, tapi bisa jadi hambatan saat kamu serius mencari kerja.",
-      "Template premium menawarkan: desain lebih profesional dan bervariasi, AI scoring unlimited, cover letter generator, export tanpa watermark, dan prioritas akses fitur AI. Investasi kecil ini bisa jadi pembeda antara CV yang dilirik dan yang terlewat.",
-      "Kapan upgrade ke premium? Jika kamu: melamar ke 10+ perusahaan sekaligus, ingin ganti industri atau posisi, target posisi senior/managerial, atau butuh CV dalam berbagai format untuk berbagai keperluan.",
-      "Di CV Pintar, semua template — baik gratis maupun premium — sudah ATS-friendly dan dioptimasi untuk screening otomatis. Perbedaannya ada di variasi desain, fitur AI, dan pengalaman export.",
-      "Mulai dari paket Free (Rp 0 selamanya) dengan 1 CV dan 2 template. Upgrade ke Starter (Rp 15.000/bln) untuk 3 CV dan semua fitur AI, atau Pro (Rp 35.000/bln) untuk 10 CV dan fitur lengkap.",
-    ],
-  },
-  "cara-menulis-ringkasan-cv": {
-    title: "Cara Menulis Ringkasan CV yang Bikin Rekruter Berhenti Scroll",
-    category: "CV & Karier",
-    excerpt:
-      "Ringkasan profil adalah bagian paling krusial di CV. Pelajari formula menulis ringkasan yang memikat dalam 7 detik pertama.",
-    date: "2026-05-01",
-    body: [
-      "Ringkasan profil adalah 2-4 kalimat di bagian atas CV yang menjadi first impression rekruter. Rata-rata rekruter hanya membaca 7 detik pertama — pastikan ringkasanmu powerful dan langsung menunjukkan value kamu.",
-      "Formula ringkasan yang efektif: [Posisi / Peran] + [pengalaman tahun] + [keahlian utama yang relevan] + [pencapaian signifikan dengan metrik] + [value proposition / apa yang kamu tawarkan ke perusahaan].",
-      "Contoh ringkasan bagus: 'Frontend Developer dengan 5+ tahun pengalaman membangun web application skala enterprise. Spesialis React, TypeScript, dan performa web, berhasil meningkatkan Core Web Vitals aplikasi sebesar 40%. Berpengalaman memimpin tim engineering 5 orang dan berkolaborasi dengan product & design.'",
-      "Hindari kesalahan umum: kalimat klise seperti 'saya pekerja keras' atau 'saya mudah beradaptasi' tanpa bukti, penggunaan kata ganti orang pertama yang berlebihan, dan informasi yang tidak relevan dengan posisi yang dilamar.",
-      "Gunakan fitur AI Saran di editor CV Pintar untuk otomatis membuat ringkasan profesional yang ATS-friendly dan disesuaikan dengan target posisi kamu.",
-    ],
-  },
-};
+const formatDate = (date: string) =>
+  new Date(date).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
+
+function articleWordCount(post: BlogPost): number {
+  return post.body
+    .map((b) => (b.t === "ul" || b.t === "ol" ? b.items.join(" ") : "text" in b ? b.text : ""))
+    .join(" ")
+    .split(/\s+/).length;
+}
 
 export const Route = createFileRoute("/blog/$slug")({
   pendingComponent: ArticleDetailSkeleton,
   loader: ({ params }) => {
-    const post = posts[params.slug];
+    const post = blogPostsBySlug[params.slug];
     if (!post) throw notFound();
     return { post, slug: params.slug };
   },
   head: ({ loaderData }) => {
     if (!loaderData) return { meta: [{ title: "Artikel tidak ditemukan" }] };
     const { post, slug } = loaderData;
+    const url = `${SITE_URL}/blog/${slug}`;
     return buildSeo({
       title: fitTitle(post.title),
       description: fitDescription(post.excerpt),
       path: `/blog/${slug}`,
       type: "article",
       articlePublishedTime: post.date,
-      articleModifiedTime: post.date,
+      articleModifiedTime: post.updated,
       jsonLd: [
         {
           "@context": "https://schema.org",
           "@type": "BreadcrumbList",
           itemListElement: [
-            { "@type": "ListItem", position: 1, name: "Beranda", item: "https://cvpintar.web.id" },
-            {
-              "@type": "ListItem",
-              position: 2,
-              name: "Blog",
-              item: "https://cvpintar.web.id/blog",
-            },
-            { "@type": "ListItem", position: 3, name: post.title },
+            { "@type": "ListItem", position: 1, name: "Beranda", item: SITE_URL },
+            { "@type": "ListItem", position: 2, name: "Blog", item: `${SITE_URL}/blog` },
+            { "@type": "ListItem", position: 3, name: post.title, item: url },
           ],
         },
         {
@@ -107,10 +58,21 @@ export const Route = createFileRoute("/blog/$slug")({
           description: post.excerpt,
           articleSection: post.category,
           datePublished: post.date,
-          dateModified: post.date,
+          dateModified: post.updated,
           inLanguage: "id-ID",
-          author: { "@type": "Organization", name: "CV Pintar" },
-          publisher: { "@type": "Organization", name: "CV Pintar", url: "https://cvpintar.web.id" },
+          wordCount: articleWordCount(post),
+          mainEntityOfPage: { "@type": "WebPage", "@id": url },
+          author: { "@type": "Organization", name: "CV Pintar", url: SITE_URL },
+          publisher: { "@type": "Organization", name: "CV Pintar", url: SITE_URL },
+        },
+        {
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          mainEntity: post.faq.map((f) => ({
+            "@type": "Question",
+            name: f.q,
+            acceptedAnswer: { "@type": "Answer", text: f.a },
+          })),
         },
       ],
     });
@@ -145,36 +107,184 @@ function ArticleDetailSkeleton() {
   );
 }
 
+function Block({ block }: { block: BlogBlock }) {
+  switch (block.t) {
+    case "h2":
+      return (
+        <h2
+          id={headingId(block.text)}
+          className="mt-10 scroll-mt-24 font-display text-2xl font-bold leading-snug"
+        >
+          {block.text}
+        </h2>
+      );
+    case "h3":
+      return <h3 className="mt-6 font-display text-lg font-bold">{block.text}</h3>;
+    case "ul":
+      return (
+        <ul className="list-disc space-y-2 pl-6 marker:text-primary">
+          {block.items.map((item, i) => (
+            <li key={i}>
+              <RichText text={item} />
+            </li>
+          ))}
+        </ul>
+      );
+    case "ol":
+      return (
+        <ol className="list-decimal space-y-2 pl-6 marker:font-semibold marker:text-primary">
+          {block.items.map((item, i) => (
+            <li key={i}>
+              <RichText text={item} />
+            </li>
+          ))}
+        </ol>
+      );
+    case "callout":
+      return (
+        <aside className="rounded-2xl border border-primary/20 bg-primary/5 p-5">
+          <p className="font-display font-bold text-foreground">{block.title}</p>
+          <p className="mt-1.5 text-[15px] leading-relaxed">
+            <RichText text={block.text} />
+          </p>
+        </aside>
+      );
+    default:
+      return (
+        <p>
+          <RichText text={block.text} />
+        </p>
+      );
+  }
+}
+
 function BlogArticlePage() {
   const { post } = Route.useLoaderData();
+  const headings = post.body.filter((b): b is Extract<BlogBlock, { t: "h2" }> => b.t === "h2");
+  const related = post.related
+    .map((slug) => blogPostsBySlug[slug])
+    .filter((p): p is BlogPost => Boolean(p));
+  const modified = post.updated !== post.date;
+
   return (
     <article className="container-page max-w-3xl py-12 md:py-16">
-      <Link
-        to="/blog"
-        className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft className="mr-1 h-4 w-4" /> Semua artikel
-      </Link>
-      <div className="mt-6 flex items-center gap-3">
-        <Badge variant="secondary">{post.category}</Badge>
-        <span className="flex items-center gap-1 text-xs text-muted-foreground">
-          <Calendar className="h-3 w-3" />
-          {new Date(post.date).toLocaleDateString("id-ID", {
-            day: "numeric",
-            month: "long",
-            year: "numeric",
-          })}
-        </span>
-      </div>
-      <h1 className="mt-3 font-display text-3xl font-bold leading-tight md:text-4xl">
-        {post.title}
-      </h1>
-      <p className="mt-4 text-lg text-muted-foreground">{post.excerpt}</p>
-      <div className="mt-8 space-y-4 text-foreground leading-relaxed">
-        {post.body.map((p: string, i: number) => (
-          <p key={i}>{p}</p>
+      <nav aria-label="Breadcrumb">
+        <Link
+          to="/blog"
+          className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="mr-1 h-4 w-4" /> Semua artikel
+        </Link>
+      </nav>
+
+      <header>
+        <div className="mt-6 flex flex-wrap items-center gap-x-3 gap-y-2">
+          <Badge variant="secondary">{post.category}</Badge>
+          <span className="flex items-center gap-1 text-xs text-muted-foreground">
+            <Calendar aria-hidden="true" className="h-3 w-3" />
+            <time dateTime={post.date}>{formatDate(post.date)}</time>
+            {modified && (
+              <>
+                <span aria-hidden="true">·</span>
+                <span>
+                  Diperbarui <time dateTime={post.updated}>{formatDate(post.updated)}</time>
+                </span>
+              </>
+            )}
+          </span>
+          <span className="flex items-center gap-1 text-xs text-muted-foreground">
+            <Clock aria-hidden="true" className="h-3 w-3" />
+            {readingMinutes(post)} menit baca
+          </span>
+        </div>
+        <h1 className="mt-3 font-display text-3xl font-bold leading-tight md:text-4xl">
+          {post.title}
+        </h1>
+        <p className="mt-4 text-lg text-muted-foreground">{post.excerpt}</p>
+      </header>
+
+      {headings.length >= 4 && (
+        <nav
+          aria-labelledby="toc-title"
+          className="mt-8 rounded-2xl border border-border bg-muted/30 p-5"
+        >
+          <p id="toc-title" className="font-display font-bold">
+            Isi artikel
+          </p>
+          <ol className="mt-2 space-y-1.5 text-sm">
+            {headings.map((h) => (
+              <li key={h.text}>
+                <a
+                  href={`#${headingId(h.text)}`}
+                  className="text-muted-foreground underline-offset-2 hover:text-primary hover:underline"
+                >
+                  {h.text}
+                </a>
+              </li>
+            ))}
+          </ol>
+        </nav>
+      )}
+
+      <div className="mt-8 space-y-4 text-[17px] leading-relaxed text-foreground/90">
+        {post.body.map((block, i) => (
+          <Block key={i} block={block} />
         ))}
       </div>
+
+      <section aria-labelledby="faq-title" className="mt-12">
+        <h2 id="faq-title" className="font-display text-2xl font-bold">
+          Pertanyaan yang sering diajukan
+        </h2>
+        <dl className="mt-4 divide-y divide-border rounded-2xl border border-border">
+          {post.faq.map((f) => (
+            <div key={f.q} className="p-5">
+              <dt className="font-semibold">{f.q}</dt>
+              <dd className="mt-1.5 text-[15px] leading-relaxed text-muted-foreground">{f.a}</dd>
+            </div>
+          ))}
+        </dl>
+      </section>
+
+      <aside className="mt-12 overflow-hidden rounded-3xl bg-green-800 p-7 text-white sm:p-9">
+        <h2 className="font-display text-2xl font-extrabold leading-tight">{post.cta.title}</h2>
+        <p className="mt-2 max-w-xl text-green-50/90">{post.cta.text}</p>
+        <Link
+          to={post.cta.to as "/register"}
+          className="mt-5 inline-flex h-12 items-center gap-2 rounded-xl bg-yellow-300 px-6 text-sm font-extrabold text-gray-950 transition hover:bg-yellow-200"
+        >
+          {post.cta.label}
+          <ArrowRight aria-hidden="true" className="h-4 w-4" />
+        </Link>
+      </aside>
+
+      {related.length > 0 && (
+        <section aria-labelledby="related-title" className="mt-12">
+          <h2 id="related-title" className="font-display text-xl font-bold">
+            Baca juga
+          </h2>
+          <ul className="mt-4 grid gap-4 sm:grid-cols-2">
+            {related.map((r) => (
+              <li key={r.slug}>
+                <Link
+                  to="/blog/$slug"
+                  params={{ slug: r.slug }}
+                  className="group block h-full rounded-2xl border border-border p-5 transition hover:border-primary/40 hover:shadow-md"
+                >
+                  <span className="text-xs font-semibold text-primary">{r.category}</span>
+                  <span className="mt-1 block font-display font-bold leading-snug group-hover:text-primary">
+                    {r.title}
+                  </span>
+                  <span className="mt-1.5 block text-sm text-muted-foreground line-clamp-2">
+                    {r.excerpt}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       <div className="mt-12 border-t border-border pt-8">
         <Button asChild variant="outline">
           <Link to="/blog">

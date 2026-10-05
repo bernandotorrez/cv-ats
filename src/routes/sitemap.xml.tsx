@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { blogPosts } from "@/lib/blog-posts";
 
 const SITE_URL = "https://cvpintar.web.id";
 
@@ -37,14 +38,6 @@ const tipsSlugs: { slug: string; date: string }[] = [
   { slug: "behavioral-star-method", date: "2026-05-06" },
 ];
 
-// Mirror of content from blog.$slug.tsx
-const blogSlugs: { slug: string; date: string }[] = [
-  { slug: "apa-itu-cv-ats", date: "2026-04-15" },
-  { slug: "keyword-cv-ats", date: "2026-04-20" },
-  { slug: "template-cv-gratis-vs-premium", date: "2026-04-25" },
-  { slug: "cara-menulis-ringkasan-cv", date: "2026-05-01" },
-];
-
 export const Route = createFileRoute("/sitemap/xml")({
   server: {
     handlers: {
@@ -73,12 +66,12 @@ export const Route = createFileRoute("/sitemap/xml")({
         }
 
         // Blog detail pages
-        for (const b of blogSlugs) {
+        for (const b of blogPosts) {
           urls.push({
             loc: `${SITE_URL}/blog/${b.slug}`,
-            priority: "0.6",
+            priority: "0.7",
             changefreq: "monthly",
-            lastmod: b.date,
+            lastmod: b.updated,
           });
         }
 
