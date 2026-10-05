@@ -165,7 +165,7 @@ function renderLayout(o: LayoutOptions): string {
         <td align="center" style="padding: 40px 16px">
           <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 520px; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(70, 132, 50, 0.08), 0 1px 3px rgba(0, 0, 0, 0.06)">
             <tr>
-              <td style="background: #468432; padding: 32px 32px 24px; text-align: center">
+              <td style="background: #15803d; padding: 32px 32px 24px; text-align: center">
                 <div style="font-size: 22px; font-weight: 800; color: #ffffff; font-family: 'Plus Jakarta Sans', Arial, sans-serif">${escapeHtml(o.headerTitle)}</div>
               </td>
             </tr>
@@ -180,7 +180,7 @@ function renderLayout(o: LayoutOptions): string {
                 </div>
                 <table cellpadding="0" cellspacing="0" style="margin: 0 auto 24px">
                   <tr>
-                    <td style="background: #468432; border-radius: 8px; text-align: center">
+                    <td style="background: #15803d; border-radius: 8px; text-align: center">
                       <a href="${escapeHtml(o.button.url)}" style="display: inline-block; padding: 12px 32px; font-size: 15px; font-weight: 600; color: #ffffff; text-decoration: none; border-radius: 8px">${escapeHtml(o.button.label)}</a>
                     </td>
                   </tr>

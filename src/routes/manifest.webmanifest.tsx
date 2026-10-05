@@ -11,7 +11,7 @@ export const Route = createFileRoute("/manifest/webmanifest")({
           start_url: "/",
           display: "standalone",
           background_color: "#FFFFFF",
-          theme_color: "#468432",
+          theme_color: "#15803d",
           orientation: "portrait-primary",
           icons: [
             {

@@ -104,7 +104,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
-      { name: "theme-color", content: "#468432" },
+      { name: "theme-color", content: "#15803d" },
       { title: "CV Pintar — Buat CV ATS Friendly dengan AI" },
       {
         name: "description",
