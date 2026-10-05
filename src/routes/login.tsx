@@ -15,16 +15,21 @@ import {
   AuthLoading,
   AuthShell,
   AuthSubmit,
+  FieldError,
   GoogleButton,
   authInputClass,
+  authInputErrorClass,
   authLabelClass,
 } from "@/components/auth/AuthShell";
+import { fieldErrors } from "@/components/auth/field-errors";
 import { CheckCircle2, Eye, EyeOff, FileText, LogIn, ShieldAlert, Sparkles } from "lucide-react";
 
 const schema = z.object({
-  email: z.string().email("Email tidak valid").max(255),
+  email: z.string().min(1, "Email wajib diisi").email("Format email tidak valid").max(255),
   password: z.string().min(1, "Password wajib diisi").max(128),
 });
+
+type LoginField = keyof typeof schema.shape;
 
 const LOCKOUT_DURATION = 30 * 60 * 1000; // 30 menit
 const MAX_ATTEMPTS = 5;
@@ -96,6 +101,7 @@ function LoginPage() {
   const { user: authUser, loading: authLoading } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [errors, setErrors] = useState<Partial<Record<LoginField, string>>>({});
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -143,26 +149,35 @@ function LoginPage() {
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
+  // Setelah field pernah gagal validasi, cek ulang saat diketik agar error hilang begitu benar
+  const updateField = (field: LoginField, value: string, set: (v: string) => void) => {
+    set(value);
+    if (!errors[field]) return;
+    const result = schema.shape[field].safeParse(value);
+    setErrors((prev) => ({
+      ...prev,
+      [field]: result.success ? undefined : result.error.issues[0].message,
+    }));
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
-    if (lockout.locked) {
-      toast.error(
-        `Akun dikunci sementara. Coba lagi dalam ${formatCountdown(lockout.remainingMs)}.`,
-      );
-      return;
-    }
+    // Banner lockout sudah tampil & tombol nonaktif
+    if (lockout.locked) return;
 
     const parsed = schema.safeParse({ email, password });
     if (!parsed.success) {
-      toast.error(parsed.error.issues[0].message);
+      const next = fieldErrors(parsed.error.issues);
+      setErrors(next);
+      document.getElementById(Object.keys(next)[0])?.focus();
       return;
     }
+    setErrors({});
 
-    // Verifikasi hCaptcha
+    // Verifikasi hCaptcha (pesan inline di widget)
     if (!captchaToken) {
       setCaptchaError("Harap selesaikan verifikasi captcha");
-      toast.error("Harap selesaikan verifikasi captcha");
       return;
     }
     setCaptchaError(null);
@@ -272,10 +287,13 @@ function LoginPage() {
             autoComplete="email"
             required
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => updateField("email", e.target.value, setEmail)}
             placeholder="nama@domain.com"
-            className={authInputClass}
+            aria-invalid={!!errors.email}
+            aria-describedby={errors.email ? "email-error" : undefined}
+            className={`${authInputClass} ${errors.email ? authInputErrorClass : ""}`}
           />
+          <FieldError id="email-error" message={errors.email} />
         </div>
 
         <div className="space-y-2">
@@ -297,9 +315,11 @@ function LoginPage() {
               autoComplete="current-password"
               required
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => updateField("password", e.target.value, setPassword)}
               placeholder="Password kamu"
-              className={`${authInputClass} pr-12`}
+              aria-invalid={!!errors.password}
+              aria-describedby={errors.password ? "password-error" : undefined}
+              className={`${authInputClass} pr-12 ${errors.password ? authInputErrorClass : ""}`}
             />
             <button
               type="button"
@@ -310,6 +330,7 @@ function LoginPage() {
               {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
             </button>
           </div>
+          <FieldError id="password-error" message={errors.password} />
         </div>
 
         {/* hCaptcha */}

@@ -16,10 +16,13 @@ import {
   AuthLoading,
   AuthShell,
   AuthSubmit,
+  FieldError,
   GoogleButton,
   authInputClass,
+  authInputErrorClass,
   authLabelClass,
 } from "@/components/auth/AuthShell";
+import { fieldErrors } from "@/components/auth/field-errors";
 import { CheckCircle2, Eye, EyeOff, FileText, Sparkles, Star, Target, Users } from "lucide-react";
 
 // ─── Security: Referral Code Validation ──────────────────────────────────────
@@ -52,19 +55,22 @@ function getValidReferralCode(): string | undefined {
 }
 
 const schema = z.object({
-  fullName: z.string().min(2, "Nama minimal 2 karakter").max(120),
-  email: z.string().email("Email tidak valid").max(255),
+  fullName: z.string().trim().min(1, "Nama wajib diisi").min(2, "Nama minimal 2 karakter").max(120),
+  email: z.string().min(1, "Email wajib diisi").email("Format email tidak valid").max(255),
   password: z
     .string()
+    .min(1, "Password wajib diisi")
     .min(8, "Password minimal 8 karakter")
     .max(128)
-    .regex(/[A-Z]/, "Harus ada huruf besar")
-    .regex(/[a-z]/, "Harus ada huruf kecil")
-    .regex(/[0-9]/, "Harus ada angka"),
+    .regex(/[A-Z]/, "Password harus mengandung huruf besar")
+    .regex(/[a-z]/, "Password harus mengandung huruf kecil")
+    .regex(/[0-9]/, "Password harus mengandung angka"),
   agreeTerms: z.literal(true, {
-    errorMap: () => ({ message: "Anda harus menyetujui Syarat & Ketentuan" }),
+    errorMap: () => ({ message: "Kamu perlu menyetujui Syarat & Ketentuan untuk mendaftar" }),
   }),
 });
+
+type RegisterField = keyof typeof schema.shape;
 
 export const Route = createFileRoute("/register")({
   beforeLoad: async () => {
@@ -90,6 +96,7 @@ function RegisterPage() {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [errors, setErrors] = useState<Partial<Record<RegisterField, string>>>({});
   const [showPassword, setShowPassword] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -119,18 +126,30 @@ function RegisterPage() {
   // Don't render form if user is already logged in (redirect happens via useEffect)
   if (authUser) return null;
 
+  // Setelah field pernah gagal validasi, cek ulang saat diubah agar error hilang begitu benar
+  const revalidate = (field: RegisterField, value: unknown) => {
+    if (!errors[field]) return;
+    const result = schema.shape[field].safeParse(value);
+    setErrors((prev) => ({
+      ...prev,
+      [field]: result.success ? undefined : result.error.issues[0].message,
+    }));
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     const parsed = schema.safeParse({ fullName, email, password, agreeTerms });
     if (!parsed.success) {
-      toast.error(parsed.error.issues[0].message);
+      const next = fieldErrors(parsed.error.issues);
+      setErrors(next);
+      document.getElementById(Object.keys(next)[0])?.focus();
       return;
     }
+    setErrors({});
 
-    // Verifikasi hCaptcha
+    // Verifikasi hCaptcha (pesan inline di widget)
     if (!captchaToken) {
       setCaptchaError("Harap selesaikan verifikasi captcha");
-      toast.error("Harap selesaikan verifikasi captcha");
       return;
     }
     setCaptchaError(null);
@@ -221,10 +240,16 @@ function RegisterPage() {
             autoComplete="name"
             required
             value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
+            onChange={(e) => {
+              setFullName(e.target.value);
+              revalidate("fullName", e.target.value);
+            }}
             placeholder="Nama lengkap kamu"
-            className={authInputClass}
+            aria-invalid={!!errors.fullName}
+            aria-describedby={errors.fullName ? "fullName-error" : undefined}
+            className={`${authInputClass} ${errors.fullName ? authInputErrorClass : ""}`}
           />
+          <FieldError id="fullName-error" message={errors.fullName} />
         </div>
 
         {/* Email */}
@@ -238,10 +263,16 @@ function RegisterPage() {
             autoComplete="email"
             required
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              revalidate("email", e.target.value);
+            }}
             placeholder="nama@domain.com"
-            className={authInputClass}
+            aria-invalid={!!errors.email}
+            aria-describedby={errors.email ? "email-error" : undefined}
+            className={`${authInputClass} ${errors.email ? authInputErrorClass : ""}`}
           />
+          <FieldError id="email-error" message={errors.email} />
         </div>
 
         {/* Password */}
@@ -256,10 +287,18 @@ function RegisterPage() {
               autoComplete="new-password"
               required
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                revalidate("password", e.target.value);
+              }}
               placeholder="Min. 8 karakter"
-              aria-describedby={password ? undefined : "password-hint"}
-              className={`${authInputClass} pr-12`}
+              aria-invalid={!!errors.password}
+              aria-describedby={
+                [errors.password && "password-error", !password && "password-hint"]
+                  .filter(Boolean)
+                  .join(" ") || undefined
+              }
+              className={`${authInputClass} pr-12 ${errors.password ? authInputErrorClass : ""}`}
             />
             <button
               type="button"
@@ -270,6 +309,7 @@ function RegisterPage() {
               {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
             </button>
           </div>
+          <FieldError id="password-error" message={errors.password} />
           {!password && (
             <p id="password-hint" className="text-xs text-gray-600">
               Minimal 8 karakter, dengan huruf besar, huruf kecil, dan angka.
@@ -294,30 +334,41 @@ function RegisterPage() {
         />
 
         {/* TOS Checkbox */}
-        <div className="flex items-start gap-3">
-          <Checkbox
-            id="agreeTerms"
-            checked={agreeTerms}
-            onCheckedChange={(c) => setAgreeTerms(c === true)}
-            className="mt-0.5 h-5 w-5 rounded-md border-gray-400 data-[state=checked]:border-green-700 data-[state=checked]:bg-green-700"
-          />
-          <Label htmlFor="agreeTerms" className="text-sm font-normal leading-relaxed text-gray-700">
-            Saya setuju dengan{" "}
-            <Link
-              to="/syarat-ketentuan"
-              className="font-semibold text-green-800 underline underline-offset-4"
+        <div className="space-y-2">
+          <div className="flex items-start gap-3">
+            <Checkbox
+              id="agreeTerms"
+              checked={agreeTerms}
+              onCheckedChange={(c) => {
+                setAgreeTerms(c === true);
+                revalidate("agreeTerms", c === true);
+              }}
+              aria-invalid={!!errors.agreeTerms}
+              aria-describedby={errors.agreeTerms ? "agreeTerms-error" : undefined}
+              className={`mt-0.5 h-5 w-5 rounded-md data-[state=checked]:border-green-700 data-[state=checked]:bg-green-700 ${errors.agreeTerms ? "border-red-600" : "border-gray-400"}`}
+            />
+            <Label
+              htmlFor="agreeTerms"
+              className="text-sm font-normal leading-relaxed text-gray-700"
             >
-              Syarat &amp; Ketentuan
-            </Link>{" "}
-            dan{" "}
-            <Link
-              to="/kebijakan-privasi"
-              className="font-semibold text-green-800 underline underline-offset-4"
-            >
-              Kebijakan Privasi
-            </Link>
-            .
-          </Label>
+              Saya setuju dengan{" "}
+              <Link
+                to="/syarat-ketentuan"
+                className="font-semibold text-green-800 underline underline-offset-4"
+              >
+                Syarat &amp; Ketentuan
+              </Link>{" "}
+              dan{" "}
+              <Link
+                to="/kebijakan-privasi"
+                className="font-semibold text-green-800 underline underline-offset-4"
+              >
+                Kebijakan Privasi
+              </Link>
+              .
+            </Label>
+          </div>
+          <FieldError id="agreeTerms-error" message={errors.agreeTerms} />
         </div>
 
         <AuthSubmit loading={loading} disabled={loading}>

@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Loader2 } from "lucide-react";
+import { AlertCircle, Loader2 } from "lucide-react";
 import { FcGoogle } from "react-icons/fc";
 
 /* Shared building blocks for /login and /register (light, WCAG AA). */
@@ -8,6 +8,21 @@ export const authInputClass =
   "h-12 rounded-xl border-gray-300 bg-white px-4 text-base text-gray-900 shadow-none placeholder:text-gray-500 focus-visible:border-green-700 focus-visible:ring-2 focus-visible:ring-green-700/20";
 
 export const authLabelClass = "text-sm font-semibold text-gray-900";
+
+/** Extra input classes when the field failed validation. */
+export const authInputErrorClass =
+  "border-red-600 bg-red-50/40 focus-visible:border-red-600 focus-visible:ring-red-600/20";
+
+/** Inline validation message under a field (linked via aria-describedby). */
+export function FieldError({ id, message }: { id: string; message?: string }) {
+  if (!message) return null;
+  return (
+    <p id={id} className="flex items-start gap-1.5 text-sm font-medium text-red-700">
+      <AlertCircle aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0" />
+      {message}
+    </p>
+  );
+}
 
 export function AuthShell({
   eyebrow,
