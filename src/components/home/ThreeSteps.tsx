@@ -7,19 +7,19 @@ const steps = [
     n: "1",
     title: "Pilih Template",
     desc: "Disediakan banyak pilihan template ATS Friendly maupun Kreatif.",
-    img: "/step1-template.png",
+    img: "/step1-template.webp",
   },
   {
     n: "2",
     title: "Isi Informasi Atau Import CV Lama Kamu",
     desc: "Isi form otomatis atau import data langsung dari PDF CV lama atau LinkedIn.",
-    img: "/step2-import.png",
+    img: "/step2-import.webp",
   },
   {
     n: "3",
     title: "Download",
     desc: "Export CV kamu ke format PDF berkualitas tinggi hanya dengan satu klik.",
-    img: "/step3-download.png",
+    img: "/step3-download.webp",
   },
 ] as const;
 
@@ -65,6 +65,8 @@ export function ThreeSteps() {
                   <img
                     src={step.img}
                     alt=""
+                    width={640}
+                    height={640}
                     className="h-full w-full object-contain"
                     loading="lazy"
                     decoding="async"

@@ -29,6 +29,51 @@ export function serializeJsonLd(data: unknown): string {
     .replace(/\u2029/g, "\\u2029");
 }
 
+const BRAND = "CV Pintar";
+
+/** Potong teks di batas kata (bukan di tengah kata), tambahkan "…" bila terpotong. */
+function truncateAtWord(text: string, max: number): string {
+  const clean = text.replace(/\s+/g, " ").trim();
+  if (clean.length <= max) return clean;
+  const cut = clean.slice(0, max - 1);
+  const lastSpace = cut.lastIndexOf(" ");
+  return `${(lastSpace > max * 0.6 ? cut.slice(0, lastSpace) : cut).replace(/[\s,;:.\-–—|]+$/, "")}…`;
+}
+
+/**
+ * Judul halaman maksimal ~60 karakter (batas tampil di hasil pencarian Google).
+ * Bagian utama dipotong di batas kata agar akhiran " | CV Pintar" tetap utuh.
+ */
+export function fitTitle(main: string, suffix = ` | ${BRAND}`, max = 60): string {
+  const room = max - suffix.length;
+  return `${truncateAtWord(main, Math.max(room, 20))}${suffix}`;
+}
+
+/**
+ * Pilih varian judul terbaik dari yang terpanjang ke terpendek: ambil yang pertama
+ * muat utuh (tanpa dipotong). Jika tidak ada yang muat, potong varian terakhir.
+ */
+export function pickTitle(candidates: string[], suffix = ` | ${BRAND}`, max = 60): string {
+  const room = max - suffix.length;
+  const fit = candidates.find((c) => c.length <= room);
+  return fit ? `${fit}${suffix}` : fitTitle(candidates[candidates.length - 1], suffix, max);
+}
+
+/** Buang sintaks markdown, URL, dan tanda hias sisa hasil scraping. */
+export function stripMarkdown(text: string): string {
+  return text
+    .replace(/!?\[([^\]]*)\]\([^)]*\)/g, "$1") // [teks](url) -> teks
+    .replace(/https?:\/\/\S+/g, "")
+    .replace(/[*_`#>•]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/** Deskripsi maksimal ~155 karakter; buang sintaks markdown/URL sisa hasil scraping. */
+export function fitDescription(text: string, max = 155): string {
+  return truncateAtWord(stripMarkdown(text), max);
+}
+
 export function buildSeo({
   title,
   description,

@@ -38,9 +38,9 @@ import {
 export const Route = createFileRoute("/tryout-cpns")({
   head: () =>
     buildSeo({
-      title: "Tryout CPNS SKD Online 2026 Gratis - 110 Soal TWK TIU TKP + Pembahasan | CV Pintar",
+      title: "Tryout CPNS SKD 2026: 110 Soal TWK TIU TKP | CV Pintar",
       description:
-        "Tryout CPNS SKD 2026 online: 110 soal sesuai kisi-kisi BKN (TWK 30, TIU 35, TKP 45), timer 100 menit, passing grade resmi, skor instan, pembahasan lengkap. Mulai dari Rp 15.000.",
+        "Tryout CPNS SKD 2026 online: 110 soal sesuai kisi-kisi BKN, timer 100 menit, passing grade resmi, skor instan, dan pembahasan lengkap. Mulai Rp 15.000.",
       path: "/tryout-cpns",
       keywords:
         "tryout cpns 2026, tryout SKD online, simulasi SKD CPNS, latihan soal SKD, soal TWK TIU TKP, tryout SKD gratis, passing grade SKD, pembahasan SKD CPNS, simulasi ujian CPNS online, tryout cpns terbaru, bank soal CPNS, kisi-kisi SKD BKN 2026",

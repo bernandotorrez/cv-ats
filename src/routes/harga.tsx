@@ -208,7 +208,7 @@ export const Route = createFileRoute("/harga")({
     buildSeo({
       title: "Harga CV Pintar - Mulai Gratis, Upgrade Saat Siap",
       description:
-        "Pilih paket CV Pintar: Free selamanya, Starter Rp 15.000/bulan, atau Pro Rp 35.000/bulan untuk AI CV, scoring ATS, review HR, Job Match Score, Tailor CV, cover letter, dan interview.",
+        "Pilih paket CV Pintar: Free selamanya, Starter Rp 15.000/bulan, atau Pro Rp 35.000/bulan untuk AI CV, skor ATS, review HR, Job Match, dan cover letter.",
       path: "/harga",
       keywords: "harga cv builder, cv ats murah, langganan cv ai indonesia, paket cv pintar",
       jsonLd: [

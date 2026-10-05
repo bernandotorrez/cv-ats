@@ -555,7 +555,7 @@ export function PhotoUpload({
                 Contoh Hasil
               </span>
               <img
-                src="/contoh_enhance_photo.png"
+                src="/contoh_enhance_photo.webp"
                 alt="Contoh Hasil Foto Profesional AI"
                 className="w-48 h-48 object-cover rounded-xl shadow-md border"
               />
@@ -597,7 +597,7 @@ export function PhotoUpload({
                 Contoh Hasil Pas Foto
               </span>
               <img
-                src="/contoh_enhance_photo.png"
+                src="/contoh_enhance_photo.webp"
                 alt="Contoh Hasil Foto Profesional AI"
                 className="w-48 h-48 object-cover rounded-xl shadow-md border"
               />

@@ -22,13 +22,17 @@ export function MentoringCta() {
         </div>
         <div className="flex shrink-0 -space-x-3" aria-hidden="true">
           <img
-            src="/mentor-female.png"
+            src="/mentor-female.webp"
             alt=""
+            width={44}
+            height={44}
             className="h-11 w-11 rounded-full border-2 border-green-700 object-cover"
           />
           <img
-            src="/mentor-male.png"
+            src="/mentor-male.webp"
             alt=""
+            width={44}
+            height={44}
             className="h-11 w-11 rounded-full border-2 border-green-700 object-cover"
           />
         </div>

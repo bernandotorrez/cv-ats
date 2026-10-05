@@ -204,42 +204,42 @@ const testimonials = [
     role: "Software Engineer",
     text: "Dengan template & tips di sini, CV saya jauh lebih rapi dan lolos ke tahap interview.",
     tag: "Lolos di Syahafaza",
-    img: "/mentor-female.png",
+    img: "/mentor-female.webp",
   },
   {
     name: "Devi L.",
     role: "Marketing Specialist",
     text: "Fitur analisis CV-nya ngebantu banget. Saya jadi tahu bagian mana yang harus diperbaiki.",
     tag: "Match Score naik 40%",
-    img: "/mentor-female.png",
+    img: "/mentor-female.webp",
   },
   {
     name: "Andi P.",
     role: "Product Manager",
     text: "Praktis, modern, dan ATS-friendly. Rekomendasi buat semua pencari kerja!",
     tag: "Lolos di perusahaan impian",
-    img: "/mentor-male.png",
+    img: "/mentor-male.webp",
   },
   {
     name: "Budi S.",
     role: "Data Analyst",
     text: "Fitur benchmarking-nya keren banget. Saya jadi tahu posisi saya dibandingkan pelamar lain dan cara naikin skor ATS.",
     tag: "Lolos di Unicorn Tech",
-    img: "/mentor-male.png",
+    img: "/mentor-male.webp",
   },
   {
     name: "Citra W.",
     role: "UI/UX Designer",
     text: "Tampilan visual template-nya bersih dan rapi. Sangat nyaman dibaca rekruter manusia dan aman untuk parser ATS.",
     tag: "Lolos di Agensi Digital",
-    img: "/mentor-female.png",
+    img: "/mentor-female.webp",
   },
   {
     name: "Doni K.",
     role: "Finance Officer",
     text: "Setelah menggunakan AI Keyword Optimizer, CV saya langsung dapet tanggapan positif dalam 3 hari saja.",
     tag: "Lolos di BUMN Terkemuka",
-    img: "/mentor-male.png",
+    img: "/mentor-male.webp",
   },
 ] as const;
 
@@ -247,19 +247,19 @@ const guides = [
   {
     title: "Panduan Lengkap Buat CV ATS-Friendly",
     desc: "Langkah demi langkah membuat CV yang lolos ATS.",
-    img: "/ats-cv-preview.png",
+    img: "/ats-cv-preview.webp",
     to: "/blog/apa-itu-cv-ats",
   },
   {
     title: "Contoh CV Fresh Graduate",
     desc: "Inspirasi CV untuk kamu yang baru lulus.",
-    img: "/fresh-graduate-cv-preview.png",
+    img: "/fresh-graduate-cv-preview.webp",
     to: "/panduan-cv-ats",
   },
   {
     title: "Tips Interview yang Meningkatkan Peluang Diterima",
     desc: "Persiapan interview biar makin percaya diri.",
-    img: "/interview-tips.png",
+    img: "/interview-tips.webp",
     to: "/tips-interview/persiapan-interview-pertama",
   },
 ] as const;
@@ -730,6 +730,8 @@ function TestimonialCard({ item }: { item: (typeof testimonials)[number] }) {
           <img
             src={item.img}
             alt=""
+            width={44}
+            height={44}
             className="h-11 w-11 rounded-full object-cover"
             loading="lazy"
             decoding="async"
@@ -941,10 +943,10 @@ function LandingPage() {
               <div className="mt-8 flex items-center gap-3 border-t border-gray-200 pt-6">
                 <div className="flex -space-x-2" aria-hidden="true">
                   {[
-                    "/mentor-female.png",
-                    "/mentor-male.png",
-                    "/mentor-female.png",
-                    "/mentor-male.png",
+                    "/mentor-female.webp",
+                    "/mentor-male.webp",
+                    "/mentor-female.webp",
+                    "/mentor-male.webp",
                   ].map((src, i) => (
                     <img
                       key={i}
@@ -972,7 +974,11 @@ function LandingPage() {
                   className="absolute inset-0 -z-10 translate-x-3 translate-y-3 rotate-3 rounded-[2rem] bg-green-700"
                 />
                 <img
-                  src="/hero-professionals.png"
+                  src="/hero-professionals.webp"
+                  srcSet="/hero-professionals-640.webp 640w, /hero-professionals.webp 1024w"
+                  sizes="(min-width: 1024px) 520px, 90vw"
+                  width={1024}
+                  height={1024}
                   alt="Tiga profesional muda tersenyum setelah lolos seleksi kerja"
                   className="h-auto w-full rounded-[2rem] border-4 border-white object-cover shadow-2xl"
                   fetchPriority="high"
@@ -1258,8 +1264,10 @@ function LandingPage() {
             <article className="relative flex flex-col overflow-hidden rounded-3xl bg-green-950 text-white">
               <div className="relative aspect-[16/9] w-full overflow-hidden">
                 <img
-                  src="/private-mentoring.png"
+                  src="/private-mentoring.webp"
                   alt=""
+                  width={1000}
+                  height={1000}
                   className="h-full w-full object-cover"
                   loading="lazy"
                   decoding="async"
@@ -1350,6 +1358,8 @@ function LandingPage() {
                   <img
                     src={item.img}
                     alt=""
+                    width={800}
+                    height={800}
                     className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                     loading="lazy"
                     decoding="async"
@@ -1393,7 +1403,9 @@ function LandingPage() {
               </div>
               <div className="relative max-w-[280px] lg:translate-y-4 shrink-0">
                 <img
-                  src="/avatar-pointing.png"
+                  src="/avatar-pointing.webp"
+                  width={600}
+                  height={600}
                   alt="3D Mascot pointing up"
                   className="w-full h-auto object-contain"
                   loading="lazy"
@@ -1484,7 +1496,9 @@ function LandingPage() {
           <div className="relative z-10 w-full max-w-[280px] lg:max-w-[340px] flex justify-center lg:justify-end">
             <div className="relative w-full">
               <img
-                src="/avatar-laptop.png"
+                src="/avatar-laptop.webp"
+                width={700}
+                height={700}
                 alt="3D Avatar with laptop celebrating success"
                 className="w-full h-auto drop-shadow-2xl"
                 loading="lazy"

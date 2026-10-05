@@ -1,5 +1,5 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { buildSeo } from "@/lib/seo";
+import { buildSeo, fitDescription, fitTitle } from "@/lib/seo";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -36,12 +36,7 @@ import {
 import { cn } from "@/lib/utils";
 
 type TipIconName =
-  | "GraduationCap"
-  | "MessageSquare"
-  | "Laptop"
-  | "CircleDollarSign"
-  | "Sparkles"
-  | "Target";
+  "GraduationCap" | "MessageSquare" | "Laptop" | "CircleDollarSign" | "Sparkles" | "Target";
 
 type SectionIconName =
   | "Target"
@@ -507,8 +502,8 @@ export const Route = createFileRoute("/tips-interview/$slug")({
     if (!loaderData) return { meta: [{ title: "Tips tidak ditemukan" }] };
     const { tip, slug } = loaderData;
     return buildSeo({
-      title: `${tip.title} — Tips Interview CV Pintar`,
-      description: tip.excerpt,
+      title: fitTitle(tip.title),
+      description: fitDescription(tip.excerpt),
       path: `/tips-interview/${slug}`,
       type: "article",
       keywords: `tips interview ${tip.category.toLowerCase()}, ${tip.title.toLowerCase()}`,

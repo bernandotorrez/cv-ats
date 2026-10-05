@@ -77,6 +77,16 @@ const FILE_EXTENSION_REWRITES: Record<string, string> = {
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     const url = new URL(request.url);
+
+    // /fitur/ → /fitur dengan 308 (permanen). Router bawaan memakai 307 (sementara),
+    // yang tidak memindahkan sinyal SEO ke URL kanonik.
+    if (url.pathname.length > 1 && url.pathname.endsWith("/")) {
+      url.pathname = url.pathname.replace(/\/+$/, "") || "/";
+      return applySecurityHeaders(
+        new Response(null, { status: 308, headers: { Location: url.toString() } }),
+      );
+    }
+
     const rewriteTarget = FILE_EXTENSION_REWRITES[url.pathname];
     if (rewriteTarget) {
       const newUrl = new URL(request.url);

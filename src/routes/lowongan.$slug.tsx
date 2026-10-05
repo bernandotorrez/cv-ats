@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 import { toast } from "sonner";
-import { buildSeo } from "@/lib/seo";
+import { buildSeo, fitDescription, pickTitle, stripMarkdown } from "@/lib/seo";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -145,21 +145,17 @@ export const Route = createFileRoute("/lowongan/$slug")({
     }
 
     return buildSeo({
-      title: `Lowongan ${loaderData.title} di ${loaderData.company} - CV Pintar`,
-      description:
-        loaderData.description?.substring(0, 160) ??
-        `Lowongan ${loaderData.title} di ${loaderData.company}, ${loaderData.location}.`,
+      title: pickTitle([
+        `Lowongan ${loaderData.title} di ${loaderData.company}`,
+        `${loaderData.title} di ${loaderData.company}`,
+        `Lowongan ${loaderData.title}`,
+        loaderData.title,
+      ]),
+      // Dibuat dari data terstruktur (bukan teks hasil scraping yang sering berantakan)
+      description: jobMetaDescription(loaderData),
       path: `/lowongan/${loaderData.slug}`,
       keywords: `lowongan ${loaderData.title}, loker ${loaderData.company}, kerja ${loaderData.location}`,
-      jsonLd: {
-        "@context": "https://schema.org",
-        "@type": "JobPosting",
-        title: loaderData.title,
-        description: loaderData.description,
-        datePosted: loaderData.created_at,
-        hiringOrganization: { "@type": "Organization", name: loaderData.company },
-        jobLocation: { "@type": "Place", address: { addressLocality: loaderData.location } },
-      },
+      jsonLd: buildJobPostingJsonLd(loaderData),
     });
   },
   component: LowonganDetailPage,
@@ -955,6 +951,91 @@ function formatLongDate(value: string) {
     month: "long",
     year: "numeric",
   });
+}
+
+/** Deskripsi meta dari data terstruktur; buang kalimat dari belakang bila melebihi 160 karakter. */
+function jobMetaDescription(job: Job) {
+  const facts = [
+    typeLabel(job.type),
+    levelLabel(job.level),
+    formatSalary(
+      job.salary_min,
+      job.salary_max,
+      job.salary_currency ?? undefined,
+      job.salary_period,
+    ),
+  ]
+    .filter(Boolean)
+    .join(" · ");
+  const sentences = [
+    `Lowongan ${job.title} di ${job.company}, ${job.location}.`,
+    `${facts}.`,
+    "Lihat persyaratan dan lamar dengan CV ATS dari CV Pintar.",
+  ];
+  while (sentences.length > 1 && sentences.join(" ").length > 160) sentences.pop();
+  return fitDescription(sentences.join(" "), 160);
+}
+
+const EMPLOYMENT_TYPE: Record<string, string> = {
+  "full-time": "FULL_TIME",
+  "part-time": "PART_TIME",
+  contract: "CONTRACTOR",
+  internship: "INTERN",
+};
+
+/** JobPosting JSON-LD selengkap mungkin untuk Google Jobs. */
+function buildJobPostingJsonLd(job: Job) {
+  const description = stripMarkdown(
+    [job.description, job.responsibilities, job.requirements].filter(Boolean).join(". "),
+  );
+  const isRemote = job.work_mode === "remote";
+  const hasSalary = Boolean(job.salary_min || job.salary_max);
+  // deadline berformat YYYY-MM-DD → ISO dengan akhir hari (zona Jakarta)
+  const validThrough = job.deadline ? `${job.deadline.slice(0, 10)}T23:59:59+07:00` : undefined;
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "JobPosting",
+    title: job.title,
+    description: description || `Lowongan ${job.title} di ${job.company}, ${job.location}.`,
+    datePosted: job.created_at,
+    ...(validThrough ? { validThrough } : {}),
+    employmentType: EMPLOYMENT_TYPE[job.type] ?? "FULL_TIME",
+    directApply: false,
+    hiringOrganization: {
+      "@type": "Organization",
+      name: job.company,
+      ...(job.company_logo ? { logo: job.company_logo } : {}),
+    },
+    jobLocation: {
+      "@type": "Place",
+      address: {
+        "@type": "PostalAddress",
+        addressLocality: job.location,
+        addressCountry: "ID",
+      },
+    },
+    ...(isRemote
+      ? {
+          jobLocationType: "TELECOMMUTE",
+          applicantLocationRequirements: { "@type": "Country", name: "ID" },
+        }
+      : {}),
+    ...(hasSalary
+      ? {
+          baseSalary: {
+            "@type": "MonetaryAmount",
+            currency: job.salary_currency || "IDR",
+            value: {
+              "@type": "QuantitativeValue",
+              ...(job.salary_min ? { minValue: job.salary_min } : {}),
+              ...(job.salary_max ? { maxValue: job.salary_max } : {}),
+              unitText: job.salary_period === "yearly" ? "YEAR" : "MONTH",
+            },
+          },
+        }
+      : {}),
+  };
 }
 
 function workModeLabel(value: string) {

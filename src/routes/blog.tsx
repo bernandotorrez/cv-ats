@@ -46,7 +46,7 @@ export const Route = createFileRoute("/blog")({
   head: ({ matches }) =>
     buildSectionHead(
       {
-        title: "Blog — CV Pintar",
+        title: "Blog Karier & Tips CV ATS | CV Pintar",
         description:
           "Artikel terbaru tentang karier, lamaran kerja, dan pengembangan profesional di Indonesia.",
         path: "/blog",

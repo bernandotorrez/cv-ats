@@ -21,8 +21,8 @@
 const CSP_DIRECTIVES = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-inline' https://js.hcaptcha.com https://*.hcaptcha.com https://va.vercel-scripts.com https://www.googletagmanager.com https://static.cloudflareinsights.com https://benixai.web.id https://www.benixai.web.id https://*.benixai.web.id",
-  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.hcaptcha.com",
-  "font-src 'self' https://fonts.gstatic.com",
+  "style-src 'self' 'unsafe-inline' https://*.hcaptcha.com",
+  "font-src 'self' data:",
   "img-src 'self' data: blob: https://*.supabase.co https://lh3.googleusercontent.com https://*.hcaptcha.com https://www.google-analytics.com https://*.google-analytics.com https://benixai.web.id https://www.benixai.web.id https://*.benixai.web.id",
   "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.hcaptcha.com https://analytics.google.com https://www.google-analytics.com https://*.google-analytics.com https://www.googletagmanager.com https://cloudflareinsights.com https://*.cloudflareinsights.com https://csp-reporting.cloudflare.com https://benixai.web.id https://www.benixai.web.id https://*.benixai.web.id wss://benixai.web.id wss://www.benixai.web.id wss://*.benixai.web.id",
   "frame-src https://*.hcaptcha.com https://newassets.hcaptcha.com https://benixai.web.id https://www.benixai.web.id https://*.benixai.web.id",

@@ -5,6 +5,7 @@ import { templatesData } from "@/lib/cv-templates-data";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { previewData } from "@/components/site/TemplatePreview";
+import { ClientOnly } from "@/components/site/ClientOnly";
 
 // Import all templates
 import { BandungTemplate } from "@/components/cv/templates/BandungTemplate";
@@ -183,15 +184,17 @@ export function TemplateGallery() {
                         }}
                       >
                         <div style={{ pointerEvents: "none" }}>
-                          {TemplateComponent ? (
-                            <TemplateComponent
-                              data={
-                                previewData[template.slug as keyof typeof previewData] ||
-                                previewData.jakarta
-                              }
-                              showHeader={true}
-                            />
-                          ) : null}
+                          <ClientOnly>
+                            {TemplateComponent ? (
+                              <TemplateComponent
+                                data={
+                                  previewData[template.slug as keyof typeof previewData] ||
+                                  previewData.jakarta
+                                }
+                                showHeader={true}
+                              />
+                            ) : null}
+                          </ClientOnly>
                         </div>
                       </div>
                     </div>

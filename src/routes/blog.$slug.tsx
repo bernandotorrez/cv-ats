@@ -1,5 +1,5 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { buildSeo } from "@/lib/seo";
+import { buildSeo, fitDescription, fitTitle } from "@/lib/seo";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Calendar } from "lucide-react";
@@ -79,8 +79,8 @@ export const Route = createFileRoute("/blog/$slug")({
     if (!loaderData) return { meta: [{ title: "Artikel tidak ditemukan" }] };
     const { post, slug } = loaderData;
     return buildSeo({
-      title: `${post.title} — Blog CV Pintar`,
-      description: post.excerpt,
+      title: fitTitle(post.title),
+      description: fitDescription(post.excerpt),
       path: `/blog/${slug}`,
       type: "article",
       articlePublishedTime: post.date,

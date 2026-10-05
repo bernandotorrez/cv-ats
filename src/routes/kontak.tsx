@@ -17,7 +17,7 @@ import { CtaBanner, Eyebrow, PageHero, SectionHeader } from "@/components/site/m
 export const Route = createFileRoute("/kontak")({
   head: () =>
     buildSeo({
-      title: "Kontak - CV Pintar",
+      title: "Kontak CV Pintar: Bantuan Akun, CV & Pembayaran",
       description:
         "Hubungi tim CV Pintar untuk bantuan akun, CV, kerja sama, private mentoring, dan pertanyaan layanan.",
       path: "/kontak",

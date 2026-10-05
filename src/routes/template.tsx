@@ -14,6 +14,7 @@ import { MalangTemplate } from "@/components/cv/templates/MalangTemplate";
 import { UbudTemplate } from "@/components/cv/templates/UbudTemplate";
 import { BogorTemplate } from "@/components/cv/templates/BogorTemplate";
 import { previewData, type TemplateSlug } from "@/components/site/TemplatePreview";
+import { ClientOnly } from "@/components/site/ClientOnly";
 import { TemplateCardSkeleton } from "@/components/ui/skeleton-loading";
 import { Button } from "@/components/ui/button";
 import {
@@ -137,7 +138,7 @@ function TemplateThumb({ slug, scale = 0.5 }: { slug: TemplateSlug; scale?: numb
         }}
       >
         <div style={{ padding: "12px", fontSize: "10px", lineHeight: 1.3 }}>
-          {Component && <Component data={data} showHeader={true} />}
+          <ClientOnly>{Component && <Component data={data} showHeader={true} />}</ClientOnly>
         </div>
       </div>
     </div>
@@ -187,7 +188,10 @@ function TemplatePage() {
         </PageHero>
 
         {/* How to choose */}
-        <section aria-labelledby="pilih-heading" className="container-page relative z-10 -mt-6 lg:-mt-10">
+        <section
+          aria-labelledby="pilih-heading"
+          className="container-page relative z-10 -mt-6 lg:-mt-10"
+        >
           <h2 id="pilih-heading" className="sr-only">
             Cara memilih template
           </h2>
