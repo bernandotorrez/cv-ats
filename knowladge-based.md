@@ -1111,9 +1111,9 @@ Jawaban:
 | Harga              | Rp 0      | Rp 15.000/bulan | Rp 35.000/bulan |
 | CV aktif           | 1         | 3               | 10              |
 | Template           | 2 basic   | Premium/all     | Semua premium   |
-| AI suggestions     | 5x/bulan  | 50x/bulan       | 200x/bulan      |
+| AI suggestions     | 1x/bulan  | 50x/bulan       | 200x/bulan      |
 | ATS scoring        | 1x/bulan  | 10x/bulan       | 50x/bulan       |
-| Perbaiki teks AI   | 5x/bulan  | 50x/bulan       | 200x/bulan      |
+| Perbaiki teks AI   | 1x/bulan  | 50x/bulan       | 200x/bulan      |
 | Guided mode        | 10x/bulan | 30x/bulan       | 100x/bulan      |
 | AI chat            | 5x/bulan  | 50x/bulan       | 200x/bulan      |
 | Download CV        | 1x        | Unlimited       | Unlimited       |

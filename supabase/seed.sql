@@ -51,35 +51,34 @@ ON CONFLICT (slug) DO UPDATE SET
   is_premium = EXCLUDED.is_premium,
   sort_order = EXCLUDED.sort_order;
 
--- Terjemah CV: gerbang & kuota per paket (lihat migration 20261006000100_translate_quota.sql)
-UPDATE public.subscription_tiers SET enable_cv_translate = false, quota_ai_translate = 0 WHERE slug = 'free';
-UPDATE public.subscription_tiers SET enable_cv_translate = true, quota_ai_translate = 3 WHERE slug = 'starter';
-UPDATE public.subscription_tiers SET enable_cv_translate = true, quota_ai_translate = 15 WHERE slug IN ('pro', 'pro_plus');
-
 -- ============================================================
 -- Seed: Subscription Tiers (ensure defaults exist)
 -- ============================================================
+-- Hanya membuat paket yang BELUM ada (database baru). Nilai paket yang sudah ada dikelola lewat
+-- migrasi; dulu blok ini memakai ON CONFLICT DO UPDATE dengan nilai lama sehingga setiap seed
+-- menimpa kuota & harga (lihat migration 20261006000200_realign_tier_limits.sql).
+-- Nilai di bawah harus sama dengan src/lib/subscription.ts (TIER_LIMITS) dan src/routes/harga.tsx.
 INSERT INTO public.subscription_tiers (slug, name, description, price_monthly, max_cvs, quota_ai_suggest, quota_ai_score, quota_ai_chat, quota_ai_cover_letter, quota_ai_keyword_extract, quota_cv_downloads, template_access, features, enable_cv_review, enable_cover_letter, enable_keyword_extractor, enable_cv_comparison, enable_interview_simulator, enable_analytics, enable_linkedin_optimize, enable_text_polish, quota_ai_polish, enable_guided_mode, quota_guided_mode, sort_order) VALUES
   ('free', 'Free', 'Paket gratis selamanya untuk mulai membuat CV ATS.', 0,
-   1, 10, 3, 5, 1, 2, 1, 'basic',
-   '["1 CV aktif", "10 AI Saran/bulan", "3 AI Scoring/bulan", "2 Template Basic", "5 AI Chat/bulan", "10 Perbaiki Teks/bulan", "1x Download PDF"]'::jsonb,
+   1, 1, 1, 5, 0, 0, 1, 'basic',
+   '["1 CV aktif", "2 template basic", "1x saran AI / bulan", "1x scoring / bulan", "1x perbaiki teks / bulan", "10x guided mode / bulan", "5x AI chat / bulan", "Export PDF dengan watermark"]'::jsonb,
    false, false, false, false, false, false, false,
-   true, 10,
+   true, 1,
    true, 10,
    1),
-  ('starter', 'Starter', 'Untuk job seeker serius yang butuh lebih banyak CV & AI.', 19000,
+  ('starter', 'Starter', 'Untuk job seeker serius yang butuh lebih banyak CV & AI.', 15000,
    3, 50, 10, 50, 10, 20, NULL, 'all',
-   '["3 CV aktif", "50 AI Saran/bulan", "10 AI Scoring/bulan", "Semua Template", "50 AI Chat/bulan", "10 Cover Letter/bulan", "CV Review HR Expert", "50 Perbaiki Teks/bulan", "Export PDF & DOCX", "Tanpa Watermark"]'::jsonb,
+   '["3 CV aktif", "Sebagian template premium", "50x saran AI / bulan", "10x scoring / bulan", "50x perbaiki teks / bulan", "30x guided mode / bulan", "10x cover letter / bulan", "10x CV review HR / bulan", "20x AI Job Match Score / bulan", "20x keyword extractor / bulan", "10x Upload CV / bulan", "2x Enhance Foto / bulan", "50x AI chat / bulan", "Export PDF tanpa watermark"]'::jsonb,
    true, true, true, false, false, false, false,
    true, 50,
    true, 30,
    2),
-  ('pro', 'Pro', 'Untuk profesional & career switcher yang ingin fitur lengkap.', 49000,
-   NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'all',
-   '["CV Unlimited", "AI Saran Unlimited", "AI Scoring Unlimited", "Semua Template Premium", "AI Chat Unlimited", "Cover Letter Unlimited", "CV Review HR Expert", "Keyword Extractor", "CV Comparison", "Perbaiki Teks Unlimited", "LinkedIn Profile Optimizer", "AI Interview Simulator", "CV Analytics", "Priority Support 24/7", "Export PDF & DOCX"]'::jsonb,
+  ('pro', 'Pro', 'Untuk profesional & career switcher yang ingin fitur lengkap.', 35000,
+   10, 200, 50, 200, 50, 100, NULL, 'all',
+   '["10 CV aktif", "Semua template premium", "200x saran AI / bulan", "50x scoring / bulan", "200x perbaiki teks / bulan", "100x guided mode / bulan", "50x cover letter / bulan", "50x CV review HR / bulan", "100x AI Job Match Score / bulan", "30x Auto Tailor CV / bulan", "100x keyword extractor / bulan", "20x Upload CV / bulan", "5x Enhance Foto / bulan", "50x simulasi wawancara / bulan", "200x AI chat / bulan", "CV comparison dan analitik CV", "Dukungan prioritas 24/7"]'::jsonb,
    true, true, true, true, true, true, true,
-   true, NULL,
-   true, NULL,
+   true, 200,
+   true, 100,
    3),
   ('pro_plus', 'Pro+', 'Paket terlengkap dengan LinkedIn Optimizer.', 99000,
    NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'all',
@@ -88,34 +87,16 @@ INSERT INTO public.subscription_tiers (slug, name, description, price_monthly, m
    true, NULL,
    true, NULL,
    4)
-ON CONFLICT (slug) DO UPDATE SET
-  name = EXCLUDED.name,
-  description = EXCLUDED.description,
-  price_monthly = EXCLUDED.price_monthly,
-  max_cvs = EXCLUDED.max_cvs,
-  quota_ai_suggest = EXCLUDED.quota_ai_suggest,
-  quota_ai_score = EXCLUDED.quota_ai_score,
-  quota_ai_chat = EXCLUDED.quota_ai_chat,
-  quota_ai_cover_letter = EXCLUDED.quota_ai_cover_letter,
-  quota_ai_keyword_extract = EXCLUDED.quota_ai_keyword_extract,
-  quota_cv_downloads = EXCLUDED.quota_cv_downloads,
-  template_access = EXCLUDED.template_access,
-  features = EXCLUDED.features,
-  enable_cv_review = EXCLUDED.enable_cv_review,
-  enable_cover_letter = EXCLUDED.enable_cover_letter,
-  enable_keyword_extractor = EXCLUDED.enable_keyword_extractor,
-  enable_cv_comparison = EXCLUDED.enable_cv_comparison,
-  enable_interview_simulator = EXCLUDED.enable_interview_simulator,
-  enable_analytics = EXCLUDED.enable_analytics,
-  enable_linkedin_optimize = EXCLUDED.enable_linkedin_optimize,
-  enable_text_polish = EXCLUDED.enable_text_polish,
-  quota_ai_polish = EXCLUDED.quota_ai_polish,
-  enable_guided_mode = EXCLUDED.enable_guided_mode,
-  quota_guided_mode = EXCLUDED.quota_guided_mode,
-  sort_order = EXCLUDED.sort_order;
+ON CONFLICT (slug) DO NOTHING;
 
 ALTER TABLE public.subscription_tiers
   ADD COLUMN IF NOT EXISTS quota_ai_tailor_cv INTEGER DEFAULT 0;
 
 UPDATE public.subscription_tiers SET quota_ai_tailor_cv = 0 WHERE slug IN ('free', 'starter');
 UPDATE public.subscription_tiers SET quota_ai_tailor_cv = 30 WHERE slug = 'pro';
+
+-- Kolom kuota yang ditambahkan migrasi belakangan: isi untuk paket yang baru dibuat di atas.
+-- (Database lama sudah diatur oleh migrasinya masing-masing; nilai ini sama.)
+UPDATE public.subscription_tiers SET quota_cv_review = 0, quota_ai_job_match = 0, quota_interview_simulator = 0, enable_cv_translate = false, quota_ai_translate = 0 WHERE slug = 'free';
+UPDATE public.subscription_tiers SET quota_cv_review = 10, quota_ai_job_match = 20, quota_interview_simulator = 0, enable_cv_translate = true, quota_ai_translate = 3 WHERE slug = 'starter';
+UPDATE public.subscription_tiers SET quota_cv_review = 50, quota_ai_job_match = 100, quota_interview_simulator = 50, enable_cv_translate = true, quota_ai_translate = 15 WHERE slug IN ('pro', 'pro_plus');
