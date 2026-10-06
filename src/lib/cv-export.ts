@@ -979,6 +979,125 @@ export function downloadBlob(blob: Blob, fileName: string) {
 }
 
 /**
+ * ─── Selectable text layer for the PDF ───────────────────────────────────────
+ * downloadPdf rasterizes the CV (html2canvas) so the PDF looks exactly like the preview,
+ * but a page that is only an image has no text: it cannot be selected, copied or searched,
+ * and ATS parsers see an empty document. We therefore also write every word of the CV into
+ * the PDF as invisible text ("render mode 3") positioned exactly over the rasterized word.
+ */
+type PdfTextBox = {
+  text: string;
+  /** CSS px relative to the CV root element. */
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  fontPx: number;
+  bold: boolean;
+};
+
+/** Standard PDF fonts only cover WinAnsi; map common typographic characters to it. */
+function toPdfText(raw: string): string {
+  return raw
+    .replace(/[\u2010\u2011\u2012\u2013\u2014\u2015\u2212]/g, "-")
+    .replace(/[\u2018\u2019\u201B]/g, "'")
+    .replace(/[\u201C\u201D\u201F]/g, '"')
+    .replace(/\u2026/g, "...")
+    .replace(/[\u00A0\u2007\u202F]/g, " ")
+    .replace(/[^\x20-\x7E\xA1-\xFF\u2022]/g, "");
+}
+
+/** One entry per rendered word, in DOM (reading) order. */
+function collectTextBoxes(root: HTMLElement): PdfTextBox[] {
+  const rootRect = root.getBoundingClientRect();
+  const boxes: PdfTextBox[] = [];
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  const skipTags = new Set(["STYLE", "SCRIPT", "NOSCRIPT", "TEXTAREA"]);
+
+  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+    const el = node.parentElement;
+    const content = node.textContent ?? "";
+    if (!el || skipTags.has(el.tagName) || !content.trim()) continue;
+
+    const cs = getComputedStyle(el);
+    if (cs.display === "none" || cs.visibility === "hidden" || Number(cs.opacity) === 0) continue;
+    const fontPx = parseFloat(cs.fontSize);
+    const bold = Number(cs.fontWeight) >= 600;
+    const transform = cs.textTransform;
+
+    const wordRe = /\S+/g;
+    for (let m = wordRe.exec(content); m; m = wordRe.exec(content)) {
+      const range = document.createRange();
+      range.setStart(node, m.index);
+      range.setEnd(node, m.index + m[0].length);
+      // A word that wraps at a hyphen spans two rects: keep the first line only
+      const rect = range.getClientRects()[0];
+      if (!rect || !rect.width || !rect.height) continue;
+
+      let text = m[0];
+      if (transform === "uppercase") text = text.toUpperCase();
+      else if (transform === "lowercase") text = text.toLowerCase();
+
+      boxes.push({
+        text: toPdfText(text),
+        x: rect.left - rootRect.left,
+        y: rect.top - rootRect.top,
+        w: rect.width,
+        h: rect.height,
+        fontPx,
+        bold,
+      });
+    }
+  }
+  return boxes.filter((b) => b.text.length > 0);
+}
+
+/** Draw the words that fall inside one page slice as invisible text over the image. */
+function addInvisibleTextLayer(
+  pdf: import("jspdf").jsPDF,
+  boxes: PdfTextBox[],
+  slice: {
+    /** CSS px of the CV root → mm on the page. */
+    mmPerCssPx: number;
+    /** Canvas px per CSS px (html2canvas scale). */
+    canvasPerCssPx: number;
+    /** Slice position in canvas px. */
+    startPx: number;
+    endPx: number;
+    /** Where the slice image starts on the page (mm). */
+    offsetYmm: number;
+  },
+): void {
+  const ptPerMm = 72 / 25.4;
+  for (const box of boxes) {
+    const centerPx = (box.y + box.h / 2) * slice.canvasPerCssPx;
+    if (centerPx < slice.startPx || centerPx >= slice.endPx) continue;
+
+    const xMm = box.x * slice.mmPerCssPx;
+    const topMm = (box.y * slice.canvasPerCssPx - slice.startPx) / slice.canvasPerCssPx;
+    const baselineMm = slice.offsetYmm + (topMm + box.h * 0.8) * slice.mmPerCssPx;
+
+    // Every word is written with a trailing real space character. Parsers (copy/paste, ATS)
+    // decide word breaks from the content stream and glyph gaps; tight headings with negative
+    // letter-spacing otherwise read as "YearsExperience".
+    const text = `${box.text} `;
+    const spaceMm = box.fontPx * 0.27 * slice.mmPerCssPx;
+    const widthMm = box.w * slice.mmPerCssPx + spaceMm;
+
+    pdf.setFont("helvetica", box.bold ? "bold" : "normal");
+    const baseSizePt = box.fontPx * slice.mmPerCssPx * ptPerMm;
+    pdf.setFontSize(baseSizePt);
+    // Helvetica glyphs are narrower/wider than the CV font. Match the rasterized word's width
+    // by scaling the font size, NOT with letter-spacing: spaced-out glyphs are read back as
+    // "2 0 %" / "# 2" by copy-paste and ATS parsers.
+    const naturalMm = pdf.getTextWidth(text);
+    const ratio = naturalMm > 0 ? Math.min(1.4, Math.max(0.6, widthMm / naturalMm)) : 1;
+    pdf.setFontSize(baseSizePt * ratio);
+    pdf.text(text, xMm, baselineMm, { renderingMode: "invisible" });
+  }
+}
+
+/**
  * Download CV as a real PDF file (rendered client-side, not via window.print()).
  *
  * iOS Safari's print dialog has no "headers and footers" toggle like desktop
@@ -1096,7 +1215,14 @@ export async function downloadPdf(_cv: CvData, fileName: string = "CV.pdf"): Pro
       backgroundColor: "#ffffff",
     });
 
+    // Measure words while the clone is still laid out (before the sandbox is removed)
+    const rootRect = clonedCv.getBoundingClientRect();
+    const textBoxes = collectTextBoxes(clonedCv);
+    const canvasPerCssPx = canvas.width / rootRect.width;
+    const mmPerCssPx = A4_WIDTH_MM / rootRect.width;
+
     const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
+    pdf.setProperties({ title: fileName.replace(/\.pdf$/i, "") });
 
     // A hard pixel-height cut lands wherever it lands — usually mid text
     // line — and with nothing drawn outside it, the break reads as content
@@ -1170,6 +1296,13 @@ export async function downloadPdf(_cv: CvData, fileName: string = "CV.pdf"): Pro
 
       if (!isFirstPage) pdf.addPage();
       pdf.addImage(imgData, "JPEG", 0, PAGE_MARGIN_MM, A4_WIDTH_MM, sliceHeightMm);
+      addInvisibleTextLayer(pdf, textBoxes, {
+        mmPerCssPx,
+        canvasPerCssPx,
+        startPx: renderedPx,
+        endPx: renderedPx + sliceHeightPx,
+        offsetYmm: PAGE_MARGIN_MM,
+      });
 
       renderedPx += sliceHeightPx;
       isFirstPage = false;
