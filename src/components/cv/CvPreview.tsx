@@ -64,6 +64,14 @@ interface Props {
   language?: CvUiLang;
 }
 
+/**
+ * Font CV. "Inter Variable" adalah nama @font-face dari @fontsource-variable (dimuat di
+ * styles.css) — "Inter" saja tidak terdaftar. Jangan pakai system-ui: html2canvas mengukur
+ * posisi kata di DOM lalu menggambarnya di canvas, dan canvas Safari tidak mengenali
+ * system-ui sehingga teks di PDF digambar dengan font lain dan kata-katanya menumpuk.
+ */
+export const CV_FONT_STACK = "'Inter Variable', Inter, Arial, sans-serif";
+
 const A4_WIDTH_MM = 210;
 const A4_HEIGHT_MM = 297;
 const PADDING_MM = 16;
@@ -146,7 +154,7 @@ export function CvPreview({
           width: `${A4_WIDTH_MM}mm`,
           minHeight: `${A4_HEIGHT_MM}mm`,
           padding: `${PADDING_MM}mm`,
-          fontFamily: "Inter, system-ui, sans-serif",
+          fontFamily: CV_FONT_STACK,
           fontSize: "10.5pt",
           lineHeight: 1.5,
           transform: `scale(${scale})`,
@@ -178,7 +186,7 @@ export function CvWatermark({ className }: { className?: string }) {
         paddingTop: "14px",
         width: "100%",
         color: "#000000",
-        fontFamily: "Inter, system-ui, sans-serif",
+        fontFamily: CV_FONT_STACK,
         fontSize: "8.5pt",
         lineHeight: 1.2,
       }}
@@ -233,7 +241,7 @@ export function MultiPageCvPreview({
               width: `${A4_WIDTH_MM}mm`,
               minHeight: `${A4_HEIGHT_MM}mm`,
               padding: `${PADDING_MM}mm`,
-              fontFamily: "Inter, system-ui, sans-serif",
+              fontFamily: CV_FONT_STACK,
               fontSize: "10.5pt",
               lineHeight: 1.5,
               transform: `scale(${scale})`,

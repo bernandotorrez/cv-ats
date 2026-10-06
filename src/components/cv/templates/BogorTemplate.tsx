@@ -469,7 +469,7 @@ export function BogorTemplate({ data, showHeader = true, sectionOrder, language 
         minHeight: "100%",
         position: "relative",
         backgroundColor: "#fff",
-        fontFamily: "'Inter', sans-serif",
+        fontFamily: "'Inter Variable', Inter, Arial, sans-serif",
       }}
     >
       {/* ─── Left Sidebar (35% width) ─── */}

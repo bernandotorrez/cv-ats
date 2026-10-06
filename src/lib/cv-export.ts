@@ -1073,8 +1073,19 @@ export async function downloadPdf(_cv: CvData, fileName: string = "CV.pdf"): Pro
 
   try {
     // Let web fonts settle before rasterizing so text isn't measured with
-    // fallback-font metrics.
-    await (document.fonts?.ready ?? Promise.resolve());
+    // fallback-font metrics. document.fonts.ready only covers faces already
+    // requested by the page, so explicitly load every weight the CV may use —
+    // a weight that is measured with one font and drawn with another makes
+    // words overlap in the PDF.
+    if (document.fonts) {
+      await Promise.all(
+        ["400", "500", "600", "700", "800"].flatMap((weight) => [
+          document.fonts.load(`${weight} 16px "Inter Variable"`).catch(() => []),
+          document.fonts.load(`${weight} 16px "Plus Jakarta Sans Variable"`).catch(() => []),
+        ]),
+      );
+      await document.fonts.ready;
+    }
     await new Promise<void>((resolve) =>
       requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
     );
