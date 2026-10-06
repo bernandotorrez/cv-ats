@@ -67,6 +67,7 @@ import { Route as AuthenticatedCvIdRouteImport } from './routes/_authenticated/c
 import { Route as AuthenticatedScoreIndexRouteImport } from './routes/_authenticated/score.index'
 import { Route as AuthenticatedScoreCvIdRouteImport } from './routes/_authenticated/score.$cvId'
 import { Route as AuthenticatedSimulasiWawancaraIdRouteImport } from './routes/_authenticated/simulasi-wawancara.$id'
+import { Route as AuthenticatedSimulasiWawancaraNegosiasiRouteImport } from './routes/_authenticated/simulasi-wawancara.negosiasi'
 import { Route as AuthenticatedToolsIndexRouteImport } from './routes/_authenticated/tools.index'
 import { Route as AuthenticatedTryoutExamIdRouteImport } from './routes/_authenticated/tryout.$examId'
 import { Route as AuthenticatedTryoutBeliRouteImport } from './routes/_authenticated/tryout.beli'
@@ -373,6 +374,12 @@ const AuthenticatedSimulasiWawancaraIdRoute =
     path: '/$id',
     getParentRoute: () => AuthenticatedSimulasiWawancaraRoute,
   } as any)
+const AuthenticatedSimulasiWawancaraNegosiasiRoute =
+  AuthenticatedSimulasiWawancaraNegosiasiRouteImport.update({
+    id: '/negosiasi',
+    path: '/negosiasi',
+    getParentRoute: () => AuthenticatedSimulasiWawancaraRoute,
+  } as any)
 const AuthenticatedToolsIndexRoute = AuthenticatedToolsIndexRouteImport.update({
   id: '/tools/',
   path: '/tools/',
@@ -480,6 +487,7 @@ export interface FileRoutesByFullPath {
   '/cv/$id': typeof AuthenticatedCvIdRoute
   '/score/$cvId': typeof AuthenticatedScoreCvIdRoute
   '/simulasi-wawancara/$id': typeof AuthenticatedSimulasiWawancaraIdRoute
+  '/simulasi-wawancara/negosiasi': typeof AuthenticatedSimulasiWawancaraNegosiasiRoute
   '/tryout/$examId': typeof AuthenticatedTryoutExamIdRouteWithChildren
   '/tryout/beli': typeof AuthenticatedTryoutBeliRoute
   '/tryout/leaderboard': typeof AuthenticatedTryoutLeaderboardRoute
@@ -547,6 +555,7 @@ export interface FileRoutesByTo {
   '/cv/$id': typeof AuthenticatedCvIdRoute
   '/score/$cvId': typeof AuthenticatedScoreCvIdRoute
   '/simulasi-wawancara/$id': typeof AuthenticatedSimulasiWawancaraIdRoute
+  '/simulasi-wawancara/negosiasi': typeof AuthenticatedSimulasiWawancaraNegosiasiRoute
   '/tryout/$examId': typeof AuthenticatedTryoutExamIdRouteWithChildren
   '/tryout/beli': typeof AuthenticatedTryoutBeliRoute
   '/tryout/leaderboard': typeof AuthenticatedTryoutLeaderboardRoute
@@ -617,6 +626,7 @@ export interface FileRoutesById {
   '/_authenticated/cv/$id': typeof AuthenticatedCvIdRoute
   '/_authenticated/score/$cvId': typeof AuthenticatedScoreCvIdRoute
   '/_authenticated/simulasi-wawancara/$id': typeof AuthenticatedSimulasiWawancaraIdRoute
+  '/_authenticated/simulasi-wawancara/negosiasi': typeof AuthenticatedSimulasiWawancaraNegosiasiRoute
   '/_authenticated/tryout/$examId': typeof AuthenticatedTryoutExamIdRouteWithChildren
   '/_authenticated/tryout/beli': typeof AuthenticatedTryoutBeliRoute
   '/_authenticated/tryout/leaderboard': typeof AuthenticatedTryoutLeaderboardRoute
@@ -687,6 +697,7 @@ export interface FileRouteTypes {
     | '/cv/$id'
     | '/score/$cvId'
     | '/simulasi-wawancara/$id'
+    | '/simulasi-wawancara/negosiasi'
     | '/tryout/$examId'
     | '/tryout/beli'
     | '/tryout/leaderboard'
@@ -754,6 +765,7 @@ export interface FileRouteTypes {
     | '/cv/$id'
     | '/score/$cvId'
     | '/simulasi-wawancara/$id'
+    | '/simulasi-wawancara/negosiasi'
     | '/tryout/$examId'
     | '/tryout/beli'
     | '/tryout/leaderboard'
@@ -823,6 +835,7 @@ export interface FileRouteTypes {
     | '/_authenticated/cv/$id'
     | '/_authenticated/score/$cvId'
     | '/_authenticated/simulasi-wawancara/$id'
+    | '/_authenticated/simulasi-wawancara/negosiasi'
     | '/_authenticated/tryout/$examId'
     | '/_authenticated/tryout/beli'
     | '/_authenticated/tryout/leaderboard'
@@ -1280,6 +1293,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSimulasiWawancaraIdRouteImport
       parentRoute: typeof AuthenticatedSimulasiWawancaraRoute
     }
+    '/_authenticated/simulasi-wawancara/negosiasi': {
+      id: '/_authenticated/simulasi-wawancara/negosiasi'
+      path: '/negosiasi'
+      fullPath: '/simulasi-wawancara/negosiasi'
+      preLoaderRoute: typeof AuthenticatedSimulasiWawancaraNegosiasiRouteImport
+      parentRoute: typeof AuthenticatedSimulasiWawancaraRoute
+    }
     '/_authenticated/tools/': {
       id: '/_authenticated/tools/'
       path: '/tools'
@@ -1369,12 +1389,15 @@ const AuthenticatedAdminRouteWithChildren =
 
 interface AuthenticatedSimulasiWawancaraRouteChildren {
   AuthenticatedSimulasiWawancaraIdRoute: typeof AuthenticatedSimulasiWawancaraIdRoute
+  AuthenticatedSimulasiWawancaraNegosiasiRoute: typeof AuthenticatedSimulasiWawancaraNegosiasiRoute
 }
 
 const AuthenticatedSimulasiWawancaraRouteChildren: AuthenticatedSimulasiWawancaraRouteChildren =
   {
     AuthenticatedSimulasiWawancaraIdRoute:
       AuthenticatedSimulasiWawancaraIdRoute,
+    AuthenticatedSimulasiWawancaraNegosiasiRoute:
+      AuthenticatedSimulasiWawancaraNegosiasiRoute,
   }
 
 const AuthenticatedSimulasiWawancaraRouteWithChildren =

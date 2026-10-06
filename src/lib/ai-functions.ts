@@ -295,3 +295,107 @@ export async function translateCv(input: {
     skippedFields: number;
   }>;
 }
+
+// ─── Latihan negosiasi gaji (edge function ai-interview) ─────────────
+
+export type NegotiationRole = "hr" | "user";
+
+export interface NegotiationMessage {
+  role: NegotiationRole;
+  content: string;
+  offer?: number | null;
+}
+
+export interface NegotiationTactic {
+  label: string;
+  verdict: "baik" | "kurang";
+  note: string;
+}
+
+export interface NegotiationResult {
+  overall: number;
+  moneyScore: number;
+  techniqueScore: number;
+  outcome: "deal" | "no_deal";
+  openingOffer: number;
+  finalOffer: number;
+  expectedSalary: number;
+  /** Batas atas HR yang sebenarnya — hanya dibuka setelah sesi dinilai. */
+  hrCeiling: number;
+  gainPercent: number;
+  summary: string;
+  tactics: NegotiationTactic[];
+  missed: string[];
+  betterPhrases: Array<{ instead: string; say: string }>;
+  tips: string[];
+}
+
+export interface NegotiationSession {
+  id: string;
+  position: string;
+  level: string;
+  industry: string | null;
+  city: string | null;
+  expectedSalary: number;
+  currentSalary: number | null;
+  messages: NegotiationMessage[];
+  currentOffer: number;
+  openingOffer?: number;
+  hrName: string;
+  company: string;
+  turnCount: number;
+  turnsLeft: number;
+  status: "active" | "ended" | "evaluated";
+  result: NegotiationResult | null;
+  createdAt: string;
+}
+
+export interface NegotiationListItem {
+  id: string;
+  position: string;
+  level: string;
+  status: NegotiationSession["status"];
+  createdAt: string;
+  score: number | null;
+}
+
+export async function negotiationStart(input: {
+  position: string;
+  level: string;
+  industry?: string;
+  city?: string;
+  currentSalary?: number | null;
+  expectedSalary: number;
+}) {
+  return callEdge("ai-interview", { action: "negotiate_start", ...input }) as Promise<{
+    session: NegotiationSession;
+  }>;
+}
+
+export async function negotiationGet(sessionId: string) {
+  return callEdge("ai-interview", { action: "negotiate_get", sessionId }) as Promise<{
+    session: NegotiationSession;
+  }>;
+}
+
+export async function negotiationTurn(sessionId: string, message: string) {
+  return callEdge("ai-interview", { action: "negotiate_turn", sessionId, message }) as Promise<{
+    reply: string;
+    offer: number;
+    mood: "terbuka" | "ragu" | "tegas";
+    deal: boolean;
+    session: NegotiationSession;
+  }>;
+}
+
+export async function negotiationEvaluate(sessionId: string) {
+  return callEdge("ai-interview", { action: "negotiate_evaluate", sessionId }) as Promise<{
+    session: NegotiationSession;
+  }>;
+}
+
+export async function negotiationList() {
+  return callEdge("ai-interview", { action: "negotiate_list" }) as Promise<{
+    sessions: NegotiationListItem[];
+  }>;
+}

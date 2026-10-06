@@ -19,6 +19,25 @@ import {
 } from "../_shared/ai-common.ts";
 import { checkRateLimit, createRateLimitedResponse } from "../_shared/rate-limit.ts";
 import {
+  MAX_MESSAGE_CHARS,
+  MAX_SALARY,
+  MAX_TURNS,
+  MIN_SALARY,
+  buildEvaluateMessages,
+  buildOpeningMessage,
+  buildTurnMessages,
+  computeMoneyScore,
+  extractAmounts,
+  fallbackReply,
+  makePersona,
+  parseEvaluation,
+  parseTurnReply,
+  sanitizeTurn,
+  type ChatMessage,
+  type NegotiationContext,
+  type Persona,
+} from "../_shared/negotiation.ts";
+import {
   LIMITS,
   limitJson,
   limitText,
@@ -237,6 +256,10 @@ Deno.serve(async (req: Request) => {
       return corsResponse({ success: true, id: inserted?.id }, 200, req);
     }
 
+    if (typeof action === "string" && action.startsWith("negotiate_")) {
+      return await handleNegotiation(action, body, admin, userId, req);
+    }
+
     throw new ValidationError("Invalid action");
   } catch (err) {
     return errorResponse(err, req);
@@ -385,4 +408,320 @@ function parseAiJson<T>(result: string): T {
   } catch {
     throw new Error("AI gagal memproses permintaan. Silakan coba lagi.");
   }
+}
+
+// ─── Latihan negosiasi gaji ────────────────────────────────────────
+
+const LEVELS = new Set(["entry", "mid", "senior", "manager", "director"]);
+
+interface NegotiationRow {
+  id: string;
+  user_id: string;
+  position: string;
+  level: string;
+  industry: string | null;
+  city: string | null;
+  current_salary: number | null;
+  expected_salary: number;
+  persona: Persona;
+  messages: ChatMessage[];
+  current_offer: number;
+  turn_count: number;
+  status: "active" | "ended" | "evaluated";
+  result: Record<string, unknown> | null;
+  created_at: string;
+}
+
+function readSalary(value: unknown, field: string, required: boolean): number | null {
+  if (value === undefined || value === null || value === "") {
+    if (required) throw new ValidationError(`${field} wajib diisi.`);
+    return null;
+  }
+  const n = typeof value === "number" ? value : Number(value);
+  if (!Number.isFinite(n) || n < MIN_SALARY || n > MAX_SALARY) {
+    throw new ValidationError(
+      `${field} harus antara Rp ${MIN_SALARY.toLocaleString("id-ID")} dan Rp ${MAX_SALARY.toLocaleString("id-ID")}.`,
+    );
+  }
+  return Math.round(n);
+}
+
+function contextOf(row: NegotiationRow): NegotiationContext {
+  return {
+    position: row.position,
+    level: row.level,
+    industry: row.industry ?? undefined,
+    city: row.city ?? undefined,
+    currentSalary: row.current_salary,
+    expectedSalary: row.expected_salary,
+  };
+}
+
+/** Tampilan sesi untuk client. Batas atas HR (persona.ceiling) baru dibuka setelah dinilai. */
+function publicSession(row: NegotiationRow) {
+  const revealed = row.status === "evaluated";
+  return {
+    id: row.id,
+    position: row.position,
+    level: row.level,
+    industry: row.industry,
+    city: row.city,
+    expectedSalary: row.expected_salary,
+    currentSalary: row.current_salary,
+    messages: row.messages,
+    currentOffer: row.current_offer,
+    openingOffer: revealed ? row.persona.opening : undefined,
+    hrName: row.persona.hrName,
+    company: row.persona.company,
+    turnCount: row.turn_count,
+    turnsLeft: Math.max(0, MAX_TURNS - row.turn_count),
+    status: row.status,
+    result: revealed ? row.result : null,
+    createdAt: row.created_at,
+  };
+}
+
+async function loadNegotiation(
+  admin: ReturnType<typeof getAdminClient>,
+  userId: string,
+  sessionId: string,
+): Promise<NegotiationRow | null> {
+  const { data, error } = await admin
+    .from("negotiation_sessions")
+    .select("*")
+    .eq("id", sessionId)
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (error) {
+    console.error("negotiation load failed:", error);
+    throw new Error("Gagal memuat sesi negosiasi.");
+  }
+  return (data as NegotiationRow | null) ?? null;
+}
+
+async function handleNegotiation(
+  action: string,
+  body: Record<string, unknown>,
+  admin: ReturnType<typeof getAdminClient>,
+  userId: string,
+  req: Request,
+): Promise<Response> {
+  if (action === "negotiate_list") {
+    const { data, error } = await admin
+      .from("negotiation_sessions")
+      .select("id, position, level, status, result, created_at")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(10);
+    if (error) throw new Error("Gagal memuat riwayat negosiasi.");
+    const sessions = (data ?? []).map((r) => ({
+      id: r.id,
+      position: r.position,
+      level: r.level,
+      status: r.status,
+      createdAt: r.created_at,
+      score: (r.result as { overall?: number } | null)?.overall ?? null,
+    }));
+    return corsResponse({ sessions }, 200, req);
+  }
+
+  if (action === "negotiate_start") {
+    const { position, level, industry } = readContext(body);
+    if (!position) throw new ValidationError("Posisi wajib diisi.");
+    const city = limitText(body.city, 100, "city").trim() || undefined;
+    const expectedSalary = readSalary(body.expectedSalary, "Harapan gaji", true)!;
+    const currentSalary = readSalary(body.currentSalary, "Gaji saat ini", false);
+
+    const ctx: NegotiationContext = {
+      position,
+      level: LEVELS.has(level) ? level : "mid",
+      industry,
+      city,
+      currentSalary,
+      expectedSalary,
+    };
+    const persona = makePersona(expectedSalary);
+    const opening: ChatMessage = {
+      role: "hr",
+      content: buildOpeningMessage(persona, ctx),
+      offer: persona.opening,
+    };
+
+    // Satu sesi = satu kuota simulasi. Giliran berikutnya dibatasi MAX_TURNS di server.
+    const reservation = await reserveQuota(admin, userId, "interview_simulator", 300);
+    const { data: inserted, error } = await admin
+      .from("negotiation_sessions")
+      .insert({
+        user_id: userId,
+        position: ctx.position,
+        level: ctx.level,
+        industry: ctx.industry ?? null,
+        city: ctx.city ?? null,
+        current_salary: currentSalary,
+        expected_salary: expectedSalary,
+        persona,
+        messages: [opening],
+        current_offer: persona.opening,
+      })
+      .select("*")
+      .single();
+    if (error || !inserted) {
+      console.error("negotiate_start insert failed:", error);
+      await reservation.release();
+      throw new Error("Gagal memulai sesi negosiasi.");
+    }
+    return corsResponse({ session: publicSession(inserted as NegotiationRow) }, 200, req);
+  }
+
+  // Aksi lain butuh sesi milik user
+  const sessionId = limitText(body.sessionId, 100, "sessionId").trim();
+  if (!sessionId) throw new ValidationError("sessionId diperlukan.");
+  const row = await loadNegotiation(admin, userId, sessionId);
+  if (!row) return corsResponse({ error: "Sesi negosiasi tidak ditemukan." }, 404, req);
+
+  if (action === "negotiate_get") {
+    return corsResponse({ session: publicSession(row) }, 200, req);
+  }
+
+  if (action === "negotiate_turn") {
+    if (row.status !== "active") {
+      throw new ValidationError("Sesi ini sudah selesai. Lihat hasil penilaiannya.");
+    }
+    const message = limitText(body.message, MAX_MESSAGE_CHARS, "message").trim();
+    if (!message) throw new ValidationError("Pesan tidak boleh kosong.");
+
+    const turnNumber = row.turn_count + 1;
+    const ctx = contextOf(row);
+    const history: ChatMessage[] = [...row.messages, { role: "user", content: message }];
+    const state = {
+      prevOffer: row.current_offer,
+      ceiling: row.persona.ceiling,
+      userAmounts: extractAmounts(message),
+      expectedSalary: row.expected_salary,
+    };
+
+    let turn = null as ReturnType<typeof sanitizeTurn> | null;
+    let note: string | undefined;
+    for (let attempt = 0; attempt < 2 && !turn; attempt++) {
+      const raw = await aiComplete(
+        buildTurnMessages(ctx, row.persona, history, row.current_offer, turnNumber, note),
+        { temperature: 0.7, jsonMode: true, maxTokens: 700 },
+        "id",
+      );
+      const parsed = parseTurnReply(raw);
+      if (!parsed) {
+        note = "Balasan sebelumnya bukan JSON valid. Ikuti FORMAT dengan tepat.";
+        continue;
+      }
+      const clean = sanitizeTurn(parsed, state);
+      if (clean.violated) {
+        note = `Balasanmu menyebut angka di atas batas atas ${row.persona.ceiling}. Jangan menyebut atau menyetujui angka di atas ${row.persona.ceiling}.`;
+        continue;
+      }
+      turn = clean;
+    }
+    if (!turn) {
+      const fb = fallbackReply(row.persona, row.current_offer);
+      turn = { ...fb, offer: row.current_offer, violated: false };
+    }
+
+    const offer = turn.offer ?? row.current_offer;
+    const ended = turn.deal || turnNumber >= MAX_TURNS;
+    const messages: ChatMessage[] = [...history, { role: "hr", content: turn.reply, offer }];
+
+    // turn_count dipakai sebagai kunci optimistik: dua request bersamaan tidak bisa menimpa satu sama lain
+    const { data: updated, error } = await admin
+      .from("negotiation_sessions")
+      .update({
+        messages,
+        current_offer: offer,
+        turn_count: turnNumber,
+        status: ended ? "ended" : "active",
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", row.id)
+      .eq("user_id", userId)
+      .eq("turn_count", row.turn_count)
+      .select("*");
+    if (error) {
+      console.error("negotiate_turn update failed:", error);
+      throw new Error("Gagal menyimpan balasan negosiasi.");
+    }
+    if (!updated || updated.length === 0) {
+      return corsResponse({ error: "Permintaan bersamaan terdeteksi. Coba kirim lagi." }, 409, req);
+    }
+    const next = updated[0] as NegotiationRow;
+    return corsResponse(
+      {
+        reply: turn.reply,
+        offer,
+        mood: turn.mood,
+        deal: turn.deal,
+        session: publicSession(next),
+      },
+      200,
+      req,
+    );
+  }
+
+  if (action === "negotiate_evaluate") {
+    if (row.status === "evaluated") {
+      return corsResponse({ session: publicSession(row) }, 200, req);
+    }
+    const userTurns = row.messages.filter((m) => m.role === "user").length;
+    if (userTurns < 2) {
+      throw new ValidationError("Bernegosiasilah minimal 2 giliran sebelum meminta penilaian.");
+    }
+
+    // "Disepakati" hanya bila sesi berakhir karena deal (bukan karena kehabisan giliran)
+    const accepted = row.status === "ended" && row.turn_count < MAX_TURNS;
+    const facts = {
+      opening: row.persona.opening,
+      ceiling: row.persona.ceiling,
+      expected: row.expected_salary,
+      finalOffer: row.current_offer,
+      accepted,
+    };
+    const raw = await aiComplete(
+      buildEvaluateMessages(contextOf(row), facts, row.messages),
+      { temperature: 0.4, jsonMode: true, maxTokens: 1800 },
+      "id",
+    );
+    const evaluation = parseEvaluation(raw);
+    if (!evaluation) throw new Error("AI gagal menilai negosiasi. Silakan coba lagi.");
+
+    const moneyScore = computeMoneyScore(facts);
+    const overall = Math.round(moneyScore * 0.5 + evaluation.techniqueScore * 0.5);
+    const result = {
+      overall,
+      moneyScore,
+      techniqueScore: evaluation.techniqueScore,
+      outcome: accepted ? "deal" : "no_deal",
+      openingOffer: facts.opening,
+      finalOffer: facts.finalOffer,
+      expectedSalary: facts.expected,
+      hrCeiling: facts.ceiling,
+      gainPercent: Math.round(((facts.finalOffer - facts.opening) / facts.opening) * 1000) / 10,
+      summary: evaluation.summary,
+      tactics: evaluation.tactics,
+      missed: evaluation.missed,
+      betterPhrases: evaluation.betterPhrases,
+      tips: evaluation.tips,
+    };
+
+    const { data: updated, error } = await admin
+      .from("negotiation_sessions")
+      .update({ result, status: "evaluated", updated_at: new Date().toISOString() })
+      .eq("id", row.id)
+      .eq("user_id", userId)
+      .select("*")
+      .single();
+    if (error || !updated) {
+      console.error("negotiate_evaluate update failed:", error);
+      throw new Error("Gagal menyimpan hasil negosiasi.");
+    }
+    return corsResponse({ session: publicSession(updated as NegotiationRow) }, 200, req);
+  }
+
+  throw new ValidationError("Invalid action");
 }

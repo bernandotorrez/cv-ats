@@ -31,6 +31,7 @@ import { getUserTier } from "@/lib/subscription";
 import { cn } from "@/lib/utils";
 import {
   ArrowRight,
+  Banknote,
   BarChart3,
   Brain,
   BriefcaseBusiness,
@@ -359,6 +360,33 @@ function SimulasiWawancaraPage() {
           </div>
         </div>
       </section>
+
+      <Link
+        to="/simulasi-wawancara/negosiasi"
+        className="group flex flex-col gap-4 rounded-2xl border border-primary/20 bg-primary/5 p-5 transition-colors hover:border-primary/40 hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:flex-row sm:items-center sm:justify-between"
+      >
+        <div className="flex items-start gap-4">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+            <Banknote className="h-6 w-6" />
+          </div>
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="font-display text-lg font-bold text-foreground">
+                Latihan negosiasi gaji
+              </h2>
+              <Badge className="bg-primary text-primary-foreground hover:bg-primary">Baru</Badge>
+            </div>
+            <p className="mt-1 max-w-2xl text-sm leading-6 text-muted-foreground">
+              Lawan HR virtual yang punya batas budget rahasia. Tawar, beri alasan, lalu lihat
+              seberapa banyak yang berhasil kamu dapatkan dan taktik apa yang terlewat.
+            </p>
+          </div>
+        </div>
+        <span className="inline-flex shrink-0 items-center gap-2 text-sm font-semibold text-primary">
+          Coba sekarang
+          <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+        </span>
+      </Link>
 
       {sessions.length > 0 && (
         <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
