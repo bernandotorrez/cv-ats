@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import {
   AlertCircle,
@@ -5,8 +6,10 @@ import {
   Clock,
   Lightbulb,
   ListChecks,
+  Shield,
   Sparkles,
   TrendingUp,
+  Zap,
 } from "lucide-react";
 import type { CvReviewResult } from "@/lib/ai-functions";
 import { cn } from "@/lib/utils";
@@ -398,5 +401,123 @@ export function ReviewDeliverables() {
         ))}
       </ul>
     </section>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Saran (hanya baca) & paywall                                        */
+/* ------------------------------------------------------------------ */
+
+const PRIORITY_BADGE: Record<ReviewData["suggestions"][number]["priority"], string> = {
+  high: "border-red-200 bg-red-100 text-red-800",
+  medium: "border-amber-200 bg-amber-100 text-amber-900",
+  low: "border-green-200 bg-green-100 text-green-800",
+};
+
+const PRIORITY_LABEL: Record<ReviewData["suggestions"][number]["priority"], string> = {
+  high: "Prioritas Tinggi",
+  medium: "Prioritas Sedang",
+  low: "Prioritas Rendah",
+};
+
+export function SuggestionList({ suggestions }: { suggestions: ReviewData["suggestions"] }) {
+  if (suggestions.length === 0) {
+    return (
+      <p className="rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50 p-6 text-center text-sm text-gray-600">
+        Hira AI tidak menemukan kalimat yang perlu diubah.
+      </p>
+    );
+  }
+  return (
+    <ul className="space-y-3">
+      {suggestions.map((s, i) => (
+        <li key={i} className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
+          <div className="flex flex-wrap items-center gap-2">
+            <span
+              className={cn(
+                "rounded-full border px-2.5 py-0.5 text-xs font-bold",
+                PRIORITY_BADGE[s.priority],
+              )}
+            >
+              {PRIORITY_LABEL[s.priority]}
+            </span>
+            <span className="text-sm font-bold text-gray-900">{s.category}</span>
+          </div>
+          <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
+            {s.current && (
+              <div>
+                <p className="mb-1 text-xs font-bold uppercase tracking-wider text-gray-600">
+                  Saat ini
+                </p>
+                <p className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm leading-relaxed text-red-800 line-through decoration-red-300">
+                  {s.current}
+                </p>
+              </div>
+            )}
+            <div className={cn(!s.current && "md:col-span-2")}>
+              <p className="mb-1 text-xs font-bold uppercase tracking-wider text-green-800">
+                Rekomendasi
+              </p>
+              <p className="rounded-xl border border-green-200 bg-green-50 p-3 text-sm font-medium leading-relaxed text-gray-900">
+                {s.suggested}
+              </p>
+            </div>
+          </div>
+          {s.impact && (
+            <p className="mt-3 flex gap-2 text-sm leading-relaxed text-gray-700">
+              <Lightbulb aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+              {s.impact}
+            </p>
+          )}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/** Kartu upgrade untuk paket yang belum punya fitur review CV. */
+export function ReviewPaywall({
+  title,
+  description,
+  backTo,
+  backLabel,
+}: {
+  title: string;
+  description: string;
+  backTo: "/dashboard" | "/cv";
+  backLabel: string;
+}) {
+  return (
+    <div className="container-page py-8 md:py-14">
+      <section className="mx-auto max-w-2xl rounded-3xl border border-gray-200 bg-white p-6 text-center shadow-sm sm:p-10">
+        <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-green-50 text-green-700 ring-1 ring-green-200">
+          <Shield aria-hidden="true" className="h-8 w-8" />
+        </span>
+        <p className="mt-5 inline-flex rounded-full border border-green-200 bg-green-50 px-3 py-1 text-xs font-bold uppercase tracking-wider text-green-800">
+          Paket Starter ke atas
+        </p>
+        <h1 className="mt-4 font-display text-3xl font-extrabold leading-tight tracking-tight text-balance text-gray-900">
+          {title}
+        </h1>
+        <p className="mx-auto mt-3 max-w-lg text-base leading-relaxed text-gray-600">
+          {description}
+        </p>
+        <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
+          <Link
+            to="/harga"
+            className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-green-700 px-6 text-base font-bold text-white shadow-md shadow-green-700/20 transition-colors hover:bg-green-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-700 focus-visible:ring-offset-2"
+          >
+            <Zap aria-hidden="true" className="h-5 w-5" />
+            Lihat Paket & Upgrade
+          </Link>
+          <Link
+            to={backTo}
+            className="inline-flex h-12 items-center justify-center rounded-xl border-2 border-gray-300 bg-white px-6 text-base font-semibold text-gray-800 transition-colors hover:border-green-700 hover:bg-green-50 hover:text-green-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-700 focus-visible:ring-offset-2"
+          >
+            {backLabel}
+          </Link>
+        </div>
+      </section>
+    </div>
   );
 }

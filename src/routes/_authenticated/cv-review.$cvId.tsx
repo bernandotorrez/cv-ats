@@ -23,7 +23,6 @@ import {
   ChevronDown,
   FileText,
   History,
-  Shield,
   Sparkles,
   X,
   Zap,
@@ -32,6 +31,7 @@ import {
   HiraCard,
   ReviewDeliverables,
   ReviewHistoryList,
+  ReviewPaywall,
   ReviewSummary,
 } from "@/components/cv-review/review-ui";
 
@@ -621,38 +621,12 @@ function CvReviewPage() {
 
   if (!tierOk) {
     return (
-      <div className="container-page py-8 md:py-14">
-        <section className="mx-auto max-w-2xl rounded-3xl border border-gray-200 bg-white p-6 text-center shadow-sm sm:p-10">
-          <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-green-50 text-green-700 ring-1 ring-green-200">
-            <Shield aria-hidden="true" className="h-8 w-8" />
-          </span>
-          <p className="mt-5 inline-flex rounded-full border border-green-200 bg-green-50 px-3 py-1 text-xs font-bold uppercase tracking-wider text-green-800">
-            Paket Starter ke atas
-          </p>
-          <h1 className="mt-4 font-display text-3xl font-extrabold leading-tight tracking-tight text-balance text-gray-900">
-            Review CV oleh HR Expert AI ada di paket Starter
-          </h1>
-          <p className="mx-auto mt-3 max-w-lg text-base leading-relaxed text-gray-600">
-            Upgrade untuk membuka review mendalam dari Hira AI, konsultan HR dengan pengalaman 20+
-            tahun, lengkap dengan saran yang bisa langsung diterapkan.
-          </p>
-          <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
-            <Link
-              to="/harga"
-              className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-green-700 px-6 text-base font-bold text-white shadow-md shadow-green-700/20 transition-colors hover:bg-green-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-700 focus-visible:ring-offset-2"
-            >
-              <Zap aria-hidden="true" className="h-5 w-5" />
-              Lihat Paket & Upgrade
-            </Link>
-            <Link
-              to="/dashboard"
-              className="inline-flex h-12 items-center justify-center rounded-xl border-2 border-gray-300 bg-white px-6 text-base font-semibold text-gray-800 transition-colors hover:border-green-700 hover:bg-green-50 hover:text-green-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-700 focus-visible:ring-offset-2"
-            >
-              Kembali ke Dashboard
-            </Link>
-          </div>
-        </section>
-      </div>
+      <ReviewPaywall
+        title="Review CV oleh HR Expert AI ada di paket Starter"
+        description="Upgrade untuk membuka review mendalam dari Hira AI, konsultan HR dengan pengalaman 20+ tahun, lengkap dengan saran yang bisa langsung diterapkan."
+        backTo="/dashboard"
+        backLabel="Kembali ke Dashboard"
+      />
     );
   }
 

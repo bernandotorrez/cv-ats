@@ -1,45 +1,46 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { buildSeo } from "@/lib/seo";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton-loading";
 import { useAuth } from "@/lib/auth-context";
 import { getUserTierConfig } from "@/lib/subscription";
 import { reviewCvUpload, type CvReviewResult, extractCvTextWithAi } from "@/lib/ai-functions";
 import { extractCvText, renderPdfToImages } from "@/lib/cv-text-extractor";
 import { CvFileUpload } from "@/components/cv/CvFileUpload";
+import { CvScannerAnimation } from "@/components/cv/CvScannerAnimation";
+import {
+  HiraCard,
+  ReviewDeliverables,
+  ReviewPaywall,
+  ReviewSummary,
+  SuggestionList,
+} from "@/components/cv-review/review-ui";
+import { scoreTone } from "@/components/cv-review/review-utils";
+import { TEMPLATES } from "@/lib/cv-types";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
-import { BackButton } from "@/components/ui/back-button";
 import {
-  AlertCircle,
   ArrowLeft,
-  BarChart3,
+  ArrowRight,
   Brain,
-  CheckCircle2,
   FileText,
-  Lightbulb,
   Loader2,
-  Shield,
+  Plus,
+  Search,
   Sparkles,
-  Star,
-  Target,
-  Trophy,
   Upload,
-  User,
-  Zap,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/cv-review/")({
   head: () =>
     buildSeo({
-      title: "Upload & Review CV - CV Pintar",
-      description: "Upload CV kamu dan dapatkan review dari AI HR profesional.",
+      title: "Review CV - CV Pintar",
+      description: "Pilih CV atau upload file CV dan dapatkan review dari AI HR profesional.",
       path: "/cv-review",
       noindex: true,
     }),
@@ -54,8 +55,41 @@ interface CvReviewInsertTable {
   insert: (value: unknown) => Promise<{ error: DbError | null }>;
 }
 
+interface CvReviewScoreRow {
+  cv_id: string | null;
+  overall_score: number;
+  created_at: string;
+}
+
+interface CvReviewSelectTable {
+  select: (columns: string) => {
+    eq: (
+      column: string,
+      value: unknown,
+    ) => {
+      order: (
+        column: string,
+        options: { ascending: boolean },
+      ) => Promise<{ data: CvReviewScoreRow[] | null; error: DbError | null }>;
+    };
+  };
+}
+
+interface CvRow {
+  id: string;
+  title: string;
+  template_id: string;
+  status: string;
+  updated_at: string;
+}
+
+type ReviewSource = "existing" | "upload";
+
 const cvReviews = () =>
   (supabase.from as unknown as (table: string) => CvReviewInsertTable)("cv_reviews");
+
+const cvReviewsSelect = () =>
+  (supabase.from as unknown as (table: string) => CvReviewSelectTable)("cv_reviews");
 
 function CvReviewUploadPage() {
   const { user } = useAuth();
@@ -71,6 +105,11 @@ function CvReviewUploadPage() {
   const [result, setResult] = useState<CvReviewResult | null>(null);
   const [tierOk, setTierOk] = useState<boolean | null>(null);
   const [pageCount, setPageCount] = useState<number | undefined>();
+  const [source, setSource] = useState<ReviewSource | null>(null);
+  const [cvs, setCvs] = useState<CvRow[]>([]);
+  const [cvsLoading, setCvsLoading] = useState(true);
+  const [lastScores, setLastScores] = useState<Record<string, { score: number; at: string }>>({});
+  const resultRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let active = true;
@@ -87,17 +126,44 @@ function CvReviewUploadPage() {
     };
   }, [user?.id]);
 
-  const scoreColor = (score: number) => {
-    if (score >= 80) return "text-emerald-700";
-    if (score >= 60) return "text-amber-700";
-    return "text-red-700";
-  };
+  useEffect(() => {
+    const userId = user?.id;
+    if (!userId) return;
+    let active = true;
 
-  const scoreTone = (score: number) => {
-    if (score >= 80) return "border-emerald-500/25 bg-emerald-500/5";
-    if (score >= 60) return "border-amber-500/25 bg-amber-500/5";
-    return "border-red-500/25 bg-red-500/5";
-  };
+    async function loadCvs(uid: string) {
+      const [cvResult, reviewResult] = await Promise.all([
+        supabase
+          .from("cvs")
+          .select("id, title, template_id, status, updated_at")
+          .eq("user_id", uid)
+          .order("updated_at", { ascending: false }),
+        cvReviewsSelect()
+          .select("cv_id, overall_score, created_at")
+          .eq("user_id", uid)
+          .order("created_at", { ascending: false }),
+      ]);
+      if (!active) return;
+
+      if (cvResult.error) toast.error(cvResult.error.message);
+      setCvs((cvResult.data as CvRow[] | null) ?? []);
+
+      // Baris pertama per cv_id = review terbaru (sudah diurutkan menurun).
+      const latest: Record<string, { score: number; at: string }> = {};
+      for (const row of reviewResult.data ?? []) {
+        if (row.cv_id && !latest[row.cv_id]) {
+          latest[row.cv_id] = { score: row.overall_score, at: row.created_at };
+        }
+      }
+      setLastScores(latest);
+      setCvsLoading(false);
+    }
+
+    loadCvs(userId);
+    return () => {
+      active = false;
+    };
+  }, [user?.id]);
 
   const toErrorMessage = (error: unknown) =>
     error instanceof Error ? error.message : "Terjadi kesalahan";
@@ -193,6 +259,9 @@ function CvReviewUploadPage() {
         },
       });
       setResult(response);
+      requestAnimationFrame(() =>
+        resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }),
+      );
 
       if (user?.id) {
         const { error } = await cvReviews().insert({
@@ -237,544 +306,489 @@ function CvReviewUploadPage() {
 
   if (tierOk === false) {
     return (
-      <div className="container-page py-8 md:py-12">
-        <section className="mx-auto max-w-3xl rounded-[1.25rem] border bg-card p-6 text-center shadow-sm md:p-10">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-warning/20 text-warning">
-            <Shield className="h-8 w-8" />
-          </div>
-          <Badge className="mt-5 bg-warning/20 text-warning hover:bg-warning/20">
-            Starter ke atas
-          </Badge>
-          <h1 className="mt-4 font-display text-3xl font-bold leading-tight text-foreground">
-            Review CV seperti dibaca HR senior.
-          </h1>
-          <p className="mx-auto mt-3 max-w-xl text-sm leading-7 text-muted-foreground sm:text-base">
-            Dapatkan analisis kekuatan, kelemahan, benchmark, dan quick wins dari persona HR
-            profesional 20+ tahun.
-          </p>
-          <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
-            <Button asChild size="lg" className="gap-2">
-              <Link to="/harga">
-                <Zap className="h-4 w-4" />
-                Upgrade ke Starter
-              </Link>
-            </Button>
-            <Button asChild size="lg" variant="outline" className="gap-2">
-              <Link to="/cv">
-                <ArrowLeft className="h-4 w-4" />
-                Kembali ke CV Saya
-              </Link>
-            </Button>
-          </div>
-        </section>
-      </div>
+      <ReviewPaywall
+        title="Review CV seperti dibaca HR senior"
+        description="Dapatkan analisis kekuatan, kelemahan, benchmark, dan perbaikan cepat dari Hira AI, persona HR profesional dengan pengalaman 20+ tahun."
+        backTo="/cv"
+        backLabel="Kembali ke CV Saya"
+      />
     );
   }
 
+  const activeSource: ReviewSource = source ?? (cvs.length > 0 ? "existing" : "upload");
+  const sourceTabs: Array<{ id: ReviewSource; label: string; icon: typeof FileText }> = [
+    {
+      id: "existing",
+      label: `CV Saya${cvs.length > 0 ? ` (${cvs.length})` : ""}`,
+      icon: FileText,
+    },
+    { id: "upload", label: "Upload file", icon: Upload },
+  ];
+
   return (
-    <div className="container-page space-y-7 py-5 md:space-y-8 md:py-8">
-      <section className="rounded-[1.25rem] border bg-card p-5 shadow-sm sm:p-6 md:p-8">
-        <div className="grid gap-6 lg:grid-cols-[1fr_340px] lg:items-center">
-          <div>
-            <BackButton />
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full border bg-primary/5 px-3 py-1 text-xs font-semibold text-primary">
-              <Brain className="h-3.5 w-3.5" />
-              HR review workspace
-            </div>
-            <h1 className="max-w-3xl font-display text-3xl font-bold leading-tight text-foreground sm:text-4xl">
-              Upload CV, lalu temukan alasan rekruter harus memanggilmu.
-            </h1>
-            <p className="mt-3 max-w-2xl text-sm leading-7 text-muted-foreground sm:text-base">
-              AI HR membaca CV kamu seperti screening awal: first impression, ATS, relevansi role,
-              achievement, dan quick wins yang paling cepat menaikkan kualitas.
-            </p>
+    <div className="container-page space-y-6 py-6 md:space-y-8 md:py-10">
+      {/* Header */}
+      <header className="min-w-0">
+        <Link
+          to="/dashboard"
+          className="inline-flex min-h-8 items-center gap-1.5 text-sm font-semibold text-green-800 underline-offset-4 hover:underline"
+        >
+          <ArrowLeft aria-hidden="true" className="h-4 w-4" />
+          Dashboard
+        </Link>
+        <h1 className="mt-1 font-display text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl">
+          Review CV oleh HR Expert AI
+        </h1>
+        <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-gray-600 sm:text-base">
+          Hira AI membaca CV-mu seperti screening awal rekruter: kesan pertama, format ATS,
+          relevansi, pencapaian, lalu memberi saran yang bisa langsung kamu terapkan.
+        </p>
+      </header>
+
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
+        <div className="min-w-0 space-y-5">
+          {/* Pilih sumber */}
+          <div
+            role="tablist"
+            aria-label="Sumber CV"
+            className="grid grid-cols-2 gap-1 rounded-2xl border border-gray-200 bg-gray-50 p-1"
+          >
+            {sourceTabs.map((tab) => {
+              const Icon = tab.icon;
+              const selected = activeSource === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  role="tab"
+                  id={`tab-${tab.id}`}
+                  aria-selected={selected}
+                  aria-controls={`panel-${tab.id}`}
+                  onClick={() => setSource(tab.id)}
+                  className={cn(
+                    "flex h-12 items-center justify-center gap-2 rounded-xl px-3 text-sm font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-700",
+                    selected
+                      ? "bg-white text-green-800 shadow-sm ring-1 ring-gray-200"
+                      : "text-gray-600 hover:text-gray-900",
+                  )}
+                >
+                  <Icon aria-hidden="true" className="h-4 w-4 shrink-0" />
+                  <span className="truncate">{tab.label}</span>
+                </button>
+              );
+            })}
           </div>
 
-          <div className="rounded-2xl border bg-muted/35 p-4">
-            <div className="flex items-start gap-3">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-                <Target className="h-5 w-5" />
-              </div>
+          {activeSource === "existing" ? (
+            <div id="panel-existing" role="tabpanel" aria-labelledby="tab-existing">
+              <ExistingCvSection
+                cvs={cvs}
+                loading={cvsLoading}
+                lastScores={lastScores}
+                onUpload={() => setSource("upload")}
+              />
+            </div>
+          ) : (
+            <div
+              id="panel-upload"
+              role="tabpanel"
+              aria-labelledby="tab-upload"
+              className="space-y-5"
+            >
+              {!extractedText ? (
+                <section className="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm sm:p-7">
+                  <div className="mb-5 flex flex-col gap-1">
+                    <h2 className="font-display text-xl font-extrabold tracking-tight text-gray-900">
+                      Upload CV dari file
+                    </h2>
+                    <p className="text-sm leading-relaxed text-gray-600">
+                      Cocok untuk CV yang kamu buat di luar CV Pintar. PDF berbasis teks memberi
+                      hasil paling akurat.
+                    </p>
+                  </div>
+                  <CvFileUpload
+                    onFileReady={handleFileReady}
+                    extracting={extracting}
+                    error={fileError}
+                    currentFile={currentFile}
+                    onClear={handleClear}
+                  />
+                </section>
+              ) : (
+                <>
+                  <section className="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="flex min-w-0 items-center gap-3.5">
+                        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-green-50 text-green-700 ring-1 ring-green-200">
+                          <FileText aria-hidden="true" className="h-6 w-6" />
+                        </span>
+                        <div className="min-w-0">
+                          <p className="truncate font-display text-base font-extrabold text-gray-900">
+                            {fileName}
+                          </p>
+                          <p className="mt-0.5 text-sm text-gray-600">{fileMeta}</p>
+                        </div>
+                      </div>
+                      <Button
+                        variant="outline"
+                        onClick={handleClear}
+                        className="h-10 shrink-0 gap-2 rounded-xl border-2 border-gray-300 font-bold hover:border-green-700 hover:bg-green-50 hover:text-green-800"
+                      >
+                        <Upload aria-hidden="true" className="h-4 w-4" />
+                        Ganti file
+                      </Button>
+                    </div>
+                  </section>
+
+                  <form
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      handleReview();
+                    }}
+                    className="space-y-6 rounded-3xl border border-gray-200 bg-white p-5 shadow-sm sm:p-7"
+                  >
+                    <div>
+                      <h2 className="font-display text-xl font-extrabold tracking-tight text-gray-900">
+                        Atur fokus review
+                      </h2>
+                      <p className="mt-1 text-sm leading-relaxed text-gray-600">
+                        Opsional, tapi target posisi membuat saran Hira AI jauh lebih tajam.
+                      </p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="target-role" className="text-sm font-bold text-gray-900">
+                        Target posisi <span className="font-normal text-gray-600">(opsional)</span>
+                      </Label>
+                      <input
+                        id="target-role"
+                        value={targetRole}
+                        onChange={(event) => setTargetRole(event.target.value)}
+                        placeholder="Contoh: Frontend Developer"
+                        autoComplete="off"
+                        className="flex h-12 w-full rounded-xl border border-gray-300 bg-white px-4 text-base text-gray-900 transition-colors placeholder:text-gray-500 focus-visible:border-green-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-700/20"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-baseline justify-between gap-2">
+                        <Label
+                          htmlFor="job-description"
+                          className="text-sm font-bold text-gray-900"
+                        >
+                          Deskripsi pekerjaan{" "}
+                          <span className="font-normal text-gray-600">(opsional)</span>
+                        </Label>
+                        <span className="text-xs tabular-nums text-gray-600">
+                          {jobDescription.length.toLocaleString("id-ID")} / 10.000
+                        </span>
+                      </div>
+                      <Textarea
+                        id="job-description"
+                        value={jobDescription}
+                        onChange={(event) => setJobDescription(event.target.value)}
+                        placeholder="Tempel job description di sini agar AI bisa membandingkan CV dengan kebutuhan role."
+                        rows={6}
+                        maxLength={10000}
+                        className="resize-y rounded-xl border-gray-300 px-4 py-3 text-base placeholder:text-gray-500 focus-visible:border-green-700 focus-visible:ring-2 focus-visible:ring-green-700/20"
+                      />
+                    </div>
+                    <div className="space-y-3 border-t border-gray-100 pt-5">
+                      <Button
+                        type="submit"
+                        disabled={reviewing}
+                        size="lg"
+                        className="h-12 w-full gap-2 rounded-xl bg-green-700 text-base font-extrabold text-white shadow-md shadow-green-700/20 hover:bg-green-800"
+                      >
+                        {reviewing ? (
+                          <Loader2 aria-hidden="true" className="h-5 w-5 animate-spin" />
+                        ) : (
+                          <Brain aria-hidden="true" className="h-5 w-5" />
+                        )}
+                        {reviewing ? "Menganalisis CV…" : "Mulai Review CV"}
+                      </Button>
+                      <p className="text-center text-sm text-gray-600">
+                        Analisis memakan waktu 10–30 detik.
+                      </p>
+                    </div>
+                  </form>
+                </>
+              )}
+            </div>
+          )}
+        </div>
+
+        <aside className="space-y-4">
+          <HiraCard />
+          <ReviewDeliverables />
+        </aside>
+      </div>
+
+      {reviewing && <CvScannerAnimation cvTitle={fileName} />}
+
+      {result && !reviewing && (
+        <div ref={resultRef} className="scroll-mt-24 space-y-8">
+          <section aria-labelledby="hasil-heading" className="space-y-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <p className="text-sm font-semibold text-foreground">Fokus review</p>
-                <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                  Bukan sekadar skor. Kamu dapat prioritas perbaikan yang bisa langsung dieksekusi.
+                <h2
+                  id="hasil-heading"
+                  className="font-display text-2xl font-extrabold tracking-tight text-gray-900"
+                >
+                  Hasil review
+                </h2>
+                <p className="mt-1 text-sm text-gray-600">
+                  {fileName}
+                  {targetRole ? ` · target ${targetRole}` : ""}
                 </p>
               </div>
+              <Button
+                variant="outline"
+                onClick={handleClear}
+                className="h-11 gap-2 rounded-xl border-2 border-gray-300 font-bold hover:border-green-700 hover:bg-green-50 hover:text-green-800"
+              >
+                <Sparkles aria-hidden="true" className="h-4 w-4" />
+                Review CV lain
+              </Button>
             </div>
-            <div className="mt-4 grid grid-cols-3 gap-2">
-              {["Upload", "Konteks", "Review"].map((item, index) => (
-                <div key={item} className="rounded-xl border bg-background p-3 text-center">
-                  <p className="text-xs font-bold text-primary">0{index + 1}</p>
-                  <p className="mt-1 text-[11px] font-medium text-muted-foreground">{item}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
+            <ReviewSummary review={result.review} />
+          </section>
 
-      <section className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
-        <div className="space-y-5">
-          {!extractedText ? (
-            <section className="rounded-2xl border bg-card p-5 shadow-sm md:p-6">
-              <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                  <p className="mb-2 inline-flex rounded-full bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground">
-                    File CV
-                  </p>
-                  <h2 className="font-display text-xl font-bold text-foreground">
-                    Upload PDF atau DOCX yang siap dibaca.
-                  </h2>
-                  <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                    File berbasis teks memberi hasil review paling akurat.
-                  </p>
-                </div>
-                <Badge variant="outline" className="w-fit">
-                  Maks 10MB
-                </Badge>
-              </div>
-              <CvFileUpload
-                onFileReady={handleFileReady}
-                extracting={extracting}
-                error={fileError}
-                currentFile={currentFile}
-                onClear={handleClear}
-              />
-            </section>
-          ) : (
-            <section className="rounded-2xl border bg-card p-5 shadow-sm md:p-6">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex min-w-0 gap-3">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-700">
-                    <FileText className="h-5 w-5" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="truncate font-display font-bold text-foreground">{fileName}</p>
-                    <p className="mt-1 text-xs text-muted-foreground">{fileMeta}</p>
-                  </div>
-                </div>
-                <Button variant="outline" onClick={handleClear} className="gap-2">
-                  <Upload className="h-4 w-4" />
-                  Ganti File
-                </Button>
-              </div>
-            </section>
-          )}
-
-          {extractedText && (
-            <section className="rounded-2xl border bg-card p-5 shadow-sm md:p-6">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                  <p className="mb-2 inline-flex rounded-full bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground">
-                    Konteks role
-                  </p>
-                  <h2 className="font-display text-xl font-bold text-foreground">
-                    Beri target agar review lebih tajam.
-                  </h2>
-                </div>
-                <Badge variant="outline" className="w-fit">
-                  Opsional, tapi disarankan
-                </Badge>
-              </div>
-
-              <div className="mt-5 space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="target-role">Target Posisi</Label>
-                  <input
-                    id="target-role"
-                    value={targetRole}
-                    onChange={(event) => setTargetRole(event.target.value)}
-                    placeholder="Contoh: Frontend Developer"
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="job-description">Deskripsi Pekerjaan</Label>
-                  <Textarea
-                    id="job-description"
-                    value={jobDescription}
-                    onChange={(event) => setJobDescription(event.target.value)}
-                    placeholder="Tempel job description di sini agar AI bisa membandingkan CV dengan kebutuhan role."
-                    rows={6}
-                    maxLength={10000}
-                  />
-                </div>
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <p className="text-xs leading-5 text-muted-foreground">
-                    Review akan menilai impresi HR, ATS, relevansi, achievement, dan writing.
-                  </p>
-                  <Button onClick={handleReview} disabled={reviewing} size="lg" className="gap-2">
-                    {reviewing ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Brain className="h-4 w-4" />
-                    )}
-                    {reviewing ? "Menganalisis CV" : "Review CV"}
-                  </Button>
-                </div>
-              </div>
-            </section>
-          )}
-        </div>
-
-        <aside className="rounded-2xl border bg-card p-5 shadow-sm">
-          <div className="flex items-start gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-700">
-              <Lightbulb className="h-5 w-5" />
-            </div>
+          <section aria-labelledby="saran-heading" className="space-y-4">
             <div>
-              <h3 className="font-display font-bold text-foreground">Agar review makin presisi</h3>
-              <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                Target role membantu AI membedakan CV yang sekadar rapi dari CV yang benar-benar
-                relevan.
+              <h2
+                id="saran-heading"
+                className="font-display text-xl font-extrabold tracking-tight text-gray-900"
+              >
+                Saran perbaikan spesifik
+              </h2>
+              <p className="mt-1 text-sm text-gray-600 sm:text-base">
+                Kerjakan yang berprioritas tinggi dulu sebelum melamar. Mau menerapkannya langsung
+                di CV?{" "}
+                <button
+                  type="button"
+                  onClick={() => setSource("existing")}
+                  className="font-semibold text-green-800 underline underline-offset-4"
+                >
+                  Buat CV di CV Pintar
+                </button>{" "}
+                lalu review dari sana.
               </p>
             </div>
-          </div>
-          <div className="mt-5 space-y-3">
-            {[
-              "Gunakan CV versi terbaru.",
-              "Tambahkan job description bila ada.",
-              "Fokus pada quick wins sebelum apply.",
-            ].map((item) => (
-              <div key={item} className="flex gap-2 text-sm text-muted-foreground">
-                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
-                <span>{item}</span>
-              </div>
-            ))}
-          </div>
-        </aside>
-      </section>
-
-      {reviewing && <ReviewLoadingPanel />}
-      {result && (
-        <ReviewResultPanel result={result} scoreColor={scoreColor} scoreTone={scoreTone} />
+            <SuggestionList suggestions={result.review.suggestions} />
+          </section>
+        </div>
       )}
     </div>
   );
 }
 
-function ReviewLoadingPanel() {
-  return (
-    <section className="rounded-[1.25rem] border bg-card p-8 text-center shadow-sm">
-      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-      <h2 className="mt-5 font-display text-2xl font-bold text-foreground">
-        HR AI sedang membaca CV kamu.
-      </h2>
-      <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted-foreground">
-        Kami mengecek struktur, relevansi, bukti pencapaian, dan hal kecil yang bisa menaikkan
-        peluang screening.
-      </p>
-    </section>
-  );
-}
+/* ------------------------------------------------------------------ */
+/* Pilih dari CV yang sudah ada                                        */
+/* ------------------------------------------------------------------ */
 
-function ReviewResultPanel({
-  result,
-  scoreColor,
-  scoreTone,
+function ExistingCvSection({
+  cvs,
+  loading,
+  lastScores,
+  onUpload,
 }: {
-  result: CvReviewResult;
-  scoreColor: (score: number) => string;
-  scoreTone: (score: number) => string;
+  cvs: CvRow[];
+  loading: boolean;
+  lastScores: Record<string, { score: number; at: string }>;
+  onUpload: () => void;
 }) {
-  const scores = [
-    { label: "First Impression", key: "firstImpression" as const },
-    { label: "Format ATS", key: "format" as const },
-    { label: "Konten & Relevansi", key: "content" as const },
-    { label: "Pencapaian", key: "achievement" as const },
-    { label: "Presentasi & Writing", key: "presentation" as const },
-  ];
+  const [query, setQuery] = useState("");
+  const normalized = query.trim().toLowerCase();
+  const visible = normalized
+    ? cvs.filter(
+        (cv) =>
+          cv.title.toLowerCase().includes(normalized) ||
+          templateName(cv.template_id).toLowerCase().includes(normalized),
+      )
+    : cvs;
 
   return (
-    <section className="space-y-5">
-      <div
-        className={cn(
-          "rounded-[1.25rem] border p-6 shadow-sm md:p-8",
-          scoreTone(result.review.scores.overall),
+    <section
+      aria-labelledby="pilih-cv-heading"
+      className="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm sm:p-7"
+    >
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h2
+            id="pilih-cv-heading"
+            className="font-display text-xl font-extrabold tracking-tight text-gray-900"
+          >
+            Pilih CV yang mau direview
+          </h2>
+          <p className="mt-1 text-sm leading-relaxed text-gray-600">
+            Klik salah satu CV. Saran AI bisa kamu terapkan langsung ke CV tersebut.
+          </p>
+        </div>
+        {cvs.length > 4 && (
+          <div className="relative sm:w-64">
+            <Search
+              aria-hidden="true"
+              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500"
+            />
+            <Input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Cari judul atau template"
+              aria-label="Cari CV"
+              className="h-10 rounded-xl border-gray-300 pl-9 text-sm shadow-none placeholder:text-gray-500 focus-visible:border-green-700 focus-visible:ring-2 focus-visible:ring-green-700/20"
+            />
+          </div>
         )}
-      >
-        <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-start gap-4">
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-background text-primary shadow-sm">
-              <User className="h-7 w-7" />
-            </div>
-            <div>
-              <Badge className="mb-2 bg-primary text-primary-foreground">Hira AI</Badge>
-              <h2 className="font-display text-2xl font-bold text-foreground">
-                Verdict dari kacamata HR senior
-              </h2>
-              <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                {result.review.reviewer.title || "HR Professional"} -{" "}
-                {result.review.reviewer.experience || "20+ tahun pengalaman"}
-              </p>
-            </div>
-          </div>
-          <div className="text-left sm:text-center">
-            <p
-              className={cn(
-                "font-display text-6xl font-bold",
-                scoreColor(result.review.scores.overall),
-              )}
-            >
-              {result.review.scores.overall}
-            </p>
-            <p className="text-xs font-medium text-muted-foreground">skor keseluruhan</p>
-          </div>
-        </div>
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
-        <div className="space-y-5">
-          <section className="rounded-2xl border bg-card p-5 shadow-sm">
-            <h3 className="flex items-center gap-2 font-display text-lg font-bold text-foreground">
-              <Target className="h-5 w-5 text-primary" />
-              Breakdown skor
-            </h3>
-            <div className="mt-5 space-y-4">
-              {scores.map((item) => {
-                const value = result.review.scores[item.key];
-                return (
-                  <div key={item.key}>
-                    <div className="mb-1 flex items-center justify-between gap-3 text-sm">
-                      <span className="text-muted-foreground">{item.label}</span>
-                      <span className="font-semibold text-foreground">{value}</span>
-                    </div>
-                    <Progress value={value} className="h-2" />
-                  </div>
-                );
-              })}
-            </div>
-          </section>
-
-          <section className="grid gap-4 md:grid-cols-2">
-            <InsightList
-              icon={CheckCircle2}
-              title="Kekuatan"
-              items={result.review.strengths}
-              tone="emerald"
-            />
-            <InsightList
-              icon={AlertCircle}
-              title="Perlu Ditingkatkan"
-              items={result.review.weaknesses}
-              tone="red"
-            />
-          </section>
-
-          <section className="rounded-2xl border bg-card p-5 shadow-sm">
-            <h3 className="flex items-center gap-2 font-display text-lg font-bold text-foreground">
-              <Lightbulb className="h-5 w-5 text-amber-600" />
-              Saran perbaikan spesifik
-            </h3>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Prioritaskan item berlabel tinggi sebelum apply.
+      <div className="mt-5">
+        {loading ? (
+          <div
+            className="grid grid-cols-1 gap-3 sm:grid-cols-2"
+            role="status"
+            aria-label="Memuat CV"
+          >
+            {[1, 2, 3, 4].map((i) => (
+              <Skeleton key={i} className="h-28 w-full rounded-2xl" />
+            ))}
+          </div>
+        ) : cvs.length === 0 ? (
+          <div className="rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50 p-8 text-center">
+            <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-green-50 text-green-700 ring-1 ring-green-200">
+              <FileText aria-hidden="true" className="h-6 w-6" />
+            </span>
+            <p className="mt-3 font-bold text-gray-900">Kamu belum punya CV di CV Pintar</p>
+            <p className="mx-auto mt-1 max-w-sm text-sm text-gray-600">
+              Buat CV baru, atau upload file CV yang sudah kamu punya untuk langsung direview.
             </p>
-            <div className="mt-5 space-y-4">
-              {result.review.suggestions.map((suggestion, index) => (
-                <article key={index} className="rounded-xl border bg-muted/25 p-4">
-                  <div className="flex flex-wrap gap-2">
-                    <Badge
-                      className={cn(
-                        "text-[10px] hover:bg-inherit",
-                        suggestion.priority === "high"
-                          ? "bg-red-500/10 text-red-700"
-                          : suggestion.priority === "medium"
-                            ? "bg-amber-500/10 text-amber-700"
-                            : "bg-muted text-muted-foreground",
+            <div className="mt-4 flex flex-col justify-center gap-2 sm:flex-row">
+              <Link
+                to="/cv"
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-green-700 px-5 text-sm font-bold text-white transition-colors hover:bg-green-800"
+              >
+                <Plus aria-hidden="true" className="h-4 w-4" />
+                Buat CV Baru
+              </Link>
+              <Button
+                variant="outline"
+                onClick={onUpload}
+                className="h-11 gap-2 rounded-xl border-2 border-gray-300 font-bold hover:border-green-700 hover:bg-green-50"
+              >
+                <Upload aria-hidden="true" className="h-4 w-4" />
+                Upload file CV
+              </Button>
+            </div>
+          </div>
+        ) : visible.length === 0 ? (
+          <p className="rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50 p-8 text-center text-sm text-gray-600">
+            Tidak ada CV yang cocok dengan “{query}”.
+          </p>
+        ) : (
+          <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {visible.map((cv) => {
+              const last = lastScores[cv.id];
+              const tone = last ? scoreTone(last.score) : null;
+              return (
+                <li key={cv.id}>
+                  <Link
+                    to="/cv-review/$cvId"
+                    params={{ cvId: cv.id }}
+                    className="group flex h-full flex-col gap-3 rounded-2xl border-2 border-gray-200 bg-white p-4 transition-colors hover:border-green-700 hover:bg-green-50/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-700 focus-visible:ring-offset-2"
+                  >
+                    <div className="flex items-start gap-3">
+                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-green-50 text-green-700 ring-1 ring-green-200">
+                        <FileText aria-hidden="true" className="h-5 w-5" />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate font-display text-base font-extrabold text-gray-900">
+                          {cv.title}
+                        </p>
+                        <p className="mt-0.5 truncate text-sm text-gray-600">
+                          Template {templateName(cv.template_id)} · diedit {timeAgo(cv.updated_at)}
+                        </p>
+                      </div>
+                      {cv.status === "draft" && (
+                        <span className="shrink-0 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-bold text-amber-900 ring-1 ring-amber-200">
+                          Draft
+                        </span>
                       )}
-                    >
-                      {suggestion.priority === "high"
-                        ? "Prioritas Tinggi"
-                        : suggestion.priority === "medium"
-                          ? "Prioritas Sedang"
-                          : "Prioritas Rendah"}
-                    </Badge>
-                    <Badge variant="outline" className="text-[10px]">
-                      {suggestion.category}
-                    </Badge>
-                  </div>
-                  <div className="mt-4 grid gap-3 text-sm md:grid-cols-2">
-                    <div>
-                      <p className="text-xs font-semibold text-muted-foreground">Saat ini</p>
-                      <p className="mt-1 text-muted-foreground line-through decoration-red-500/40">
-                        {suggestion.current}
-                      </p>
                     </div>
-                    <div>
-                      <p className="text-xs font-semibold text-primary">Rekomendasi</p>
-                      <p className="mt-1 font-medium text-foreground">{suggestion.suggested}</p>
+                    <div className="mt-auto flex items-center justify-between gap-2 border-t border-gray-100 pt-3">
+                      {tone && last ? (
+                        <span className="flex items-center gap-2 text-sm text-gray-700">
+                          <span
+                            className={cn(
+                              "flex h-8 min-w-8 items-center justify-center rounded-lg px-1.5 font-display text-sm font-extrabold ring-1",
+                              tone.pill,
+                            )}
+                          >
+                            {last.score}
+                          </span>
+                          Review terakhir {timeAgo(last.at)}
+                        </span>
+                      ) : (
+                        <span className="text-sm text-gray-600">Belum pernah direview</span>
+                      )}
+                      <span className="inline-flex shrink-0 items-center gap-1 text-sm font-bold text-green-800">
+                        {last ? "Review lagi" : "Review"}
+                        <ArrowRight
+                          aria-hidden="true"
+                          className="h-4 w-4 transition-transform group-hover:translate-x-0.5"
+                        />
+                      </span>
                     </div>
-                  </div>
-                  <p className="mt-3 flex gap-2 text-xs leading-5 text-muted-foreground">
-                    <BarChart3 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
-                    Dampak: {suggestion.impact}
-                  </p>
-                </article>
-              ))}
-            </div>
-          </section>
-        </div>
-
-        <aside className="space-y-5">
-          <section className="rounded-2xl border bg-card p-5 shadow-sm">
-            <h3 className="flex items-center gap-2 font-display font-bold text-foreground">
-              <Trophy className="h-5 w-5 text-amber-600" />
-              Benchmark
-            </h3>
-            <div className="mt-4 grid gap-3">
-              <BenchmarkItem label="Level" value={result.review.industryBenchmark.level} />
-              <BenchmarkItem
-                label="Percentile"
-                value={result.review.industryBenchmark.percentile}
-              />
-              <BenchmarkItem
-                label="Perbandingan"
-                value={result.review.industryBenchmark.comparison}
-              />
-            </div>
-          </section>
-
-          <section className="rounded-2xl border border-primary/20 bg-primary/5 p-5 shadow-sm">
-            <h3 className="flex items-center gap-2 font-display font-bold text-foreground">
-              <Star className="h-5 w-5 text-primary" />
-              Verdict HR
-            </h3>
-            <Badge className="mt-4 bg-primary text-primary-foreground">
-              {result.review.hrVerdict.verdict}
-            </Badge>
-            <p className="mt-3 text-sm leading-6 text-muted-foreground">
-              {result.review.hrVerdict.reason}
-            </p>
-            <div className="mt-4 space-y-2">
-              {result.review.hrVerdict.nextSteps.map((step, index) => (
-                <div key={index} className="flex gap-2 text-sm text-muted-foreground">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                  <span>{step}</span>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          <section className="rounded-2xl border bg-card p-5 shadow-sm">
-            <h3 className="flex items-center gap-2 font-display font-bold text-foreground">
-              <Zap className="h-5 w-5 text-amber-600" />
-              Quick wins
-            </h3>
-            <div className="mt-4 space-y-3">
-              {result.review.quickWins.map((win, index) => (
-                <div key={index} className="flex gap-2 text-sm text-muted-foreground">
-                  <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
-                  <span>{win}</span>
-                </div>
-              ))}
-            </div>
-          </section>
-        </aside>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </div>
     </section>
-  );
-}
-
-function InsightList({
-  icon: Icon,
-  title,
-  items,
-  tone,
-}: {
-  icon: typeof CheckCircle2;
-  title: string;
-  items: string[];
-  tone: "emerald" | "red";
-}) {
-  const toneClass =
-    tone === "emerald" ? "bg-emerald-500/10 text-emerald-700" : "bg-red-500/10 text-red-700";
-
-  return (
-    <section className="rounded-2xl border bg-card p-5 shadow-sm">
-      <h3 className="flex items-center gap-2 font-display font-bold text-foreground">
-        <span className={cn("flex h-8 w-8 items-center justify-center rounded-lg", toneClass)}>
-          <Icon className="h-4 w-4" />
-        </span>
-        {title}
-      </h3>
-      <div className="mt-4 space-y-3">
-        {items.map((item, index) => (
-          <div key={index} className="flex gap-2 text-sm leading-6 text-muted-foreground">
-            <CheckCircle2 className="mt-1 h-3.5 w-3.5 shrink-0 text-primary" />
-            <span>{item}</span>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-function BenchmarkItem({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-xl border bg-muted/30 p-3">
-      <p className="text-xs font-semibold text-muted-foreground">{label}</p>
-      <p className="mt-1 text-sm font-semibold text-foreground">{value || "-"}</p>
-    </div>
   );
 }
 
 function CvReviewSkeleton() {
   return (
-    <div className="container-page space-y-7 py-5 md:space-y-8 md:py-8">
-      <section className="rounded-[1.25rem] border bg-card p-5 shadow-sm sm:p-6 md:p-8">
-        <div className="grid gap-6 lg:grid-cols-[1fr_340px] lg:items-center">
-          <div>
-            <Skeleton className="h-8 w-28" />
-            <Skeleton className="mt-4 h-7 w-44 rounded-full" />
-            <Skeleton className="mt-5 h-10 w-full max-w-2xl sm:h-12" />
-            <Skeleton className="mt-3 h-10 w-4/5 max-w-xl sm:h-12" />
-            <Skeleton className="mt-5 h-4 w-full max-w-xl" />
-            <Skeleton className="mt-2 h-4 w-5/6 max-w-lg" />
-          </div>
-          <div className="rounded-2xl border bg-muted/35 p-4">
-            <div className="flex gap-3">
-              <Skeleton className="h-11 w-11 rounded-xl" />
-              <div className="flex-1">
-                <Skeleton className="h-4 w-32" />
-                <Skeleton className="mt-2 h-3 w-full" />
-                <Skeleton className="mt-1 h-3 w-4/5" />
-              </div>
-            </div>
-            <div className="mt-4 grid grid-cols-3 gap-2">
-              {[1, 2, 3].map((item) => (
-                <Skeleton key={item} className="h-16 rounded-xl" />
-              ))}
-            </div>
-          </div>
+    <div
+      className="container-page space-y-6 py-6 md:space-y-8 md:py-10"
+      role="status"
+      aria-label="Memuat halaman review"
+    >
+      <div className="space-y-3">
+        <Skeleton className="h-5 w-24" />
+        <Skeleton className="h-10 w-full max-w-md" />
+        <Skeleton className="h-5 w-full max-w-xl" />
+      </div>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
+        <div className="space-y-5">
+          <Skeleton className="h-14 w-full rounded-2xl" />
+          <Skeleton className="h-80 w-full rounded-3xl" />
         </div>
-      </section>
-
-      <section className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
-        <div className="rounded-2xl border bg-card p-5 shadow-sm md:p-6">
-          <Skeleton className="h-6 w-24 rounded-full" />
-          <Skeleton className="mt-3 h-7 w-full max-w-xl" />
-          <Skeleton className="mt-2 h-4 w-80 max-w-full" />
-          <Skeleton className="mt-5 h-64 w-full rounded-xl" />
+        <div className="space-y-4">
+          <Skeleton className="h-20 w-full rounded-2xl" />
+          <Skeleton className="h-52 w-full rounded-2xl" />
         </div>
-        <div className="rounded-2xl border bg-card p-5 shadow-sm">
-          <div className="flex gap-3">
-            <Skeleton className="h-10 w-10 rounded-xl" />
-            <div className="flex-1">
-              <Skeleton className="h-5 w-44" />
-              <Skeleton className="mt-2 h-3 w-full" />
-              <Skeleton className="mt-1 h-3 w-4/5" />
-            </div>
-          </div>
-          <div className="mt-5 space-y-3">
-            {[1, 2, 3].map((item) => (
-              <Skeleton key={item} className="h-5 w-full" />
-            ))}
-          </div>
-        </div>
-      </section>
+      </div>
     </div>
   );
+}
+
+function templateName(id: string) {
+  return TEMPLATES.find((t) => t.id === id)?.name ?? id;
+}
+
+function timeAgo(iso: string): string {
+  const minutes = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
+  if (minutes < 1) return "baru saja";
+  if (minutes < 60) return `${minutes} menit lalu`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} jam lalu`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days} hari lalu`;
+  return `pada ${new Date(iso).toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  })}`;
 }

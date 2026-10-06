@@ -68,11 +68,14 @@ export function CvFileUpload({
 
   if (extracting) {
     return (
-      <div className="flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-primary/30 bg-primary/5 p-10 text-center">
-        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+      <div
+        role="status"
+        className="flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-green-300 bg-green-50 p-10 text-center"
+      >
+        <Loader2 aria-hidden="true" className="h-10 w-10 animate-spin text-green-700" />
         <div>
-          <p className="font-medium text-sm">Mengekstrak teks dari CV...</p>
-          <p className="text-xs text-muted-foreground mt-1">{currentFile?.name}</p>
+          <p className="font-bold text-gray-900">Membaca teks dari CV…</p>
+          <p className="mt-1 break-all text-sm text-gray-600">{currentFile?.name}</p>
         </div>
       </div>
     );
@@ -80,13 +83,13 @@ export function CvFileUpload({
 
   if (currentFile && !error) {
     return (
-      <div className="flex items-center gap-3 rounded-xl border-2 border-primary/20 bg-primary/5 p-4">
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-          <FileText className="h-5 w-5 text-primary" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium truncate">{currentFile.name}</p>
-          <p className="text-xs text-muted-foreground">
+      <div className="flex items-center gap-3 rounded-2xl border-2 border-green-200 bg-green-50 p-4">
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-green-700 ring-1 ring-green-200">
+          <FileText aria-hidden="true" className="h-5 w-5" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-bold text-gray-900">{currentFile.name}</p>
+          <p className="text-sm text-gray-600">
             {(currentFile.size / 1024).toFixed(0)} KB ·{" "}
             {currentFile.name.endsWith(".pdf") ? "PDF" : "DOCX"}
           </p>
@@ -95,9 +98,10 @@ export function CvFileUpload({
           <button
             type="button"
             onClick={onClear}
-            className="flex h-8 w-8 items-center justify-center rounded-md hover:bg-muted transition-colors"
+            aria-label="Hapus file"
+            className="flex h-10 w-10 items-center justify-center rounded-lg text-gray-600 transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-700"
           >
-            <X className="h-4 w-4 text-muted-foreground" />
+            <X aria-hidden="true" className="h-4 w-4" />
           </button>
         )}
       </div>
@@ -109,31 +113,47 @@ export function CvFileUpload({
   return (
     <div>
       <div
+        role="button"
+        tabIndex={disabled ? -1 : 0}
+        aria-label="Pilih file CV (PDF atau DOCX)"
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onClick={handleClick}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            handleClick();
+          }
+        }}
         className={cn(
-          "flex cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed p-10 text-center transition-all",
+          "flex cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed p-8 text-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-700 focus-visible:ring-offset-2 sm:p-12",
           dragOver
-            ? "border-primary bg-primary/10 scale-[1.02]"
-            : "border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/30",
+            ? "border-green-700 bg-green-50"
+            : "border-gray-300 bg-gray-50 hover:border-green-700 hover:bg-green-50/60",
           disabled && "pointer-events-none opacity-50",
         )}
       >
-        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10">
-          <Upload className="h-7 w-7 text-primary" />
-        </div>
+        <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-green-700 ring-1 ring-green-200">
+          <Upload aria-hidden="true" className="h-7 w-7" />
+        </span>
         <div>
-          <p className="font-medium text-sm">Seret & lepas CV kamu di sini</p>
-          <p className="text-xs text-muted-foreground mt-1">PDF atau DOCX · Maks 10MB</p>
+          <p className="font-display text-base font-extrabold text-gray-900">
+            Seret & lepas CV kamu di sini
+          </p>
+          <p className="mt-1 text-sm text-gray-600">PDF atau DOCX · maksimal 10MB</p>
         </div>
-        <span className="text-xs text-primary font-medium">atau klik untuk pilih file</span>
+        <span className="inline-flex h-10 items-center rounded-xl bg-green-700 px-5 text-sm font-bold text-white">
+          Pilih file
+        </span>
       </div>
 
       {displayError && (
-        <div className="flex items-center gap-2 mt-3 text-sm text-destructive">
-          <FileWarning className="h-4 w-4 shrink-0" />
+        <div
+          role="alert"
+          className="mt-3 flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800"
+        >
+          <FileWarning aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0" />
           <span>{displayError}</span>
         </div>
       )}
