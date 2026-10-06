@@ -240,7 +240,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           window.dataLayer = window.dataLayer || [];
           function gtag(){dataLayer.push(arguments);}
           gtag('js', new Date());
-          gtag('config', '${GOOGLE_TAG_ID}');
+          // Google Signals / personalisasi iklan dimatikan: fitur itu memanggil google.<tld>/ads/ga-audiences
+          // dan stats.g.doubleclick.net yang tidak diizinkan CSP (dan memang tidak dipakai di sini).
+          gtag('config', '${GOOGLE_TAG_ID}', {
+            allow_google_signals: false,
+            allow_ad_personalization_signals: false,
+          });
         `,
         },
         {
