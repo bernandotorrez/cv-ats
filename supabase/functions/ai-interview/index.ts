@@ -18,6 +18,7 @@ import {
   type CvUiLang,
 } from "../_shared/ai-common.ts";
 import { checkRateLimit, createRateLimitedResponse } from "../_shared/rate-limit.ts";
+import { normalizeQuestions } from "../_shared/interview-questions.ts";
 import {
   MAX_MESSAGE_CHARS,
   MAX_SALARY,
@@ -317,8 +318,13 @@ ${languageInstruction}`,
   ];
 
   const result = await aiComplete(messages, { temperature: 0.8, jsonMode: true }, lang);
-  const parsed = parseAiJson<unknown[] | { questions?: unknown[] }>(result);
-  return { questions: Array.isArray(parsed) ? parsed : (parsed.questions ?? []) };
+  const questions = normalizeQuestions(parseAiJson<unknown>(result));
+  // Daftar kosong dulu lolos sebagai sukses sehingga sesi tampil kosong; sekarang jadi error
+  // (kuota yang sudah direservasi dikembalikan oleh pemanggil).
+  if (questions.length === 0) {
+    throw new Error("AI belum menghasilkan pertanyaan yang valid. Silakan coba lagi.");
+  }
+  return { questions };
 }
 
 async function evaluateAnswers(

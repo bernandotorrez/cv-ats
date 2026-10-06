@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { useSpeechRecognition } from "@/hooks/use-speech-recognition";
 import { VoiceAnswerPanel } from "@/components/interview/VoiceAnswerPanel";
+import { normalizeQuestions } from "../../../supabase/functions/_shared/interview-questions";
 import {
   analyzeDelivery,
   formatDuration,
@@ -119,6 +120,7 @@ function InterviewSessionPage() {
     feedback: string;
   } | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [generateError, setGenerateError] = useState<string | null>(null);
   const speechBaseTextRef = useRef("");
   const activeSpeechQuestionIdRef = useRef<string | null>(null);
   const previousQuestionIndexRef = useRef(currentQ);
@@ -181,7 +183,7 @@ function InterviewSessionPage() {
     position: String(data.position ?? ""),
     level: String(data.level ?? ""),
     industry: typeof data.industry === "string" ? data.industry : null,
-    questions: Array.isArray(data.questions) ? (data.questions as Question[]) : [],
+    questions: normalizeQuestions(data.questions),
     answers: Array.isArray(data.answers) ? (data.answers as SessionAnswer[]) : [],
     scores: Array.isArray(data.scores) ? (data.scores as Evaluation[]) : [],
     overall_score: typeof data.overall_score === "number" ? data.overall_score : null,
@@ -190,6 +192,8 @@ function InterviewSessionPage() {
 
   const generateQuestions = useCallback(
     async (sessionId: string, position: string, level: string, industry: string | null) => {
+      setGenerateError(null);
+      setStep("generating");
       try {
         const token = (await supabase.auth.getSession()).data.session?.access_token;
         const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-interview`, {
@@ -200,21 +204,30 @@ function InterviewSessionPage() {
         const result = await res.json();
         if (result.error) throw new Error(result.error);
 
-        const nextQuestions = result.questions as Question[];
+        // Jangan percaya bentuk balasan: daftar kosong/rusak dulu membuat sesi tampil kosong
+        const nextQuestions = normalizeQuestions(result.questions);
+        if (nextQuestions.length === 0) {
+          throw new Error("AI belum menghasilkan pertanyaan yang valid.");
+        }
         setQuestions(nextQuestions);
         setAnswers(Object.fromEntries(nextQuestions.map((q) => [q.id, ""])));
+        setCurrentQ(0);
         setStep("answering");
 
         await interviewSessions<SessionData>()
           .update({ questions: nextQuestions })
           .eq("id", sessionId);
       } catch (error: unknown) {
-        toast.error("Gagal membuat pertanyaan: " + toErrorMessage(error));
-        setStep("generating");
+        setGenerateError(toErrorMessage(error));
       }
     },
     [],
   );
+
+  const retryGenerate = () => {
+    if (!session) return;
+    generateQuestions(session.id, session.position, session.level, session.industry);
+  };
 
   const loadSession = useCallback(async () => {
     if (!user?.id) return;
@@ -448,7 +461,40 @@ function InterviewSessionPage() {
         )}
       </header>
 
-      {step === "generating" && (
+      {(generateError || (step === "answering" && !currentQuestion)) && (
+        <section
+          role="alert"
+          className="rounded-3xl border border-red-200 bg-red-50 p-8 text-center md:p-12"
+        >
+          <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-white text-red-700 ring-1 ring-red-200">
+            <AlertTriangle aria-hidden="true" className="h-8 w-8" />
+          </span>
+          <h2 className="mt-5 font-display text-2xl font-extrabold text-gray-900">
+            Pertanyaan belum berhasil dibuat
+          </h2>
+          <p className="mx-auto mt-2 max-w-md text-base leading-relaxed text-gray-700">
+            {generateError ?? "Sesi ini belum punya pertanyaan yang valid."} Kuotamu tidak terpotong
+            untuk percobaan yang gagal.
+          </p>
+          <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
+            <Button
+              onClick={retryGenerate}
+              className="h-12 gap-2 rounded-xl bg-green-700 px-6 font-extrabold text-white hover:bg-green-800"
+            >
+              <RotateCcw aria-hidden="true" className="h-4 w-4" />
+              Coba lagi
+            </Button>
+            <Link
+              to="/simulasi-wawancara"
+              className="inline-flex h-12 items-center justify-center rounded-xl border-2 border-gray-300 bg-white px-6 text-base font-semibold text-gray-800 transition-colors hover:border-green-700 hover:bg-green-50"
+            >
+              Kembali
+            </Link>
+          </div>
+        </section>
+      )}
+
+      {step === "generating" && !generateError && (
         <ProcessCard
           icon={Sparkles}
           title="AI sedang menyusun pertanyaan"
