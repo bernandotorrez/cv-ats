@@ -1,14 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, MotionConfig } from "framer-motion";
 import { buildSeo } from "@/lib/seo";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton-loading";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
@@ -20,28 +17,23 @@ import { InlineCvEditor } from "@/components/cv/InlineCvEditor";
 import { type CvData, type TemplateId, emptyCv } from "@/lib/cv-types";
 import { cn } from "@/lib/utils";
 import {
-  AlertCircle,
   ArrowLeft,
   ArrowRight,
-  BarChart3,
   Brain,
-  CheckCircle2,
-  ChevronRight,
-  Clock,
+  ChevronDown,
   FileText,
   History,
-  Lightbulb,
-  Loader2,
   Shield,
   Sparkles,
-  Star,
-  Target,
-  Trophy,
-  User,
   X,
   Zap,
 } from "lucide-react";
-import { BackButton } from "@/components/ui/back-button";
+import {
+  HiraCard,
+  ReviewDeliverables,
+  ReviewHistoryList,
+  ReviewSummary,
+} from "@/components/cv-review/review-ui";
 
 export const Route = createFileRoute("/_authenticated/cv-review/$cvId")({
   head: () =>
@@ -114,19 +106,7 @@ function CvReviewPage() {
   const [reviewHistory, setReviewHistory] = useState<ReviewHistory[]>([]);
   const [selectedHistoryId, setSelectedHistoryId] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
-  const [showSummary, setShowSummary] = useState(false);
-
-  const scoreColor = (score: number) => {
-    if (score >= 80) return "text-emerald-600";
-    if (score >= 60) return "text-amber-600";
-    return "text-red-600";
-  };
-
-  const scoreBg = (score: number) => {
-    if (score >= 80) return "bg-emerald-50 border-emerald-200 dark:bg-emerald-950/20 dark:border-emerald-800";
-    if (score >= 60) return "bg-amber-50 border-amber-200 dark:bg-amber-950/20 dark:border-amber-800";
-    return "bg-red-50 border-red-200 dark:bg-red-950/20 dark:border-red-800";
-  };
+  const [showSummary, setShowSummary] = useState(true);
 
   const toErrorMessage = (error: unknown) =>
     error instanceof Error ? error.message : "Terjadi kesalahan";
@@ -262,10 +242,10 @@ function CvReviewPage() {
           jobDescription: jobDescription.trim() || undefined,
         },
       });
-      
+
       // Small delay for animation to complete
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
       window.scrollTo({ top: 0, behavior: "smooth" });
       setResult(response);
       setPhase("result");
@@ -294,7 +274,11 @@ function CvReviewPage() {
       const bulletIndex = suggestion.bulletIndex;
       let applied = false;
 
-      const replaceBulletPoint = (description: string, bulletIdx: number, newBulletText: string): string => {
+      const replaceBulletPoint = (
+        description: string,
+        bulletIdx: number,
+        newBulletText: string,
+      ): string => {
         const lines = description.split("\n");
         let nonEmptyCount = 0;
         for (let i = 0; i < lines.length; i++) {
@@ -317,7 +301,12 @@ function CvReviewPage() {
         return lines.join("\n");
       };
 
-      const setValueByPath = (obj: any, path: string, value: string, bulletIdx?: number | null): boolean => {
+      const setValueByPath = (
+        obj: any,
+        path: string,
+        value: string,
+        bulletIdx?: number | null,
+      ): boolean => {
         try {
           const match = path.match(/^(\w+)\[(\d+)\]\.(\w+)$/);
           if (match) {
@@ -325,7 +314,11 @@ function CvReviewPage() {
             const idx = parseInt(indexStr);
             if (obj[arrayName] && obj[arrayName][idx]) {
               if (bulletIdx !== null && bulletIdx !== undefined && field === "description") {
-                obj[arrayName][idx][field] = replaceBulletPoint(obj[arrayName][idx][field] || "", bulletIdx, value);
+                obj[arrayName][idx][field] = replaceBulletPoint(
+                  obj[arrayName][idx][field] || "",
+                  bulletIdx,
+                  value,
+                );
               } else {
                 obj[arrayName][idx][field] = value;
               }
@@ -368,7 +361,11 @@ function CvReviewPage() {
             const desc = updatedCvData.experiences[i].description || "";
             if (searchIn(desc)) {
               if (bulletIndex !== null && bulletIndex !== undefined) {
-                updatedCvData.experiences[i].description = replaceBulletPoint(desc, bulletIndex, newText);
+                updatedCvData.experiences[i].description = replaceBulletPoint(
+                  desc,
+                  bulletIndex,
+                  newText,
+                );
               } else {
                 updatedCvData.experiences[i].description = doReplace(desc);
               }
@@ -385,8 +382,14 @@ function CvReviewPage() {
       }
 
       if (!applied) {
-        const isSummary = categoryLower.includes("summary") || categoryLower.includes("ringkasan") || categoryLower.includes("content");
-        const isExperience = categoryLower.includes("experience") || categoryLower.includes("pengalaman") || categoryLower.includes("achievement");
+        const isSummary =
+          categoryLower.includes("summary") ||
+          categoryLower.includes("ringkasan") ||
+          categoryLower.includes("content");
+        const isExperience =
+          categoryLower.includes("experience") ||
+          categoryLower.includes("pengalaman") ||
+          categoryLower.includes("achievement");
         const isHeadline = categoryLower.includes("headline") || categoryLower.includes("judul");
 
         if (isSummary) {
@@ -401,7 +404,11 @@ function CvReviewPage() {
               const exp = updatedCvData.experiences[i];
               if (exp.company && currentText.includes(exp.company)) {
                 if (bulletIndex !== null && bulletIndex !== undefined) {
-                  updatedCvData.experiences[i].description = replaceBulletPoint(exp.description || "", bulletIndex, newText);
+                  updatedCvData.experiences[i].description = replaceBulletPoint(
+                    exp.description || "",
+                    bulletIndex,
+                    newText,
+                  );
                 } else {
                   updatedCvData.experiences[i].description = newText;
                 }
@@ -412,7 +419,11 @@ function CvReviewPage() {
           }
           if (!applied) {
             if (bulletIndex !== null && bulletIndex !== undefined) {
-              updatedCvData.experiences[0].description = replaceBulletPoint(updatedCvData.experiences[0].description || "", bulletIndex, newText);
+              updatedCvData.experiences[0].description = replaceBulletPoint(
+                updatedCvData.experiences[0].description || "",
+                bulletIndex,
+                newText,
+              );
             } else {
               updatedCvData.experiences[0].description = newText;
             }
@@ -427,10 +438,7 @@ function CvReviewPage() {
       setCvData(updatedCvData);
 
       try {
-        await supabase
-          .from("cvs")
-          .update({ data: updatedCvData })
-          .eq("id", cvId);
+        await supabase.from("cvs").update({ data: updatedCvData }).eq("id", cvId);
       } catch (err) {
         console.warn("Gagal menyimpan ke database:", err);
       }
@@ -446,7 +454,11 @@ function CvReviewPage() {
     const updatedCvData = JSON.parse(JSON.stringify(cvData));
     let appliedCount = 0;
 
-    const replaceBulletPoint = (description: string, bulletIdx: number, newBulletText: string): string => {
+    const replaceBulletPoint = (
+      description: string,
+      bulletIdx: number,
+      newBulletText: string,
+    ): string => {
       const lines = description.split("\n");
       let nonEmptyCount = 0;
       for (let i = 0; i < lines.length; i++) {
@@ -469,7 +481,12 @@ function CvReviewPage() {
       return lines.join("\n");
     };
 
-    const setValueByPath = (obj: any, path: string, value: string, bulletIdx?: number | null): boolean => {
+    const setValueByPath = (
+      obj: any,
+      path: string,
+      value: string,
+      bulletIdx?: number | null,
+    ): boolean => {
       try {
         const match = path.match(/^(\w+)\[(\d+)\]\.(\w+)$/);
         if (match) {
@@ -477,7 +494,11 @@ function CvReviewPage() {
           const idx = parseInt(indexStr);
           if (obj[arrayName] && obj[arrayName][idx]) {
             if (bulletIdx !== null && bulletIdx !== undefined && field === "description") {
-              obj[arrayName][idx][field] = replaceBulletPoint(obj[arrayName][idx][field] || "", bulletIdx, value);
+              obj[arrayName][idx][field] = replaceBulletPoint(
+                obj[arrayName][idx][field] || "",
+                bulletIdx,
+                value,
+              );
             } else {
               obj[arrayName][idx][field] = value;
             }
@@ -527,7 +548,11 @@ function CvReviewPage() {
             const desc = updatedCvData.experiences[i].description || "";
             if (searchIn(desc)) {
               if (bulletIndex !== null && bulletIndex !== undefined) {
-                updatedCvData.experiences[i].description = replaceBulletPoint(desc, bulletIndex, suggestion.suggested);
+                updatedCvData.experiences[i].description = replaceBulletPoint(
+                  desc,
+                  bulletIndex,
+                  suggestion.suggested,
+                );
               } else {
                 updatedCvData.experiences[i].description = doReplace(desc);
               }
@@ -539,8 +564,14 @@ function CvReviewPage() {
       }
 
       if (!applied) {
-        const isSummary = categoryLower.includes("summary") || categoryLower.includes("ringkasan") || categoryLower.includes("content");
-        const isExperience = categoryLower.includes("experience") || categoryLower.includes("pengalaman") || categoryLower.includes("achievement");
+        const isSummary =
+          categoryLower.includes("summary") ||
+          categoryLower.includes("ringkasan") ||
+          categoryLower.includes("content");
+        const isExperience =
+          categoryLower.includes("experience") ||
+          categoryLower.includes("pengalaman") ||
+          categoryLower.includes("achievement");
         const isHeadline = categoryLower.includes("headline") || categoryLower.includes("judul");
 
         if (isSummary) {
@@ -551,7 +582,11 @@ function CvReviewPage() {
           applied = true;
         } else if (isExperience && updatedCvData.experiences.length > 0) {
           if (bulletIndex !== null && bulletIndex !== undefined) {
-            updatedCvData.experiences[0].description = replaceBulletPoint(updatedCvData.experiences[0].description || "", bulletIndex, suggestion.suggested);
+            updatedCvData.experiences[0].description = replaceBulletPoint(
+              updatedCvData.experiences[0].description || "",
+              bulletIndex,
+              suggestion.suggested,
+            );
           } else {
             updatedCvData.experiences[0].description = suggestion.suggested;
           }
@@ -568,10 +603,7 @@ function CvReviewPage() {
     setCvData(updatedCvData);
 
     try {
-      await supabase
-        .from("cvs")
-        .update({ data: updatedCvData })
-        .eq("id", cvId);
+      await supabase.from("cvs").update({ data: updatedCvData }).eq("id", cvId);
     } catch (err) {
       console.warn("Gagal menyimpan ke database:", err);
     }
@@ -589,376 +621,339 @@ function CvReviewPage() {
 
   if (!tierOk) {
     return (
-      <div className="container-page py-8 md:py-12">
-        <section className="mx-auto max-w-3xl rounded-[1.25rem] border bg-card p-6 text-center shadow-sm md:p-10">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-warning/20 text-warning">
-            <Shield className="h-8 w-8" />
-          </div>
-          <Badge className="mt-5 bg-warning/20 text-warning hover:bg-warning/20">
-            Starter ke atas
-          </Badge>
-          <h1 className="mt-4 font-display text-3xl font-bold leading-tight text-foreground">
-            Review CV by HR Expert AI tersedia di paket Starter.
-          </h1>
-          <p className="mx-auto mt-3 max-w-xl text-sm leading-7 text-muted-foreground sm:text-base">
-            Upgrade untuk membuka review mendalam dari AI HR profesional dengan pengalaman 20+
-            tahun.
+      <div className="container-page py-8 md:py-14">
+        <section className="mx-auto max-w-2xl rounded-3xl border border-gray-200 bg-white p-6 text-center shadow-sm sm:p-10">
+          <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-green-50 text-green-700 ring-1 ring-green-200">
+            <Shield aria-hidden="true" className="h-8 w-8" />
+          </span>
+          <p className="mt-5 inline-flex rounded-full border border-green-200 bg-green-50 px-3 py-1 text-xs font-bold uppercase tracking-wider text-green-800">
+            Paket Starter ke atas
           </p>
-          <Button asChild size="lg" className="mt-7 gap-2">
-            <Link to="/harga">
-              <Zap className="h-4 w-4" />
-              Upgrade ke Starter
+          <h1 className="mt-4 font-display text-3xl font-extrabold leading-tight tracking-tight text-balance text-gray-900">
+            Review CV oleh HR Expert AI ada di paket Starter
+          </h1>
+          <p className="mx-auto mt-3 max-w-lg text-base leading-relaxed text-gray-600">
+            Upgrade untuk membuka review mendalam dari Hira AI, konsultan HR dengan pengalaman 20+
+            tahun, lengkap dengan saran yang bisa langsung diterapkan.
+          </p>
+          <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
+            <Link
+              to="/harga"
+              className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-green-700 px-6 text-base font-bold text-white shadow-md shadow-green-700/20 transition-colors hover:bg-green-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-700 focus-visible:ring-offset-2"
+            >
+              <Zap aria-hidden="true" className="h-5 w-5" />
+              Lihat Paket & Upgrade
             </Link>
-          </Button>
+            <Link
+              to="/dashboard"
+              className="inline-flex h-12 items-center justify-center rounded-xl border-2 border-gray-300 bg-white px-6 text-base font-semibold text-gray-800 transition-colors hover:border-green-700 hover:bg-green-50 hover:text-green-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-700 focus-visible:ring-offset-2"
+            >
+              Kembali ke Dashboard
+            </Link>
+          </div>
         </section>
       </div>
     );
   }
 
+  const inResult = phase === "result" && result;
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
-      {/* Header */}
-      <div className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur-sm">
-        <div className="container-page flex items-center justify-between py-4">
-          <div className="flex items-center gap-4">
-            <BackButton />
-            <div>
-              <h1 className="font-display text-lg font-bold text-foreground">
-                AI CV Review
-              </h1>
-              <p className="text-xs text-muted-foreground">{cvTitle}</p>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            {phase === "result" && result && (
-              <>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowSummary(!showSummary)}
-                  className="gap-2"
-                >
-                  <BarChart3 className="h-4 w-4" />
-                  {showSummary ? "Tutup Summary" : "Lihat Summary"}
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setPhase("input");
-                    setResult(null);
-                    setSelectedHistoryId(null);
-                  }}
-                  className="gap-2"
-                >
-                  <Sparkles className="h-4 w-4" />
-                  Review Baru
-                </Button>
-              </>
-            )}
-            {reviewHistory.length > 0 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowHistory(!showHistory)}
-                className="gap-2"
+    <MotionConfig reducedMotion="user">
+      <div className="container-page space-y-6 py-6 md:space-y-8 md:py-10">
+        {/* Header */}
+        <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div className="min-w-0">
+            <Link
+              to="/cv-review"
+              className="inline-flex min-h-8 items-center gap-1.5 text-sm font-semibold text-green-800 underline-offset-4 hover:underline"
+            >
+              <ArrowLeft aria-hidden="true" className="h-4 w-4" />
+              Review CV
+            </Link>
+            <h1 className="mt-1 font-display text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl">
+              Review CV oleh HR Expert AI
+            </h1>
+            <p className="mt-1.5 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-sm text-gray-600 sm:text-base">
+              <FileText aria-hidden="true" className="h-4 w-4 shrink-0 text-green-700" />
+              <span className="max-w-full truncate font-semibold text-gray-900">
+                {cvTitle || "CV tanpa judul"}
+              </span>
+              <span aria-hidden="true">·</span>
+              <Link
+                to="/cv/$id"
+                params={{ id: cvId }}
+                className="font-semibold text-green-800 underline-offset-4 hover:underline"
               >
-                <History className="h-4 w-4" />
-                Riwayat ({reviewHistory.length})
-              </Button>
-            )}
+                Buka editor
+              </Link>
+            </p>
           </div>
-        </div>
-      </div>
 
-      {/* History Panel */}
-      <AnimatePresence>
-        {showHistory && reviewHistory.length > 0 && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            className="overflow-hidden border-b bg-muted/30"
-          >
-            <div className="container-page py-4">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="font-semibold text-sm">Riwayat Review</h3>
-                <Button variant="ghost" size="icon" onClick={() => setShowHistory(false)}>
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-              <div className="flex gap-2 overflow-x-auto pb-2">
-                {reviewHistory.map((history) => (
-                  <button
-                    key={history.id}
-                    onClick={() => loadReviewDetail(history.id)}
-                    className={cn(
-                      "flex items-center gap-2 rounded-lg border px-3 py-2 text-left transition-all hover:border-primary/40 hover:bg-primary/5 shrink-0",
-                      selectedHistoryId === history.id && "border-primary bg-primary/5"
-                    )}
-                  >
-                    <Clock className="h-4 w-4 text-muted-foreground" />
-                    <div>
-                      <p className="text-xs font-medium">{history.target_role || "Tanpa target"}</p>
-                      <p className="text-[10px] text-muted-foreground">
-                        {new Date(history.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "short" })}
-                      </p>
-                    </div>
-                    <span className={cn("font-bold text-lg", scoreColor(history.overall_score))}>
-                      {history.overall_score}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Main Content */}
-      <AnimatePresence mode="wait">
-        {phase === "input" && (
-          <motion.div
-            key="input"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="container-page py-8"
-          >
-            <div className="mx-auto max-w-2xl">
-              {/* Hero section */}
-              <div className="text-center mb-8">
-                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/20 to-primary/10">
-                  <Brain className="h-8 w-8 text-primary" />
-                </div>
-                <h2 className="font-display text-3xl font-bold text-foreground mb-2">
-                  Review CV oleh HR Expert AI
-                </h2>
-                <p className="text-muted-foreground">
-                  Dapatkan analisis mendalam dari AI HR dengan pengalaman 20+ tahun
-                </p>
-              </div>
-
-              {/* Input form */}
-              <Card className="border-2 shadow-lg">
-                <CardContent className="p-6 space-y-6">
-                  {/* HR Persona */}
-                  <div className="flex items-center gap-4 p-4 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 border border-amber-200 dark:border-amber-800">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-orange-500 shrink-0">
-                      <span className="text-lg font-bold text-white">HA</span>
-                    </div>
-                    <div>
-                      <p className="font-semibold text-amber-900 dark:text-amber-400">Hira AI</p>
-                      <p className="text-sm text-amber-700 dark:text-amber-500">Senior HR Consultant • 20+ tahun</p>
-                    </div>
-                  </div>
-
-                  {/* Target Role */}
-                  <div className="space-y-2">
-                    <Label htmlFor="target-role" className="text-sm font-medium">
-                      Target Posisi <span className="text-muted-foreground">(opsional)</span>
-                    </Label>
-                    <input
-                      id="target-role"
-                      value={targetRole}
-                      onChange={(e) => setTargetRole(e.target.value)}
-                      placeholder="Contoh: Frontend Developer, Marketing Manager"
-                      className="flex h-11 w-full rounded-lg border border-input bg-background px-4 py-2 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    />
-                  </div>
-
-                  {/* Job Description */}
-                  <div className="space-y-2">
-                    <Label htmlFor="job-description" className="text-sm font-medium">
-                      Deskripsi Pekerjaan <span className="text-muted-foreground">(opsional)</span>
-                    </Label>
-                    <Textarea
-                      id="job-description"
-                      value={jobDescription}
-                      onChange={(e) => setJobDescription(e.target.value)}
-                      placeholder="Tempel job description di sini untuk analisis yang lebih akurat..."
-                      rows={5}
-                      maxLength={10000}
-                      className="resize-none"
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Menambahkan job description membantu AI mengecek relevansi CV dengan posisi target
-                    </p>
-                  </div>
-
-                  {/* Submit Button */}
-                  <Button
-                    onClick={handleReview}
-                    size="lg"
-                    className="w-full gap-2 h-12 text-base"
-                  >
-                    <Brain className="h-5 w-5" />
-                    Mulai Review CV
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-
-                  <p className="text-xs text-center text-muted-foreground">
-                    Proses analisis membutuhkan waktu 10-30 detik
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-          </motion.div>
-        )}
-
-        {phase === "scanning" && (
-          <motion.div
-            key="scanning"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <CvScannerAnimation cvTitle={cvTitle} />
-          </motion.div>
-        )}
-
-        {phase === "result" && result && (
-          <motion.div
-            key="result"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="px-4 py-4"
-          >
-            {/* Summary Panel */}
-            <AnimatePresence>
-              {showSummary && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: "auto", opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  className="overflow-hidden mb-4"
+          {inResult && (
+            <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
+              {reviewHistory.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setShowHistory((v) => !v)}
+                  aria-expanded={showHistory}
+                  className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border-2 border-gray-300 bg-white px-4 text-sm font-semibold text-gray-800 transition-colors hover:border-green-700 hover:bg-green-50 hover:text-green-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-700 focus-visible:ring-offset-2"
                 >
-                  <Card className="border-2">
-                    <CardContent className="p-6">
-                      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-                        {/* Score */}
-                        <div className={cn("rounded-xl border-2 p-4 text-center", scoreBg(result.review.scores.overall))}>
-                          <p className="text-sm text-muted-foreground mb-1">Skor Keseluruhan</p>
-                          <p className={cn("text-5xl font-bold", scoreColor(result.review.scores.overall))}>
-                            {result.review.scores.overall}
-                          </p>
-                          <p className="text-xs text-muted-foreground mt-1">/100</p>
-                        </div>
-
-                        {/* Verdict */}
-                        <div className="rounded-xl border-2 p-4">
-                          <p className="text-sm text-muted-foreground mb-2">Verdict HR</p>
-                          <Badge className="bg-primary text-primary-foreground">
-                            {result.review.hrVerdict.verdict}
-                          </Badge>
-                          <p className="text-xs text-muted-foreground mt-2 line-clamp-2">
-                            {result.review.hrVerdict.reason}
-                          </p>
-                        </div>
-
-                        {/* Strengths */}
-                        <div className="rounded-xl border-2 p-4">
-                          <p className="text-sm text-muted-foreground mb-2 flex items-center gap-1">
-                            <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                            Kekuatan
-                          </p>
-                          <ul className="space-y-1">
-                            {result.review.strengths.slice(0, 2).map((s, i) => (
-                              <li key={i} className="text-xs line-clamp-1">{s}</li>
-                            ))}
-                          </ul>
-                        </div>
-
-                        {/* Weaknesses */}
-                        <div className="rounded-xl border-2 p-4">
-                          <p className="text-sm text-muted-foreground mb-2 flex items-center gap-1">
-                            <AlertCircle className="h-4 w-4 text-red-500" />
-                            Perlu Diperbaiki
-                          </p>
-                          <ul className="space-y-1">
-                            {result.review.weaknesses.slice(0, 2).map((w, i) => (
-                              <li key={i} className="text-xs line-clamp-1">{w}</li>
-                            ))}
-                          </ul>
-                        </div>
-                      </div>
-
-                      {/* Score breakdown */}
-                      <div className="mt-6 grid grid-cols-5 gap-3">
-                        {[
-                          { label: "First Impression", value: result.review.scores.firstImpression },
-                          { label: "Format ATS", value: result.review.scores.format },
-                          { label: "Konten", value: result.review.scores.content },
-                          { label: "Pencapaian", value: result.review.scores.achievement },
-                          { label: "Presentasi", value: result.review.scores.presentation },
-                        ].map((item) => (
-                          <div key={item.label} className="text-center">
-                            <div className="relative h-16 w-16 mx-auto mb-2">
-                              <svg className="h-16 w-16 -rotate-90" viewBox="0 0 36 36">
-                                <path
-                                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  className="text-muted"
-                                  strokeWidth="3"
-                                />
-                                <path
-                                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  className={item.value >= 80 ? "text-emerald-500" : item.value >= 60 ? "text-amber-500" : "text-red-500"}
-                                  strokeWidth="3"
-                                  strokeDasharray={`${item.value}, 100`}
-                                />
-                              </svg>
-                              <span className="absolute inset-0 flex items-center justify-center text-sm font-bold">
-                                {item.value}
-                              </span>
-                            </div>
-                            <p className="text-[10px] text-muted-foreground">{item.label}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
+                  <History aria-hidden="true" className="h-4 w-4" />
+                  Riwayat ({reviewHistory.length})
+                </button>
               )}
-            </AnimatePresence>
+              <Button
+                onClick={() => {
+                  setPhase("input");
+                  setResult(null);
+                  setSelectedHistoryId(null);
+                  setShowHistory(false);
+                }}
+                className="h-11 gap-2 rounded-xl bg-green-700 px-5 font-bold text-white shadow-md shadow-green-700/20 hover:bg-green-800"
+              >
+                <Sparkles aria-hidden="true" className="h-4 w-4" />
+                Review Baru
+              </Button>
+            </div>
+          )}
+        </header>
 
-            {/* Inline CV Editor - side-by-side */}
-            <InlineCvEditor
-              cvData={cvData}
-              templateId={templateId}
-              suggestions={suggestions}
-              onApplySuggestion={handleApplySuggestion}
-              onApplyAll={handleApplyAllSuggestions}
-              onSave={handleSaveAndReturn}
+        {/* Riwayat (saat melihat hasil) */}
+        {inResult && showHistory && reviewHistory.length > 0 && (
+          <section
+            aria-label="Riwayat review"
+            className="rounded-2xl border border-gray-200 bg-gray-50 p-4"
+          >
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="font-display text-base font-extrabold text-gray-900">
+                Riwayat review CV ini
+              </h2>
+              <button
+                type="button"
+                onClick={() => setShowHistory(false)}
+                aria-label="Tutup riwayat"
+                className="flex h-9 w-9 items-center justify-center rounded-lg text-gray-600 transition-colors hover:bg-gray-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-700"
+              >
+                <X aria-hidden="true" className="h-4 w-4" />
+              </button>
+            </div>
+            <ReviewHistoryList
+              layout="row"
+              items={reviewHistory}
+              selectedId={selectedHistoryId}
+              onSelect={loadReviewDetail}
             />
-          </motion.div>
+          </section>
         )}
-      </AnimatePresence>
-    </div>
+
+        <AnimatePresence mode="wait">
+          {phase === "input" && (
+            <motion.div
+              key="input"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2 }}
+              className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]"
+            >
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleReview();
+                }}
+                className="space-y-6 rounded-3xl border border-gray-200 bg-white p-5 shadow-sm sm:p-7"
+              >
+                <div>
+                  <h2 className="font-display text-xl font-extrabold tracking-tight text-gray-900">
+                    Atur fokus review
+                  </h2>
+                  <p className="mt-1 text-sm leading-relaxed text-gray-600">
+                    Semakin spesifik target posisinya, semakin tajam saran dari Hira AI.
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="target-role" className="text-sm font-bold text-gray-900">
+                    Target posisi <span className="font-normal text-gray-600">(opsional)</span>
+                  </Label>
+                  <input
+                    id="target-role"
+                    value={targetRole}
+                    onChange={(e) => setTargetRole(e.target.value)}
+                    placeholder="Contoh: Frontend Developer, Marketing Manager"
+                    autoComplete="off"
+                    className="flex h-12 w-full rounded-xl border border-gray-300 bg-white px-4 text-base text-gray-900 transition-colors placeholder:text-gray-500 focus-visible:border-green-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-700/20"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-baseline justify-between gap-2">
+                    <Label htmlFor="job-description" className="text-sm font-bold text-gray-900">
+                      Deskripsi pekerjaan{" "}
+                      <span className="font-normal text-gray-600">(opsional)</span>
+                    </Label>
+                    <span className="text-xs tabular-nums text-gray-600" aria-live="off">
+                      {jobDescription.length.toLocaleString("id-ID")} / 10.000
+                    </span>
+                  </div>
+                  <Textarea
+                    id="job-description"
+                    value={jobDescription}
+                    onChange={(e) => setJobDescription(e.target.value)}
+                    placeholder="Tempel job description di sini untuk analisis yang lebih akurat..."
+                    rows={6}
+                    maxLength={10000}
+                    className="resize-y rounded-xl border-gray-300 px-4 py-3 text-base placeholder:text-gray-500 focus-visible:border-green-700 focus-visible:ring-2 focus-visible:ring-green-700/20"
+                  />
+                  <p className="text-sm text-gray-600">
+                    Dengan job description, Hira AI ikut mengecek seberapa cocok CV-mu dengan
+                    lowongan itu.
+                  </p>
+                </div>
+
+                <div className="space-y-3 border-t border-gray-100 pt-5">
+                  <Button
+                    type="submit"
+                    size="lg"
+                    className="h-12 w-full gap-2 rounded-xl bg-green-700 text-base font-extrabold text-white shadow-md shadow-green-700/20 hover:bg-green-800"
+                  >
+                    <Brain aria-hidden="true" className="h-5 w-5" />
+                    Mulai Review CV
+                    <ArrowRight aria-hidden="true" className="h-4 w-4" />
+                  </Button>
+                  <p className="text-center text-sm text-gray-600">
+                    Analisis memakan waktu 10–30 detik. Hasilnya otomatis tersimpan di riwayat.
+                  </p>
+                </div>
+              </form>
+
+              <aside className="space-y-4">
+                <HiraCard />
+                <ReviewDeliverables />
+                {reviewHistory.length > 0 && (
+                  <section aria-labelledby="riwayat-heading" className="space-y-2.5">
+                    <h2
+                      id="riwayat-heading"
+                      className="flex items-center gap-2 font-display text-base font-extrabold text-gray-900"
+                    >
+                      <History aria-hidden="true" className="h-4 w-4 text-green-700" />
+                      Riwayat review
+                      <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-bold text-gray-700">
+                        {reviewHistory.length}
+                      </span>
+                    </h2>
+                    <ReviewHistoryList
+                      items={reviewHistory.slice(0, 5)}
+                      selectedId={selectedHistoryId}
+                      onSelect={loadReviewDetail}
+                    />
+                    {reviewHistory.length > 5 && (
+                      <p className="text-xs text-gray-600">
+                        Menampilkan 5 review terbaru dari {reviewHistory.length}.
+                      </p>
+                    )}
+                  </section>
+                )}
+              </aside>
+            </motion.div>
+          )}
+
+          {phase === "scanning" && (
+            <motion.div
+              key="scanning"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              <CvScannerAnimation cvTitle={cvTitle} />
+            </motion.div>
+          )}
+
+          {inResult && (
+            <motion.div
+              key="result"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="space-y-8"
+            >
+              <section aria-labelledby="ringkasan-heading" className="space-y-4">
+                <div className="flex items-center justify-between gap-3">
+                  <h2
+                    id="ringkasan-heading"
+                    className="font-display text-xl font-extrabold tracking-tight text-gray-900"
+                  >
+                    Hasil review
+                  </h2>
+                  <button
+                    type="button"
+                    onClick={() => setShowSummary((v) => !v)}
+                    aria-expanded={showSummary}
+                    aria-controls="ringkasan-panel"
+                    className="inline-flex h-10 items-center gap-1.5 rounded-xl px-3 text-sm font-semibold text-green-800 transition-colors hover:bg-green-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-700"
+                  >
+                    {showSummary ? "Sembunyikan ringkasan" : "Tampilkan ringkasan"}
+                    <ChevronDown
+                      aria-hidden="true"
+                      className={cn("h-4 w-4 transition-transform", showSummary && "rotate-180")}
+                    />
+                  </button>
+                </div>
+                <div id="ringkasan-panel" hidden={!showSummary}>
+                  <ReviewSummary review={result.review} />
+                </div>
+              </section>
+
+              <section aria-labelledby="terapkan-heading" className="space-y-4">
+                <div>
+                  <h2
+                    id="terapkan-heading"
+                    className="font-display text-xl font-extrabold tracking-tight text-gray-900"
+                  >
+                    Terapkan saran di CV-mu
+                  </h2>
+                  <p className="mt-1 text-sm text-gray-600 sm:text-base">
+                    Klik teks yang disorot di pratinjau, atau buka daftar saran. Perubahan yang
+                    diterapkan tersimpan otomatis ke CV.
+                  </p>
+                </div>
+                <InlineCvEditor
+                  cvData={cvData}
+                  templateId={templateId}
+                  suggestions={suggestions}
+                  onApplySuggestion={handleApplySuggestion}
+                  onApplyAll={handleApplyAllSuggestions}
+                  onSave={handleSaveAndReturn}
+                />
+              </section>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </MotionConfig>
   );
 }
 
 function CvReviewSkeleton() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
-      <div className="container-page py-8">
-        <div className="mx-auto max-w-2xl">
-          <Skeleton className="h-16 w-16 rounded-2xl mx-auto mb-4" />
-          <Skeleton className="h-10 w-64 mx-auto mb-2" />
-          <Skeleton className="h-6 w-80 mx-auto mb-8" />
-          <Card>
-            <CardContent className="p-6 space-y-6">
-              <Skeleton className="h-20 w-full rounded-xl" />
-              <Skeleton className="h-11 w-full" />
-              <Skeleton className="h-32 w-full" />
-              <Skeleton className="h-12 w-full" />
-            </CardContent>
-          </Card>
+    <div
+      className="container-page space-y-6 py-6 md:space-y-8 md:py-10"
+      role="status"
+      aria-label="Memuat halaman review"
+    >
+      <div className="space-y-3">
+        <Skeleton className="h-5 w-24" />
+        <Skeleton className="h-10 w-full max-w-md" />
+        <Skeleton className="h-5 w-64" />
+      </div>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
+        <Skeleton className="h-[26rem] w-full rounded-3xl" />
+        <div className="space-y-4">
+          <Skeleton className="h-20 w-full rounded-2xl" />
+          <Skeleton className="h-52 w-full rounded-2xl" />
         </div>
       </div>
     </div>

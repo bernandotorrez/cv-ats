@@ -1,11 +1,12 @@
 /**
  * CV Scanner Animation
- * QR Code-like scanning animation for CV review loading state
+ * Loading state saat AI HR menganalisis CV: dokumen yang dipindai + daftar tahapan.
  */
 
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Brain, FileText, Search, CheckCircle2, Sparkles } from "lucide-react";
+import { useEffect, useState } from "react";
+import { motion, useReducedMotion } from "framer-motion";
+import { Brain, Check, FileText, Loader2, Search, Sparkles } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface CvScannerAnimationProps {
   cvTitle: string;
@@ -13,255 +14,156 @@ interface CvScannerAnimationProps {
 }
 
 const scanPhases = [
-  { icon: FileText, text: "Membaca struktur CV...", duration: 2000 },
-  { icon: Search, text: "Menganalisis konten & format...", duration: 2500 },
-  { icon: Brain, text: "Evaluasi dari sudut pandang HR...", duration: 3000 },
-  { icon: Sparkles, text: "Menyiapkan rekomendasi...", duration: 2000 },
+  { icon: FileText, text: "Membaca struktur CV", duration: 2000 },
+  { icon: Search, text: "Menganalisis konten & format", duration: 2500 },
+  { icon: Brain, text: "Evaluasi dari sudut pandang HR", duration: 3000 },
+  { icon: Sparkles, text: "Menyiapkan rekomendasi", duration: 2000 },
 ];
 
 export function CvScannerAnimation({ cvTitle }: CvScannerAnimationProps) {
   const [currentPhase, setCurrentPhase] = useState(0);
   const [progress, setProgress] = useState(0);
+  const reduceMotion = useReducedMotion();
 
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
     const totalDuration = scanPhases.reduce((acc, p) => acc + p.duration, 0);
     const startTime = Date.now();
     let phaseIndex = 0;
     let phaseStartTime = Date.now();
 
     const interval = setInterval(() => {
-      const elapsed = Date.now() - startTime;
-      const phaseElapsed = Date.now() - phaseStartTime;
-      
-      // Update progress
-      setProgress(Math.min((elapsed / totalDuration) * 100, 95));
+      const now = Date.now();
+      setProgress(Math.min(((now - startTime) / totalDuration) * 100, 95));
 
-      // Check if we need to move to next phase
-      if (phaseIndex < scanPhases.length - 1 && phaseElapsed >= scanPhases[phaseIndex].duration) {
+      if (
+        phaseIndex < scanPhases.length - 1 &&
+        now - phaseStartTime >= scanPhases[phaseIndex].duration
+      ) {
         phaseIndex++;
-        phaseStartTime = Date.now();
+        phaseStartTime = now;
         setCurrentPhase(phaseIndex);
       }
-    }, 50);
+    }, 100);
 
     return () => clearInterval(interval);
   }, []);
 
   return (
-    <div className="relative flex flex-col items-center justify-center min-h-[80vh] overflow-hidden">
-      {/* Background grid pattern */}
-      <div className="absolute inset-0 opacity-5">
-        <div
-          className="h-full w-full"
-          style={{
-            backgroundImage: `
-              linear-gradient(rgba(var(--primary-rgb), 0.3) 1px, transparent 1px),
-              linear-gradient(90deg, rgba(var(--primary-rgb), 0.3) 1px, transparent 1px)
-            `,
-            backgroundSize: "40px 40px",
-          }}
-        />
-      </div>
-
-      {/* Floating particles */}
-      <div className="absolute inset-0 overflow-hidden">
-        {[...Array(20)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute h-1 w-1 rounded-full bg-primary/30"
-            initial={{
-              x: Math.random() * 100 + "%",
-              y: Math.random() * 100 + "%",
-              scale: 0,
-            }}
-            animate={{
-              x: [Math.random() * 100 + "%", Math.random() * 100 + "%"],
-              y: [Math.random() * 100 + "%", Math.random() * 100 + "%"],
-              scale: [0, 1, 0],
-            }}
-            transition={{
-              duration: 3 + Math.random() * 4,
-              repeat: Infinity,
-              delay: Math.random() * 2,
-            }}
-          />
-        ))}
-      </div>
-
-      {/* Main scanner card */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="relative z-10 w-full max-w-xl mx-auto px-4"
+    <div className="mx-auto grid max-w-4xl grid-cols-1 items-center gap-8 py-4 md:grid-cols-[1fr_1.1fr] md:gap-12 md:py-10">
+      {/* Dokumen yang dipindai */}
+      <div
+        aria-hidden="true"
+        className="relative mx-auto w-full max-w-xs overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-xl shadow-green-900/10"
       >
-        {/* CV Document mockup (Enlarged) */}
-        <div className="relative mx-auto w-full max-w-md">
-          {/* Document background */}
+        <div className="flex items-center gap-3 border-b border-gray-100 bg-green-50 p-4">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-green-700 text-white">
+            <FileText className="h-5 w-5" />
+          </span>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-bold text-gray-900">{cvTitle || "CV kamu"}</p>
+            <p className="text-xs text-gray-600">Sedang dipindai</p>
+          </div>
+        </div>
+
+        <div className="space-y-5 p-5">
+          <div className="space-y-2">
+            <div className="h-4 w-1/2 rounded bg-green-200" />
+            <div className="h-2.5 w-3/4 rounded bg-gray-200" />
+          </div>
+          {[0, 1, 2].map((block) => (
+            <div key={block} className="space-y-2">
+              <div className="h-3 w-1/3 rounded bg-gray-300" />
+              <div className="h-2 w-full rounded bg-gray-100" />
+              <div className="h-2 w-11/12 rounded bg-gray-100" />
+              <div className="h-2 w-4/5 rounded bg-gray-100" />
+            </div>
+          ))}
+        </div>
+
+        {!reduceMotion && (
           <motion.div
-            className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl overflow-hidden border border-border/80"
-            initial={{ scale: 0.85, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.5 }}
+            className="absolute inset-x-0 h-16 bg-gradient-to-b from-transparent via-green-600/20 to-transparent"
+            initial={{ top: "-15%" }}
+            animate={{ top: ["-15%", "100%"] }}
+            transition={{ duration: 2.4, repeat: Infinity, ease: "linear" }}
           >
-            {/* Document header */}
-            <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-5 border-b">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
-                  <FileText className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <span className="text-base font-bold text-foreground block truncate">{cvTitle}</span>
-                  <span className="text-xs text-muted-foreground">Scanning CV Document...</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Document content lines (Realistic CV skeleton layout) */}
-            <div className="p-6 space-y-4">
-              <div className="space-y-2 pb-3 border-b border-border/40">
-                <div className="h-4 bg-primary/20 rounded-md w-1/2" />
-                <div className="h-2.5 bg-gray-200 dark:bg-gray-700 rounded-md w-3/4" />
-              </div>
-              
-              <div className="space-y-2">
-                <div className="h-3 bg-gray-300 dark:bg-gray-600 rounded-md w-1/4" />
-                <div className="h-2 bg-gray-100 dark:bg-gray-700 rounded-md w-full" />
-                <div className="h-2 bg-gray-100 dark:bg-gray-700 rounded-md w-11/12" />
-                <div className="h-2 bg-gray-100 dark:bg-gray-700 rounded-md w-4/5" />
-              </div>
-
-              <div className="space-y-2 pt-2">
-                <div className="h-3 bg-gray-300 dark:bg-gray-600 rounded-md w-1/3" />
-                <div className="h-2 bg-gray-100 dark:bg-gray-700 rounded-md w-full" />
-                <div className="h-2 bg-gray-100 dark:bg-gray-700 rounded-md w-5/6" />
-                <div className="h-2 bg-gray-100 dark:bg-gray-700 rounded-md w-3/4" />
-              </div>
-            </div>
-
-            {/* Scanning line effect */}
-            <motion.div
-              className="absolute left-0 right-0 h-1 bg-gradient-to-r from-transparent via-primary to-transparent shadow-[0_0_15px_rgba(var(--primary-rgb),0.8)]"
-              initial={{ top: 0 }}
-              animate={{ top: ["0%", "100%", "0%"] }}
-              transition={{
-                duration: 3,
-                repeat: Infinity,
-                ease: "easeInOut",
-              }}
-            />
-
-            {/* Scan glow effect */}
-            <motion.div
-              className="absolute left-0 right-0 h-28 pointer-events-none"
-              initial={{ top: 0 }}
-              animate={{ top: ["0%", "100%", "0%"] }}
-              transition={{
-                duration: 3,
-                repeat: Infinity,
-                ease: "easeInOut",
-              }}
-              style={{
-                background: "linear-gradient(180deg, transparent, rgba(var(--primary-rgb), 0.15), transparent)",
-              }}
-            />
-
-            {/* Corner scan markers */}
-            <div className="absolute top-3 left-3 w-8 h-8 border-t-3 border-l-3 border-primary rounded-tl-sm" />
-            <div className="absolute top-3 right-3 w-8 h-8 border-t-3 border-r-3 border-primary rounded-tr-sm" />
-            <div className="absolute bottom-3 left-3 w-8 h-8 border-b-3 border-l-3 border-primary rounded-bl-sm" />
-            <div className="absolute bottom-3 right-3 w-8 h-8 border-b-3 border-r-3 border-primary rounded-br-sm" />
+            <div className="absolute inset-x-0 bottom-0 h-0.5 bg-green-600 shadow-[0_0_12px_rgba(21,128,61,0.8)]" />
           </motion.div>
+        )}
+      </div>
 
-          {/* Pulse ring effect */}
-          <motion.div
-            className="absolute inset-0 rounded-2xl border-2 border-primary/30"
-            animate={{
-              scale: [1, 1.04, 1],
-              opacity: [0.6, 0.1, 0.6],
-            }}
-            transition={{
-              duration: 2,
-              repeat: Infinity,
-            }}
+      {/* Tahapan */}
+      <div role="status" aria-live="polite">
+        <p className="text-xs font-bold uppercase tracking-wider text-green-800">
+          Hira AI sedang bekerja
+        </p>
+        <h2 className="mt-1 font-display text-2xl font-extrabold tracking-tight text-gray-900 sm:text-3xl">
+          Mereview CV-mu
+        </h2>
+        <p className="mt-1.5 text-sm text-gray-600">Biasanya selesai dalam 10–30 detik.</p>
+
+        <ol className="mt-6 space-y-3">
+          {scanPhases.map((phase, i) => {
+            const done = i < currentPhase;
+            const active = i === currentPhase;
+            const Icon = phase.icon;
+            return (
+              <li
+                key={phase.text}
+                className={cn(
+                  "flex items-center gap-3 rounded-2xl border p-3 transition-colors",
+                  active && "border-green-700 bg-green-50",
+                  done && "border-gray-200 bg-white",
+                  !done && !active && "border-gray-100 bg-gray-50 text-gray-500",
+                )}
+              >
+                <span
+                  className={cn(
+                    "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl",
+                    done && "bg-green-700 text-white",
+                    active && "bg-white text-green-700 ring-1 ring-green-200",
+                    !done && !active && "bg-white text-gray-400 ring-1 ring-gray-200",
+                  )}
+                >
+                  {done ? (
+                    <Check aria-hidden="true" className="h-4 w-4" />
+                  ) : (
+                    <Icon aria-hidden="true" className="h-4 w-4" />
+                  )}
+                </span>
+                <span
+                  className={cn(
+                    "flex-1 text-sm font-semibold",
+                    active ? "text-green-900" : done ? "text-gray-800" : "text-gray-500",
+                  )}
+                >
+                  {phase.text}
+                </span>
+                {active && (
+                  <Loader2
+                    aria-hidden="true"
+                    className={cn("h-4 w-4 text-green-700", !reduceMotion && "animate-spin")}
+                  />
+                )}
+              </li>
+            );
+          })}
+        </ol>
+
+        <div
+          className="mt-5 h-2 overflow-hidden rounded-full bg-gray-200"
+          role="progressbar"
+          aria-label="Progres review"
+          aria-valuenow={Math.round(progress)}
+          aria-valuemin={0}
+          aria-valuemax={100}
+        >
+          <div
+            className="h-full rounded-full bg-green-700 transition-[width] duration-300"
+            style={{ width: `${progress}%` }}
           />
         </div>
-
-        {/* Progress section */}
-        <div className="mt-8 text-center max-w-sm mx-auto">
-          {/* Phase indicator */}
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={currentPhase}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              className="flex items-center justify-center gap-3 mb-4"
-            >
-              {(() => {
-                const Icon = scanPhases[currentPhase].icon;
-                return (
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 shrink-0">
-                    <Icon className="h-4 w-4 text-primary" />
-                  </div>
-                );
-              })()}
-              <span className="text-sm font-semibold text-foreground">
-                {scanPhases[currentPhase].text}
-              </span>
-            </motion.div>
-          </AnimatePresence>
-
-          {/* Progress bar */}
-          <div className="relative h-2 w-full bg-muted rounded-full overflow-hidden">
-            <motion.div
-              className="absolute inset-y-0 left-0 bg-gradient-to-r from-primary/80 to-primary rounded-full"
-              initial={{ width: 0 }}
-              animate={{ width: `${progress}%` }}
-              transition={{ duration: 0.3 }}
-            />
-            <motion.div
-              className="absolute inset-y-0 left-0 w-20 bg-gradient-to-r from-transparent via-white/30 to-transparent"
-              animate={{ x: ["-100%", "500%"] }}
-              transition={{
-                duration: 1.5,
-                repeat: Infinity,
-                ease: "linear",
-              }}
-            />
-          </div>
-
-          {/* Phase dots */}
-          <div className="flex justify-center gap-2 mt-4">
-            {scanPhases.map((_, i) => (
-              <motion.div
-                key={i}
-                className={`h-2 w-2 rounded-full ${
-                  i <= currentPhase ? "bg-primary" : "bg-muted"
-                }`}
-                animate={i === currentPhase ? { scale: [1, 1.3, 1] } : {}}
-                transition={{ duration: 0.5, repeat: Infinity }}
-              />
-            ))}
-          </div>
-
-          {/* HR persona badge */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 1 }}
-            className="mt-6 inline-flex items-center gap-2 rounded-full border bg-card px-4 py-2 shadow-sm"
-          >
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-orange-500">
-              <span className="text-xs font-bold text-white">HA</span>
-            </div>
-            <div className="text-left">
-              <p className="text-xs font-semibold text-foreground">Hira AI</p>
-              <p className="text-[10px] text-muted-foreground">HR Expert • 20+ tahun</p>
-            </div>
-          </motion.div>
-        </div>
-      </motion.div>
+      </div>
     </div>
   );
 }
