@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import {
   BadgeCheck,
+  Banknote,
   BarChart3,
   Bug,
   CalendarDays,
@@ -12,9 +13,11 @@ import {
   FileText,
   GitBranch,
   Highlighter,
+  Languages,
   LayoutDashboard,
   Mail,
   Maximize2,
+  Mic,
   QrCode,
   RefreshCw,
   Rocket,
@@ -70,6 +73,55 @@ type Release = {
 const changelog: Release[] = [
   {
     version: APP_VERSION,
+    date: "6 Oktober 2026",
+    title: "Terjemah CV, Wawancara Suara & Latihan Negosiasi Gaji",
+    summary:
+      "Satu klik untuk menerjemahkan CV ke Bahasa Inggris atau Indonesia, jawab simulasi wawancara dengan suara lalu lihat analisis cara bicaramu, dan berlatih menawar gaji melawan HR virtual yang punya batas budget rahasia. Tampilan halaman Review CV, footer, dan halaman error juga disegarkan.",
+    highlights: [
+      {
+        icon: Languages,
+        type: "Fitur baru",
+        short: "Terjemah CV ID ⇄ EN satu klik",
+        text: "Ganti bahasa CV di editor, lalu pilih untuk menerjemahkan isinya sekalian: ringkasan, jabatan, deskripsi pekerjaan, dan bagian lainnya. Nama perusahaan, tanggal, kontak, link, serta nama tools tidak diubah. Isi CV lama dicadangkan dan terjemahan bisa dibatalkan. Tersedia di paket Starter (3x per bulan) dan Pro (15x per bulan).",
+      },
+      {
+        icon: Mic,
+        type: "Fitur baru",
+        short: "Jawab wawancara dengan suara",
+        text: "Simulasi wawancara punya panel rekam suara dengan timer dan transkrip langsung. Setelah sesi selesai, kartu Cara bicara menampilkan tempo bicara, kata pengisi, dan durasi jawabanmu, lengkap dengan tips perbaikan. Perlu browser Chrome atau Edge.",
+      },
+      {
+        icon: Banknote,
+        type: "Fitur baru",
+        short: "Latihan negosiasi gaji",
+        text: "Hadapi HR virtual yang membuka dengan tawaran di bawah harapanmu dan punya batas budget rahasia. Tawar lewat ketikan atau suara; di akhir kamu melihat berapa banyak yang berhasil didapat, batas budget HR yang sebenarnya, taktik yang berhasil, dan kalimat yang bisa lebih kuat. Fitur Pro.",
+      },
+      {
+        icon: FileSearch,
+        type: "Peningkatan",
+        short: "Review CV lebih mudah",
+        text: "Halaman Review CV kini bisa langsung memilih dari CV yang sudah kamu buat, lengkap dengan skor review terakhir tiap CV. Hasil review menampilkan ringkasan skor, verdict HR, langkah berikutnya, dan daftar saran yang bisa diterapkan satu per satu.",
+      },
+      {
+        icon: LayoutDashboard,
+        type: "Peningkatan",
+        text: "Halaman CV Saya, footer, dan halaman error (404 dan 500) dirancang ulang dengan tampilan yang sama dengan dashboard. Halaman yang tidak ditemukan kini menawarkan jalan pintas ke halaman yang kamu cari.",
+      },
+      {
+        icon: FileText,
+        type: "Perbaikan",
+        short: "PDF lebih rapi & bisa disalin",
+        text: "Teks di PDF kini bisa diblok, disalin, dan dibaca sistem ATS. Kata yang saling menimpa sudah hilang, dan pada CV dua halaman atau lebih, baris teks tidak lagi terpotong di pergantian halaman, termasuk di template dua kolom.",
+      },
+      {
+        icon: RefreshCw,
+        type: "Perbaikan",
+        text: "Me-refresh halaman yang butuh login tidak lagi melempar kamu ke halaman login, dan tombol Keluar di menu HP tidak lagi tertutup navigasi bawah.",
+      },
+    ],
+  },
+  {
+    version: "v1.10.0-live",
     date: "6 Oktober 2026",
     title: "Editor CV Baru & Skor ATS yang Lebih Akurat",
     summary:
