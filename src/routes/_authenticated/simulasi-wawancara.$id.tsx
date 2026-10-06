@@ -3,9 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { buildSeo } from "@/lib/seo";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton-loading";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
@@ -20,11 +18,13 @@ import {
 import { cn } from "@/lib/utils";
 import {
   AlertTriangle,
+  ArrowLeft,
   BarChart3,
+  Banknote,
+  Check,
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
-  Clock,
   Home,
   Lightbulb,
   Loader2,
@@ -32,10 +32,9 @@ import {
   Mic,
   RotateCcw,
   Sparkles,
-  Target,
-  Trophy,
   Zap,
 } from "lucide-react";
+import { scoreTone } from "@/components/cv-review/review-utils";
 
 export const Route = createFileRoute("/_authenticated/simulasi-wawancara/$id")({
   head: () =>
@@ -166,18 +165,6 @@ function InterviewSessionPage() {
     return map[level] ?? level;
   };
 
-  const getScoreColor = (score: number) => {
-    if (score >= 80) return "text-emerald-700";
-    if (score >= 60) return "text-amber-700";
-    return "text-red-700";
-  };
-
-  const getScoreBg = (score: number) => {
-    if (score >= 80) return "border-emerald-500/25 bg-emerald-500/5";
-    if (score >= 60) return "border-amber-500/25 bg-amber-500/5";
-    return "border-red-500/25 bg-red-500/5";
-  };
-
   const getScoreMessage = (score: number) => {
     if (score >= 90) return "Kamu sudah sangat siap. Pertahankan struktur dan bukti dampaknya.";
     if (score >= 80) return "Jawabanmu kuat. Poles sedikit agar terdengar lebih natural.";
@@ -185,13 +172,6 @@ function InterviewSessionPage() {
     if (score >= 50) return "Masih perlu latihan. Fokus pada struktur STAR dan angka dampak.";
     return "Mulai dari jawaban singkat yang jelas, lalu tambah konteks dan hasil.";
   };
-
-  const scoreToneClass = (score: number) =>
-    score >= 80
-      ? "bg-emerald-500/10 text-emerald-700"
-      : score >= 60
-        ? "bg-amber-500/10 text-amber-700"
-        : "bg-red-500/10 text-red-700";
 
   const toErrorMessage = (error: unknown) =>
     error instanceof Error ? error.message : "Terjadi kesalahan";
@@ -423,167 +403,157 @@ function InterviewSessionPage() {
     }
   };
 
-  const facetScores = useMemo(() => {
-    const average =
-      evaluations.length > 0
-        ? Math.round(
-            evaluations.reduce((sum, item) => sum + (item.score ?? 0), 0) / evaluations.length,
-          )
-        : overallScore;
-    return [
-      { label: "Relevansi", value: Math.max(0, Math.min(100, average + 4)) },
-      { label: "Struktur", value: Math.max(0, Math.min(100, average - 2)) },
-      { label: "Dampak", value: Math.max(0, Math.min(100, average - 5)) },
-      { label: "Percaya diri", value: Math.max(0, Math.min(100, average + 1)) },
-    ];
-  }, [evaluations, overallScore]);
-
   if (loading) {
     return <InterviewSessionSkeleton />;
   }
 
   const delivery = summarizeDelivery(session?.answers ?? []);
+  const unanswered = questions.length - answeredCount;
 
   return (
-    <div className="container-page space-y-6 py-5 md:py-8">
-      <header className="rounded-[1.25rem] border bg-card p-5 shadow-sm sm:p-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="flex items-start gap-3">
-            <Button asChild variant="outline" size="icon" className="h-10 w-10 shrink-0">
-              <Link to="/simulasi-wawancara" aria-label="Kembali">
-                <ChevronLeft className="h-4 w-4" />
-              </Link>
-            </Button>
-            <div>
-              <Badge variant="outline" className="mb-2">
-                Sesi Interview
-              </Badge>
-              <h1 className="font-display text-2xl font-bold leading-tight text-foreground">
-                {session?.position ?? "Simulasi Wawancara"}
-              </h1>
-              <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
-                <span>{levelLabel(session?.level || "")} Level</span>
-                {session?.industry && <span>{session.industry}</span>}
-                <span className="inline-flex items-center gap-1">
-                  <Clock className="h-3.5 w-3.5" />
-                  Latihan terarah
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {step === "results" && (
-            <Button asChild variant="outline" className="gap-2">
-              <Link to="/simulasi-wawancara">
-                <RotateCcw className="h-4 w-4" />
-                Simulasi Baru
-              </Link>
-            </Button>
-          )}
+    <div className="container-page space-y-6 py-6 md:space-y-8 md:py-10">
+      {/* Header */}
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="min-w-0">
+          <Link
+            to="/simulasi-wawancara"
+            className="inline-flex min-h-8 items-center gap-1.5 text-sm font-semibold text-green-800 underline-offset-4 hover:underline"
+          >
+            <ArrowLeft aria-hidden="true" className="h-4 w-4" />
+            Simulasi wawancara
+          </Link>
+          <h1 className="mt-1 font-display text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl">
+            {session?.position ?? "Simulasi wawancara"}
+          </h1>
+          <p className="mt-2 flex flex-wrap items-center gap-2">
+            <span className="rounded-full bg-green-50 px-3 py-1 text-sm font-bold text-green-900 ring-1 ring-green-200">
+              {levelLabel(session?.level || "")} level
+            </span>
+            {session?.industry && (
+              <span className="rounded-full bg-gray-100 px-3 py-1 text-sm font-semibold text-gray-800">
+                {session.industry}
+              </span>
+            )}
+          </p>
         </div>
+
+        {step === "results" && (
+          <Link
+            to="/simulasi-wawancara"
+            className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-green-700 px-5 text-sm font-bold text-white shadow-md shadow-green-700/20 transition-colors hover:bg-green-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-700 focus-visible:ring-offset-2"
+          >
+            <RotateCcw aria-hidden="true" className="h-4 w-4" />
+            Simulasi baru
+          </Link>
+        )}
       </header>
 
       {step === "generating" && (
-        <ProcessState
+        <ProcessCard
           icon={Sparkles}
-          title="AI sedang menyusun pertanyaan."
+          title="AI sedang menyusun pertanyaan"
           description={`Pertanyaan disesuaikan dengan ${session?.position ?? "posisi"} dan level ${levelLabel(session?.level || "")}.`}
-          tone="primary"
         />
       )}
 
       {step === "evaluating" && (
-        <ProcessState
+        <ProcessCard
           icon={BarChart3}
-          title="AI sedang membaca kualitas jawabanmu."
-          description="Evaluasi melihat relevansi, struktur cerita, bukti dampak, dan saran perbaikan yang bisa langsung dicoba."
-          tone="amber"
+          title="AI sedang membaca jawabanmu"
+          description="Evaluasi melihat relevansi, struktur cerita, bukti dampak, dan cara bicara, lalu menyiapkan saran yang bisa langsung dicoba."
         />
       )}
 
       {step === "loading" && (
-        <ProcessState
+        <ProcessCard
           icon={Loader2}
-          title="Memuat sesi."
+          spin
+          title="Memuat sesi"
           description="Sebentar, kami sedang mengambil data latihanmu."
-          tone="primary"
-          loading
         />
       )}
 
       {step === "answering" && currentQuestion && (
-        <main className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
-          <section className="space-y-4">
-            <div className="rounded-2xl border bg-card p-4 shadow-sm">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <p className="text-sm font-semibold text-foreground">
-                    Pertanyaan {currentQ + 1} dari {questions.length}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {answeredCount}/{questions.length} jawaban sudah terisi
-                  </p>
-                </div>
-                <Badge variant="outline" className="w-fit">
-                  {Math.round(completionPercent)}% lengkap
-                </Badge>
-              </div>
-              <Progress value={questionPercent} className="mt-4 h-2" />
-              <div className="mt-4 flex flex-wrap gap-2">
-                {questions.map((question, index) => (
-                  <button
-                    key={question.id}
-                    type="button"
-                    onClick={() => setCurrentQ(index)}
-                    className={cn(
-                      "h-9 min-w-9 rounded-full border px-3 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-                      index === currentQ
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : answers[question.id]?.trim()
-                          ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700"
-                          : "bg-background text-muted-foreground hover:border-primary/40",
-                    )}
-                    aria-label={`Buka pertanyaan ${index + 1}`}
-                  >
-                    {index + 1}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <article className="rounded-2xl border bg-card p-5 shadow-sm md:p-6">
-              <div className="flex items-start gap-3">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                  <MessageSquare className="h-5 w-5" />
-                </div>
-                <div>
-                  <div className="mb-2 flex flex-wrap gap-2">
-                    <Badge variant="outline">Q{currentQ + 1}</Badge>
-                    <Badge className="bg-muted text-muted-foreground hover:bg-muted">
-                      Jawab natural
-                    </Badge>
-                  </div>
-                  <h2 className="font-display text-xl font-bold leading-snug text-foreground">
-                    {currentQuestion.question}
-                  </h2>
-                </div>
-              </div>
-            </article>
-
-            <article className="rounded-2xl border bg-card p-5 shadow-sm md:p-6">
-              <div>
-                <label
-                  htmlFor="interview-answer"
-                  className="flex items-center gap-2 text-sm font-semibold text-foreground"
-                >
-                  <Mic className="h-4 w-4 text-primary" />
-                  Jawaban kamu
-                </label>
-                <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                  Ketik, atau jawab dengan suara supaya kamu juga mendapat analisis tempo dan kata
-                  pengisi. Teks yang sudah ada tetap dipertahankan saat rekaman.
+        <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
+          <div className="min-w-0 space-y-4">
+            {/* Navigator */}
+            <section
+              aria-label="Navigasi pertanyaan"
+              className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5"
+            >
+              <div className="flex items-baseline justify-between gap-3">
+                <p className="font-display text-base font-extrabold text-gray-900">
+                  Pertanyaan {currentQ + 1} dari {questions.length}
+                </p>
+                <p className="text-sm text-gray-600">
+                  {answeredCount}/{questions.length} terjawab
                 </p>
               </div>
+              <div
+                className="mt-3 h-2 overflow-hidden rounded-full bg-gray-100"
+                role="progressbar"
+                aria-label="Jawaban terisi"
+                aria-valuenow={Math.round(completionPercent)}
+                aria-valuemin={0}
+                aria-valuemax={100}
+              >
+                <div
+                  className="h-full rounded-full bg-green-700 transition-[width] duration-300"
+                  style={{ width: `${completionPercent}%` }}
+                />
+              </div>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {questions.map((question, index) => {
+                  const done = Boolean(answers[question.id]?.trim());
+                  return (
+                    <button
+                      key={question.id}
+                      type="button"
+                      onClick={() => setCurrentQ(index)}
+                      aria-label={`Buka pertanyaan ${index + 1}${done ? " (sudah dijawab)" : ""}`}
+                      aria-current={index === currentQ ? "step" : undefined}
+                      className={cn(
+                        "flex h-10 min-w-10 items-center justify-center gap-1 rounded-xl border-2 px-3 text-sm font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-700",
+                        index === currentQ
+                          ? "border-green-700 bg-green-700 text-white"
+                          : done
+                            ? "border-green-200 bg-green-50 text-green-900"
+                            : "border-gray-200 bg-white text-gray-700 hover:border-green-700",
+                      )}
+                    >
+                      {done && index !== currentQ ? (
+                        <Check aria-hidden="true" className="h-3.5 w-3.5" />
+                      ) : null}
+                      {index + 1}
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+
+            {/* Pertanyaan */}
+            <article className="rounded-2xl border border-green-200 bg-green-50 p-5 sm:p-6">
+              <p className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-green-800">
+                <MessageSquare aria-hidden="true" className="h-4 w-4" />
+                Pertanyaan {currentQ + 1}
+              </p>
+              <h2 className="mt-2 font-display text-xl font-extrabold leading-snug text-gray-900 sm:text-2xl">
+                {currentQuestion.question}
+              </h2>
+            </article>
+
+            {/* Jawaban */}
+            <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
+              <label
+                htmlFor="interview-answer"
+                className="flex items-center gap-2 font-display text-base font-extrabold text-gray-900"
+              >
+                Jawabanmu
+              </label>
+              <p className="mt-1 text-sm leading-relaxed text-gray-600">
+                Ketik, atau jawab dengan suara supaya kamu juga mendapat analisis tempo dan kata
+                pengisi. Teks yang sudah ada tetap dipertahankan saat rekaman.
+              </p>
 
               <div className="mt-4">
                 {isSupported ? (
@@ -611,219 +581,304 @@ function InterviewSessionPage() {
                 }}
                 placeholder="Tulis jawabanmu di sini. Coba format STAR: situasi, tugas, aksi, hasil."
                 rows={8}
-                className={cn("mt-4 resize-none", isListening && "border-red-500/50 bg-red-500/5")}
+                readOnly={isListening}
+                className={cn(
+                  "mt-4 resize-y rounded-xl border-gray-300 px-4 py-3 text-base placeholder:text-gray-500 focus-visible:border-green-700 focus-visible:ring-2 focus-visible:ring-green-700/20",
+                  isListening && "border-red-400 bg-red-50",
+                )}
               />
 
               <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-xs text-muted-foreground">{answerText.length} karakter</p>
+                <p className="text-sm tabular-nums text-gray-600">
+                  {answerText.length.toLocaleString("id-ID")} karakter
+                </p>
                 <div className="flex flex-col gap-2 sm:flex-row">
                   <Button
                     variant="outline"
                     disabled={currentQ === 0}
                     onClick={() => setCurrentQ((value) => value - 1)}
-                    className="gap-2"
+                    className="h-11 gap-2 rounded-xl border-2 border-gray-300 font-bold hover:border-green-700 hover:bg-green-50"
                   >
-                    <ChevronLeft className="h-4 w-4" />
+                    <ChevronLeft aria-hidden="true" className="h-4 w-4" />
                     Sebelumnya
                   </Button>
                   {currentQ < questions.length - 1 ? (
-                    <Button onClick={() => setCurrentQ((value) => value + 1)} className="gap-2">
+                    <Button
+                      onClick={() => setCurrentQ((value) => value + 1)}
+                      className="h-11 gap-2 rounded-xl bg-green-700 font-bold text-white hover:bg-green-800"
+                    >
                       Selanjutnya
-                      <ChevronRight className="h-4 w-4" />
+                      <ChevronRight aria-hidden="true" className="h-4 w-4" />
                     </Button>
                   ) : (
-                    <Button onClick={handleSubmitAnswers} disabled={submitting} className="gap-2">
+                    <Button
+                      onClick={handleSubmitAnswers}
+                      disabled={submitting}
+                      className="h-11 gap-2 rounded-xl bg-green-700 font-extrabold text-white hover:bg-green-800"
+                    >
                       {submitting ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" />
                       ) : (
-                        <Sparkles className="h-4 w-4" />
+                        <Sparkles aria-hidden="true" className="h-4 w-4" />
                       )}
-                      Kumpulkan & Evaluasi
+                      Kumpulkan & evaluasi
                     </Button>
                   )}
                 </div>
               </div>
-            </article>
-          </section>
+              {currentQ === questions.length - 1 && unanswered > 0 && (
+                <p role="status" className="mt-3 text-sm font-medium text-amber-900">
+                  Masih ada {unanswered} pertanyaan yang belum dijawab. Semua harus terisi sebelum
+                  dievaluasi.
+                </p>
+              )}
+            </section>
+          </div>
 
-          <aside className="space-y-4">
-            <div className="rounded-2xl border bg-card p-5 shadow-sm">
-              <div className="flex items-start gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-700">
-                  <Lightbulb className="h-5 w-5" />
-                </div>
-                <div>
-                  <h3 className="font-display font-bold text-foreground">Checklist jawaban kuat</h3>
-                  <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                    Cukup jawab jelas, spesifik, dan punya akhir yang menunjukkan dampak.
-                  </p>
-                </div>
-              </div>
-              <div className="mt-5 space-y-3">
-                {["Konteks singkat", "Aksi pribadi", "Hasil terukur"].map((item) => (
-                  <div key={item} className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                    <span>{item}</span>
+          <aside className="space-y-4 lg:sticky lg:top-24">
+            <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+              <h2 className="flex items-center gap-2 font-display text-base font-extrabold text-gray-900">
+                <Lightbulb aria-hidden="true" className="h-4 w-4 text-green-700" />
+                Kerangka jawaban STAR
+              </h2>
+              <dl className="mt-3 space-y-3">
+                {[
+                  ["S", "Situasi", "Konteks singkat: di mana dan kapan."],
+                  ["T", "Tugas", "Tanggung jawab atau targetmu."],
+                  ["A", "Aksi", "Apa yang kamu lakukan, secara pribadi."],
+                  ["R", "Hasil", "Dampak terukur: angka, waktu, biaya."],
+                ].map(([letter, title, hint]) => (
+                  <div key={letter} className="flex gap-3">
+                    <dt
+                      aria-hidden="true"
+                      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-green-700 font-display text-sm font-extrabold text-white"
+                    >
+                      {letter}
+                    </dt>
+                    <dd className="text-sm leading-snug text-gray-800">
+                      <span className="font-bold">{title}.</span> {hint}
+                    </dd>
                   </div>
                 ))}
-              </div>
-            </div>
+              </dl>
+            </section>
 
-            <div className="rounded-2xl border bg-muted/35 p-5">
-              <p className="text-sm font-semibold text-foreground">Progress sesi</p>
-              <Progress value={completionPercent} className="mt-4 h-2" />
-              <div className="mt-4 grid grid-cols-2 gap-2 text-center">
-                <div className="rounded-xl border bg-background p-3">
-                  <p className="font-display text-xl font-bold text-foreground">{answeredCount}</p>
-                  <p className="text-[11px] text-muted-foreground">Terjawab</p>
-                </div>
-                <div className="rounded-xl border bg-background p-3">
-                  <p className="font-display text-xl font-bold text-foreground">
-                    {questions.length - answeredCount}
+            <section className="rounded-2xl border border-gray-200 bg-gray-50 p-5">
+              <h2 className="font-display text-base font-extrabold text-gray-900">Progres sesi</h2>
+              <div className="mt-3 grid grid-cols-2 gap-2 text-center">
+                <div className="rounded-xl bg-white p-3 ring-1 ring-gray-200">
+                  <p className="font-display text-2xl font-extrabold text-gray-900">
+                    {answeredCount}
                   </p>
-                  <p className="text-[11px] text-muted-foreground">Tersisa</p>
+                  <p className="text-xs text-gray-600">Terjawab</p>
                 </div>
-              </div>
-            </div>
-          </aside>
-        </main>
-      )}
-
-      {step === "results" && (
-        <main className="mx-auto max-w-4xl space-y-6">
-          <section
-            className={cn(
-              "rounded-[1.25rem] border p-6 text-center shadow-sm md:p-8",
-              getScoreBg(overallScore),
-            )}
-          >
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-background text-primary shadow-sm">
-              <Trophy className="h-8 w-8" />
-            </div>
-            <p className="mt-5 text-sm font-semibold text-muted-foreground">Skor keseluruhan</p>
-            <p className={cn("mt-1 font-display text-6xl font-bold", getScoreColor(overallScore))}>
-              {overallScore}
-            </p>
-            <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-muted-foreground">
-              {getScoreMessage(overallScore)}
-            </p>
-          </section>
-
-          {feedback && (
-            <section className="rounded-2xl border bg-card p-5 shadow-sm md:p-6">
-              <div className="flex items-start gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-700">
-                  <Lightbulb className="h-5 w-5" />
-                </div>
-                <div>
-                  <h2 className="font-display text-lg font-bold text-foreground">
-                    Ringkasan feedback
-                  </h2>
-                  <p className="mt-2 whitespace-pre-line text-sm leading-7 text-muted-foreground">
-                    {feedback}
-                  </p>
+                <div className="rounded-xl bg-white p-3 ring-1 ring-gray-200">
+                  <p className="font-display text-2xl font-extrabold text-gray-900">{unanswered}</p>
+                  <p className="text-xs text-gray-600">Tersisa</p>
                 </div>
               </div>
             </section>
-          )}
+          </aside>
+        </div>
+      )}
 
-          <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {facetScores.map((facet) => (
-              <article key={facet.label} className="rounded-2xl border bg-card p-4 shadow-sm">
-                <p className="text-xs font-semibold text-muted-foreground">{facet.label}</p>
-                <p
-                  className={cn("mt-2 font-display text-2xl font-bold", getScoreColor(facet.value))}
-                >
-                  {facet.value}
-                </p>
-                <Progress value={facet.value} className="mt-3 h-1.5" />
-              </article>
-            ))}
-          </section>
+      {step === "results" && (
+        <div className="space-y-6">
+          <ScoreHero score={overallScore} message={getScoreMessage(overallScore)} />
+
+          {feedback && (
+            <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
+              <h2 className="flex items-center gap-2 font-display text-lg font-extrabold text-gray-900">
+                <Lightbulb aria-hidden="true" className="h-5 w-5 text-green-700" />
+                Ringkasan feedback
+              </h2>
+              <p className="mt-3 whitespace-pre-line text-base leading-relaxed text-gray-800">
+                {feedback}
+              </p>
+            </section>
+          )}
 
           {delivery && <DeliveryCard summary={delivery} />}
 
-          <section className="space-y-4">
-            <div>
-              <p className="mb-2 inline-flex rounded-full bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground">
-                Evaluasi detail
-              </p>
-              <h2 className="font-display text-xl font-bold text-foreground">
-                Perbaikan per pertanyaan
-              </h2>
-            </div>
+          {evaluations.length > 0 && (
+            <section aria-labelledby="per-pertanyaan-heading" className="space-y-4">
+              <div>
+                <h2
+                  id="per-pertanyaan-heading"
+                  className="font-display text-xl font-extrabold tracking-tight text-gray-900"
+                >
+                  Perbaikan per pertanyaan
+                </h2>
+                <p className="mt-1 text-sm text-gray-600">
+                  Buka tiap pertanyaan untuk melihat jawabanmu dan saran yang bisa langsung dicoba.
+                </p>
+              </div>
 
-            <div className="space-y-3">
-              {evaluations.map((item, index) => {
-                const question = questions[index] || session?.questions?.[index];
-                const score = item.score ?? 0;
-                return (
-                  <article
-                    key={item.id || index}
-                    className="rounded-2xl border bg-card p-5 shadow-sm"
-                  >
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                      <div className="flex min-w-0 gap-3">
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                          <MessageSquare className="h-4 w-4" />
-                        </div>
-                        <div>
-                          <Badge variant="outline">Pertanyaan {index + 1}</Badge>
-                          <p className="mt-2 text-sm font-semibold leading-6 text-foreground">
-                            {question?.question || `Pertanyaan ${index + 1}`}
+              <ul className="space-y-3">
+                {evaluations.map((item, index) => {
+                  const question = questions[index] || session?.questions?.[index];
+                  const score = item.score ?? 0;
+                  const tone = scoreTone(score);
+                  const userAnswer =
+                    answers[item.id] ??
+                    session?.answers?.find((a) => a.id === item.id)?.answer ??
+                    "";
+                  return (
+                    <li
+                      key={item.id || index}
+                      className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm"
+                    >
+                      <div className="flex items-start gap-4">
+                        <span
+                          className={cn(
+                            "flex h-12 w-12 shrink-0 items-center justify-center rounded-xl font-display text-lg font-extrabold ring-1",
+                            tone.pill,
+                          )}
+                        >
+                          {score}
+                          <span className="sr-only"> dari 100</span>
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-bold uppercase tracking-wider text-green-800">
+                            Pertanyaan {index + 1}
                           </p>
+                          <h3 className="mt-0.5 text-base font-bold leading-snug text-gray-900">
+                            {question?.question || `Pertanyaan ${index + 1}`}
+                          </h3>
+                          <div
+                            className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-gray-100"
+                            role="presentation"
+                          >
+                            <div
+                              className={cn("h-full rounded-full", tone.bar)}
+                              style={{ width: `${Math.max(0, Math.min(100, score))}%` }}
+                            />
+                          </div>
                         </div>
                       </div>
-                      <Badge
-                        className={cn("w-fit font-bold hover:bg-inherit", scoreToneClass(score))}
-                      >
-                        {score}/100
-                      </Badge>
-                    </div>
 
-                    <div className="mt-5 grid gap-3 md:grid-cols-3">
-                      <FeedbackBlock
-                        icon={CheckCircle2}
-                        title="Kekuatan"
-                        text={item.strength}
-                        tone="emerald"
-                      />
-                      <FeedbackBlock
-                        icon={AlertTriangle}
-                        title="Area perbaikan"
-                        text={item.weakness}
-                        tone="amber"
-                      />
-                      <FeedbackBlock
-                        icon={Zap}
-                        title="Quick win"
-                        text={item.suggestion}
-                        tone="sky"
-                      />
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
-          </section>
+                      {userAnswer && (
+                        <details className="mt-4 rounded-xl bg-gray-50 p-3">
+                          <summary className="cursor-pointer text-sm font-bold text-gray-800">
+                            Lihat jawabanmu
+                          </summary>
+                          <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-gray-700">
+                            {userAnswer}
+                          </p>
+                        </details>
+                      )}
 
-          <div className="flex flex-col justify-center gap-3 pt-2 sm:flex-row">
-            <Button asChild variant="outline" className="gap-2">
-              <Link to="/dashboard">
-                <Home className="h-4 w-4" />
-                Dashboard
-              </Link>
-            </Button>
-            <Button asChild className="gap-2">
-              <Link to="/simulasi-wawancara">
-                <RotateCcw className="h-4 w-4" />
-                Latihan Lagi
-              </Link>
-            </Button>
+                      <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
+                        <FeedbackBlock
+                          icon={CheckCircle2}
+                          title="Kekuatan"
+                          text={item.strength}
+                          tone="good"
+                        />
+                        <FeedbackBlock
+                          icon={AlertTriangle}
+                          title="Area perbaikan"
+                          text={item.weakness}
+                          tone="warn"
+                        />
+                        <FeedbackBlock
+                          icon={Zap}
+                          title="Coba ini"
+                          text={item.suggestion}
+                          tone="tip"
+                        />
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          )}
+
+          <div className="flex flex-col gap-3 pt-2 sm:flex-row">
+            <Link
+              to="/simulasi-wawancara"
+              className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-green-700 px-6 text-base font-extrabold text-white shadow-md shadow-green-700/20 transition-colors hover:bg-green-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-700 focus-visible:ring-offset-2"
+            >
+              <RotateCcw aria-hidden="true" className="h-4 w-4" />
+              Latihan lagi
+            </Link>
+            <Link
+              to="/simulasi-wawancara/negosiasi"
+              className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border-2 border-gray-300 bg-white px-6 text-base font-semibold text-gray-800 transition-colors hover:border-green-700 hover:bg-green-50 hover:text-green-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-700 focus-visible:ring-offset-2"
+            >
+              <Banknote aria-hidden="true" className="h-4 w-4" />
+              Latih negosiasi gaji
+            </Link>
+            <Link
+              to="/dashboard"
+              className="inline-flex h-12 items-center justify-center gap-2 rounded-xl px-4 text-base font-semibold text-gray-700 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-700"
+            >
+              <Home aria-hidden="true" className="h-4 w-4" />
+              Dashboard
+            </Link>
           </div>
-        </main>
+        </div>
       )}
     </div>
+  );
+}
+
+function ScoreHero({ score, message }: { score: number; message: string }) {
+  const radius = 52;
+  const circumference = 2 * Math.PI * radius;
+  const clamped = Math.max(0, Math.min(100, score));
+  const tone = scoreTone(clamped);
+  return (
+    <section
+      aria-label="Skor keseluruhan"
+      className="relative overflow-hidden rounded-3xl bg-green-700 p-6 text-white shadow-xl shadow-green-900/15 sm:p-8"
+    >
+      <div
+        aria-hidden="true"
+        className="absolute -right-10 -top-16 h-52 w-52 rounded-full bg-green-600/50 blur-2xl"
+      />
+      <div
+        aria-hidden="true"
+        className="absolute -bottom-20 left-10 h-44 w-44 rounded-full bg-yellow-300/15 blur-3xl"
+      />
+      <div className="relative flex flex-col items-center gap-6 text-center sm:flex-row sm:text-left">
+        <div className="relative h-36 w-36 shrink-0">
+          <svg viewBox="0 0 120 120" className="h-full w-full -rotate-90" aria-hidden="true">
+            <circle
+              cx="60"
+              cy="60"
+              r={radius}
+              fill="none"
+              strokeWidth="10"
+              className="stroke-white/20"
+            />
+            <circle
+              cx="60"
+              cy="60"
+              r={radius}
+              fill="none"
+              strokeWidth="10"
+              strokeLinecap="round"
+              strokeDasharray={circumference}
+              strokeDashoffset={circumference * (1 - clamped / 100)}
+              className="stroke-yellow-300 transition-[stroke-dashoffset] duration-700"
+            />
+          </svg>
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <span className="font-display text-5xl font-extrabold leading-none">{clamped}</span>
+            <span className="mt-1 text-xs font-semibold text-green-100">dari 100</span>
+          </div>
+        </div>
+        <div>
+          <p className="text-xs font-bold uppercase tracking-wider text-yellow-300">
+            Skor keseluruhan
+          </p>
+          <p className="mt-1 font-display text-2xl font-extrabold">{tone.label}</p>
+          <p className="mt-2 max-w-md text-base leading-relaxed text-green-50">{message}</p>
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -844,69 +899,75 @@ function DeliveryCard({ summary }: { summary: NonNullable<ReturnType<typeof summ
     tips.push("Cara bicaramu sudah baik. Pertahankan tempo dan kejelasan ini.");
 
   return (
-    <section className="rounded-2xl border bg-card p-5 shadow-sm md:p-6">
+    <section
+      aria-labelledby="cara-bicara-heading"
+      className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6"
+    >
       <div className="flex items-start gap-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-          <Mic className="h-5 w-5" />
-        </div>
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-green-50 text-green-700 ring-1 ring-green-200">
+          <Mic aria-hidden="true" className="h-5 w-5" />
+        </span>
         <div>
-          <h2 className="font-display text-lg font-bold text-foreground">Cara bicara</h2>
-          <p className="text-xs text-muted-foreground">
+          <h2
+            id="cara-bicara-heading"
+            className="font-display text-lg font-extrabold text-gray-900"
+          >
+            Cara bicara
+          </h2>
+          <p className="text-sm text-gray-600">
             Dari {summary.answersWithVoice} jawaban yang kamu rekam dengan suara.
           </p>
         </div>
       </div>
 
-      <dl className="mt-5 grid gap-3 sm:grid-cols-3">
-        <div className="rounded-xl border bg-muted/30 p-4">
-          <dt className="text-xs font-semibold text-muted-foreground">Tempo rata-rata</dt>
-          <dd className="mt-1 font-display text-2xl font-bold text-foreground">
+      <dl className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div className="rounded-xl bg-gray-50 p-4">
+          <dt className="text-sm font-medium text-gray-600">Tempo rata-rata</dt>
+          <dd className="mt-1 font-display text-2xl font-extrabold text-gray-900">
             {summary.avgWpm > 0 ? summary.avgWpm : "–"}
-            <span className="ml-1 text-sm font-medium text-muted-foreground">kata/menit</span>
+            <span className="ml-1 text-sm font-medium text-gray-600">kata/menit</span>
           </dd>
           <dd
             className={cn(
               "mt-2 inline-flex rounded-full px-2.5 py-0.5 text-xs font-bold",
-              pace.tone === "good"
-                ? "bg-emerald-500/10 text-emerald-700"
-                : "bg-amber-500/10 text-amber-700",
+              pace.tone === "good" ? "bg-green-100 text-green-800" : "bg-amber-100 text-amber-900",
             )}
           >
             {pace.label}
           </dd>
         </div>
-        <div className="rounded-xl border bg-muted/30 p-4">
-          <dt className="text-xs font-semibold text-muted-foreground">Kata pengisi</dt>
-          <dd className="mt-1 font-display text-2xl font-bold text-foreground">
+        <div className="rounded-xl bg-gray-50 p-4">
+          <dt className="text-sm font-medium text-gray-600">Kata pengisi</dt>
+          <dd className="mt-1 font-display text-2xl font-extrabold text-gray-900">
             {summary.totalFillers}
-            <span className="ml-1 text-sm font-medium text-muted-foreground">
+            <span className="ml-1 text-sm font-medium text-gray-600">
               ({summary.fillersPer100Words}/100 kata)
             </span>
           </dd>
-          <dd className="mt-2 text-xs text-muted-foreground">
+          <dd className="mt-2 text-sm text-gray-700">
             {summary.topFillers.length > 0
               ? summary.topFillers.map((f) => `${f.label} ×${f.count}`).join(", ")
               : "Tidak terdeteksi"}
           </dd>
         </div>
-        <div className="rounded-xl border bg-muted/30 p-4">
-          <dt className="text-xs font-semibold text-muted-foreground">Durasi rata-rata</dt>
-          <dd className="mt-1 font-display text-2xl font-bold text-foreground">
+        <div className="rounded-xl bg-gray-50 p-4">
+          <dt className="text-sm font-medium text-gray-600">Durasi rata-rata</dt>
+          <dd className="mt-1 font-display text-2xl font-extrabold text-gray-900">
             {formatDuration(summary.avgDurationSec)}
-            <span className="ml-1 text-sm font-medium text-muted-foreground">per jawaban</span>
+            <span className="ml-1 text-sm font-medium text-gray-600">per jawaban</span>
           </dd>
         </div>
       </dl>
 
       <ul className="mt-4 space-y-2">
         {tips.map((tip) => (
-          <li key={tip} className="flex gap-2 text-sm leading-6 text-muted-foreground">
-            <CheckCircle2 className="mt-1 h-4 w-4 shrink-0 text-primary" />
+          <li key={tip} className="flex gap-2.5 text-sm leading-relaxed text-gray-800">
+            <CheckCircle2 aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-green-700" />
             {tip}
           </li>
         ))}
       </ul>
-      <p className="mt-4 text-xs leading-5 text-muted-foreground">
+      <p className="mt-4 text-sm leading-relaxed text-gray-600">
         Ini perkiraan dari transkrip browser. Suara seperti “eee” atau “umm” sering tidak ikut
         tertranskrip, jadi kata pengisi sebenarnya bisa lebih banyak dari yang terdeteksi.
       </p>
@@ -914,33 +975,32 @@ function DeliveryCard({ summary }: { summary: NonNullable<ReturnType<typeof summ
   );
 }
 
-function ProcessState({
+function ProcessCard({
   icon: Icon,
   title,
   description,
-  tone,
-  loading = false,
+  spin = false,
 }: {
   icon: typeof Sparkles;
   title: string;
   description: string;
-  tone: "primary" | "amber";
-  loading?: boolean;
+  spin?: boolean;
 }) {
-  const toneClass =
-    tone === "primary" ? "bg-primary/10 text-primary" : "bg-amber-500/10 text-amber-700";
-
   return (
-    <section className="rounded-[1.25rem] border bg-card p-8 text-center shadow-sm md:p-12">
-      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-muted">
-        <Icon className={cn("h-8 w-8", toneClass, loading && "animate-spin")} />
-      </div>
-      <h2 className="mt-5 font-display text-2xl font-bold text-foreground">{title}</h2>
-      <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted-foreground">{description}</p>
-      <div className="mx-auto mt-6 flex w-40 gap-2">
-        <span className="h-2 flex-1 rounded-full bg-primary/25" />
-        <span className="h-2 flex-1 rounded-full bg-primary/50" />
-        <span className="h-2 flex-1 rounded-full bg-primary" />
+    <section
+      role="status"
+      className="rounded-3xl border border-gray-200 bg-white p-8 text-center shadow-sm md:p-12"
+    >
+      <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-green-50 text-green-700 ring-1 ring-green-200">
+        <Icon aria-hidden="true" className={cn("h-8 w-8", spin && "motion-safe:animate-spin")} />
+      </span>
+      <h2 className="mt-5 font-display text-2xl font-extrabold text-gray-900">{title}</h2>
+      <p className="mx-auto mt-2 max-w-md text-base leading-relaxed text-gray-600">{description}</p>
+      <div
+        aria-hidden="true"
+        className="mx-auto mt-6 h-2 w-48 overflow-hidden rounded-full bg-gray-100"
+      >
+        <div className="h-full w-1/3 rounded-full bg-green-700 motion-safe:animate-[pulse_1.4s_ease-in-out_infinite]" />
       </div>
     </section>
   );
@@ -955,117 +1015,55 @@ function FeedbackBlock({
   icon: typeof CheckCircle2;
   title: string;
   text?: string;
-  tone: "emerald" | "amber" | "sky";
+  tone: "good" | "warn" | "tip";
 }) {
-  const toneClass = {
-    emerald: "bg-emerald-500/10 text-emerald-700",
-    amber: "bg-amber-500/10 text-amber-700",
-    sky: "bg-sky-500/10 text-sky-700",
+  const styles = {
+    good: { box: "border-green-200 bg-green-50/60", icon: "bg-green-100 text-green-800" },
+    warn: { box: "border-amber-200 bg-amber-50/60", icon: "bg-amber-100 text-amber-900" },
+    tip: { box: "border-sky-200 bg-sky-50/60", icon: "bg-sky-100 text-sky-800" },
   }[tone];
 
   return (
-    <div className="rounded-xl border bg-muted/30 p-4">
-      <div className="flex items-center gap-2">
+    <div className={cn("rounded-xl border p-4", styles.box)}>
+      <p className="flex items-center gap-2 text-sm font-bold text-gray-900">
         <span
-          className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-lg", toneClass)}
+          className={cn(
+            "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg",
+            styles.icon,
+          )}
         >
-          <Icon className="h-4 w-4" />
+          <Icon aria-hidden="true" className="h-4 w-4" />
         </span>
-        <p className="text-sm font-semibold text-foreground">{title}</p>
-      </div>
-      <p className="mt-3 text-sm leading-6 text-muted-foreground">{text || "Belum ada catatan."}</p>
+        {title}
+      </p>
+      <p className="mt-2.5 text-sm leading-relaxed text-gray-800">{text || "Belum ada catatan."}</p>
     </div>
   );
 }
 
 function InterviewSessionSkeleton() {
   return (
-    <div className="container-page space-y-6 py-5 md:py-8">
-      <header className="rounded-[1.25rem] border bg-card p-5 shadow-sm sm:p-6">
-        <div className="flex items-start gap-3">
-          <Skeleton className="h-10 w-10 rounded-xl" />
-          <div className="flex-1">
-            <Skeleton className="h-6 w-28 rounded-full" />
-            <Skeleton className="mt-3 h-8 w-full max-w-md" />
-            <Skeleton className="mt-2 h-4 w-72 max-w-full" />
-          </div>
+    <div
+      className="container-page space-y-6 py-6 md:space-y-8 md:py-10"
+      role="status"
+      aria-label="Memuat sesi wawancara"
+    >
+      <div className="space-y-3">
+        <Skeleton className="h-5 w-32" />
+        <Skeleton className="h-10 w-full max-w-md" />
+        <Skeleton className="h-7 w-48 rounded-full" />
+      </div>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
+        <div className="space-y-4">
+          <Skeleton className="h-36 w-full rounded-2xl" />
+          <Skeleton className="h-32 w-full rounded-2xl" />
+          <Skeleton className="h-96 w-full rounded-2xl" />
         </div>
-      </header>
-
-      <main className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
-        <section className="space-y-4">
-          <div className="rounded-2xl border bg-card p-4 shadow-sm">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <Skeleton className="h-5 w-36" />
-                <Skeleton className="mt-2 h-3 w-28" />
-              </div>
-              <Skeleton className="h-6 w-20 rounded-full" />
-            </div>
-            <Skeleton className="mt-4 h-2 w-full rounded-full" />
-            <div className="mt-4 flex flex-wrap gap-2">
-              {[1, 2, 3, 4, 5, 6].map((item) => (
-                <Skeleton key={item} className="h-9 w-9 rounded-full" />
-              ))}
-            </div>
-          </div>
-
-          <div className="rounded-2xl border bg-card p-5 shadow-sm md:p-6">
-            <div className="flex gap-3">
-              <Skeleton className="h-11 w-11 rounded-xl" />
-              <div className="flex-1">
-                <div className="mb-3 flex gap-2">
-                  <Skeleton className="h-6 w-12 rounded-full" />
-                  <Skeleton className="h-6 w-24 rounded-full" />
-                </div>
-                <Skeleton className="h-7 w-full" />
-                <Skeleton className="mt-2 h-7 w-4/5" />
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-2xl border bg-card p-5 shadow-sm md:p-6">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <Skeleton className="h-5 w-32" />
-                <Skeleton className="mt-2 h-3 w-80 max-w-full" />
-              </div>
-              <Skeleton className="h-9 w-32" />
-            </div>
-            <Skeleton className="mt-4 h-48 w-full rounded-xl" />
-            <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:justify-end">
-              <Skeleton className="h-10 w-full sm:w-32" />
-              <Skeleton className="h-10 w-full sm:w-32" />
-            </div>
-          </div>
-        </section>
-
-        <aside className="space-y-4">
-          <div className="rounded-2xl border bg-card p-5 shadow-sm">
-            <div className="flex gap-3">
-              <Skeleton className="h-10 w-10 rounded-xl" />
-              <div className="flex-1">
-                <Skeleton className="h-5 w-40" />
-                <Skeleton className="mt-2 h-3 w-full" />
-                <Skeleton className="mt-1 h-3 w-4/5" />
-              </div>
-            </div>
-            <div className="mt-5 space-y-3">
-              {[1, 2, 3].map((item) => (
-                <Skeleton key={item} className="h-5 w-full" />
-              ))}
-            </div>
-          </div>
-          <div className="rounded-2xl border bg-muted/35 p-5">
-            <Skeleton className="h-5 w-28" />
-            <Skeleton className="mt-4 h-2 w-full rounded-full" />
-            <div className="mt-4 grid grid-cols-2 gap-2">
-              <Skeleton className="h-20 rounded-xl" />
-              <Skeleton className="h-20 rounded-xl" />
-            </div>
-          </div>
-        </aside>
-      </main>
+        <div className="space-y-4">
+          <Skeleton className="h-56 w-full rounded-2xl" />
+          <Skeleton className="h-32 w-full rounded-2xl" />
+        </div>
+      </div>
     </div>
   );
 }
