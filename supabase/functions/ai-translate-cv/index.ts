@@ -6,7 +6,9 @@
  *
  * Hanya teks bebas (ringkasan, jabatan, deskripsi, ...) yang dikirim ke AI; struktur, tanggal,
  * nama perusahaan, kontak, dan URL tidak pernah diubah (lihat _shared/translate-cv.ts).
- * Kuota & gerbang fitur memakai milik "Perbaiki Teks": quota_ai_polish / enable_text_polish.
+ * Gerbang & kuota sendiri per paket: subscription_tiers.enable_cv_translate / quota_ai_translate
+ * (free terkunci, starter 3/bulan, pro 15/bulan — lihat migration 20261006000100_translate_quota.sql),
+ * ditambah batas harian anti-penyalahgunaan.
  */
 import {
   aiComplete,
@@ -27,6 +29,37 @@ import {
   type TranslateTarget,
 } from "../_shared/translate-cv.ts";
 
+/** Maksimal terjemahan per 24 jam per user, di luar kuota bulanan (mencegah ledakan pemakaian). */
+const DAILY_CAP = 5;
+
+interface TranslateTier {
+  slug?: string;
+  enable_cv_translate?: boolean | null;
+  quota_ai_translate?: number | null;
+}
+
+/** Tier aktif user; jika tidak punya langganan aktif, pakai baris tier "free". */
+async function loadTier(
+  admin: ReturnType<typeof getAdminClient>,
+  userId: string,
+): Promise<TranslateTier | null> {
+  const { data: sub } = await admin
+    .from("user_subscriptions")
+    .select("subscription_tiers!inner(slug, enable_cv_translate, quota_ai_translate)")
+    .eq("user_id", userId)
+    .eq("status", "active")
+    .maybeSingle();
+  const active = (sub as { subscription_tiers?: TranslateTier } | null)?.subscription_tiers;
+  if (active) return active;
+
+  const { data: free } = await admin
+    .from("subscription_tiers")
+    .select("slug, enable_cv_translate, quota_ai_translate")
+    .eq("slug", "free")
+    .maybeSingle();
+  return (free as TranslateTier | null) ?? null;
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders(req) });
 
@@ -44,30 +77,11 @@ Deno.serve(async (req: Request) => {
 
     const admin = getAdminClient();
 
-    const { data: userSub } = await admin
-      .from("user_subscriptions")
-      .select("subscription_tiers!inner(slug, enable_text_polish, quota_ai_polish)")
-      .eq("user_id", userId)
-      .eq("status", "active")
-      .single();
-
-    const tier = (
-      userSub as {
-        subscription_tiers?: {
-          enable_text_polish?: boolean | null;
-          quota_ai_polish?: number | null;
-        };
-      } | null
-    )?.subscription_tiers;
-    if (
-      tier?.enable_text_polish === false ||
-      (tier?.quota_ai_polish !== null &&
-        tier?.quota_ai_polish !== undefined &&
-        tier.quota_ai_polish <= 0)
-    ) {
+    const tier = await loadTier(admin, userId);
+    if (!tier?.enable_cv_translate) {
       return corsResponse(
         {
-          error: "Terjemahan CV tidak tersedia di paket kamu. Silakan upgrade.",
+          error: "Terjemahan CV tersedia di paket Starter ke atas. Upgrade untuk menggunakannya.",
           requiresUpgrade: true,
           upgradeUrl: "/harga",
         },
@@ -91,8 +105,33 @@ Deno.serve(async (req: Request) => {
       );
     }
 
+    // Batas harian (di atas kuota bulanan)
+    const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const { count: usedToday } = await admin
+      .from("ai_usage")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .eq("feature", "translate")
+      .gte("created_at", since);
+    if ((usedToday ?? 0) >= DAILY_CAP) {
+      throw new Error(
+        `Kuota harian terjemahan CV tercapai (${DAILY_CAP} per hari). Coba lagi besok.`,
+      );
+    }
+
     // Reservasi kuota SEBELUM memanggil AI; dikembalikan jika AI/parsing gagal
-    const reservation = await reserveQuota(admin, userId, "polish", 1500);
+    let reservation;
+    try {
+      reservation = await reserveQuota(admin, userId, "translate", 1500);
+    } catch (e) {
+      if (e instanceof Error && e.message.startsWith("Kuota")) {
+        const limit = tier.quota_ai_translate;
+        throw new Error(
+          `Kuota terjemahan CV bulan ini habis${limit != null ? ` (${limit})` : ""}. Upgrade paket untuk menambah kuota.`,
+        );
+      }
+      throw e;
+    }
 
     let translations: Record<string, string>;
     try {

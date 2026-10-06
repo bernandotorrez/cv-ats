@@ -57,6 +57,7 @@ const FEATURE_QUOTA_MAP: Record<string, string> = {
   cv_review: "quota_cv_review",
   interview_simulator: "quota_interview_simulator",
   polish: "quota_ai_polish",
+  translate: "quota_ai_translate",
   guided: "quota_guided_mode",
 };
 

@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, Check, Languages, Loader2, Minus } from "lucide-react";
+import { ArrowRight, Check, Languages, Loader2, Lock, Minus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import {
   Dialog,
   DialogContent,
@@ -11,6 +12,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { translateCv } from "@/lib/ai-functions";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/auth-context";
+import { getUserTierConfig } from "@/lib/subscription";
 import type { CvData } from "@/lib/cv-types";
 import type { CvUiLang } from "@/lib/cv-translations";
 
@@ -50,8 +54,45 @@ export function TranslateCvDialog({
   onLabelsOnly,
   onTranslated,
 }: TranslateCvDialogProps) {
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Gerbang & sisa kuota paket (diperiksa ulang tiap dialog dibuka). Server tetap penentu akhir.
+  const [plan, setPlan] = useState<{ enabled: boolean; max: number | null; used: number } | null>(
+    null,
+  );
+
+  useEffect(() => {
+    if (!target || !user?.id) return;
+    let active = true;
+    setPlan(null);
+    (async () => {
+      const config = await getUserTierConfig(user.id);
+      const monthStart = new Date();
+      monthStart.setDate(1);
+      monthStart.setHours(0, 0, 0, 0);
+      const { count } = await supabase
+        .from("ai_usage")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id)
+        .eq("feature", "translate")
+        .gte("created_at", monthStart.toISOString());
+      if (active) {
+        setPlan({
+          enabled: config.enableCvTranslate,
+          max: config.maxCvTranslate,
+          used: count ?? 0,
+        });
+      }
+    })().catch(() => active && setPlan({ enabled: true, max: null, used: 0 }));
+    return () => {
+      active = false;
+    };
+  }, [target, user?.id]);
+
+  const remaining = plan && plan.max !== null ? Math.max(0, plan.max - plan.used) : null;
+  const locked = plan !== null && !plan.enabled;
+  const exhausted = plan !== null && plan.enabled && remaining === 0;
 
   const handleClose = () => {
     if (loading) return;
@@ -131,6 +172,35 @@ export function TranslateCvDialog({
             </section>
           </div>
 
+          {plan && !locked && (
+            <p
+              className={cn(
+                "rounded-xl p-3 text-sm font-semibold ring-1",
+                exhausted
+                  ? "bg-red-50 text-red-900 ring-red-200"
+                  : "bg-green-50 text-green-900 ring-green-200",
+              )}
+            >
+              {plan.max === null
+                ? "Terjemahan tanpa batas di paketmu."
+                : exhausted
+                  ? `Kuota terjemahan bulan ini habis (${plan.max}).`
+                  : `Sisa ${remaining} dari ${plan.max} terjemahan bulan ini.`}
+            </p>
+          )}
+
+          {locked && (
+            <div className="rounded-xl border border-amber-300 bg-amber-50 p-3.5 text-sm leading-relaxed text-amber-950">
+              <p className="flex items-center gap-2 font-bold">
+                <Lock aria-hidden="true" className="h-4 w-4 shrink-0" />
+                Terjemahan isi CV ada di paket Starter ke atas
+              </p>
+              <p className="mt-1">
+                Mengganti judul bagian (Pengalaman Kerja → Work Experience) tetap gratis.
+              </p>
+            </div>
+          )}
+
           <p className="rounded-xl bg-amber-50 p-3 text-sm leading-relaxed text-amber-950 ring-1 ring-amber-200">
             Hasil terjemahan AI perlu kamu baca ulang. Isi CV yang sekarang dicadangkan, dan kamu
             bisa membatalkan terjemahan setelah selesai.
@@ -174,24 +244,36 @@ export function TranslateCvDialog({
           >
             Ganti judul bagian saja
           </Button>
-          <Button
-            type="button"
-            onClick={handleTranslate}
-            disabled={loading}
-            className="h-11 gap-2 rounded-xl bg-green-700 font-bold text-white hover:bg-green-800"
-          >
-            {loading ? (
-              <>
-                <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" />
-                Menerjemahkan…
-              </>
-            ) : (
-              <>
+          {locked || exhausted ? (
+            <Button
+              asChild
+              className="h-11 gap-2 rounded-xl bg-green-700 font-bold text-white hover:bg-green-800"
+            >
+              <Link to="/harga">
                 <Languages aria-hidden="true" className="h-4 w-4" />
-                Terjemahkan isi CV
-              </>
-            )}
-          </Button>
+                Upgrade untuk menerjemahkan
+              </Link>
+            </Button>
+          ) : (
+            <Button
+              type="button"
+              onClick={handleTranslate}
+              disabled={loading || plan === null}
+              className="h-11 gap-2 rounded-xl bg-green-700 font-bold text-white hover:bg-green-800"
+            >
+              {loading ? (
+                <>
+                  <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" />
+                  Menerjemahkan…
+                </>
+              ) : (
+                <>
+                  <Languages aria-hidden="true" className="h-4 w-4" />
+                  Terjemahkan isi CV
+                </>
+              )}
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

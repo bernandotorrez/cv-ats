@@ -51,6 +51,11 @@ ON CONFLICT (slug) DO UPDATE SET
   is_premium = EXCLUDED.is_premium,
   sort_order = EXCLUDED.sort_order;
 
+-- Terjemah CV: gerbang & kuota per paket (lihat migration 20261006000100_translate_quota.sql)
+UPDATE public.subscription_tiers SET enable_cv_translate = false, quota_ai_translate = 0 WHERE slug = 'free';
+UPDATE public.subscription_tiers SET enable_cv_translate = true, quota_ai_translate = 3 WHERE slug = 'starter';
+UPDATE public.subscription_tiers SET enable_cv_translate = true, quota_ai_translate = 15 WHERE slug IN ('pro', 'pro_plus');
+
 -- ============================================================
 -- Seed: Subscription Tiers (ensure defaults exist)
 -- ============================================================

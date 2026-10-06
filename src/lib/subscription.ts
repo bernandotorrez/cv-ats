@@ -33,6 +33,8 @@ export interface TierLimits {
   enableTextPolish: boolean; // ai-polish: all tiers with quota
   enableGuidedMode: boolean; // ai-chat (mode=guided): all tiers ✅
   maxTextPolish: number | null; // null = unlimited
+  enableCvTranslate: boolean; // ai-translate-cv: free=❌, starter+=✅ (kuota bulanan)
+  maxCvTranslate: number | null; // null = unlimited
   canDownloadDocx: boolean;
   canCoverLetter: boolean; // ai-cover-letter: free=❌
   canKeywordExtract: boolean; // ai-keywords: free=❌
@@ -73,6 +75,8 @@ type DbSubscriptionRow = {
     enable_text_polish: boolean;
     enable_guided_mode: boolean;
     quota_ai_polish: number | null;
+    enable_cv_translate: boolean;
+    quota_ai_translate: number | null;
   } | null;
 };
 
@@ -102,6 +106,8 @@ const TIER_LIMITS: Record<Tier, TierLimits> = {
     enableGuidedMode: true,
     enableTextPolish: true,
     maxTextPolish: 1,
+    enableCvTranslate: false,
+    maxCvTranslate: 0,
     canDownloadDocx: false,
     canCoverLetter: false,
     canKeywordExtract: false,
@@ -132,6 +138,8 @@ const TIER_LIMITS: Record<Tier, TierLimits> = {
     enableGuidedMode: true,
     enableTextPolish: true,
     maxTextPolish: 50,
+    enableCvTranslate: true,
+    maxCvTranslate: 3,
     canDownloadDocx: true,
     canCoverLetter: true,
     canKeywordExtract: true,
@@ -162,6 +170,8 @@ const TIER_LIMITS: Record<Tier, TierLimits> = {
     enableGuidedMode: true,
     enableTextPolish: true,
     maxTextPolish: 200,
+    enableCvTranslate: true,
+    maxCvTranslate: 15,
     canDownloadDocx: true,
     canCoverLetter: true,
     canKeywordExtract: true,
@@ -204,6 +214,7 @@ export async function getUserTierConfig(userId: string): Promise<TierLimits> {
           enable_cv_comparison, enable_interview_simulator,
           enable_analytics,
           enable_text_polish, quota_ai_polish,
+          enable_cv_translate, quota_ai_translate,
           enable_guided_mode
         )`,
       )
@@ -243,6 +254,10 @@ export async function getUserTierConfig(userId: string): Promise<TierLimits> {
         canAnalytics: t.enable_analytics ?? base.canAnalytics,
         enableTextPolish: t.enable_text_polish ?? base.enableTextPolish,
         maxTextPolish: t.quota_ai_polish ?? base.maxTextPolish,
+        enableCvTranslate: t.enable_cv_translate ?? base.enableCvTranslate,
+        // null = tanpa batas (jangan jatuh ke nilai bawaan seperti kuota lain)
+        maxCvTranslate:
+          t.quota_ai_translate === undefined ? base.maxCvTranslate : t.quota_ai_translate,
         enableGuidedMode: t.enable_guided_mode ?? base.enableGuidedMode,
         maxGuidedSessions: t.quota_guided_mode ?? base.maxGuidedSessions,
       };
