@@ -34,6 +34,8 @@ import { WhatsAppShare } from "@/components/share/WhatsAppShare";
 import { TemplateGallery } from "@/components/cv/TemplateGallery";
 import { TEMPLATES, type CvData, type TemplateId, emptyCv } from "@/lib/cv-types";
 import { type CvUiLang } from "@/lib/cv-translations";
+import { TranslateCvDialog } from "@/components/cv/TranslateCvDialog";
+import { hasTranslatableContent } from "@/components/cv/translate-utils";
 import { suggestSection, polishText, polishTextVariants, parseCvUpload, extractCvTextWithAi } from "@/lib/ai-functions";
 import { PolishPanel, type PolishVariant } from "@/components/ai/polish-panel";
 import { AiChatPanel } from "@/components/cv/AiChatPanel";
@@ -174,6 +176,7 @@ function CvEditorPage() {
   const [quotaProPhoto, setQuotaProPhoto] = useState(0);
   const [quotaUploadCv, setQuotaUploadCv] = useState(0);
   const [cvLanguage, setCvLanguage] = useState<CvUiLang>("id");
+  const [translateTarget, setTranslateTarget] = useState<CvUiLang | null>(null);
   const [allowedTemplates, setAllowedTemplates] = useState<string[] | null>(null);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "unsaved">("idle");
   const [polishPanel, setPolishPanel] = useState<{
@@ -701,6 +704,43 @@ function CvEditorPage() {
 
   if (loading) return <EditorSkeleton />;
 
+  // Ganti bahasa CV: kalau CV sudah ada isinya, tawarkan menerjemahkan isinya sekalian
+  // (switch bahasa tadinya hanya mengganti judul bagian).
+  const handleLanguageChange = (next: CvUiLang) => {
+    if (next === cvLanguage) return;
+    if (hasTranslatableContent(data)) setTranslateTarget(next);
+    else setCvLanguage(next);
+  };
+
+  const handleTranslated = async (result: { data: CvData; language: CvUiLang; fields: number }) => {
+    const previous = { title, data, language: cvLanguage };
+
+    // Cadangkan isi CV sebelum diganti (tabel cv_versions). Gagal mencadangkan tidak
+    // memblokir terjemahan: pembatalan lewat toast tetap tersedia.
+    if (user?.id) {
+      const { error } = await (supabase as any)
+        .from("cv_versions")
+        .insert({ cv_id: id, user_id: user.id, snapshot: previous });
+      if (error) console.warn("[Translate CV] Gagal mencadangkan versi lama:", error);
+    }
+
+    setData(result.data);
+    setCvLanguage(result.language);
+    setTranslateTarget(null);
+    toast.success(`${result.fields} bagian CV berhasil diterjemahkan`, {
+      description: "Baca ulang hasilnya sebelum mengunduh.",
+      duration: 20000,
+      action: {
+        label: "Batalkan",
+        onClick: () => {
+          setData(previous.data);
+          setCvLanguage(previous.language);
+          toast.success("Terjemahan dibatalkan");
+        },
+      },
+    });
+  };
+
   const canUploadCv = hasUploadCvFeature || quotaUploadCv > 0 || userTier === "starter" || userTier === "pro";
 
   const scoreTone =
@@ -783,7 +823,18 @@ function CvEditorPage() {
         userId={user?.id}
         onOpenCvUpload={openCvUpload}
         cvLanguage={cvLanguage}
-        onLanguageChange={setCvLanguage}
+        onLanguageChange={handleLanguageChange}
+      />
+
+      <TranslateCvDialog
+        target={translateTarget}
+        cvData={data}
+        onClose={() => setTranslateTarget(null)}
+        onLabelsOnly={(lang) => {
+          setCvLanguage(lang);
+          setTranslateTarget(null);
+        }}
+        onTranslated={handleTranslated}
       />
 
       {/* ─── MAIN CONTENT: 2-Column Layout (lg+) / tabs (mobile & tablet) ─── */}

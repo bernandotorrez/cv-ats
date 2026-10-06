@@ -281,3 +281,17 @@ export async function extractCvTextWithAi(input: {
     text: string;
   }>;
 }
+
+export async function translateCv(input: {
+  data: {
+    cvData: Record<string, unknown>;
+    target: "en" | "id";
+  };
+}) {
+  return callEdge("ai-translate-cv", input.data) as Promise<{
+    cvData: Record<string, unknown>;
+    language: "en" | "id";
+    translatedFields: number;
+    skippedFields: number;
+  }>;
+}
