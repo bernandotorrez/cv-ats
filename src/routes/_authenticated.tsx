@@ -1,4 +1,12 @@
-import { createFileRoute, Link, Outlet, redirect, useRouterState } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  Link,
+  Outlet,
+  redirect,
+  useNavigate,
+  useRouterState,
+} from "@tanstack/react-router";
+import { useEffect, useRef } from "react";
 import { BarChart3, ClipboardCheck, FileText, Home, PenLine } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,11 +15,16 @@ import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async ({ location }) => {
+    // Session Supabase disimpan di localStorage — server tidak bisa membacanya. Mengecek di
+    // server selalu "belum login" dan memantul ke /login saat refresh, jadi pengecekan hanya
+    // dilakukan di client (navigasi). Untuk load pertama, AuthGate di bawah yang mengalihkan.
+    if (typeof window === "undefined") return;
     const { data } = await supabase.auth.getSession();
     if (!data.session) {
       throw redirect({
         to: "/login",
-        search: { redirect: location.pathname },
+        // href membawa query & hash (mis. ?guided=true), bukan hanya path
+        search: { redirect: location.href },
       });
     }
   },
@@ -23,9 +36,27 @@ function AuthGate() {
   const pathname = useRouterState({
     select: (state) => state.location.pathname,
   });
+  const href = useRouterState({
+    select: (state) => state.location.href,
+  });
+  const navigate = useNavigate();
   const isCvBuilderPage = /^\/cv\/[^/]+\/?$/.test(pathname);
   const isAdminPage = pathname === "/admin" || pathname.startsWith("/admin/");
   const hideBottomNav = isCvBuilderPage || isAdminPage;
+
+  // Belum login (load pertama / sesi berakhir): ke login lalu kembali ke halaman ini.
+  // Dipicu sekali saja: navigate() dipanggil lagi di setiap render selama navigasi masih
+  // menunggu (beforeLoad login), dan tiap panggilan membatalkan yang sebelumnya → render loop.
+  const redirectedToLogin = useRef(false);
+  useEffect(() => {
+    if (user) {
+      redirectedToLogin.current = false;
+      return;
+    }
+    if (loading || redirectedToLogin.current) return;
+    redirectedToLogin.current = true;
+    navigate({ to: "/login", search: { redirect: href }, replace: true });
+  }, [loading, user, href, navigate]);
 
   if (loading || !user) {
     return (

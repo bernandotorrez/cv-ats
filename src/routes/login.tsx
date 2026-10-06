@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate, redirect } from "@tanstack/react-router";
-import { useState, type FormEvent, useEffect } from "react";
+import { useState, type FormEvent, useEffect, useRef } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
 import { buildSeo } from "@/lib/seo";
@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
+import { safeRedirectTarget } from "@/lib/auth-redirect";
 import { HCaptchaWidget } from "@/components/ui/hcaptcha";
 import {
   AuthAside,
@@ -36,11 +37,11 @@ const MAX_ATTEMPTS = 5;
 const ATTEMPT_WINDOW = 15 * 60 * 1000; // 15 menit
 
 export const Route = createFileRoute("/login")({
-  beforeLoad: async () => {
-    // Check session (works on client-side navigation)
+  beforeLoad: async ({ search }) => {
+    // Check session (works on client-side navigation). Sudah login → ke halaman tujuan.
     const { data } = await supabase.auth.getSession();
     if (data.session) {
-      throw redirect({ to: "/dashboard" });
+      throw redirect({ href: safeRedirectTarget(search.redirect) });
     }
   },
   head: () =>
@@ -117,12 +118,14 @@ function LoginPage() {
     setHydrated(true);
   }, []);
 
-  // Redirect already-logged-in users on client side (fallback for SSR)
+  // Redirect already-logged-in users on client side (fallback for SSR).
+  // Sekali saja: navigate() yang diulang di tiap render membatalkan navigasi sebelumnya.
+  const redirectedRef = useRef(false);
   useEffect(() => {
-    if (hydrated && !authLoading && authUser) {
-      navigate({ to: "/dashboard", replace: true });
-    }
-  }, [hydrated, authUser, authLoading, navigate]);
+    if (!hydrated || authLoading || !authUser || redirectedRef.current) return;
+    redirectedRef.current = true;
+    navigate({ href: safeRedirectTarget(redirect), replace: true });
+  }, [hydrated, authUser, authLoading, navigate, redirect]);
 
   // Countdown timer for lockout
   useEffect(() => {
@@ -215,9 +218,7 @@ function LoginPage() {
     clearAttempts();
     toast.success("Berhasil masuk");
     // Hanya path internal (cegah open redirect); href agar query string ikut terbawa
-    const target =
-      redirect && redirect.startsWith("/") && !redirect.startsWith("//") ? redirect : "/dashboard";
-    navigate({ href: target });
+    navigate({ href: safeRedirectTarget(redirect) });
   };
 
   const handleGoogle = async () => {
