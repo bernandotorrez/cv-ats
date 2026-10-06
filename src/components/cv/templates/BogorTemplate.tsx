@@ -470,6 +470,7 @@ export function BogorTemplate({ data, showHeader = true, sectionOrder, language 
         position: "relative",
         backgroundColor: "#fff",
         fontFamily: "'Inter Variable', Inter, Arial, sans-serif",
+        fontFeatureSettings: "normal",
       }}
     >
       {/* ─── Left Sidebar (35% width) ─── */}

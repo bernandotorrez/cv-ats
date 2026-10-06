@@ -69,6 +69,8 @@ interface Props {
  * styles.css) — "Inter" saja tidak terdaftar. Jangan pakai system-ui: html2canvas mengukur
  * posisi kata di DOM lalu menggambarnya di canvas, dan canvas Safari tidak mengenali
  * system-ui sehingga teks di PDF digambar dengan font lain dan kata-katanya menumpuk.
+ * Untuk alasan yang sama fontFeatureSettings di-reset ke "normal": body memakai
+ * "cv11"/"ss01" (glyph alternatif Inter) yang tidak didukung canvas.
  */
 export const CV_FONT_STACK = "'Inter Variable', Inter, Arial, sans-serif";
 
@@ -155,6 +157,7 @@ export function CvPreview({
           minHeight: `${A4_HEIGHT_MM}mm`,
           padding: `${PADDING_MM}mm`,
           fontFamily: CV_FONT_STACK,
+          fontFeatureSettings: "normal",
           fontSize: "10.5pt",
           lineHeight: 1.5,
           transform: `scale(${scale})`,
@@ -187,6 +190,7 @@ export function CvWatermark({ className }: { className?: string }) {
         width: "100%",
         color: "#000000",
         fontFamily: CV_FONT_STACK,
+          fontFeatureSettings: "normal",
         fontSize: "8.5pt",
         lineHeight: 1.2,
       }}
@@ -242,6 +246,7 @@ export function MultiPageCvPreview({
               minHeight: `${A4_HEIGHT_MM}mm`,
               padding: `${PADDING_MM}mm`,
               fontFamily: CV_FONT_STACK,
+          fontFeatureSettings: "normal",
               fontSize: "10.5pt",
               lineHeight: 1.5,
               transform: `scale(${scale})`,
