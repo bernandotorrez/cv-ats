@@ -137,7 +137,10 @@ export function SiteHeader() {
   return (
     <header
       className={cn(
-        "sticky top-0 z-40 border-b bg-white/90 backdrop-blur transition-[border-color,box-shadow] supports-[backdrop-filter]:bg-white/80 print:hidden",
+        "sticky top-0 border-b bg-white/90 backdrop-blur transition-[border-color,box-shadow] supports-[backdrop-filter]:bg-white/80 print:hidden",
+        // Menu terbuka = overlay layar penuh: harus di atas bottom navigation (fixed z-40,
+        // lebih akhir di DOM) agar tombol Dashboard/Keluar di bawah tidak tertutup.
+        open ? "z-50" : "z-40",
         scrolled || open ? "border-gray-200 shadow-sm" : "border-transparent",
       )}
     >
@@ -286,7 +289,10 @@ export function SiteHeader() {
           id="mobile-menu"
           className="absolute inset-x-0 top-full h-[calc(100dvh-4rem)] overflow-y-auto overscroll-contain border-t border-gray-200 bg-white lg:hidden"
         >
-          <nav aria-label="Navigasi mobile" className="container-page flex flex-col py-5">
+          <nav
+            aria-label="Navigasi mobile"
+            className="container-page flex flex-col pt-5 pb-[max(2rem,calc(env(safe-area-inset-bottom)+1.5rem))]"
+          >
             <p className="px-3 text-xs font-bold uppercase tracking-wider text-gray-600">Menu</p>
             <ul className="mt-2 grid gap-1">
               {nav.map((item) => {
