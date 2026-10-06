@@ -34,7 +34,20 @@ const MAX_ANSWER_CHARS = 5_000;
 const MAX_FEEDBACK_CHARS = 20_000;
 
 type Question = { id: string; question: string };
-type Answer = { id: string; answer: string };
+/** `durationSec`/`wpm`/`fillerCount` hanya ada untuk jawaban yang direkam dengan suara. */
+type Answer = {
+  id: string;
+  answer: string;
+  durationSec?: number;
+  wpm?: number;
+  fillerCount?: number;
+};
+
+/** Angka opsional dari client: dibuang jika bukan angka valid, dibatasi ke rentang wajar. */
+function readOptionalNumber(value: unknown, max: number): number | undefined {
+  if (typeof value !== "number" || !Number.isFinite(value) || value < 0) return undefined;
+  return Math.min(Math.round(value), max);
+}
 
 function readContext(body: Record<string, unknown>) {
   const position = limitText(body.position, LIMITS.shortText, "position").trim();
@@ -66,10 +79,17 @@ function readAnswers(value: unknown): Answer[] {
   return value.map((a) => {
     if (!a || typeof a !== "object") throw new ValidationError("Input answers tidak valid.");
     const item = a as Record<string, unknown>;
-    return {
+    const answer: Answer = {
       id: limitText(String(item.id ?? ""), 50, "answers.id"),
       answer: limitText(item.answer, MAX_ANSWER_CHARS, "answers.answer"),
     };
+    const durationSec = readOptionalNumber(item.durationSec, 1_800);
+    const wpm = readOptionalNumber(item.wpm, 400);
+    const fillerCount = readOptionalNumber(item.fillerCount, 500);
+    if (durationSec !== undefined) answer.durationSec = durationSec;
+    if (wpm !== undefined) answer.wpm = wpm;
+    if (fillerCount !== undefined) answer.fillerCount = fillerCount;
+    return answer;
   });
 }
 
@@ -294,7 +314,13 @@ async function evaluateAnswers(
   const qaText = questions
     .map((q, i) => {
       const a = answers.find((a) => a.id === q.id);
-      return `Q${i + 1}: ${q.question}\nA${i + 1}: ${a?.answer || "(tidak dijawab)"}`;
+      const delivery =
+        a?.durationSec && a.durationSec > 0
+          ? `\n(Cara bicara, dari rekaman suara: ${a.durationSec} detik` +
+            `${a.wpm ? `, sekitar ${a.wpm} kata/menit` : ""}` +
+            `, ${a.fillerCount ?? 0} kata pengisi terdeteksi)`
+          : "";
+      return `Q${i + 1}: ${q.question}\nA${i + 1}: ${a?.answer || "(tidak dijawab)"}${delivery}`;
     })
     .join("\n\n");
 
@@ -322,7 +348,8 @@ Cara menilai:
 6. Untuk suggestion, berikan saran praktis yang bisa langsung dipakai user untuk memperbaiki jawaban. Bila memungkinkan, arahkan ke struktur kalimat yang lebih baik, contoh metrik, atau detail konteks yang harus ditambahkan.
 7. Feedback harus spesifik terhadap jawaban user. Hindari kalimat template seperti "jawaban sudah baik" tanpa alasan.
 8. Jika jawaban kosong atau sangat minim, beri skor rendah dan jelaskan cara membangun jawaban dari nol.
-9. Jangan mengubah schema JSON.
+9. Jika sebuah jawaban punya baris "Cara bicara" (dari rekaman suara), pertimbangkan tempo, durasi, dan kata pengisi pada aspek Komunikasi dan sebutkan hal terpentingnya di feedback umum. Transkrip berasal dari speech recognition, jadi jangan menghukum skor karena salah transkrip atau karena "eee/umm" yang tidak tertulis. Tempo wajar sekitar 100-170 kata/menit.
+10. Jangan mengubah schema JSON.
 
 Format output HARUS JSON valid saja, tanpa markdown dan tanpa teks tambahan:
 {

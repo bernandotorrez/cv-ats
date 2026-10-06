@@ -10,6 +10,13 @@ import { Skeleton } from "@/components/ui/skeleton-loading";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { useSpeechRecognition } from "@/hooks/use-speech-recognition";
+import { VoiceAnswerPanel } from "@/components/interview/VoiceAnswerPanel";
+import {
+  analyzeDelivery,
+  formatDuration,
+  paceLabel,
+  summarizeDelivery,
+} from "@/lib/interview-delivery";
 import { cn } from "@/lib/utils";
 import {
   AlertTriangle,
@@ -54,13 +61,22 @@ interface Evaluation {
   suggestion: string;
 }
 
+/** Jawaban + data cara bicara (hanya ada untuk jawaban yang direkam dengan suara). */
+interface SessionAnswer {
+  id: string;
+  answer: string;
+  durationSec?: number;
+  wpm?: number;
+  fillerCount?: number;
+}
+
 interface SessionData {
   id: string;
   position: string;
   level: string;
   industry: string | null;
   questions: Question[];
-  answers: Array<{ id: string; answer: string }>;
+  answers: SessionAnswer[];
   scores: Evaluation[];
   overall_score: number | null;
   feedback: string | null;
@@ -108,8 +124,21 @@ function InterviewSessionPage() {
   const activeSpeechQuestionIdRef = useRef<string | null>(null);
   const previousQuestionIndexRef = useRef(currentQ);
 
-  const { isListening, transcript, isSupported, startListening, stopListening } =
-    useSpeechRecognition({ lang: "id-ID" });
+  const {
+    isListening,
+    transcript,
+    error: speechError,
+    isSupported,
+    startListening,
+    stopListening,
+  } = useSpeechRecognition({ lang: "id-ID" });
+  const [listeningStartedAt, setListeningStartedAt] = useState<number | null>(null);
+  const recordStartRef = useRef<number | null>(null);
+  // Total detik merekam per pertanyaan (untuk menghitung tempo bicara)
+  const durationsRef = useRef<Record<string, number>>({});
+  const answersRef = useRef<Record<string, string>>({});
+
+  answersRef.current = answers;
 
   const currentQuestion = questions[currentQ];
   const answeredCount = useMemo(
@@ -173,9 +202,7 @@ function InterviewSessionPage() {
     level: String(data.level ?? ""),
     industry: typeof data.industry === "string" ? data.industry : null,
     questions: Array.isArray(data.questions) ? (data.questions as Question[]) : [],
-    answers: Array.isArray(data.answers)
-      ? (data.answers as Array<{ id: string; answer: string }>)
-      : [],
+    answers: Array.isArray(data.answers) ? (data.answers as SessionAnswer[]) : [],
     scores: Array.isArray(data.scores) ? (data.scores as Evaluation[]) : [],
     overall_score: typeof data.overall_score === "number" ? data.overall_score : null,
     feedback: typeof data.feedback === "string" ? data.feedback : null,
@@ -273,13 +300,43 @@ function InterviewSessionPage() {
     loadSession();
   }, [loadSession]);
 
+  const stopRecording = useCallback(() => {
+    const questionId = activeSpeechQuestionIdRef.current;
+    if (questionId && recordStartRef.current) {
+      const elapsed = (Date.now() - recordStartRef.current) / 1000;
+      durationsRef.current[questionId] = (durationsRef.current[questionId] ?? 0) + elapsed;
+    }
+    recordStartRef.current = null;
+    setListeningStartedAt(null);
+    activeSpeechQuestionIdRef.current = null;
+    stopListening();
+  }, [stopListening]);
+
+  const startRecording = useCallback(
+    (questionId: string) => {
+      activeSpeechQuestionIdRef.current = questionId;
+      speechBaseTextRef.current = answersRef.current[questionId] || "";
+      recordStartRef.current = Date.now();
+      setListeningStartedAt(Date.now());
+      startListening();
+    },
+    [startListening],
+  );
+
+  // Pindah pertanyaan saat merekam: hentikan rekaman, waktunya dihitung ke pertanyaan sebelumnya
   useEffect(() => {
     if (previousQuestionIndexRef.current !== currentQ && activeSpeechQuestionIdRef.current) {
-      activeSpeechQuestionIdRef.current = null;
-      stopListening();
+      stopRecording();
     }
     previousQuestionIndexRef.current = currentQ;
-  }, [currentQ, stopListening]);
+  }, [currentQ, stopRecording]);
+
+  // Mikrofon ditolak / error recognizer: tampilkan pesan dan reset status rekam
+  useEffect(() => {
+    if (!speechError) return;
+    toast.error(speechError);
+    stopRecording();
+  }, [speechError, stopRecording]);
 
   useEffect(() => {
     const activeQuestionId = activeSpeechQuestionIdRef.current;
@@ -292,20 +349,6 @@ function InterviewSessionPage() {
     }
   }, [transcript, isListening]);
 
-  const handleMicToggle = useCallback(() => {
-    if (isListening) {
-      activeSpeechQuestionIdRef.current = null;
-      stopListening();
-      return;
-    }
-
-    const currentQuestionId = questions[currentQ]?.id;
-    if (!currentQuestionId) return;
-    activeSpeechQuestionIdRef.current = currentQuestionId;
-    speechBaseTextRef.current = answers[currentQuestionId] || "";
-    startListening();
-  }, [answers, currentQ, isListening, questions, startListening, stopListening]);
-
   const handleSubmitAnswers = async () => {
     if (isListening) stopListening();
 
@@ -317,10 +360,20 @@ function InterviewSessionPage() {
     setSubmitting(true);
     setStep("evaluating");
 
-    const answerList = questions.map((question) => ({
-      id: question.id,
-      answer: answers[question.id],
-    }));
+    const answerList: SessionAnswer[] = questions.map((question) => {
+      const answer = answers[question.id];
+      const recordedSec = durationsRef.current[question.id] ?? 0;
+      // Hanya jawaban yang direkam dengan suara (>= 3 detik) punya data cara bicara
+      if (recordedSec < 3) return { id: question.id, answer };
+      const stats = analyzeDelivery(answer, recordedSec);
+      return {
+        id: question.id,
+        answer,
+        durationSec: stats.durationSec,
+        wpm: stats.wpm,
+        fillerCount: stats.fillerCount,
+      };
+    });
 
     try {
       await interviewSessions<SessionData>().update({ answers: answerList }).eq("id", id);
@@ -388,6 +441,8 @@ function InterviewSessionPage() {
   if (loading) {
     return <InterviewSessionSkeleton />;
   }
+
+  const delivery = summarizeDelivery(session?.answers ?? []);
 
   return (
     <div className="container-page space-y-6 py-5 md:py-8">
@@ -516,39 +571,36 @@ function InterviewSessionPage() {
             </article>
 
             <article className="rounded-2xl border bg-card p-5 shadow-sm md:p-6">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <label
-                    htmlFor="interview-answer"
-                    className="flex items-center gap-2 text-sm font-semibold text-foreground"
-                  >
-                    <Mic className="h-4 w-4 text-primary" />
-                    Jawaban kamu
-                  </label>
-                  <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                    Ketik atau gunakan suara. Teks yang sudah ada tetap dipertahankan saat rekaman.
-                  </p>
-                </div>
-                {isSupported && (
-                  <Button
-                    type="button"
-                    variant={isListening ? "destructive" : "outline"}
-                    size="sm"
-                    onClick={handleMicToggle}
-                    className="gap-2"
-                    aria-pressed={isListening}
-                  >
-                    <Mic className={cn("h-4 w-4", isListening && "animate-pulse")} />
-                    {isListening ? "Stop Rekam" : "Rekam Suara"}
-                  </Button>
-                )}
+              <div>
+                <label
+                  htmlFor="interview-answer"
+                  className="flex items-center gap-2 text-sm font-semibold text-foreground"
+                >
+                  <Mic className="h-4 w-4 text-primary" />
+                  Jawaban kamu
+                </label>
+                <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                  Ketik, atau jawab dengan suara supaya kamu juga mendapat analisis tempo dan kata
+                  pengisi. Teks yang sudah ada tetap dipertahankan saat rekaman.
+                </p>
               </div>
 
-              {isListening && (
-                <div className="mt-4 rounded-xl border border-red-500/25 bg-red-500/5 px-3 py-2 text-xs font-medium text-red-700">
-                  Merekam. Lanjutkan bicara, transkrip akan ditambahkan ke jawaban saat ini.
-                </div>
-              )}
+              <div className="mt-4">
+                {isSupported ? (
+                  <VoiceAnswerPanel
+                    recording={listeningStartedAt !== null}
+                    startedAt={listeningStartedAt}
+                    answer={answerText}
+                    onStart={() => startRecording(currentQuestion.id)}
+                    onStop={stopRecording}
+                  />
+                ) : (
+                  <p className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">
+                    Browser ini belum mendukung rekam suara. Gunakan Chrome atau Edge untuk menjawab
+                    dengan suara, atau ketik jawabanmu di bawah.
+                  </p>
+                )}
+              </div>
 
               <Textarea
                 id="interview-answer"
@@ -689,6 +741,8 @@ function InterviewSessionPage() {
             ))}
           </section>
 
+          {delivery && <DeliveryCard summary={delivery} />}
+
           <section className="space-y-4">
             <div>
               <p className="mb-2 inline-flex rounded-full bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground">
@@ -770,6 +824,93 @@ function InterviewSessionPage() {
         </main>
       )}
     </div>
+  );
+}
+
+function DeliveryCard({ summary }: { summary: NonNullable<ReturnType<typeof summarizeDelivery>> }) {
+  const pace = paceLabel(summary.avgWpm);
+  const tips: string[] = [];
+  if (summary.avgWpm > 170)
+    tips.push("Bicaramu cukup cepat. Beri jeda sejenak di akhir tiap poin.");
+  else if (summary.avgWpm > 0 && summary.avgWpm < 100)
+    tips.push("Tempomu pelan. Latih jawaban agar lebih padat dan mengalir.");
+  if (summary.fillersPer100Words >= 5)
+    tips.push("Banyak kata pengisi. Ganti dengan jeda singkat saat berpikir.");
+  if (summary.avgDurationSec < 20)
+    tips.push("Jawabanmu singkat. Untuk pertanyaan perilaku, 45–90 detik biasanya ideal.");
+  else if (summary.avgDurationSec > 120)
+    tips.push("Jawabanmu cukup panjang. Ringkas ke inti: situasi, aksi, hasil.");
+  if (tips.length === 0)
+    tips.push("Cara bicaramu sudah baik. Pertahankan tempo dan kejelasan ini.");
+
+  return (
+    <section className="rounded-2xl border bg-card p-5 shadow-sm md:p-6">
+      <div className="flex items-start gap-3">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+          <Mic className="h-5 w-5" />
+        </div>
+        <div>
+          <h2 className="font-display text-lg font-bold text-foreground">Cara bicara</h2>
+          <p className="text-xs text-muted-foreground">
+            Dari {summary.answersWithVoice} jawaban yang kamu rekam dengan suara.
+          </p>
+        </div>
+      </div>
+
+      <dl className="mt-5 grid gap-3 sm:grid-cols-3">
+        <div className="rounded-xl border bg-muted/30 p-4">
+          <dt className="text-xs font-semibold text-muted-foreground">Tempo rata-rata</dt>
+          <dd className="mt-1 font-display text-2xl font-bold text-foreground">
+            {summary.avgWpm > 0 ? summary.avgWpm : "–"}
+            <span className="ml-1 text-sm font-medium text-muted-foreground">kata/menit</span>
+          </dd>
+          <dd
+            className={cn(
+              "mt-2 inline-flex rounded-full px-2.5 py-0.5 text-xs font-bold",
+              pace.tone === "good"
+                ? "bg-emerald-500/10 text-emerald-700"
+                : "bg-amber-500/10 text-amber-700",
+            )}
+          >
+            {pace.label}
+          </dd>
+        </div>
+        <div className="rounded-xl border bg-muted/30 p-4">
+          <dt className="text-xs font-semibold text-muted-foreground">Kata pengisi</dt>
+          <dd className="mt-1 font-display text-2xl font-bold text-foreground">
+            {summary.totalFillers}
+            <span className="ml-1 text-sm font-medium text-muted-foreground">
+              ({summary.fillersPer100Words}/100 kata)
+            </span>
+          </dd>
+          <dd className="mt-2 text-xs text-muted-foreground">
+            {summary.topFillers.length > 0
+              ? summary.topFillers.map((f) => `${f.label} ×${f.count}`).join(", ")
+              : "Tidak terdeteksi"}
+          </dd>
+        </div>
+        <div className="rounded-xl border bg-muted/30 p-4">
+          <dt className="text-xs font-semibold text-muted-foreground">Durasi rata-rata</dt>
+          <dd className="mt-1 font-display text-2xl font-bold text-foreground">
+            {formatDuration(summary.avgDurationSec)}
+            <span className="ml-1 text-sm font-medium text-muted-foreground">per jawaban</span>
+          </dd>
+        </div>
+      </dl>
+
+      <ul className="mt-4 space-y-2">
+        {tips.map((tip) => (
+          <li key={tip} className="flex gap-2 text-sm leading-6 text-muted-foreground">
+            <CheckCircle2 className="mt-1 h-4 w-4 shrink-0 text-primary" />
+            {tip}
+          </li>
+        ))}
+      </ul>
+      <p className="mt-4 text-xs leading-5 text-muted-foreground">
+        Ini perkiraan dari transkrip browser. Suara seperti “eee” atau “umm” sering tidak ikut
+        tertranskrip, jadi kata pengisi sebenarnya bisa lebih banyak dari yang terdeteksi.
+      </p>
+    </section>
   );
 }
 
