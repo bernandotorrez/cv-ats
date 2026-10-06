@@ -1227,37 +1227,50 @@ export async function downloadPdf(_cv: CvData, fileName: string = "CV.pdf"): Pro
     // A hard pixel-height cut lands wherever it lands — usually mid text
     // line — and with nothing drawn outside it, the break reads as content
     // slammed against both page edges. Reserve a real margin at the top and
-    // bottom of every page, and nudge each cut up to the nearest blank row
-    // so a line of text never gets sliced in half.
+    // bottom of every page, and move each cut up to a row that no line of text
+    // (or image) crosses. The rows are judged from the measured DOM boxes, not
+    // from "is this pixel row white": two-column templates have a tinted
+    // sidebar, so no pixel row is ever white and a pixel check always fell back
+    // to a hard cut straight through the text.
     const PAGE_MARGIN_MM = 12;
     const pxPerMm = canvas.width / A4_WIDTH_MM;
     const maxSliceHeightPx = Math.round((A4_HEIGHT_MM - PAGE_MARGIN_MM * 2) * pxPerMm);
-    const breakLookbackPx = Math.round(15 * pxPerMm);
-    const sourceCtx = canvas.getContext("2d");
+    const inkPadPx = canvasPerCssPx; // 1 CSS px of breathing room around every line
 
-    const isRowBlank = (rowY: number): boolean => {
-      if (!sourceCtx) return false;
-      try {
-        const { data } = sourceCtx.getImageData(0, rowY, canvas.width, 1);
-        for (let x = 0; x < data.length; x += 16) {
-          // sample every 4th pixel (4 channels each) for speed
-          if (data[x] < 250 || data[x + 1] < 250 || data[x + 2] < 250) return false;
-        }
-        return true;
-      } catch {
-        // Canvas tainted by a cross-origin image without CORS headers —
-        // fall back to a hard cut instead of failing the whole export.
-        return false;
-      }
+    const obstacles: Array<{ top: number; bottom: number }> = textBoxes.map((box) => ({
+      // Range rects include the font's ascent/descent padding; ink sits inside them.
+      top: (box.y + box.h * 0.12) * canvasPerCssPx - inkPadPx,
+      bottom: (box.y + box.h * 0.98) * canvasPerCssPx + inkPadPx,
+    }));
+    clonedCv.querySelectorAll("img, svg").forEach((el) => {
+      const r = el.getBoundingClientRect();
+      if (!r.width || !r.height) return;
+      obstacles.push({
+        top: (r.top - rootRect.top) * canvasPerCssPx,
+        bottom: (r.bottom - rootRect.top) * canvasPerCssPx,
+      });
+    });
+
+    const crossingCount = (row: number): number => {
+      let count = 0;
+      for (const o of obstacles) if (o.top < row && row < o.bottom) count++;
+      return count;
     };
 
+    /** Highest cut at or below `minCutPx` — scanning up from the ideal one — that slices nothing. */
     const findSafeBreak = (idealCutPx: number, minCutPx: number): number => {
-      if (!sourceCtx) return idealCutPx;
-      const earliest = Math.max(minCutPx, idealCutPx - breakLookbackPx);
-      for (let row = idealCutPx; row >= earliest; row--) {
-        if (isRowBlank(row)) return row;
+      let bestRow = idealCutPx;
+      let bestCount = Infinity;
+      for (let row = idealCutPx; row >= minCutPx; row--) {
+        const count = crossingCount(row);
+        if (count === 0) return row;
+        if (count < bestCount) {
+          bestCount = count;
+          bestRow = row;
+        }
       }
-      return idealCutPx;
+      // No clean row at all (extremely dense layout): cut where the fewest lines are hit.
+      return bestRow;
     };
 
     let renderedPx = 0;
