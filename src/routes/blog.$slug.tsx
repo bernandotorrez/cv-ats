@@ -1,5 +1,6 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { Button } from "@/components/ui/button";
+import { createFileRoute, notFound } from "@tanstack/react-router";
+import { Newspaper } from "lucide-react";
+import { ErrorState } from "@/components/site/ErrorState";
 import { Skeleton } from "@/components/ui/skeleton-loading";
 import { ArticleView } from "@/components/blog/ArticleView";
 import { blogPostsBySlug, type BlogPost } from "@/lib/blog-posts";
@@ -18,12 +19,15 @@ export const Route = createFileRoute("/blog/$slug")({
   },
   component: BlogArticlePage,
   notFoundComponent: () => (
-    <div className="container-page py-20 text-center">
-      <h1 className="font-display text-3xl font-bold">Artikel tidak ditemukan</h1>
-      <Button asChild className="mt-6">
-        <Link to="/blog">Kembali ke Blog</Link>
-      </Button>
-    </div>
+    <ErrorState
+      code="404"
+      icon={Newspaper}
+      eyebrow="Artikel tidak ditemukan"
+      title="Artikel ini sudah tidak ada."
+      description="Mungkin judulnya berubah atau artikelnya sudah diarsipkan. Masih banyak tips karier lain di blog kami."
+      primary={{ label: "Lihat Semua Artikel", to: "/blog" }}
+      secondary={{ label: "Ke Beranda", to: "/" }}
+    />
   ),
 });
 

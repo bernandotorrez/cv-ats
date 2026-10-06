@@ -1,6 +1,6 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { Award } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { createFileRoute, notFound } from "@tanstack/react-router";
+import { ErrorState } from "@/components/site/ErrorState";
+import { Award, MessagesSquare } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton-loading";
 import { ArticleView } from "@/components/blog/ArticleView";
 import { buildArticleHead } from "@/lib/article-seo";
@@ -24,13 +24,15 @@ export const Route = createFileRoute("/tips-interview/$slug")({
   },
   component: TipDetailPage,
   notFoundComponent: () => (
-    <div className="container-page py-20 text-center">
-      <h1 className="font-display text-3xl font-bold">Tips tidak ditemukan</h1>
-      <p className="mt-2 text-muted-foreground">Artikel yang kamu cari tidak tersedia.</p>
-      <Button asChild className="mt-6">
-        <Link to="/tips-interview">Kembali ke Tips Interview</Link>
-      </Button>
-    </div>
+    <ErrorState
+      code="404"
+      icon={MessagesSquare}
+      eyebrow="Tips tidak ditemukan"
+      title="Tips interview ini tidak tersedia."
+      description="Artikel yang kamu cari sudah dipindahkan atau tidak ada. Cek kumpulan tips interview lainnya."
+      primary={{ label: "Lihat Tips Interview", to: "/tips-interview" }}
+      secondary={{ label: "Ke Beranda", to: "/" }}
+    />
   ),
 });
 

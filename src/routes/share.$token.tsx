@@ -1,5 +1,6 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { Download, FileText, Loader2, Printer, Share2 } from "lucide-react";
+import { ErrorState } from "@/components/site/ErrorState";
+import { Download, FileText, Loader2, Printer, Share2, Link2Off } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -67,17 +68,15 @@ export const Route = createFileRoute("/share/$token")({
   },
   component: SharedCvPage,
   notFoundComponent: () => (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="max-w-md px-4 text-center">
-        <h1 className="font-display text-3xl font-bold text-foreground">CV tidak ditemukan</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Link CV ini tidak valid atau sudah dinonaktifkan oleh pemilik.
-        </p>
-        <Button asChild className="mt-6">
-          <Link to="/">Kembali ke Beranda</Link>
-        </Button>
-      </div>
-    </div>
+    <ErrorState
+      standalone
+      icon={Link2Off}
+      eyebrow="Link CV tidak aktif"
+      title="CV ini tidak bisa ditampilkan."
+      description="Link CV ini tidak valid atau sudah dinonaktifkan oleh pemiliknya. Minta link terbaru ke orang yang membagikannya."
+      primary={{ label: "Buat CV-mu Sendiri", to: "/register" }}
+      secondary={{ label: "Ke Beranda", to: "/" }}
+    />
   ),
 });
 

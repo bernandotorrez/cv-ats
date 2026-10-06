@@ -1,4 +1,5 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { ErrorState } from "@/components/site/ErrorState";
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
@@ -48,6 +49,7 @@ import {
   Sparkles,
   Wand2,
   Zap,
+  BriefcaseBusiness,
 } from "lucide-react";
 
 type Job = {
@@ -160,13 +162,15 @@ export const Route = createFileRoute("/lowongan/$slug")({
   },
   component: LowonganDetailPage,
   notFoundComponent: () => (
-    <div className="container-page py-20 text-center">
-      <h1 className="font-display text-3xl font-bold">Lowongan tidak ditemukan</h1>
-      <p className="mt-2 text-muted-foreground">Lowongan ini mungkin sudah tidak aktif.</p>
-      <Button asChild className="mt-6">
-        <Link to="/lowongan">Lihat Semua Lowongan</Link>
-      </Button>
-    </div>
+    <ErrorState
+      code="404"
+      icon={BriefcaseBusiness}
+      eyebrow="Lowongan tidak ditemukan"
+      title="Lowongan ini sudah tidak aktif."
+      description="Posisinya mungkin sudah terisi atau masa tayangnya habis. Masih ada lowongan lain yang bisa kamu lamar."
+      primary={{ label: "Lihat Semua Lowongan", to: "/lowongan" }}
+      secondary={{ label: "Ke Beranda", to: "/" }}
+    />
   ),
 });
 

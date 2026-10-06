@@ -16,6 +16,9 @@ import appCss from "../styles.css?url";
 import interLatinFont from "@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url";
 import jakartaLatinFont from "@fontsource-variable/plus-jakarta-sans/files/plus-jakarta-sans-latin-wght-normal.woff2?url";
 import { SiteHeader } from "@/components/site/SiteHeader";
+import { RefreshCw, SearchX, TriangleAlert, WifiOff } from "lucide-react";
+import { ErrorState } from "@/components/site/ErrorState";
+import { goBackAction } from "@/components/site/error-actions";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { BenixCsWidget } from "@/components/site/BenixCsWidget";
 import { FakeBuyerCard } from "@/components/site/FakeBuyerCard";
@@ -28,59 +31,100 @@ const GOOGLE_TAG_ID = "G-HYFCCCP4SR";
 
 function NotFoundComponent() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="max-w-md text-center">
-        <h1 className="text-7xl font-bold text-foreground">404</h1>
-        <h2 className="mt-4 text-xl font-semibold text-foreground">Halaman tidak ditemukan</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Halaman yang kamu cari tidak ada atau telah dipindahkan.
-        </p>
-        <div className="mt-6">
-          <Link
-            to="/"
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-          >
-            Kembali ke Beranda
-          </Link>
-        </div>
-      </div>
-    </div>
+    <ErrorState
+      code="404"
+      icon={SearchX}
+      eyebrow="Error 404 · Halaman tidak ditemukan"
+      title={
+        <>
+          Ups, halaman ini <span className="text-green-700">tidak ada.</span>
+        </>
+      }
+      description="Mungkin link-nya salah ketik, sudah dipindahkan, atau halamannya sudah tidak tersedia. Yuk lanjut dari halaman lain."
+      primary={{ label: "Ke Beranda", to: "/" }}
+      secondary={goBackAction()}
+      showSuggestions
+    />
   );
 }
+
+/** Chunk files from an older deploy are gone — a reload fetches the new version. */
+const CHUNK_ERROR_RE =
+  /Failed to fetch dynamically imported module|Importing a module script failed|error loading dynamically imported module|ChunkLoadError|Loading chunk [\w-]+ failed/i;
 
 function ErrorComponent({ error: rawError, reset }: ErrorComponentProps) {
   const error = rawError instanceof Error ? rawError : new Error(String(rawError));
   console.error(error);
   const router = useRouter();
+  const retry = () => {
+    router.invalidate();
+    reset();
+  };
+
+  const isChunkError = CHUNK_ERROR_RE.test(error.message);
+  const isOffline = typeof navigator !== "undefined" && navigator.onLine === false;
+
+  if (isChunkError) {
+    return (
+      <ErrorState
+        standalone
+        icon={RefreshCw}
+        eyebrow="Versi baru tersedia"
+        title={
+          <>
+            CV Pintar baru saja <span className="text-green-700">diperbarui.</span>
+          </>
+        }
+        description="Muat ulang halaman untuk memakai versi terbaru. Data yang sudah tersimpan tetap aman."
+        primary={{ label: "Muat Ulang", icon: RefreshCw, onClick: () => window.location.reload() }}
+      />
+    );
+  }
+
+  if (isOffline) {
+    return (
+      <ErrorState
+        standalone
+        icon={WifiOff}
+        eyebrow="Koneksi terputus"
+        title={
+          <>
+            Sepertinya kamu sedang <span className="text-green-700">offline.</span>
+          </>
+        }
+        description="Periksa koneksi internet kamu, lalu coba lagi. Perubahan CV yang sudah tersimpan tidak akan hilang."
+        primary={{ label: "Coba Lagi", icon: RefreshCw, onClick: retry }}
+        secondary={{ label: "Ke Beranda", to: "/" }}
+      />
+    );
+  }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="max-w-md text-center">
-        <h1 className="text-xl font-semibold tracking-tight text-foreground">
-          Halaman gagal dimuat
-        </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Terjadi kesalahan. Silakan coba lagi atau kembali ke beranda.
-        </p>
-        <div className="mt-6 flex flex-wrap justify-center gap-2">
-          <button
-            onClick={() => {
-              router.invalidate();
-              reset();
-            }}
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-          >
-            Coba Lagi
-          </button>
-          <a
-            href="/"
-            className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
-          >
-            Beranda
-          </a>
-        </div>
-      </div>
-    </div>
+    <ErrorState
+      standalone
+      code="500"
+      icon={TriangleAlert}
+      eyebrow="Terjadi kesalahan"
+      title={
+        <>
+          Ada yang tidak beres <span className="text-green-700">di sisi kami.</span>
+        </>
+      }
+      description="Halaman ini gagal dimuat. Coba lagi sebentar; kalau masih terjadi, hubungi kami di cs@cvpintar.web.id."
+      primary={{ label: "Coba Lagi", icon: RefreshCw, onClick: retry }}
+      secondary={{ label: "Ke Beranda", to: "/" }}
+    >
+      {import.meta.env.DEV && (
+        <details className="mt-8 w-full max-w-xl rounded-xl border border-red-200 bg-red-50 p-4 text-left text-sm text-red-900">
+          <summary className="cursor-pointer font-semibold">
+            Detail error (hanya di development)
+          </summary>
+          <pre className="mt-2 overflow-auto whitespace-pre-wrap break-words text-xs">
+            {error.stack || error.message}
+          </pre>
+        </details>
+      )}
+    </ErrorState>
   );
 }
 
@@ -100,111 +144,129 @@ function PageLoadingFallback() {
 }
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
-  head: () => ({
-    meta: [
-      { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
-      { name: "theme-color", content: "#15803d" },
-      { title: "CV Pintar — Buat CV ATS Friendly dengan AI" },
-      {
-        name: "description",
-        content:
-          "Bikin CV ATS friendly dalam 1 menit. Template gratis, saran AI Bahasa Indonesia, scoring otomatis, dan tips lolos screening HR & interview.",
-      },
-      { name: "author", content: "CV Pintar" },
-      { name: "robots", content: "index, follow" },
-      { property: "og:site_name", content: "CV Pintar" },
-      { property: "og:locale", content: "id_ID" },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-      { property: "og:title", content: "CV Pintar — Buat CV ATS Friendly dengan AI" },
-      { name: "twitter:title", content: "CV Pintar — Buat CV ATS Friendly dengan AI" },
-      {
-        property: "og:description",
-        content:
-          "Bikin CV ATS friendly dalam 1 menit. Template gratis, saran AI Bahasa Indonesia, scoring otomatis, dan tips lolos screening HR & interview.",
-      },
-      {
-        name: "twitter:description",
-        content:
-          "Bikin CV ATS friendly dalam 1 menit. Template gratis, saran AI Bahasa Indonesia, scoring otomatis, dan tips lolos screening HR & interview.",
-      },
-      {
-        property: "og:image",
-        content:
-          "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/44765322-b45b-44f5-a6ac-752e6e50e35e",
-      },
-      { property: "og:image:width", content: "1200" },
-      { property: "og:image:height", content: "630" },
-      { property: "og:image:alt", content: "CV Pintar — Buat CV ATS Friendly dengan AI" },
-      {
-        name: "twitter:image",
-        content:
-          "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/44765322-b45b-44f5-a6ac-752e6e50e35e",
-      },
-      { name: "twitter:image:alt", content: "CV Pintar — Buat CV ATS Friendly dengan AI" },
-    ],
-    links: [
-      { rel: "stylesheet", href: appCss },
-      { rel: "alternate", hrefLang: "id", href: SITE_URL },
-      { rel: "alternate", hrefLang: "x-default", href: SITE_URL },
-      { rel: "icon", href: "/favicon.ico", sizes: "any" },
-      { rel: "icon", type: "image/png", sizes: "16x16", href: "/favicon-16x16.png" },
-      { rel: "icon", type: "image/png", sizes: "32x32", href: "/favicon-32x32.png" },
-      { rel: "apple-touch-icon", sizes: "180x180", href: "/apple-touch-icon.png" },
-      { rel: "manifest", href: "/site.webmanifest" },
-      // Preload font latin (dipakai hampir semua teks) agar teks tampil tanpa menunggu CSS selesai di-parse
-      {
-        rel: "preload",
-        href: interLatinFont,
-        as: "font",
-        type: "font/woff2",
-        crossOrigin: "anonymous",
-      },
-      {
-        rel: "preload",
-        href: jakartaLatinFont,
-        as: "font",
-        type: "font/woff2",
-        crossOrigin: "anonymous",
-      },
-    ],
-    scripts: [
-      {
-        async: true,
-        src: `https://www.googletagmanager.com/gtag/js?id=${GOOGLE_TAG_ID}`,
-      },
-      {
-        children: `
+  head: ({ match, matches }) => {
+    // 404 global: root match ditandai _notFound (status tetap "success"); 404 dari route anak: salah satu match berstatus "notFound"
+    const isNotFound =
+      match.status === "notFound" ||
+      match._notFound === true ||
+      matches.some((m) => m.status === "notFound" || m._notFound === true);
+    const hasError = matches.some((m) => m.status === "error");
+    return {
+      meta: [
+        { charSet: "utf-8" },
+        { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
+        { name: "theme-color", content: "#15803d" },
+        {
+          title: isNotFound
+            ? "Halaman tidak ditemukan — CV Pintar"
+            : hasError
+              ? "Terjadi kesalahan — CV Pintar"
+              : "CV Pintar — Buat CV ATS Friendly dengan AI",
+        },
+        {
+          name: "description",
+          content:
+            "Bikin CV ATS friendly dalam 1 menit. Template gratis, saran AI Bahasa Indonesia, scoring otomatis, dan tips lolos screening HR & interview.",
+        },
+        { name: "author", content: "CV Pintar" },
+        // Halaman 404 tidak boleh diindeks mesin pencari
+        {
+          name: "robots",
+          content: isNotFound || hasError ? "noindex, follow" : "index, follow",
+        },
+        { property: "og:site_name", content: "CV Pintar" },
+        { property: "og:locale", content: "id_ID" },
+        { property: "og:type", content: "website" },
+        { name: "twitter:card", content: "summary_large_image" },
+        { property: "og:title", content: "CV Pintar — Buat CV ATS Friendly dengan AI" },
+        { name: "twitter:title", content: "CV Pintar — Buat CV ATS Friendly dengan AI" },
+        {
+          property: "og:description",
+          content:
+            "Bikin CV ATS friendly dalam 1 menit. Template gratis, saran AI Bahasa Indonesia, scoring otomatis, dan tips lolos screening HR & interview.",
+        },
+        {
+          name: "twitter:description",
+          content:
+            "Bikin CV ATS friendly dalam 1 menit. Template gratis, saran AI Bahasa Indonesia, scoring otomatis, dan tips lolos screening HR & interview.",
+        },
+        {
+          property: "og:image",
+          content:
+            "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/44765322-b45b-44f5-a6ac-752e6e50e35e",
+        },
+        { property: "og:image:width", content: "1200" },
+        { property: "og:image:height", content: "630" },
+        { property: "og:image:alt", content: "CV Pintar — Buat CV ATS Friendly dengan AI" },
+        {
+          name: "twitter:image",
+          content:
+            "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/44765322-b45b-44f5-a6ac-752e6e50e35e",
+        },
+        { name: "twitter:image:alt", content: "CV Pintar — Buat CV ATS Friendly dengan AI" },
+      ],
+      links: [
+        { rel: "stylesheet", href: appCss },
+        { rel: "alternate", hrefLang: "id", href: SITE_URL },
+        { rel: "alternate", hrefLang: "x-default", href: SITE_URL },
+        { rel: "icon", href: "/favicon.ico", sizes: "any" },
+        { rel: "icon", type: "image/png", sizes: "16x16", href: "/favicon-16x16.png" },
+        { rel: "icon", type: "image/png", sizes: "32x32", href: "/favicon-32x32.png" },
+        { rel: "apple-touch-icon", sizes: "180x180", href: "/apple-touch-icon.png" },
+        { rel: "manifest", href: "/site.webmanifest" },
+        // Preload font latin (dipakai hampir semua teks) agar teks tampil tanpa menunggu CSS selesai di-parse
+        {
+          rel: "preload",
+          href: interLatinFont,
+          as: "font",
+          type: "font/woff2",
+          crossOrigin: "anonymous",
+        },
+        {
+          rel: "preload",
+          href: jakartaLatinFont,
+          as: "font",
+          type: "font/woff2",
+          crossOrigin: "anonymous",
+        },
+      ],
+      scripts: [
+        {
+          async: true,
+          src: `https://www.googletagmanager.com/gtag/js?id=${GOOGLE_TAG_ID}`,
+        },
+        {
+          children: `
           window.dataLayer = window.dataLayer || [];
           function gtag(){dataLayer.push(arguments);}
           gtag('js', new Date());
           gtag('config', '${GOOGLE_TAG_ID}');
         `,
-      },
-      {
-        type: "application/ld+json",
-        children: JSON.stringify({
-          "@context": "https://schema.org",
-          "@type": "Organization",
-          name: "CV Pintar",
-          url: SITE_URL,
-          logo: `${SITE_URL}/favicon.ico`,
-          sameAs: [],
-        }),
-      },
-      {
-        type: "application/ld+json",
-        children: JSON.stringify({
-          "@context": "https://schema.org",
-          "@type": "WebSite",
-          name: "CV Pintar",
-          url: SITE_URL,
-          inLanguage: "id-ID",
-        }),
-      },
-    ],
-  }),
+        },
+        {
+          type: "application/ld+json",
+          children: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            name: "CV Pintar",
+            url: SITE_URL,
+            logo: `${SITE_URL}/favicon.ico`,
+            sameAs: [],
+          }),
+        },
+        {
+          type: "application/ld+json",
+          children: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            name: "CV Pintar",
+            url: SITE_URL,
+            inLanguage: "id-ID",
+          }),
+        },
+      ],
+    };
+  },
   shellComponent: RootShell,
   component: RootComponent,
   notFoundComponent: NotFoundComponent,

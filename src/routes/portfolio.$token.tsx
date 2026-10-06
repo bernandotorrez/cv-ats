@@ -1,4 +1,5 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { ErrorState } from "@/components/site/ErrorState";
 import {
   ArrowRight,
   Award,
@@ -19,6 +20,7 @@ import {
   Printer,
   Share2,
   Sparkles,
+  Link2Off,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
@@ -90,17 +92,15 @@ export const Route = createFileRoute("/portfolio/$token")({
   },
   component: SharePage,
   notFoundComponent: () => (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="max-w-md text-center">
-        <h1 className="font-display text-3xl font-bold text-foreground">CV tidak ditemukan</h1>
-        <p className="mt-2 text-sm leading-6 text-muted-foreground">
-          Link portfolio ini tidak valid atau sudah dinonaktifkan oleh pemilik.
-        </p>
-        <Button asChild className="mt-6">
-          <Link to="/">Kembali ke Beranda</Link>
-        </Button>
-      </div>
-    </div>
+    <ErrorState
+      standalone
+      icon={Link2Off}
+      eyebrow="Link portfolio tidak aktif"
+      title="Portfolio ini tidak bisa ditampilkan."
+      description="Link portfolio ini tidak valid atau sudah dinonaktifkan oleh pemiliknya. Minta link terbaru ke orang yang membagikannya."
+      primary={{ label: "Buat Portfolio-mu", to: "/register" }}
+      secondary={{ label: "Ke Beranda", to: "/" }}
+    />
   ),
 });
 
