@@ -113,67 +113,101 @@ const buyers = [
 ] as const satisfies readonly Buyer[];
 
 const tiers = ["Starter", "Pro"] as const;
-const INITIAL_DELAY_MS = 4000;
-const VISIBLE_DURATION_MS = 6000;
-const SESSION_KEY = "cvp_fake_buyer_shown";
+
+// Waktu tampil acak (ms). Kartu muncul berulang selama pengunjung masih di halaman publik,
+// dibatasi MAX_PER_SESSION supaya tidak mengganggu.
+const FIRST_DELAY_MS: [number, number] = [3_000, 10_000];
+const GAP_MS: [number, number] = [20_000, 50_000];
+const VISIBLE_MS: [number, number] = [5_500, 8_000];
+const MAX_PER_SESSION = 5;
+const COUNT_KEY = "cvp_fake_buyer_count";
+const DISMISSED_KEY = "cvp_fake_buyer_dismissed";
+
+function between([min, max]: [number, number]) {
+  return Math.round(min + Math.random() * (max - min));
+}
 
 function pickRandom<T>(items: readonly T[]): T {
   return items[Math.floor(Math.random() * items.length)]!;
 }
 
-function hasShownThisSession() {
+function readSession(key: string): string | null {
   try {
-    return sessionStorage.getItem(SESSION_KEY) === "1";
+    return sessionStorage.getItem(key);
   } catch {
-    return false;
+    return null;
   }
 }
 
-function markShownThisSession() {
+function writeSession(key: string, value: string) {
   try {
-    sessionStorage.setItem(SESSION_KEY, "1");
+    sessionStorage.setItem(key, value);
   } catch {
     // ignore storage failures (private browsing, disabled storage)
   }
 }
 
 export function FakeBuyerCard({ disabled = false }: { disabled?: boolean }) {
-  const [dismissed, setDismissed] = useState(false);
-  const [alreadyShownSession] = useState(() => hasShownThisSession());
+  const [dismissed, setDismissed] = useState(() => readSession(DISMISSED_KEY) === "1");
   const [buyer, setBuyer] = useState<Buyer | null>(null);
   const [tier, setTier] = useState<(typeof tiers)[number]>("Starter");
   const [visible, setVisible] = useState(false);
-  const showTimerRef = useRef<number | undefined>(undefined);
-  const hideTimerRef = useRef<number | undefined>(undefined);
+  const [visibleMs, setVisibleMs] = useState(VISIBLE_MS[0]);
+  const lastBuyerRef = useRef<string | null>(null);
 
-  const shouldShow = !disabled && !dismissed && !alreadyShownSession;
+  const shouldShow = !disabled && !dismissed;
 
+  // Dijadwalkan ulang setiap `disabled`/`dismissed` berubah: kartu tidak lagi "mati" hanya karena
+  // halaman pertama yang dibuka kebetulan halaman yang menonaktifkannya.
   useEffect(() => {
-    const clearTimers = () => {
-      window.clearTimeout(showTimerRef.current);
-      window.clearTimeout(hideTimerRef.current);
-    };
-
     if (!shouldShow) {
-      clearTimers();
       setVisible(false);
       return;
     }
 
-    showTimerRef.current = window.setTimeout(() => {
-      setBuyer(pickRandom(buyers));
-      setTier(pickRandom(tiers));
-      setVisible(true);
-      markShownThisSession();
+    let showTimer: number | undefined;
+    let hideTimer: number | undefined;
+    let cancelled = false;
 
-      hideTimerRef.current = window.setTimeout(() => {
-        setVisible(false);
-      }, VISIBLE_DURATION_MS);
-    }, INITIAL_DELAY_MS);
+    const scheduleNext = (delay: number) => {
+      showTimer = window.setTimeout(() => {
+        if (cancelled) return;
+        const shown = Number(readSession(COUNT_KEY) ?? "0");
+        if (shown >= MAX_PER_SESSION) return;
 
-    return clearTimers;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+        // Hindari nama yang sama dua kali berturut-turut
+        let next = pickRandom(buyers);
+        for (let i = 0; i < 5 && next.name === lastBuyerRef.current; i++) next = pickRandom(buyers);
+        lastBuyerRef.current = next.name;
+
+        const duration = between(VISIBLE_MS);
+        setBuyer(next);
+        setTier(pickRandom(tiers));
+        setVisibleMs(duration);
+        setVisible(true);
+        writeSession(COUNT_KEY, String(shown + 1));
+
+        hideTimer = window.setTimeout(() => {
+          setVisible(false);
+          scheduleNext(between(GAP_MS));
+        }, duration);
+      }, delay);
+    };
+
+    scheduleNext(between(FIRST_DELAY_MS));
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(showTimer);
+      window.clearTimeout(hideTimer);
+      setVisible(false);
+    };
+  }, [shouldShow]);
+
+  const handleDismiss = () => {
+    writeSession(DISMISSED_KEY, "1");
+    setDismissed(true);
+  };
 
   const productName = useMemo(() => `CV Pintar ${tier}`, [tier]);
 
@@ -217,7 +251,7 @@ export function FakeBuyerCard({ disabled = false }: { disabled?: boolean }) {
 
                 <button
                   type="button"
-                  onClick={() => setDismissed(true)}
+                  onClick={handleDismiss}
                   aria-label="Tutup notifikasi pembelian"
                   className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-700"
                 >
@@ -242,7 +276,7 @@ export function FakeBuyerCard({ disabled = false }: { disabled?: boolean }) {
                 className="absolute inset-x-0 top-0 h-1 origin-left bg-green-700"
                 initial={{ scaleX: 1 }}
                 animate={{ scaleX: 0 }}
-                transition={{ duration: VISIBLE_DURATION_MS / 1000, ease: "linear" }}
+                transition={{ duration: visibleMs / 1000, ease: "linear" }}
               />
             </div>
           </motion.aside>
