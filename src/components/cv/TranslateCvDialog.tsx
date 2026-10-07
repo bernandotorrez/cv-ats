@@ -125,13 +125,13 @@ export function TranslateCvDialog({
 
   return (
     <Dialog open={target !== null} onOpenChange={(open) => !open && handleClose()}>
-      <DialogContent className="max-h-[90dvh] gap-0 overflow-y-auto rounded-3xl border border-gray-200 p-0 shadow-2xl sm:max-w-lg">
+      <DialogContent className="max-h-[90dvh] w-[calc(100vw-2rem)] grid-cols-[minmax(0,1fr)] gap-0 overflow-y-auto overflow-x-hidden rounded-3xl border border-gray-200 p-0 shadow-2xl sm:max-w-lg">
         <DialogHeader className="space-y-0 border-b border-gray-200 bg-green-50 px-5 py-4 pr-12 text-left">
           <div className="flex items-center gap-3">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-green-700 text-white">
               <Languages aria-hidden="true" className="h-5 w-5" />
             </span>
-            <div>
+            <div className="min-w-0">
               <DialogTitle className="font-display text-lg font-extrabold text-gray-900">
                 Terjemahkan isi CV ke {label}?
               </DialogTitle>
@@ -225,7 +225,7 @@ export function TranslateCvDialog({
           )}
         </div>
 
-        <DialogFooter className="flex flex-col-reverse gap-2 border-t border-gray-200 bg-gray-50 p-4 sm:flex-row sm:justify-end sm:space-x-0">
+        <DialogFooter className="flex flex-col-reverse gap-2 border-t border-gray-200 bg-gray-50 p-4 sm:flex-row sm:flex-wrap sm:justify-end sm:space-x-0">
           <Button
             type="button"
             variant="ghost"
