@@ -935,6 +935,94 @@ const EMPLOYMENT_TYPE: Record<string, string> = {
   internship: "INTERN",
 };
 
+const CITY_REGION: Record<string, string> = {
+  jakarta: "DKI Jakarta",
+  "jakarta selatan": "DKI Jakarta",
+  "jakarta utara": "DKI Jakarta",
+  "jakarta barat": "DKI Jakarta",
+  "jakarta timur": "DKI Jakarta",
+  "jakarta pusat": "DKI Jakarta",
+  "south jakarta": "DKI Jakarta",
+  "north jakarta": "DKI Jakarta",
+  "west jakarta": "DKI Jakarta",
+  "east jakarta": "DKI Jakarta",
+  "central jakarta": "DKI Jakarta",
+  "greater jakarta": "DKI Jakarta",
+  bandung: "Jawa Barat",
+  bekasi: "Jawa Barat",
+  bogor: "Jawa Barat",
+  depok: "Jawa Barat",
+  cikarang: "Jawa Barat",
+  karawang: "Jawa Barat",
+  cimahi: "Jawa Barat",
+  cirebon: "Jawa Barat",
+  sukabumi: "Jawa Barat",
+  tasikmalaya: "Jawa Barat",
+  tangerang: "Banten",
+  "tangerang selatan": "Banten",
+  serang: "Banten",
+  cilegon: "Banten",
+  surabaya: "Jawa Timur",
+  malang: "Jawa Timur",
+  sidoarjo: "Jawa Timur",
+  gresik: "Jawa Timur",
+  kediri: "Jawa Timur",
+  pasuruan: "Jawa Timur",
+  mojokerto: "Jawa Timur",
+  jember: "Jawa Timur",
+  semarang: "Jawa Tengah",
+  solo: "Jawa Tengah",
+  surakarta: "Jawa Tengah",
+  magelang: "Jawa Tengah",
+  kudus: "Jawa Tengah",
+  pekalongan: "Jawa Tengah",
+  tegal: "Jawa Tengah",
+  purwokerto: "Jawa Tengah",
+  yogyakarta: "DI Yogyakarta",
+  jogja: "DI Yogyakarta",
+  sleman: "DI Yogyakarta",
+  bantul: "DI Yogyakarta",
+  denpasar: "Bali",
+  badung: "Bali",
+  gianyar: "Bali",
+  medan: "Sumatera Utara",
+  palembang: "Sumatera Selatan",
+  pekanbaru: "Riau",
+  batam: "Kepulauan Riau",
+  padang: "Sumatera Barat",
+  "bandar lampung": "Lampung",
+  makassar: "Sulawesi Selatan",
+  manado: "Sulawesi Utara",
+  balikpapan: "Kalimantan Timur",
+  samarinda: "Kalimantan Timur",
+  banjarmasin: "Kalimantan Selatan",
+  pontianak: "Kalimantan Barat",
+};
+
+/**
+ * "Bandung, Jawa Barat" → locality Bandung, region Jawa Barat. Kalau provinsi
+ * tidak tertulis, ditebak dari daftar kota besar. "Remote"/"Indonesia" hanya negara.
+ */
+function buildPostalAddress(location: string) {
+  const parts = location
+    .split(",")
+    .map((part) => part.trim())
+    .filter((part) => part && !/^(indonesia|remote)$/i.test(part));
+  const locality = parts[0];
+  const cityKey = (locality || "")
+    .toLowerCase()
+    .replace(/^(kota|kabupaten|kab\.?)\s+/, "")
+    .trim();
+  const region = parts[1] || CITY_REGION[cityKey];
+
+  return {
+    "@type": "PostalAddress",
+    ...(locality ? { addressLocality: locality } : {}),
+    ...(region ? { addressRegion: region } : {}),
+    addressCountry: "ID",
+  };
+}
+
 /** JobPosting JSON-LD selengkap mungkin untuk Google Jobs. */
 function buildJobPostingJsonLd(job: Job) {
   const description = stripMarkdown(
@@ -944,9 +1032,12 @@ function buildJobPostingJsonLd(job: Job) {
   const hasSalary = Boolean(job.salary_min || job.salary_max);
   // deadline berformat YYYY-MM-DD → ISO dengan akhir hari (zona Jakarta);
   // tanpa deadline pakai expires_at agar Google Jobs tahu kapan lowongan berakhir.
+  // Lowongan manual tanpa keduanya: anggap berlaku 60 hari sejak diposting.
   const validThrough = job.deadline
     ? `${job.deadline.slice(0, 10)}T23:59:59+07:00`
-    : job.expires_at || undefined;
+    : job.expires_at ||
+      new Date(new Date(job.posted_at || job.created_at).getTime() + 60 * 86_400_000).toISOString();
+  const address = buildPostalAddress(job.location);
 
   return {
     "@context": "https://schema.org",
@@ -954,7 +1045,7 @@ function buildJobPostingJsonLd(job: Job) {
     title: job.title,
     description: description || `Lowongan ${job.title} di ${job.company}, ${job.location}.`,
     datePosted: job.posted_at || job.created_at,
-    ...(validThrough ? { validThrough } : {}),
+    validThrough,
     employmentType: EMPLOYMENT_TYPE[job.type] ?? "FULL_TIME",
     directApply: false,
     hiringOrganization: {
@@ -962,13 +1053,11 @@ function buildJobPostingJsonLd(job: Job) {
       name: job.company,
       ...(job.company_logo ? { logo: job.company_logo } : {}),
     },
+    // streetAddress & postalCode tidak diisi: sumber lowongan jarang mencantumkannya
+    // dan Google hanya menandainya sebagai rekomendasi, bukan error.
     jobLocation: {
       "@type": "Place",
-      address: {
-        "@type": "PostalAddress",
-        addressLocality: job.location,
-        addressCountry: "ID",
-      },
+      address: address,
     },
     ...(isRemote
       ? {
