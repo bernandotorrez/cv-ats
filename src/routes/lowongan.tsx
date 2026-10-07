@@ -138,68 +138,6 @@ const locationOptions = [
   "Remote",
 ];
 
-const fallbackJobs: Job[] = [
-  {
-    id: "fallback-product-analyst",
-    slug: "product-analyst-remote",
-    title: "Product Analyst",
-    company: "Startup Digital Indonesia",
-    location: "Remote",
-    type: "full-time",
-    level: "mid",
-    industry: "Teknologi",
-    salary_min: 8000000,
-    salary_max: 14000000,
-    salary_currency: "IDR",
-    salary_period: "monthly",
-    description:
-      "Menganalisis funnel produk, membuat dashboard metrik, dan bekerja sama dengan product manager untuk meningkatkan aktivasi pengguna.",
-    tech_stack: "SQL, Dashboard, Product Analytics",
-    work_mode: "remote",
-    source_url: null,
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: "fallback-admin-finance",
-    slug: "admin-finance-jakarta",
-    title: "Admin Finance",
-    company: "Perusahaan Retail Nasional",
-    location: "Jakarta",
-    type: "full-time",
-    level: "entry",
-    industry: "Finance",
-    salary_min: 4500000,
-    salary_max: 7000000,
-    salary_currency: "IDR",
-    salary_period: "monthly",
-    description:
-      "Mengelola invoice, rekonsiliasi sederhana, arsip transaksi, dan koordinasi pembayaran vendor.",
-    work_mode: "onsite",
-    source_url: null,
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: "fallback-social-media",
-    slug: "social-media-specialist-bandung",
-    title: "Social Media Specialist",
-    company: "Creative Agency Bandung",
-    location: "Bandung",
-    type: "contract",
-    level: "entry",
-    industry: "Marketing",
-    salary_min: 5000000,
-    salary_max: 9000000,
-    salary_currency: "IDR",
-    salary_period: "monthly",
-    description:
-      "Menyusun content calendar, membuat brief visual, membaca performa konten, dan mengelola komunitas brand.",
-    tech_stack: "Content Calendar, Meta Business Suite, Analytics",
-    work_mode: "hybrid",
-    source_url: null,
-    created_at: new Date().toISOString(),
-  },
-];
-
 const playbook = [
   {
     icon: Target,
@@ -267,9 +205,9 @@ function LowonganPage() {
         .order("created_at", { ascending: false });
 
       const rows = (data as unknown as Job[]) ?? [];
-      setJobs(rows.length > 0 ? rows : fallbackJobs);
+      setJobs(rows);
     } catch {
-      setJobs(fallbackJobs);
+      setJobs([]);
     } finally {
       setLoading(false);
     }
@@ -376,7 +314,7 @@ function LowonganPage() {
         day: "numeric",
         month: "short",
       })
-    : "Hari ini";
+    : "-";
 
   const hasActiveFilter =
     search !== "" ||
@@ -645,20 +583,26 @@ function LowonganPage() {
             <div className="rounded-2xl border border-dashed border-gray-300 bg-white px-6 py-16 text-center">
               <Briefcase aria-hidden="true" className="mx-auto mb-3 h-10 w-10 text-gray-500" />
               <h3 className="font-display text-lg font-bold text-gray-900">
-                Belum ada lowongan yang cocok
+                {jobs.length === 0
+                  ? "Belum ada lowongan saat ini"
+                  : "Belum ada lowongan yang cocok"}
               </h3>
               <p className="mt-1 text-sm text-gray-600">
-                Coba ubah filter, atau cari lintas platform di bawah.
+                {jobs.length === 0
+                  ? "Lowongan baru ditambahkan otomatis beberapa kali sehari. Cek lagi nanti, atau cari lintas platform di bawah."
+                  : "Coba ubah filter, atau cari lintas platform di bawah."}
               </p>
               <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={resetFilters}
-                  className="h-11 rounded-xl border-gray-300"
-                >
-                  Reset filter
-                </Button>
+                {hasActiveFilter && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={resetFilters}
+                    className="h-11 rounded-xl border-gray-300"
+                  >
+                    Reset filter
+                  </Button>
+                )}
                 <Button
                   asChild
                   className="h-11 rounded-xl bg-green-700 font-bold text-white hover:bg-green-800"
@@ -681,7 +625,8 @@ function LowonganPage() {
                         onToggleSaved={toggleSavedJob}
                       />
                     </li>
-                    {index === 2 && paginatedJobs.length > 3 && (
+                    {/* Banner tiap 3 lowongan, tidak di akhir daftar */}
+                    {index % 3 === 2 && index < paginatedJobs.length - 1 && (
                       <li>
                         <aside
                           aria-label="Cek kecocokan CV"
@@ -702,7 +647,7 @@ function LowonganPage() {
                             </div>
                           </div>
                           <Link
-                            to="/register"
+                            to={user ? "/job-match" : "/register"}
                             className="inline-flex h-11 shrink-0 items-center gap-2 rounded-xl bg-yellow-300 px-5 font-bold text-gray-950 hover:bg-yellow-200"
                           >
                             Cek Kecocokan CV
@@ -989,11 +934,9 @@ function JobCard({
     job.salary_currency ?? undefined,
     job.salary_period ?? undefined,
   );
-  const isFallback = job.id.startsWith("fallback-");
   const techItems = parseInlineList(job.tech_stack).slice(0, 3);
   const deadlineText = job.deadline ? formatDeadline(job.deadline) : null;
 
-  const detailLink = isFallback ? buildSearchSources(job.title, job.location)[4].url : null;
   const titleId = `job-${job.id}`;
   // md:flex-none: di layout kolom (desktop), flex-1 membuat tinggi tombol mengecil seukuran teks
   const actionBtn =
@@ -1015,25 +958,13 @@ function JobCard({
             </span>
             <div className="min-w-0 flex-1">
               <h3 id={titleId} className="font-display text-xl font-bold text-gray-900">
-                {isFallback ? (
-                  <a
-                    href={detailLink ?? "#"}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="hover:text-green-800 hover:underline"
-                  >
-                    {job.title}
-                    <span className="sr-only"> (membuka tab baru)</span>
-                  </a>
-                ) : (
-                  <Link
-                    to="/lowongan/$slug"
-                    params={{ slug: job.slug }}
-                    className="hover:text-green-800 hover:underline"
-                  >
-                    {job.title}
-                  </Link>
-                )}
+                <Link
+                  to="/lowongan/$slug"
+                  params={{ slug: job.slug }}
+                  className="hover:text-green-800 hover:underline"
+                >
+                  {job.title}
+                </Link>
               </h3>
               <p className="mt-1 flex items-center gap-1.5 text-sm font-semibold text-gray-700">
                 <Building2 aria-hidden="true" className="h-4 w-4" /> {job.company}
@@ -1059,9 +990,6 @@ function JobCard({
             )}
             {job.industry && (
               <li className="rounded-full bg-gray-100 px-2.5 py-1 text-gray-800">{job.industry}</li>
-            )}
-            {isFallback && (
-              <li className="rounded-full bg-yellow-200 px-2.5 py-1 text-gray-900">Contoh</li>
             )}
           </ul>
 
@@ -1110,29 +1038,16 @@ function JobCard({
             })}
           </p>
           <div className="flex w-full gap-2 md:flex-col">
-            {isFallback ? (
-              <a
-                href={detailLink ?? "#"}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={`${actionBtn} bg-green-700 text-white hover:bg-green-800`}
-              >
-                Cari serupa
-                <ExternalLink aria-hidden="true" className="h-4 w-4" />
-                <span className="sr-only"> (membuka tab baru)</span>
-              </a>
-            ) : (
-              <Link
-                to="/lowongan/$slug"
-                params={{ slug: job.slug }}
-                aria-label={`Lihat detail ${job.title} di ${job.company}`}
-                className={`${actionBtn} bg-green-700 text-white hover:bg-green-800`}
-              >
-                Lihat Detail
-                <ArrowRight aria-hidden="true" className="h-4 w-4" />
-              </Link>
-            )}
-            {isFallback ? null : isLoggedIn ? (
+            <Link
+              to="/lowongan/$slug"
+              params={{ slug: job.slug }}
+              aria-label={`Lihat detail ${job.title} di ${job.company}`}
+              className={`${actionBtn} bg-green-700 text-white hover:bg-green-800`}
+            >
+              Lihat Detail
+              <ArrowRight aria-hidden="true" className="h-4 w-4" />
+            </Link>
+            {isLoggedIn ? (
               <button
                 type="button"
                 aria-pressed={isSaved}
