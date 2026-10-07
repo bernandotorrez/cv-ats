@@ -82,13 +82,24 @@ type ExtractedJob = {
   salary_currency?: string | null;
   salary_period?: string | null;
   description: string;
-  responsibilities?: string | null;
-  requirements?: string | null;
-  qualifications?: string | null;
-  benefits?: string | null;
-  tech_stack?: string | null;
+  // AI kadang mengembalikan list sebagai array, kadang string dipisah \n.
+  responsibilities?: string | string[] | null;
+  requirements?: string | string[] | null;
+  qualifications?: string | string[] | null;
+  benefits?: string | string[] | null;
+  tech_stack?: string | string[] | null;
   work_mode?: string | null;
   deadline?: string | null;
+};
+
+type PolishedJob = {
+  job_id?: number;
+  description?: string | null;
+  responsibilities?: string | string[] | null;
+  requirements?: string | string[] | null;
+  qualifications?: string | string[] | null;
+  benefits?: string | string[] | null;
+  tech_stack?: string | string[] | null;
 };
 
 /** Halaman detail lowongan yang sudah lolos cek konten, status tutup, dan tanggal. */
@@ -129,6 +140,8 @@ const DEFAULT_SOURCES: SearchSource[] = ["jobstreet", "glints", "kalibrr", "deal
 const AI_PAGES_PER_BATCH = 5;
 const AI_BATCH_CONCURRENCY = 3;
 const AI_CONTENT_CHARS = 5000;
+const AI_POLISH_BATCH = 5;
+const AI_POLISH_SOURCE_CHARS = 3500;
 const MIN_PAGE_CONTENT_CHARS = 300;
 const MAX_LISTING_PAGES = 6;
 const DIRECT_FETCH_LIMIT = 12;
@@ -356,6 +369,7 @@ Deno.serve(async (req: Request) => {
 
     // ── STEP 6: Validasi & bangun row ───────────────────────────────────────
     const rows: JobRow[] = [];
+    const rowSourceText = new Map<JobRow, string>();
     const seenKeys = new Set<string>();
     assessed.forEach((page, index) => {
       const job = extracted.get(index);
@@ -368,6 +382,7 @@ Deno.serve(async (req: Request) => {
       if (seenKeys.has(key)) return reject("duplicate", { url: page.result.url });
       seenKeys.add(key);
       rows.push(row);
+      rowSourceText.set(row, page.text);
     });
 
     const finalRows = rows.slice(0, limit);
@@ -383,6 +398,9 @@ Deno.serve(async (req: Request) => {
         message: "AI tidak menemukan lowongan yang cukup valid dan masih dibuka.",
       });
     }
+
+    // ── STEP 6b: AI polish — rapikan & kelompokkan ulang isi lowongan ──────
+    await polishJobsWithAi(finalRows, rowSourceText, log);
 
     // Lowongan yang sama (judul + perusahaan) yang sudah ada di DB di-update,
     // bukan dibuat ulang dengan slug baru.
@@ -1361,48 +1379,14 @@ async function extractBatch(
 
   const maxTokens = Math.min(4096, 400 + pages.length * 750);
 
-  const t0 = Date.now();
-  const res = await fetch(AI_GATEWAY_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${aiKey}`,
-    },
-    body: JSON.stringify({
-      model: AI_MODEL,
-      temperature: 0.1,
-      max_tokens: maxTokens,
-      response_format: { type: "json_object" },
-      messages: [
-        {
-          role: "system",
-          content:
-            "Kamu adalah parser lowongan kerja profesional. Output hanya JSON valid dan ringkas. Jangan gunakan markdown.",
-        },
-        { role: "user", content: prompt },
-      ],
-    }),
-  });
-
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    log.error("ai_call_failed", { status: res.status, body: text.slice(0, 300) });
-    throw new Error("AI extraction gagal.");
-  }
-
-  const data = await res.json();
-  const usage = data.usage || {};
-  const finishReason = data.choices?.[0]?.finish_reason ?? null;
-  log.info("ai_call_ok", {
-    pages: pages.length,
-    attempt,
-    latency_ms: Date.now() - t0,
-    prompt_tokens: usage.prompt_tokens ?? null,
-    completion_tokens: usage.completion_tokens ?? null,
-    finish_reason: finishReason,
-  });
-
-  const content = data.choices?.[0]?.message?.content || "{}";
+  const { content, finishReason } = await callAiJson(
+    "Kamu adalah parser lowongan kerja profesional. Output hanya JSON valid dan ringkas. Jangan gunakan markdown.",
+    prompt,
+    maxTokens,
+    aiKey,
+    log,
+    { stage: "extract", pages: pages.length, attempt },
+  );
   const parsed = parseJobsFromContent(content);
   if (parsed.recovered) log.warn("ai_parse_recovered", { attempt, jobs: parsed.jobs.length });
 
@@ -1447,6 +1431,183 @@ function prepareAiContent(text: string, maxLength: number) {
       return true;
     });
   return lines.join("\n").slice(0, maxLength);
+}
+
+/** Panggil AI gateway (Sumopod) dalam mode JSON. */
+async function callAiJson(
+  system: string,
+  prompt: string,
+  maxTokens: number,
+  aiKey: string,
+  log: Logger,
+  logData: Record<string, unknown>,
+) {
+  const t0 = Date.now();
+  const res = await fetch(AI_GATEWAY_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${aiKey}`,
+    },
+    body: JSON.stringify({
+      model: AI_MODEL,
+      temperature: 0.1,
+      max_tokens: maxTokens,
+      response_format: { type: "json_object" },
+      messages: [
+        { role: "system", content: system },
+        { role: "user", content: prompt },
+      ],
+    }),
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    log.error("ai_call_failed", { ...logData, status: res.status, body: text.slice(0, 300) });
+    throw new Error("AI call gagal.");
+  }
+
+  const data = await res.json();
+  const usage = data.usage || {};
+  const finishReason: string | null = data.choices?.[0]?.finish_reason ?? null;
+  log.info("ai_call_ok", {
+    ...logData,
+    model: AI_MODEL,
+    latency_ms: Date.now() - t0,
+    prompt_tokens: usage.prompt_tokens ?? null,
+    completion_tokens: usage.completion_tokens ?? null,
+    finish_reason: finishReason,
+  });
+
+  return { content: String(data.choices?.[0]?.message?.content || "{}"), finishReason };
+}
+
+// ---------------------------------------------------------------------------
+// AI POLISH
+// ---------------------------------------------------------------------------
+
+/**
+ * Tahap kedua: AI merapikan draft hasil ekstraksi — memindahkan item ke
+ * kategori yang benar, membuang heading/lokasi/jadwal yang nyasar ke list, dan
+ * merapikan kalimat. Hasilnya tetap diverifikasi ke halaman sumber; kalau AI
+ * gagal, draft yang sudah tervalidasi tetap dipakai.
+ */
+async function polishJobsWithAi(rows: JobRow[], sourceText: Map<JobRow, string>, log: Logger) {
+  const aiKey = Deno.env.get("AI_API_KEY");
+  if (!aiKey || rows.length === 0) return;
+
+  const batches: JobRow[][] = [];
+  for (let i = 0; i < rows.length; i += AI_POLISH_BATCH) {
+    batches.push(rows.slice(i, i + AI_POLISH_BATCH));
+  }
+
+  let polished = 0;
+  await mapWithConcurrency(batches, AI_BATCH_CONCURRENCY, async (batch) => {
+    try {
+      const results = await polishBatch(batch, sourceText, aiKey, log);
+      batch.forEach((row, index) => {
+        const job = results.get(index);
+        const text = sourceText.get(row);
+        if (job && text && applyPolish(row, job, text)) polished++;
+      });
+    } catch (err) {
+      log.warn("ai_polish_failed", { message: err instanceof Error ? err.message : String(err) });
+    }
+  });
+
+  log.info("ai_polish_done", { rows: rows.length, polished });
+}
+
+async function polishBatch(
+  rows: JobRow[],
+  sourceText: Map<JobRow, string>,
+  aiKey: string,
+  log: Logger,
+) {
+  const payload = rows.map((row, index) => ({
+    job_id: index + 1,
+    title: row.title,
+    company: row.company,
+    draft: {
+      description: row.description,
+      responsibilities: sanitizeListItems(row.responsibilities),
+      requirements: sanitizeListItems(row.requirements),
+      qualifications: sanitizeListItems(row.qualifications),
+      benefits: sanitizeListItems(row.benefits),
+      tech_stack: row.tech_stack,
+    },
+    source: prepareAiContent(sourceText.get(row) || "", AI_POLISH_SOURCE_CHARS),
+  }));
+
+  const prompt = [
+    "Rapikan draft data lowongan kerja berikut agar siap tampil di job board.",
+    `Kembalikan JSON valid: {"jobs":[{"job_id":1,"description":"...","responsibilities":[],"requirements":[],"qualifications":[],"benefits":[],"tech_stack":[]}]} dengan TEPAT satu objek per job_id.`,
+    "",
+    "=== ATURAN ===",
+    "- Gunakan HANYA informasi yang ada di `source`. Jangan menambah fakta baru.",
+    "- Pertahankan bahasa dan kata-kata asli sumber (jangan terjemahkan/parafrase). Boleh rapikan kapitalisasi, ejaan, dan tanda baca.",
+    "- Satu item = satu poin utuh. Gabungkan potongan kalimat yang terpecah, jangan memotong kalimat (misal 'Mon - Fri').",
+    "- BUANG dari semua list: heading/judul section (misal '## Benefit Kerja', 'Deskripsi pekerjaan ...'), nama perusahaan, kota/lokasi/alamat,",
+    "  jadwal & jam kerja, work arrangement (onsite/remote), gaji, dan tanggal.",
+    "- Kelompokkan dengan benar:",
+    "  responsibilities = tugas & tanggung jawab pekerjaan",
+    "  requirements     = syarat wajib (pengalaman, pendidikan, skill wajib)",
+    "  qualifications   = skill/kualifikasi tambahan atau nice-to-have yang bukan duplikat requirements",
+    "  benefits         = fasilitas/tunjangan untuk karyawan",
+    "- Satu item tidak boleh muncul di lebih dari satu list. Maksimal 8 item per list. Kalau tidak ada, isi [].",
+    "- description: 2-3 kalimat ringkasan peran, maksimal 400 karakter, tanpa markdown dan tanpa daftar.",
+    "- tech_stack: nama tools/teknologi saja (misal 'Vue.js', 'Nuxt.js'), maksimal 12.",
+    "",
+    "=== DATA ===",
+    JSON.stringify(payload),
+  ].join("\n");
+
+  const { content } = await callAiJson(
+    "Kamu adalah editor data lowongan kerja yang teliti. Output hanya JSON valid. Jangan gunakan markdown.",
+    prompt,
+    Math.min(4096, 300 + rows.length * 700),
+    aiKey,
+    log,
+    { stage: "polish", rows: rows.length },
+  );
+
+  const parsed = parseJsonObject(content) as { jobs?: unknown };
+  const results = new Map<number, PolishedJob>();
+  for (const item of Array.isArray(parsed.jobs) ? parsed.jobs : []) {
+    if (!item || typeof item !== "object") continue;
+    const job = item as PolishedJob;
+    const index = Number(job.job_id) - 1;
+    if (Number.isInteger(index) && index >= 0 && index < rows.length && !results.has(index)) {
+      results.set(index, job);
+    }
+  }
+  return results;
+}
+
+/** Terapkan hasil polish ke row. Return true kalau ada field yang berubah. */
+function applyPolish(row: JobRow, job: PolishedJob, text: string) {
+  const before = JSON.stringify(row);
+
+  const lists = groundedJobLists(job, text);
+  for (const field of LIST_FIELDS) {
+    if (job[field] === undefined) continue;
+    // Item dari AI yang tidak bisa diverifikasi → pakai draft (sudah tervalidasi),
+    // kecuali AI memang mengosongkan field itu (item salah kategori).
+    const aiGaveItems = sanitizeListItems(job[field]).length > 0;
+    const polished = lists[field] ? cleanListText(lists[field], 2000) : null;
+    row[field] = polished || (aiGaveItems ? row[field] : null);
+  }
+
+  const description = cleanJobDescription(job.description || "", 2000);
+  if (description.length >= 60 && isTextGrounded(description, text)) {
+    row.description = description;
+  }
+
+  if (job.tech_stack !== undefined) {
+    row.tech_stack = filterGroundedInlineText(job.tech_stack, text) ?? row.tech_stack;
+  }
+
+  return JSON.stringify(row) !== before;
 }
 
 async function mapWithConcurrency<T, R>(
@@ -1495,40 +1656,13 @@ function buildJobRow(job: ExtractedJob, page: AssessedPage, today: string) {
   const location = normalizeLocation(structured?.location || job.location, workMode);
   if (!location) return "foreign_location" as const;
 
-  const responsibilities =
-    filterGroundedListText(job.responsibilities, text) ||
-    extractSectionItems(text, [
-      "responsibilities",
-      "job description",
-      "deskripsi pekerjaan",
-      "tanggung jawab",
-      "apa yang akan kamu lakukan",
-      "what you will do",
-      "the role",
-    ]);
-  const requirements =
-    filterGroundedListText(job.requirements, text) ||
-    extractSectionItems(text, [
-      "requirements",
-      "persyaratan",
-      "kualifikasi",
-      "minimum qualifications",
-      "what you will need",
-      "qualifications",
-      "requirements and skills",
-    ]);
-  const qualifications =
-    filterGroundedListText(job.qualifications, text) ||
-    extractSectionItems(text, [
-      "preferred qualifications",
-      "nice to have",
-      "skill yang dibutuhkan",
-      "skills",
-      "kompetensi",
-    ]);
-  const benefits =
-    filterGroundedListText(job.benefits, text) ||
-    extractSectionItems(text, ["benefits", "perks", "fasilitas", "benefit", "what we offer"]);
+  // Hanya isi dari AI yang bisa diverifikasi ke halaman. Fallback regex per
+  // heading dibuang: sering ikut menyapu section lain (benefit, lokasi, jadwal).
+  const lists = groundedJobLists(job, text);
+  const responsibilities = lists.responsibilities;
+  const requirements = lists.requirements;
+  const qualifications = lists.qualifications;
+  const benefits = lists.benefits;
 
   const description = buildSourceDescription(text, job.description, responsibilities);
   if (description.length < 60) return "low_quality" as const;
@@ -1565,7 +1699,7 @@ function buildJobRow(job: ExtractedJob, page: AssessedPage, today: string) {
     requirements: cleanListText(requirements || "", 2000) || null,
     qualifications: cleanListText(qualifications || "", 2000) || null,
     benefits: cleanListText(benefits || "", 1000) || null,
-    tech_stack: extractTechStack(text) || filterGroundedInlineText(job.tech_stack, text),
+    tech_stack: filterGroundedInlineText(job.tech_stack, text) || extractTechStack(text),
     work_mode: workMode,
     deadline,
     posted_at: postedAt ? new Date(`${postedAt}T00:00:00+07:00`).toISOString() : null,
@@ -1859,29 +1993,13 @@ function normalizeNumericSalary(value: string) {
   return clean;
 }
 
-function extractSectionItems(text: string, headings: string[]) {
-  const section = extractSectionText(text, headings);
-  if (!section) return null;
-  const items = section
-    .split(/\n|•|·|(?:^|\s)[*-]\s+|(?<=\.)\s+(?=[A-Z0-9A-Z])/)
-    .map((item) =>
-      item
-        .replace(/^[0-9]+[.)]\s*/, "")
-        .replace(/^[*-]\s*/, "")
-        .trim(),
-    )
-    .filter((item) => item.length > 8 && item.length < 240 && !isJobContentNoise(item))
-    .slice(0, 10);
-  return items.length > 0 ? items.join("\n") : null;
-}
-
 function extractSectionText(text: string, headings: string[]) {
   const normalized = text.replace(/\r/g, "\n");
   const escapedHeadings = headings.map(escapeRegExp).join("|");
   const stop =
     "responsibilities|requirements|qualifications|benefits|perks|about|company|deskripsi|kualifikasi|persyaratan|tanggung jawab|fasilitas|benefit|skills|apply|lamar|deadline";
   const pattern = new RegExp(
-    `(?:^|\\n)[#*\\s]*(?:${escapedHeadings})[*\\s]*:?\\s*\\n?([\\s\\S]{80,1800}?)(?=\\n[#*\\s]*(?:${stop})[*\\s]*:?\\s*\\n|$)`,
+    `(?:^|\\n)[#*\\s]*(?:${escapedHeadings})[*\\s]*:?\\s*\\n?([\\s\\S]{80,1800}?)(?=\\n\\s*#{1,6}\\s|\\n[#*\\s]*(?:${stop})[*\\s]*:?\\s*\\n|$)`,
     "i",
   );
   const match = normalized.match(pattern);
@@ -1917,20 +2035,55 @@ function buildSourceDescription(
   return responsibilities ? cleanJobDescription(responsibilities, 900) : "";
 }
 
-function filterGroundedListText(value: string | null | undefined, sourceText: string) {
-  const items = String(value || "")
-    .split(/\n|;|•|·/)
-    .map((item) => item.replace(/^[-*\d.)\s]+/, "").trim())
-    .filter(Boolean)
-    .filter((item) => isTextGrounded(item, sourceText))
-    .slice(0, 10);
+const LIST_FIELDS = ["responsibilities", "requirements", "qualifications", "benefits"] as const;
+type ListField = (typeof LIST_FIELDS)[number];
 
-  return items.length > 0 ? items.join("\n") : null;
+/**
+ * Ambil list dari AI, rapikan, verifikasi ke halaman sumber, dan buang item
+ * yang muncul di lebih dari satu field (item pertama yang menang).
+ */
+function groundedJobLists(
+  job: Partial<Record<ListField, string | string[] | null>>,
+  sourceText: string,
+): Record<ListField, string | null> {
+  const seen = new Set<string>();
+  const result = {} as Record<ListField, string | null>;
+  for (const field of LIST_FIELDS) {
+    const items = sanitizeListItems(job[field])
+      .filter((item) => isTextGrounded(item, sourceText))
+      .filter((item) => {
+        const key = normalizeWords(item);
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      })
+      .slice(0, 10);
+    result[field] = items.length > 0 ? items.join("\n") : null;
+  }
+  return result;
 }
 
-function filterGroundedInlineText(value: string | null | undefined, sourceText: string) {
-  const items = String(value || "")
-    .split(/,|\n|;/)
+/** Pecah list (array atau string \n) jadi item bersih tanpa markdown, bullet, atau heading. */
+function sanitizeListItems(value: unknown): string[] {
+  const raw = Array.isArray(value) ? value.map(String) : String(value || "").split(/\n|•|·|;/);
+  return raw
+    .filter((item) => !/^\s*#{1,6}\s/.test(item)) // heading markdown, bukan isi list
+    .map((item) =>
+      stripAngleBrackets(decodeHtmlEntities(item))
+        .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
+        .replace(/[*_`]{1,3}/g, "")
+        .replace(/^\s*#{1,6}\s*/, "")
+        // Bullet hanya kalau diikuti spasi, supaya "3+ years" tidak jadi "+ years".
+        .replace(/^\s*(?:[-*•·+–]\s+|\d{1,2}[.)]\s+)/, "")
+        .replace(/\s+/g, " ")
+        .trim(),
+    )
+    .filter((item) => item.length >= 3 && item.length <= 300)
+    .filter((item) => !/:$/.test(item) && !isJobContentNoise(item));
+}
+
+function filterGroundedInlineText(value: string | string[] | null | undefined, sourceText: string) {
+  const items = (Array.isArray(value) ? value.map(String) : String(value || "").split(/,|\n|;/))
     .map((item) => item.trim())
     .filter((item) => Boolean(item) && !isJobContentNoise(item))
     .filter((item) => normalizeWords(sourceText).includes(normalizeWords(item)))
