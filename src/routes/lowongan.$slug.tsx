@@ -227,132 +227,141 @@ function LowonganDetailPage() {
 
         {/* Mobile: header → isi lowongan → panel lamar. Desktop: panel lamar sticky di
             kanan, isi lowongan langsung di bawah judul tanpa perlu scroll. */}
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-8">
-          <header className="lg:col-start-1 lg:row-start-1">
-            <h1 className="max-w-4xl font-display text-3xl font-bold leading-tight text-foreground sm:text-4xl lg:text-5xl">
-              {job.title}
-            </h1>
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start lg:gap-8">
+          {/* Satu kolom kiri (judul + isi) agar tinggi panel kanan tidak melebarkan
+              ruang di bawah judul saat hasil job match muncul. */}
+          <div className="min-w-0 space-y-6">
+            <header>
+              <h1 className="max-w-4xl font-display text-3xl font-bold leading-tight text-foreground sm:text-4xl lg:text-5xl">
+                {job.title}
+              </h1>
 
-            <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-base text-muted-foreground">
-              <span className="inline-flex items-center gap-2 font-medium text-foreground">
-                <Building2 className="h-5 w-5 text-primary" />
-                {job.company}
-              </span>
-              <span className="inline-flex items-center gap-2">
-                <MapPin className="h-5 w-5" />
-                {job.location}
-              </span>
-              <span className="inline-flex items-center gap-2">
-                <Calendar className="h-5 w-5" />
-                Diposting {postedDate}
-              </span>
-            </div>
+              <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-base text-muted-foreground">
+                <span className="inline-flex items-center gap-2 font-medium text-foreground">
+                  <Building2 className="h-5 w-5 text-primary" />
+                  {job.company}
+                </span>
+                <span className="inline-flex items-center gap-2">
+                  <MapPin className="h-5 w-5" />
+                  {job.location}
+                </span>
+                <span className="inline-flex items-center gap-2">
+                  <Calendar className="h-5 w-5" />
+                  Diposting {postedDate}
+                </span>
+              </div>
 
-            <div className="mt-5 flex flex-wrap gap-2">
-              <Badge className="bg-primary/10 text-primary hover:bg-primary/10">
-                {levelLabel(job.level)}
-              </Badge>
-              <Badge variant="secondary">{typeLabel(job.type)}</Badge>
-              {job.work_mode && <Badge variant="outline">{workModeLabel(job.work_mode)}</Badge>}
-              {job.industry && <Badge variant="outline">{job.industry}</Badge>}
-              {salaryText && <Badge variant="outline">{salaryText}</Badge>}
-              {deadlineText && <Badge variant="outline">Deadline {deadlineText}</Badge>}
-            </div>
-          </header>
+              <div className="mt-5 flex flex-wrap gap-2">
+                <Badge className="bg-primary/10 text-primary hover:bg-primary/10">
+                  {levelLabel(job.level)}
+                </Badge>
+                <Badge variant="secondary">{typeLabel(job.type)}</Badge>
+                {job.work_mode && <Badge variant="outline">{workModeLabel(job.work_mode)}</Badge>}
+                {job.industry && <Badge variant="outline">{job.industry}</Badge>}
+                {salaryText && <Badge variant="outline">{salaryText}</Badge>}
+                {deadlineText && <Badge variant="outline">Deadline {deadlineText}</Badge>}
+              </div>
+            </header>
 
-          <div className="min-w-0 space-y-5 lg:col-start-1 lg:row-start-2">
-            <ContentCard
-              icon={FileText}
-              eyebrow="Role overview"
-              title="Deskripsi pekerjaan"
-              fallback="Deskripsi pekerjaan belum tersedia lengkap dari sumber asli."
-            >
-              {descriptionParagraphs.length > 0 ? (
-                <div className="space-y-4">
-                  {descriptionParagraphs.map((paragraph) => (
-                    <p key={paragraph} className="leading-8 text-muted-foreground">
-                      {paragraph}
-                    </p>
-                  ))}
-                </div>
-              ) : null}
-            </ContentCard>
-
-            {responsibilityItems.length > 0 && (
+            <div className="space-y-5">
               <ContentCard
-                icon={ListChecks}
-                eyebrow="Tanggung jawab"
-                title="Responsibilities"
-                fallback=""
+                icon={FileText}
+                eyebrow="Role overview"
+                title="Deskripsi pekerjaan"
+                fallback="Deskripsi pekerjaan belum tersedia lengkap dari sumber asli."
               >
-                <Checklist items={responsibilityItems} />
-              </ContentCard>
-            )}
-
-            {requirementItems.length > 0 && (
-              <ContentCard
-                icon={ShieldCheck}
-                eyebrow="Yang perlu disiapkan"
-                title="Job requirements"
-                fallback=""
-              >
-                <Checklist items={requirementItems} />
-              </ContentCard>
-            )}
-
-            {qualificationItems.length > 0 && (
-              <ContentCard
-                icon={BadgeCheck}
-                eyebrow="Kualifikasi kandidat"
-                title="Skill dan kualifikasi"
-                fallback=""
-              >
-                <Checklist items={qualificationItems} />
-              </ContentCard>
-            )}
-
-            {benefitItems.length > 0 && (
-              <ContentCard icon={Gift} eyebrow="Benefit" title="Fasilitas dan benefit" fallback="">
-                <Checklist items={benefitItems} />
-              </ContentCard>
-            )}
-
-            {techItems.length > 0 && (
-              <ContentCard icon={Laptop} eyebrow="Tools" title="Tech stack dan tools" fallback="">
-                <div className="flex flex-wrap gap-2">
-                  {techItems.map((item) => (
-                    <Badge key={item} variant="secondary" className="px-3 py-1.5">
-                      {item}
-                    </Badge>
-                  ))}
-                </div>
-              </ContentCard>
-            )}
-
-            <Card className="border-border/80 bg-muted/45 shadow-sm">
-              <CardContent className="p-5 md:p-6">
-                <div className="mb-4 flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                    <Lightbulb className="h-5 w-5" aria-hidden="true" />
+                {descriptionParagraphs.length > 0 ? (
+                  <div className="space-y-4">
+                    {descriptionParagraphs.map((paragraph) => (
+                      <p key={paragraph} className="leading-8 text-muted-foreground">
+                        {paragraph}
+                      </p>
+                    ))}
                   </div>
-                  <h2 className="font-display text-xl font-bold text-foreground">
-                    Sebelum klik lamar
-                  </h2>
-                </div>
-                <div className="grid gap-3 sm:grid-cols-3">
-                  {prepCards.map((item) => (
-                    <div key={item.title} className="rounded-lg border bg-card p-4">
-                      <item.icon className="mb-2 h-5 w-5 text-primary" aria-hidden="true" />
-                      <h3 className="font-semibold text-foreground">{item.title}</h3>
-                      <p className="mt-1 text-sm leading-6 text-muted-foreground">{item.desc}</p>
+                ) : null}
+              </ContentCard>
+
+              {responsibilityItems.length > 0 && (
+                <ContentCard
+                  icon={ListChecks}
+                  eyebrow="Tanggung jawab"
+                  title="Responsibilities"
+                  fallback=""
+                >
+                  <Checklist items={responsibilityItems} />
+                </ContentCard>
+              )}
+
+              {requirementItems.length > 0 && (
+                <ContentCard
+                  icon={ShieldCheck}
+                  eyebrow="Yang perlu disiapkan"
+                  title="Job requirements"
+                  fallback=""
+                >
+                  <Checklist items={requirementItems} />
+                </ContentCard>
+              )}
+
+              {qualificationItems.length > 0 && (
+                <ContentCard
+                  icon={BadgeCheck}
+                  eyebrow="Kualifikasi kandidat"
+                  title="Skill dan kualifikasi"
+                  fallback=""
+                >
+                  <Checklist items={qualificationItems} />
+                </ContentCard>
+              )}
+
+              {benefitItems.length > 0 && (
+                <ContentCard
+                  icon={Gift}
+                  eyebrow="Benefit"
+                  title="Fasilitas dan benefit"
+                  fallback=""
+                >
+                  <Checklist items={benefitItems} />
+                </ContentCard>
+              )}
+
+              {techItems.length > 0 && (
+                <ContentCard icon={Laptop} eyebrow="Tools" title="Tech stack dan tools" fallback="">
+                  <div className="flex flex-wrap gap-2">
+                    {techItems.map((item) => (
+                      <Badge key={item} variant="secondary" className="px-3 py-1.5">
+                        {item}
+                      </Badge>
+                    ))}
+                  </div>
+                </ContentCard>
+              )}
+
+              <Card className="border-border/80 bg-muted/45 shadow-sm">
+                <CardContent className="p-5 md:p-6">
+                  <div className="mb-4 flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                      <Lightbulb className="h-5 w-5" aria-hidden="true" />
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                    <h2 className="font-display text-xl font-bold text-foreground">
+                      Sebelum klik lamar
+                    </h2>
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    {prepCards.map((item) => (
+                      <div key={item.title} className="rounded-lg border bg-card p-4">
+                        <item.icon className="mb-2 h-5 w-5 text-primary" aria-hidden="true" />
+                        <h3 className="font-semibold text-foreground">{item.title}</h3>
+                        <p className="mt-1 text-sm leading-6 text-muted-foreground">{item.desc}</p>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
 
-          <div className="lg:col-start-2 lg:row-span-2 lg:row-start-1">
+          <div>
             <ApplyPanel job={job} salaryText={salaryText} />
           </div>
         </div>
