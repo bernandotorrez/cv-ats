@@ -74,6 +74,8 @@ type Job = {
   tech_stack?: string | null;
   work_mode?: string | null;
   deadline?: string | null;
+  posted_at?: string | null;
+  expires_at?: string | null;
   source_url?: string | null;
   created_at: string;
 };
@@ -200,7 +202,7 @@ function LowonganDetailPage() {
     job.salary_currency ?? undefined,
     job.salary_period ?? undefined,
   );
-  const postedDate = new Date(job.created_at).toLocaleDateString("id-ID", {
+  const postedDate = new Date(job.posted_at || job.created_at).toLocaleDateString("id-ID", {
     day: "numeric",
     month: "long",
     year: "numeric",
@@ -576,7 +578,11 @@ function ApplyPanel({ job, salaryText }: { job: Job; salaryText: string | null }
         </div>
 
         <div className="space-y-3 rounded-lg bg-muted/60 p-4">
-          <Fact icon={Clock} label="Diposting" value={formatShortDate(job.created_at)} />
+          <Fact
+            icon={Clock}
+            label="Diposting"
+            value={formatShortDate(job.posted_at || job.created_at)}
+          />
           <Fact icon={Briefcase} label="Tipe" value={typeLabel(job.type)} />
           <Fact icon={GraduationCap} label="Level" value={levelLabel(job.level)} />
           <Fact
@@ -994,15 +1000,18 @@ function buildJobPostingJsonLd(job: Job) {
   );
   const isRemote = job.work_mode === "remote";
   const hasSalary = Boolean(job.salary_min || job.salary_max);
-  // deadline berformat YYYY-MM-DD → ISO dengan akhir hari (zona Jakarta)
-  const validThrough = job.deadline ? `${job.deadline.slice(0, 10)}T23:59:59+07:00` : undefined;
+  // deadline berformat YYYY-MM-DD → ISO dengan akhir hari (zona Jakarta);
+  // tanpa deadline pakai expires_at agar Google Jobs tahu kapan lowongan berakhir.
+  const validThrough = job.deadline
+    ? `${job.deadline.slice(0, 10)}T23:59:59+07:00`
+    : job.expires_at || undefined;
 
   return {
     "@context": "https://schema.org",
     "@type": "JobPosting",
     title: job.title,
     description: description || `Lowongan ${job.title} di ${job.company}, ${job.location}.`,
-    datePosted: job.created_at,
+    datePosted: job.posted_at || job.created_at,
     ...(validThrough ? { validThrough } : {}),
     employmentType: EMPLOYMENT_TYPE[job.type] ?? "FULL_TIME",
     directApply: false,

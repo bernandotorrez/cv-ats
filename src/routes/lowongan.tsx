@@ -87,6 +87,7 @@ interface Job {
   tech_stack?: string | null;
   work_mode?: string | null;
   deadline?: string | null;
+  posted_at?: string | null;
   source_url?: string | null;
   created_at: string;
 }
@@ -114,6 +115,11 @@ type SavedJobListingsQuery = {
     };
   };
 };
+
+/** Tanggal hari ini (WIB) format YYYY-MM-DD, untuk membandingkan kolom deadline. */
+function jakartaToday() {
+  return new Date(Date.now() + 7 * 3600_000).toISOString().slice(0, 10);
+}
 
 function savedJobListingsTable() {
   return (supabase as any).from("saved_job_listings") as unknown as SavedJobListingsQuery;
@@ -256,6 +262,8 @@ function LowonganPage() {
         .from("job_listings")
         .select("*")
         .eq("is_active", true)
+        // Cron menonaktifkan lowongan kedaluwarsa tiap jam; filter ini menutup jedanya.
+        .or(`deadline.is.null,deadline.gte.${jakartaToday()}`)
         .order("created_at", { ascending: false });
 
       const rows = (data as unknown as Job[]) ?? [];
@@ -364,7 +372,7 @@ function LowonganPage() {
   const totalRemote = jobs.filter((job) => job.location.toLowerCase().includes("remote")).length;
   const totalCompanies = new Set(jobs.map((job) => job.company)).size;
   const latestDate = jobs[0]?.created_at
-    ? new Date(jobs[0].created_at).toLocaleDateString("id-ID", {
+    ? new Date(jobs[0].posted_at || jobs[0].created_at).toLocaleDateString("id-ID", {
         day: "numeric",
         month: "short",
       })
@@ -1096,7 +1104,7 @@ function JobCard({
           <p className="flex items-center gap-1.5 text-xs font-medium text-gray-600">
             <Clock aria-hidden="true" className="h-3.5 w-3.5" />
             Diposting{" "}
-            {new Date(job.created_at).toLocaleDateString("id-ID", {
+            {new Date(job.posted_at || job.created_at).toLocaleDateString("id-ID", {
               day: "numeric",
               month: "short",
             })}

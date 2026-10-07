@@ -73,6 +73,9 @@ export const Route = createFileRoute("/sitemap/xml")({
             .from("job_listings")
             .select("slug, updated_at")
             .eq("is_active", true)
+            .or(
+              `deadline.is.null,deadline.gte.${new Date(Date.now() + 7 * 3600_000).toISOString().slice(0, 10)}`,
+            )
             .limit(500);
           if (data) {
             for (const job of data) {

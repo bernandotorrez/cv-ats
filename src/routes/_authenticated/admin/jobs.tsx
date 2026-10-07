@@ -66,8 +66,10 @@ export const Route = createFileRoute("/_authenticated/admin/jobs")({
     if (!sessionData.session) {
       throw redirect({ to: "/login", search: {} as any });
     }
-    const { data } = await supabase
-      .rpc("has_role", { _user_id: sessionData.session.user.id, _role: "admin" });
+    const { data } = await supabase.rpc("has_role", {
+      _user_id: sessionData.session.user.id,
+      _role: "admin",
+    });
     if (!data) {
       throw redirect({ to: "/dashboard" });
     }
@@ -158,6 +160,8 @@ type SearchResponse = {
   skipped?: number;
   searched?: number;
   source_pages?: number;
+  rejected?: Record<string, number>;
+  message?: string;
   jobs?: ImportedJob[];
   error?: string;
 };
@@ -587,6 +591,21 @@ function AdminJobsPage() {
                   <Metric label="Searched" value={result.searched || 0} />
                   <Metric label="Source Pages" value={result.source_pages || 0} />
                 </div>
+
+                {Object.keys(result.rejected || {}).length > 0 && (
+                  <div className="flex flex-wrap items-center gap-2 text-sm">
+                    <span className="text-muted-foreground">Ditolak:</span>
+                    {Object.entries(result.rejected || {}).map(([reason, count]) => (
+                      <Badge key={reason} variant="outline">
+                        {REJECT_REASON_LABELS[reason] || reason}: {count}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+
+                {result.message && (result.inserted || 0) === 0 && (
+                  <p className="text-sm text-muted-foreground">{result.message}</p>
+                )}
 
                 <div className="space-y-2">
                   {(result.jobs || []).map((job) => (
@@ -1186,6 +1205,18 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
     </div>
   );
 }
+
+const REJECT_REASON_LABELS: Record<string, string> = {
+  closed: "Sudah ditutup",
+  expired: "Lewat deadline",
+  stale: "Diposting >45 hari",
+  undated: "Tanpa tanggal",
+  no_content: "Halaman tidak terbaca",
+  not_job_detail: "Bukan detail lowongan",
+  low_quality: "Data tidak lengkap",
+  foreign_location: "Luar Indonesia",
+  duplicate: "Duplikat",
+};
 
 function Metric({ label, value }: { label: string; value: number }) {
   return (

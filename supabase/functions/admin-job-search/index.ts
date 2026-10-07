@@ -2,15 +2,35 @@ import { corsHeaders } from "../_shared/cors.ts";
 import { AI_MODEL, getAdminClient, getUserId } from "../_shared/ai-common.ts";
 
 type SearchSource = "jobstreet" | "glints" | "kalibrr" | "dealls" | "google";
+type Board = "jobstreet" | "glints" | "kalibrr" | "dealls" | "other";
+type PageKind = "detail" | "listing";
+
+type PageLink = { url: string; text: string };
+
+type StructuredJob = {
+  title: string | null;
+  company: string | null;
+  location: string | null;
+  country: string | null;
+  datePosted: string | null;
+  validThrough: string | null;
+  employmentType: string | null;
+};
 
 type SearchResult = {
   title: string;
   url: string;
   content: string;
   source: string;
+  board: Board;
+  kind: PageKind;
   original_content?: string;
-  original_content_source?: "tavily_extract" | "direct_fetch";
+  original_content_source?: "tavily_search" | "tavily_extract" | "direct_fetch";
+  links?: PageLink[];
+  structured?: StructuredJob | null;
 };
+
+type RawSearchHit = { title: string; url: string; content: string; raw_content?: string };
 
 type TavilySearchResponse = {
   results?: Array<{
@@ -39,10 +59,21 @@ type BraveSearchResponse = {
   };
 };
 
+type PageData = {
+  content: string;
+  source: "tavily_extract" | "direct_fetch";
+  links: PageLink[];
+  structured: StructuredJob | null;
+};
+
 type ExtractedJob = {
+  page_id?: number;
+  is_job_detail?: boolean;
+  is_closed?: boolean;
   title: string;
   company: string;
   location: string;
+  posted_date?: string | null;
   type?: string;
   level?: string;
   industry?: string;
@@ -58,7 +89,14 @@ type ExtractedJob = {
   tech_stack?: string | null;
   work_mode?: string | null;
   deadline?: string | null;
-  source_url?: string | null;
+};
+
+/** Halaman detail lowongan yang sudah lolos cek konten, status tutup, dan tanggal. */
+type AssessedPage = {
+  result: SearchResult;
+  text: string;
+  postedAt: string | null;
+  deadline: string | null;
 };
 
 type SalaryRange = {
@@ -73,11 +111,32 @@ type JobParseResult = {
   recovered: boolean;
 };
 
+type RejectReason =
+  | "no_content"
+  | "closed"
+  | "expired"
+  | "stale"
+  | "undated"
+  | "not_job_detail"
+  | "low_quality"
+  | "foreign_location"
+  | "duplicate";
+
+type JobRow = ReturnType<typeof buildJobRow> extends infer R ? Exclude<R, RejectReason> : never;
+
 const AI_GATEWAY_URL = "https://ai.sumopod.com/v1/chat/completions";
 const DEFAULT_SOURCES: SearchSource[] = ["jobstreet", "glints", "kalibrr", "dealls", "google"];
-const RICH_AI_SOURCE_LIMIT = 6;
-const RICH_AI_CONTENT_CHARS = 3500;
-const SNIPPET_AI_CONTENT_CHARS = 1200;
+const AI_PAGES_PER_BATCH = 5;
+const AI_BATCH_CONCURRENCY = 3;
+const AI_CONTENT_CHARS = 5000;
+const MIN_PAGE_CONTENT_CHARS = 300;
+const MAX_LISTING_PAGES = 6;
+const DIRECT_FETCH_LIMIT = 12;
+
+// Lowongan yang diposting lebih lama dari ini dianggap basi (kecuali deadline-nya masih berlaku).
+const MAX_POSTED_AGE_DAYS = 45;
+// Lowongan tanpa tanggal posting/deadline disembunyikan otomatis setelah N hari tidak terlihat lagi.
+const DEFAULT_TTL_DAYS = 30;
 
 // ---------------------------------------------------------------------------
 // LOGGER
@@ -119,14 +178,14 @@ type Logger = ReturnType<typeof createLogger>;
 // ---------------------------------------------------------------------------
 // SOURCE DOMAINS & QUERY CONFIG
 //
-// LinkedIn sengaja tidak dipakai karena sering mengembalikan halaman login/consent,
-// bukan detail lowongan yang bisa dicrawl stabil.
+// LinkedIn & Glassdoor sengaja tidak dipakai karena sering mengembalikan halaman
+// login/consent, bukan detail lowongan yang bisa dicrawl stabil.
 // ---------------------------------------------------------------------------
 
 const SOURCE_DOMAINS: Record<SearchSource, string[]> = {
-  jobstreet: ["jobstreet.co.id", "jobstreet.com"],
+  jobstreet: ["id.jobstreet.com", "jobstreet.co.id"],
   glints: ["glints.com"],
-  kalibrr: ["kalibrr.com"],
+  kalibrr: ["kalibrr.com", "kalibrr.id"],
   dealls: ["dealls.com"],
   google: [],
 };
@@ -138,6 +197,21 @@ const SOURCE_QUERY_SUFFIXES: Record<SearchSource, string> = {
   dealls: "lowongan kerja",
   google: "lowongan kerja Indonesia terbaru",
 };
+
+const BLOCKED_HOSTS = [
+  "linkedin.com",
+  "glassdoor.com",
+  "glassdoor.co.id",
+  "facebook.com",
+  "instagram.com",
+  "twitter.com",
+  "x.com",
+  "youtube.com",
+  "tiktok.com",
+  "reddit.com",
+  "quora.com",
+  "wikipedia.org",
+];
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
@@ -179,19 +253,24 @@ Deno.serve(async (req: Request) => {
     const location = cleanText(body.location || "Indonesia", 60);
     const limit = clampNumber(Number(body.limit || 12), 1, 50);
     const sources = normalizeSources(body.sources);
+    const today = jakartaToday();
 
     log = createLogger(requestId, query);
-    log.info("request_start", { query, location, limit, sources });
+    log.info("request_start", { query, location, limit, sources, today });
 
     if (!query || query.length < 2) {
       log.warn("validation_failed", { reason: "query too short" });
       return json(req, { error: "Posisi atau keyword lowongan wajib diisi." }, 400);
     }
 
-    // ── STEP 1: Search ──────────────────────────────────────────────────────
-    log.info("search_start", { sources, limit });
-    const searchResults = await collectSearchResults(query, location, sources, limit, log);
+    const rejected: Partial<Record<RejectReason, number>> = {};
+    const reject = (reason: RejectReason, data?: Record<string, unknown>) => {
+      rejected[reason] = (rejected[reason] || 0) + 1;
+      log.debug("job_rejected", { reason, ...data });
+    };
 
+    // ── STEP 1: Search ──────────────────────────────────────────────────────
+    const searchResults = await collectSearchResults(query, location, sources, limit, log);
     if (searchResults.length === 0) {
       log.error("search_empty", { reason: "no search provider configured or no results" });
       return json(
@@ -203,48 +282,123 @@ Deno.serve(async (req: Request) => {
         400,
       );
     }
-    log.info("search_done", { total_results: searchResults.length });
 
-    // ── STEP 2: Enrich ──────────────────────────────────────────────────────
-    log.info("enrich_start", {
-      urls_to_fetch: Math.min(searchResults.length, Math.max(limit * 2, 20)),
-    });
-    const enrichedResults = await enrichSearchResults(searchResults, limit, log);
-    const enrichedCount = enrichedResults.filter((r) => r.original_content).length;
-    log.info("enrich_done", {
-      enriched: enrichedCount,
-      snippet_only: enrichedResults.length - enrichedCount,
-    });
+    // ── STEP 2: Kumpulkan URL detail lowongan ──────────────────────────────
+    // Hanya halaman detail 1 lowongan yang dipakai. Halaman pencarian/listing
+    // dipakai sebagai sumber link ke halaman detail, tidak pernah disimpan.
+    const candidateTarget = clampNumber(limit * 2 + 4, 8, 30);
+    const seenUrls = new Set(searchResults.map((r) => r.url));
+    let candidates = searchResults.filter((r) => r.kind === "detail");
+    const listings = searchResults.filter((r) => r.kind === "listing");
 
-    // ── STEP 3: AI Extraction ───────────────────────────────────────────────
-    log.info("ai_extract_start", { input_results: enrichedResults.length, limit });
-    const extractedJobs = await extractJobsWithAi(query, location, enrichedResults, limit, log);
-    log.info("ai_extract_done", { jobs_extracted: extractedJobs.length });
-
-    // ── STEP 4: Build rows & filter ─────────────────────────────────────────
-    const rows = extractedJobs
-      .map((job) => toJobRow(job, query, location, enrichedResults))
-      .filter((row): row is NonNullable<typeof row> => row !== null);
-    const invalidCount = extractedJobs.length - rows.length;
-    if (invalidCount > 0) {
-      log.warn("rows_filtered", { invalid_rows: invalidCount, reason: "missing required fields" });
+    if (candidates.length < candidateTarget && listings.length > 0) {
+      const harvested = await harvestDetailUrls(
+        listings,
+        candidateTarget - candidates.length,
+        seenUrls,
+        log,
+      );
+      candidates = [...candidates, ...harvested];
     }
 
-    if (rows.length === 0) {
-      log.warn("no_valid_rows", { extracted: extractedJobs.length });
+    // Job board yang dikenal diproses lebih dulu daripada situs lain.
+    candidates = [
+      ...candidates.filter((c) => c.board !== "other"),
+      ...candidates.filter((c) => c.board === "other"),
+    ].slice(0, candidateTarget);
+
+    log.info("candidates_ready", {
+      detail_from_search: searchResults.filter((r) => r.kind === "detail").length,
+      listings: listings.length,
+      candidates: candidates.length,
+    });
+
+    if (candidates.length === 0) {
       return json(req, {
         inserted: 0,
         skipped: 0,
+        rejected,
         jobs: [],
-        message: "AI tidak menemukan lowongan yang cukup valid dari hasil pencarian.",
+        searched: searchResults.length,
+        message: "Tidak ditemukan halaman detail lowongan dari hasil pencarian.",
       });
     }
 
-    // ── STEP 5: Upsert ke DB ────────────────────────────────────────────────
-    log.info("db_upsert_start", { rows: rows.length });
+    // ── STEP 3: Ambil isi halaman detail ────────────────────────────────────
+    const enriched = await enrichSearchResults(candidates, log);
+    const sourcePages = enriched.filter(
+      (r) => (r.original_content?.length || 0) >= MIN_PAGE_CONTENT_CHARS,
+    ).length;
+
+    // ── STEP 4: Cek konten, status tutup & tanggal sebelum AI ──────────────
+    const assessed: AssessedPage[] = [];
+    for (const result of enriched) {
+      const outcome = assessPage(result, today);
+      if (typeof outcome === "string") reject(outcome, { url: result.url });
+      else assessed.push(outcome);
+    }
+    log.info("pages_assessed", { usable: assessed.length, rejected });
+
+    if (assessed.length === 0) {
+      return json(req, {
+        inserted: 0,
+        skipped: candidates.length,
+        rejected,
+        jobs: [],
+        searched: searchResults.length,
+        source_pages: sourcePages,
+        message: "Semua lowongan yang ditemukan sudah ditutup, kedaluwarsa, atau tidak terbaca.",
+      });
+    }
+
+    // ── STEP 5: AI extraction (1 halaman = 1 lowongan) ─────────────────────
+    const extracted = await extractJobsWithAi(assessed, today, log);
+
+    // ── STEP 6: Validasi & bangun row ───────────────────────────────────────
+    const rows: JobRow[] = [];
+    const seenKeys = new Set<string>();
+    assessed.forEach((page, index) => {
+      const job = extracted.get(index);
+      if (!job) return reject("not_job_detail", { url: page.result.url, why: "ai_skipped" });
+
+      const row = buildJobRow(job, page, today);
+      if (typeof row === "string") return reject(row, { url: page.result.url, title: job.title });
+
+      const key = jobIdentityKey(row.title, row.company);
+      if (seenKeys.has(key)) return reject("duplicate", { url: page.result.url });
+      seenKeys.add(key);
+      rows.push(row);
+    });
+
+    const finalRows = rows.slice(0, limit);
+    if (finalRows.length === 0) {
+      log.warn("no_valid_rows", { rejected });
+      return json(req, {
+        inserted: 0,
+        skipped: candidates.length,
+        rejected,
+        jobs: [],
+        searched: searchResults.length,
+        source_pages: sourcePages,
+        message: "AI tidak menemukan lowongan yang cukup valid dan masih dibuka.",
+      });
+    }
+
+    // Lowongan yang sama (judul + perusahaan) yang sudah ada di DB di-update,
+    // bukan dibuat ulang dengan slug baru.
+    await reuseExistingSlugs(admin, finalRows, log);
+    const seenSlugs = new Set<string>();
+    const upsertRows = finalRows.filter((row) => {
+      if (seenSlugs.has(row.slug)) return false;
+      seenSlugs.add(row.slug);
+      return true;
+    });
+
+    // ── STEP 7: Upsert ke DB ────────────────────────────────────────────────
+    log.info("db_upsert_start", { rows: upsertRows.length });
     const { data, error } = await admin
       .from("job_listings")
-      .upsert(rows, { onConflict: "slug" })
+      .upsert(upsertRows, { onConflict: "slug" })
       .select("id, slug, title, company, location, source_url");
 
     if (error) {
@@ -253,21 +407,23 @@ Deno.serve(async (req: Request) => {
     }
 
     const inserted = data?.length || 0;
-    const skipped = Math.max(extractedJobs.length - inserted, 0);
+    const skipped = Math.max(candidates.length - inserted, 0);
     log.info("request_done", {
       inserted,
       skipped,
+      rejected,
       searched: searchResults.length,
-      source_pages: enrichedCount,
+      source_pages: sourcePages,
       total_ms: log.elapsed(),
     });
 
     return json(req, {
       inserted,
       skipped,
+      rejected,
       jobs: data || [],
       searched: searchResults.length,
-      source_pages: enrichedCount,
+      source_pages: sourcePages,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Internal server error";
@@ -291,9 +447,6 @@ async function collectSearchResults(
   log: Logger,
 ) {
   const perSource = Math.max(5, Math.ceil((limit * 2) / sources.length));
-
-  // FIX: Variasi query dibangun lebih hati-hati — hindari kombinasi yang sia-sia.
-  // Cukup 2 variasi: lokasi spesifik + Indonesia fallback.
   const queryVariants = buildQueryVariants(query, location);
 
   log.debug("search_variants", {
@@ -303,113 +456,137 @@ async function collectSearchResults(
 
   const batches = await Promise.all(
     sources.flatMap((source) =>
-      queryVariants.map((variant) => {
+      queryVariants.map(async (variant) => {
         const q = buildSourceQuery(variant.query, variant.location, source);
-        return searchWeb(q, source, perSource, log).catch((err) => {
+        const hits = await searchWeb(q, source, perSource, log).catch((err) => {
           log.warn("source_search_failed", { source, query: q, error: err.message });
-          return [] as SearchResult[];
+          return [] as RawSearchHit[];
         });
+        return hits.map((hit) => ({ hit, source }));
       }),
     ),
   );
 
-  // FIX: Jika semua source utama gagal total, coba fallback ke Google search tanpa site: filter.
-  const allRaw = batches.flat();
-  const hasResults = allRaw.length > 0;
-
-  let fallbackResults: SearchResult[] = [];
-  if (!hasResults) {
+  let raw = batches.flat();
+  if (raw.length === 0) {
     log.warn("all_sources_empty", { reason: "triggering google fallback search" });
     const fallbackQuery = buildGoogleFallbackQuery(query, location);
-    fallbackResults = await searchWeb(fallbackQuery, "google", perSource * 2, log).catch((err) => {
+    const hits = await searchWeb(fallbackQuery, "google", perSource * 2, log).catch((err) => {
       log.warn("google_fallback_failed", { error: err.message });
-      return [];
+      return [] as RawSearchHit[];
     });
+    raw = hits.map((hit) => ({ hit, source: "google" as SearchSource }));
   }
 
-  const seedResults = buildSourceSeedResults(query, sources);
-  const combined = [...seedResults, ...allRaw, ...fallbackResults];
+  const combined = [...buildListingSeeds(query, sources), ...raw.map(toSearchResult)].filter(
+    (result): result is SearchResult => result !== null,
+  );
 
   const seen = new Set<string>();
-  const seenTitles = new Set<string>();
-  const sourceCounts: Record<string, number> = {};
-
-  const filtered = combined
-    .filter((result) => {
-      if (!result.url || seen.has(result.url)) return false;
-      // Filter URL yang jelas tidak bisa dipakai sebagai sumber lowongan.
-      if (isNonJobUrl(result.url)) return false;
-      const titleKey = normalizeForDedup(result.title);
-      if (titleKey.length > 5 && seenTitles.has(titleKey)) return false;
-      seen.add(result.url);
-      if (titleKey.length > 5) seenTitles.add(titleKey);
-      sourceCounts[result.source] = (sourceCounts[result.source] || 0) + 1;
-      return true;
-    })
-    .slice(0, Math.max(limit * 3, 24));
+  const counts: Record<string, number> = {};
+  const filtered = combined.filter((result) => {
+    if (seen.has(result.url)) return false;
+    seen.add(result.url);
+    const key = `${result.board}:${result.kind}`;
+    counts[key] = (counts[key] || 0) + 1;
+    return true;
+  });
 
   log.info("search_collected", {
-    raw: combined.length,
-    after_dedup: filtered.length,
-    by_source: sourceCounts,
+    raw: raw.length,
+    after_classify: filtered.length,
+    by_board: counts,
   });
 
   return filtered;
 }
 
-function buildSourceSeedResults(query: string, sources: SearchSource[]): SearchResult[] {
-  if (!sources.includes("dealls")) return [];
-  const params = new URLSearchParams({ searchJob: query });
-  return [
-    {
-      title: `${query} jobs on Dealls`,
-      url: `https://dealls.com/?${params.toString()}`,
-      content: `Dealls job search results for ${query}`,
-      source: "dealls",
-    },
-  ];
+function toSearchResult({ hit, source }: { hit: RawSearchHit; source: SearchSource }) {
+  const classified = classifyUrl(hit.url);
+  if (!classified) return null;
+  // Situs non-job-board hanya dipakai kalau berupa halaman detail.
+  if (classified.board === "other" && classified.kind === "listing") return null;
+
+  const rawContent = cleanContent(hit.raw_content || "", 20000);
+  return {
+    title: hit.title,
+    url: classified.url,
+    content: hit.content,
+    source,
+    board: classified.board,
+    kind: classified.kind,
+    original_content: rawContent || undefined,
+    original_content_source: rawContent ? "tavily_search" : undefined,
+  } satisfies SearchResult;
 }
 
 /**
- * FIX: Buat query lebih natural dan tidak over-engineered.
+ * Halaman pencarian job board yang diurutkan dari yang terbaru. Halaman ini
+ * hanya dipakai untuk memanen link detail lowongan, tidak pernah disimpan.
+ */
+function buildListingSeeds(query: string, sources: SearchSource[]): SearchResult[] {
+  const seeds: SearchResult[] = [];
+  const listing = (url: string, source: SearchSource, board: Board): SearchResult => ({
+    title: `${query} (${source})`,
+    url,
+    content: "",
+    source,
+    board,
+    kind: "listing",
+  });
+
+  if (sources.includes("dealls")) {
+    const params = new URLSearchParams({ searchJob: query });
+    seeds.push(listing(`https://dealls.com/?${params.toString()}`, "dealls", "dealls"));
+  }
+  if (sources.includes("jobstreet")) {
+    const slug = query
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+    if (slug) {
+      seeds.push(
+        listing(
+          `https://id.jobstreet.com/id/${slug}-jobs?sortmode=ListedDate&daterange=14`,
+          "jobstreet",
+          "jobstreet",
+        ),
+      );
+    }
+  }
+  return seeds;
+}
+
+/**
  * Variasi: lokasi asli + fallback Indonesia (jika beda).
  */
 function buildQueryVariants(query: string, location: string) {
   const variants: { query: string; location: string }[] = [{ query, location }];
 
-  // Tambah fallback ke Indonesia jika lokasi sangat spesifik
   const loc = location.toLowerCase();
   if (loc !== "indonesia" && !loc.includes("indonesia")) {
     variants.push({ query, location: "Indonesia" });
   }
 
-  // Cukup 2 varian maksimal
   return variants.slice(0, 2);
 }
 
 /**
- * FIX: Google fallback query — lebih natural, tidak pakai site: filter.
+ * Google fallback query — natural, tanpa site: filter.
  * Dipakai ketika semua source utama tidak menghasilkan data.
  */
 function buildGoogleFallbackQuery(query: string, location: string) {
   return `lowongan kerja "${query}" ${location} terbaru`;
 }
 
-/**
- * FIX: Filter URL yang bukan halaman lowongan.
- * LinkedIn diblok total karena crawler sering hanya mendapat halaman login/consent.
- */
-function isNonJobUrl(url: string) {
-  try {
-    const parsed = new URL(url);
-    if (parsed.hostname.includes("linkedin.com")) return true;
-    return false;
-  } catch {
-    return false;
-  }
-}
+async function searchWeb(
+  searchQuery: string,
+  source: SearchSource,
+  limit: number,
+  log: Logger,
+): Promise<RawSearchHit[]> {
+  const domains = SOURCE_DOMAINS[source];
 
-async function searchWeb(searchQuery: string, source: SearchSource, limit: number, log: Logger) {
   const tavilyKey = Deno.env.get("TAVILY_API_KEY");
   if (tavilyKey) {
     const res = await fetch("https://api.tavily.com/search", {
@@ -420,8 +597,12 @@ async function searchWeb(searchQuery: string, source: SearchSource, limit: numbe
         query: searchQuery,
         max_results: limit,
         search_depth: "advanced",
+        // Hanya halaman yang diindeks sebulan terakhir — lowongan lama tidak ikut.
+        time_range: "month",
         include_answer: false,
-        include_raw_content: true,
+        // Markdown mempertahankan link, dipakai untuk memanen URL detail dari halaman listing.
+        include_raw_content: "markdown",
+        ...(domains.length > 0 ? { include_domains: domains } : {}),
       }),
     });
     if (!res.ok) throw new Error(`Tavily search gagal: ${res.status}`);
@@ -430,10 +611,8 @@ async function searchWeb(searchQuery: string, source: SearchSource, limit: numbe
       title: String(item.title || ""),
       url: String(item.url || ""),
       content: String(item.content || ""),
-      source,
-      original_content: cleanContent(item.raw_content || "", 12000) || undefined,
-      original_content_source: item.raw_content ? "tavily_extract" : undefined,
-    })) as SearchResult[];
+      raw_content: item.raw_content ? String(item.raw_content) : undefined,
+    }));
     log.debug("provider_result", {
       provider: "tavily",
       source,
@@ -443,15 +622,18 @@ async function searchWeb(searchQuery: string, source: SearchSource, limit: numbe
     return results;
   }
 
+  const siteQuery = domains.length > 0 ? `${searchQuery} site:${domains[0]}` : searchQuery;
+
   const serpKey = Deno.env.get("SERPAPI_API_KEY");
   if (serpKey) {
     const url = new URL("https://serpapi.com/search.json");
     url.searchParams.set("engine", "google");
-    url.searchParams.set("q", searchQuery);
+    url.searchParams.set("q", siteQuery);
     url.searchParams.set("api_key", serpKey);
     url.searchParams.set("num", String(Math.min(limit, 10)));
     url.searchParams.set("hl", "id");
     url.searchParams.set("gl", "id");
+    url.searchParams.set("tbs", "qdr:m");
     const res = await fetch(url);
     if (!res.ok) throw new Error(`SerpAPI search gagal: ${res.status}`);
     const data = (await res.json()) as SerpApiSearchResponse;
@@ -459,12 +641,11 @@ async function searchWeb(searchQuery: string, source: SearchSource, limit: numbe
       title: String(item.title || ""),
       url: String(item.link || ""),
       content: String(item.snippet || ""),
-      source,
-    })) as SearchResult[];
+    }));
     log.debug("provider_result", {
       provider: "serpapi",
       source,
-      query: searchQuery,
+      query: siteQuery,
       count: results.length,
     });
     return results;
@@ -473,10 +654,11 @@ async function searchWeb(searchQuery: string, source: SearchSource, limit: numbe
   const braveKey = Deno.env.get("BRAVE_SEARCH_API_KEY");
   if (braveKey) {
     const url = new URL("https://api.search.brave.com/res/v1/web/search");
-    url.searchParams.set("q", searchQuery);
+    url.searchParams.set("q", siteQuery);
     url.searchParams.set("count", String(Math.min(limit, 20)));
     url.searchParams.set("country", "id");
     url.searchParams.set("search_lang", "id");
+    url.searchParams.set("freshness", "pm");
     const res = await fetch(url, {
       headers: {
         Accept: "application/json",
@@ -489,12 +671,11 @@ async function searchWeb(searchQuery: string, source: SearchSource, limit: numbe
       title: String(item.title || ""),
       url: String(item.url || ""),
       content: String(item.description || ""),
-      source,
-    })) as SearchResult[];
+    }));
     log.debug("provider_result", {
       provider: "brave",
       source,
-      query: searchQuery,
+      query: siteQuery,
       count: results.length,
     });
     return results;
@@ -505,24 +686,76 @@ async function searchWeb(searchQuery: string, source: SearchSource, limit: numbe
 }
 
 // ---------------------------------------------------------------------------
-// QUERY BUILDER
+// URL CLASSIFICATION
 // ---------------------------------------------------------------------------
 
+function detectBoard(host: string): Board {
+  if (
+    host === "jobstreet.co.id" ||
+    host.endsWith("jobstreet.com") ||
+    host.endsWith(".jobstreet.co.id")
+  )
+    return "jobstreet";
+  if (host === "glints.com" || host.endsWith(".glints.com")) return "glints";
+  if (/(^|\.)kalibrr\.(com|id)$/.test(host)) return "kalibrr";
+  if (host === "dealls.com" || host.endsWith(".dealls.com")) return "dealls";
+  return "other";
+}
+
 /**
- * - Jobstreet/Glints/Kalibrr: tetap pakai site: karena mereka crawlable
- * - Google: query natural tanpa site: filter
+ * Tentukan apakah URL adalah halaman detail 1 lowongan atau halaman listing,
+ * sekaligus kanonisasi (buang query/hash) agar dedup per URL stabil.
+ * Return null untuk URL yang tidak boleh dipakai sama sekali.
  */
-function buildSourceQuery(query: string, location: string, source: SearchSource) {
-  const domains = SOURCE_DOMAINS[source];
-  const suffix = SOURCE_QUERY_SUFFIXES[source];
-
-  // Google: query natural tanpa filter
-  if (source === "google" || domains.length === 0) {
-    return `${query} ${location} ${suffix}`;
+function classifyUrl(raw: string): { url: string; board: Board; kind: PageKind } | null {
+  let parsed: URL;
+  try {
+    parsed = new URL(raw);
+  } catch {
+    return null;
   }
+  if (parsed.protocol !== "https:" && parsed.protocol !== "http:") return null;
 
-  // Jobstreet, Glints, Kalibrr: pakai site: filter karena crawlable
-  return `${query} ${location} ${suffix} site:${domains[0]}`;
+  const host = parsed.hostname.toLowerCase().replace(/^www\./, "");
+  if (BLOCKED_HOSTS.some((h) => host === h || host.endsWith(`.${h}`))) return null;
+
+  const path = parsed.pathname;
+  const board = detectBoard(host);
+  parsed.hash = "";
+
+  const detail = (isDetail: boolean) => {
+    if (isDetail) parsed.search = "";
+    return { url: parsed.toString(), board, kind: (isDetail ? "detail" : "listing") as PageKind };
+  };
+
+  switch (board) {
+    case "jobstreet":
+      return detail(/\/job\/(?:[a-z0-9-]*-)?\d{6,}\/?$/i.test(path));
+    case "glints": {
+      // glints.com/vn, /sg, /my, ... = lowongan luar Indonesia.
+      const country = path.match(/^\/([a-z]{2})\//i)?.[1]?.toLowerCase();
+      if (country && country !== "id" && country !== "en") return null;
+      return detail(
+        /\/opportunities\/jobs\/[^/]+\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/?$/i.test(
+          path,
+        ),
+      );
+    }
+    case "kalibrr":
+      return detail(/\/c\/[^/]+\/jobs\/\d+/i.test(path));
+    case "dealls":
+      return detail(/^\/(?:en\/)?loker\/[^/]+~[^/]+\/?$/i.test(path));
+    default: {
+      for (const key of Array.from(parsed.searchParams.keys())) {
+        if (/^utm_|^fbclid$|^gclid$/i.test(key)) parsed.searchParams.delete(key);
+      }
+      const looksLikeListing =
+        /\/(search|cari|kategori|category|tag|tags|find-jobs|job-search|page\/\d+)(\/|$)|\/jobs\/?$|lowongan-kerja-(di|terbaru)|\/lowongan\/?$|\/loker\/?$/i.test(
+          path,
+        ) || /[?&](q|s|keyword|keywords|search|query)=/i.test(parsed.search);
+      return detail(!looksLikeListing && path.length > 1);
+    }
+  }
 }
 
 function normalizeSources(value: unknown): SearchSource[] {
@@ -532,41 +765,143 @@ function normalizeSources(value: unknown): SearchSource[] {
   return sources.length > 0 ? sources : DEFAULT_SOURCES;
 }
 
+function buildSourceQuery(query: string, location: string, source: SearchSource) {
+  return `${query} ${location} ${SOURCE_QUERY_SUFFIXES[source]}`;
+}
+
+// ---------------------------------------------------------------------------
+// LISTING HARVEST
+// ---------------------------------------------------------------------------
+
+/**
+ * Ambil link halaman detail lowongan dari halaman listing/pencarian job board.
+ * Link diambil bergiliran dari tiap listing supaya satu situs tidak mendominasi.
+ */
+async function harvestDetailUrls(
+  listings: SearchResult[],
+  max: number,
+  seenUrls: Set<string>,
+  log: Logger,
+) {
+  const targets = listings.filter((l) => l.board !== "other").slice(0, MAX_LISTING_PAGES);
+  const needFetch = targets.filter((l) => !l.original_content || l.original_content.length < 500);
+  const pages =
+    needFetch.length > 0 ? await extractSourcePages(needFetch, log) : new Map<string, PageData>();
+
+  const perListing = targets.map((listing) => {
+    const page = pages.get(listing.url);
+    const content = page?.content || listing.original_content || "";
+    const links = [...(page?.links || []), ...extractLinksFromText(content, listing.url)];
+    const found: SearchResult[] = [];
+    for (const link of links) {
+      const classified = classifyUrl(link.url);
+      if (!classified || classified.kind !== "detail" || classified.board !== listing.board)
+        continue;
+      if (seenUrls.has(classified.url)) continue;
+      seenUrls.add(classified.url);
+      found.push({
+        title: cleanText(link.text, 160),
+        url: classified.url,
+        content: "",
+        source: listing.source,
+        board: classified.board,
+        kind: "detail",
+      });
+    }
+    return found;
+  });
+
+  const harvested: SearchResult[] = [];
+  for (let round = 0; harvested.length < max; round++) {
+    const batch = perListing.map((list) => list[round]).filter(Boolean);
+    if (batch.length === 0) break;
+    harvested.push(...batch.slice(0, max - harvested.length));
+  }
+
+  log.info("listing_harvest", {
+    listings: targets.length,
+    fetched: pages.size,
+    harvested: harvested.length,
+    per_listing: perListing.map((list) => list.length),
+  });
+  return harvested;
+}
+
+function extractLinksFromText(text: string, baseUrl: string): PageLink[] {
+  const links: PageLink[] = [];
+  for (const match of text.matchAll(/\[([^\]]{0,200})\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g)) {
+    const url = resolveUrl(match[2], baseUrl);
+    if (url) links.push({ url, text: match[1] });
+  }
+  for (const match of text.matchAll(/https?:\/\/[^\s)"'<>\]]+/g)) {
+    links.push({ url: match[0], text: "" });
+  }
+  return links;
+}
+
+function extractLinksFromHtml(html: string, baseUrl: string): PageLink[] {
+  const links: PageLink[] = [];
+  // Kartu lowongan bisa berisi markup panjang, jadi teks diambil dari potongan
+  // setelah tag pembuka (bukan sampai </a>).
+  for (const match of html.matchAll(/<a\b[^>]*\bhref=["']([^"']+)["'][^>]*>/gi)) {
+    const url = resolveUrl(decodeHtmlEntities(match[1]), baseUrl);
+    if (!url) continue;
+    const after = html.slice(
+      (match.index ?? 0) + match[0].length,
+      (match.index ?? 0) + match[0].length + 800,
+    );
+    links.push({ url, text: cleanText(stripHtml(after.split(/<\/a>/i)[0]), 200) });
+  }
+  return links;
+}
+
+function resolveUrl(href: string, baseUrl: string) {
+  try {
+    return new URL(href, baseUrl).toString();
+  } catch {
+    return null;
+  }
+}
+
 // ---------------------------------------------------------------------------
 // ENRICHMENT
 // ---------------------------------------------------------------------------
 
-async function enrichSearchResults(results: SearchResult[], limit: number, log: Logger) {
-  const enrichLimit = Math.min(results.length, Math.max(limit * 2, 20));
-  const targets = results.slice(0, enrichLimit);
-  const extracted = await extractSourcePages(targets, log);
+async function enrichSearchResults(results: SearchResult[], log: Logger) {
+  const pages = await extractSourcePages(results, log);
 
   return results.map((result) => {
-    const page = extracted.get(result.url);
+    const page = pages.get(result.url);
     if (!page) return result;
-    const existingContent = result.original_content || "";
+    const existing = result.original_content || "";
+    const useExisting = existing.length >= page.content.length;
     return {
       ...result,
-      original_content:
-        existingContent.length >= page.content.length ? existingContent : page.content,
-      original_content_source:
-        existingContent.length >= page.content.length
-          ? result.original_content_source
-          : page.source,
+      original_content: useExisting ? existing : page.content,
+      original_content_source: useExisting ? result.original_content_source : page.source,
+      links: page.links,
+      structured: page.structured,
     };
   });
 }
 
+/**
+ * Tavily extract untuk halaman yang belum punya konten, lalu direct fetch untuk
+ * yang masih kosong + halaman yang biasanya punya JSON-LD JobPosting (tanggal
+ * posting & validThrough paling akurat datang dari sana).
+ */
 async function extractSourcePages(results: SearchResult[], log: Logger) {
-  const validUrls = results.map((r) => r.url).filter(Boolean);
-  const pageMap = new Map<string, { content: string; source: "tavily_extract" | "direct_fetch" }>();
+  const pageMap = new Map<string, PageData>();
+
+  const needTavily = results
+    .filter((r) => !r.original_content || r.original_content.length < 800)
+    .map((r) => r.url);
 
   const tavilyKey = Deno.env.get("TAVILY_API_KEY");
-  if (tavilyKey && validUrls.length > 0) {
+  if (tavilyKey && needTavily.length > 0) {
     const batchSize = 20;
-    for (let i = 0; i < validUrls.length; i += batchSize) {
-      const batch = validUrls.slice(i, i + batchSize);
-      log.debug("tavily_extract_batch", { batch_index: i / batchSize, urls: batch.length });
+    for (let i = 0; i < needTavily.length; i += batchSize) {
+      const batch = needTavily.slice(i, i + batchSize);
       try {
         const res = await fetch("https://api.tavily.com/extract", {
           method: "POST",
@@ -587,9 +922,15 @@ async function extractSourcePages(results: SearchResult[], log: Logger) {
           let extracted = 0;
           for (const item of data.results || []) {
             const url = String(item.url || "");
-            const content = cleanContent(item.raw_content || item.content || "", 20000);
+            const rawContent = String(item.raw_content || item.content || "");
+            const content = cleanContent(rawContent, 20000);
             if (url && content.length > 120) {
-              pageMap.set(url, { content, source: "tavily_extract" });
+              pageMap.set(url, {
+                content,
+                source: "tavily_extract",
+                links: extractLinksFromText(rawContent, url),
+                structured: null,
+              });
               extracted++;
             }
           }
@@ -606,35 +947,44 @@ async function extractSourcePages(results: SearchResult[], log: Logger) {
     }
   }
 
-  const missing = results.filter((r) => !pageMap.has(r.url)).slice(0, 12);
-  log.debug("direct_fetch_start", { urls: missing.length });
+  // Jobstreet/Glints/Kalibrr memblokir fetch langsung (403), jadi direct fetch
+  // diprioritaskan untuk halaman yang belum punya konten, lalu Dealls & situs lain.
+  const hasContent = (r: SearchResult) =>
+    pageMap.has(r.url) || (r.original_content?.length || 0) >= MIN_PAGE_CONTENT_CHARS;
+  const directTargets = [
+    ...results.filter((r) => !hasContent(r)),
+    ...results.filter((r) => hasContent(r) && (r.board === "dealls" || r.board === "other")),
+  ].slice(0, DIRECT_FETCH_LIMIT);
 
   const directPages = await Promise.allSettled(
-    missing.map(async (result) => ({
+    directTargets.map(async (result) => ({
       url: result.url,
-      content: await fetchPageText(result.url, log),
+      page: await fetchPage(result.url, log),
     })),
   );
 
   let directOk = 0;
-  let directFailed = 0;
   for (const settled of directPages) {
-    if (settled.status === "fulfilled" && settled.value.content.length > 120) {
-      pageMap.set(settled.value.url, { content: settled.value.content, source: "direct_fetch" });
-      directOk++;
+    if (settled.status !== "fulfilled" || !settled.value.page) continue;
+    const { url, page } = settled.value;
+    const existing = pageMap.get(url);
+    if (existing && existing.content.length >= page.content.length) {
+      existing.structured = page.structured;
+      existing.links = [...existing.links, ...page.links];
     } else {
-      directFailed++;
+      pageMap.set(url, page);
     }
+    directOk++;
   }
-  log.info("direct_fetch_done", { ok: directOk, failed: directFailed });
+  log.info("direct_fetch_done", { attempted: directTargets.length, ok: directOk });
 
   return pageMap;
 }
 
-async function fetchPageText(url: string, log: Logger) {
+async function fetchPage(url: string, log: Logger): Promise<PageData | null> {
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 10000);
+    const timeout = setTimeout(() => controller.abort(), 8000);
     const res = await fetch(url, {
       signal: controller.signal,
       headers: {
@@ -647,191 +997,369 @@ async function fetchPageText(url: string, log: Logger) {
 
     if (!res.ok) {
       log.debug("direct_fetch_skip", { url, status: res.status });
-      return "";
+      return null;
     }
     const contentType = res.headers.get("content-type") || "";
     if (!contentType.includes("text/html") && !contentType.includes("text/plain")) {
-      log.debug("direct_fetch_skip", {
-        url,
-        reason: "non-html content-type",
-        content_type: contentType,
-      });
-      return "";
+      log.debug("direct_fetch_skip", { url, reason: "non-html", content_type: contentType });
+      return null;
     }
 
     const html = await res.text();
     const structured = extractStructuredJobPosting(html);
-    const text = cleanContent(`${structured}\n\n${stripHtml(html)}`, 16000);
-    log.debug("direct_fetch_ok", { url, chars: text.length });
-    return text;
+    const content = cleanContent(`${structured.text}\n\n${stripHtml(html)}`, 16000);
+    if (content.length <= 120) return null;
+    return {
+      content,
+      source: "direct_fetch",
+      links: extractLinksFromHtml(html, url),
+      structured: structured.job,
+    };
   } catch (err) {
     log.debug("direct_fetch_error", {
       url,
       error: err instanceof Error ? err.message : String(err),
     });
-    return "";
+    return null;
   }
+}
+
+// ---------------------------------------------------------------------------
+// PAGE ASSESSMENT (closed / expired / stale)
+// ---------------------------------------------------------------------------
+
+function assessPage(result: SearchResult, today: string): AssessedPage | RejectReason {
+  const text = cutSimilarJobsSection(result.original_content || "");
+  if (text.length < MIN_PAGE_CONTENT_CHARS) return "no_content";
+  if (isClosedJobText(text)) return "closed";
+
+  const structured = result.structured;
+  const postedAt =
+    validPostedDate(parseHumanDate(structured?.datePosted), today) ||
+    validPostedDate(extractPostedDate(text, today), today);
+  const deadline =
+    validDeadline(parseHumanDate(structured?.validThrough), today) ||
+    validDeadline(extractDeadline(text), today);
+
+  const freshness = freshnessRejection(postedAt, deadline, today);
+  if (freshness) return freshness;
+
+  // Situs di luar job board besar sering menyalin lowongan lama tanpa update —
+  // wajib ada tanggal yang bisa diverifikasi.
+  if (result.board === "other" && !postedAt && !deadline) return "undated";
+
+  return { result, text, postedAt, deadline };
+}
+
+function freshnessRejection(
+  postedAt: string | null,
+  deadline: string | null,
+  today: string,
+): RejectReason | null {
+  if (deadline && deadline < today) return "expired";
+  const stillOpenByDeadline = Boolean(deadline && deadline >= today);
+  if (postedAt && daysBetween(postedAt, today) > MAX_POSTED_AGE_DAYS && !stillOpenByDeadline)
+    return "stale";
+  return null;
+}
+
+const CLOSED_JOB_MARKERS = [
+  "lowongan ini sudah ditutup",
+  "lowongan ini telah ditutup",
+  "lowongan sudah ditutup",
+  "lowongan ini sudah tidak tersedia",
+  "lowongan ini tidak tersedia lagi",
+  "lowongan ini sudah kedaluwarsa",
+  "lowongan ini sudah tidak aktif",
+  "iklan lowongan ini sudah tidak",
+  "pekerjaan ini sudah ditutup",
+  "pekerjaan ini sudah tidak tersedia",
+  "sudah tidak menerima lamaran",
+  "tidak lagi menerima lamaran",
+  "this job is no longer available",
+  "this job is no longer advertised",
+  "this job is no longer accepting applications",
+  "no longer accepting applications",
+  "this job has expired",
+  "this job is closed",
+  "this job has been closed",
+  "this position has been filled",
+  "this position is no longer available",
+  "job ad has expired",
+  "job is no longer active",
+];
+
+function isClosedJobText(text: string) {
+  const normalized = normalizeWords(text);
+  return CLOSED_JOB_MARKERS.some((marker) => normalized.includes(marker));
+}
+
+/**
+ * Halaman detail biasanya diakhiri daftar "lowongan serupa" yang punya tanggal
+ * & judul sendiri — buang supaya tidak tercampur dengan lowongan utama.
+ */
+function cutSimilarJobsSection(content: string) {
+  const match = content.search(
+    /\n[#*>\s-]*(lowongan serupa|lowongan lainnya|lowongan terkait|lowongan lain dari|pekerjaan serupa|rekomendasi lowongan|similar jobs|related jobs|more jobs from|other jobs|jobs you may|you may also like|people also viewed|lihat lowongan lain)/i,
+  );
+  if (match > 400 && match > content.length * 0.2) return content.slice(0, match).trim();
+  return content;
+}
+
+const MONTHS: Record<string, number> = {
+  januari: 1,
+  january: 1,
+  jan: 1,
+  februari: 2,
+  pebruari: 2,
+  february: 2,
+  feb: 2,
+  maret: 3,
+  march: 3,
+  mar: 3,
+  april: 4,
+  apr: 4,
+  mei: 5,
+  may: 5,
+  juni: 6,
+  june: 6,
+  jun: 6,
+  juli: 7,
+  july: 7,
+  jul: 7,
+  agustus: 8,
+  august: 8,
+  agu: 8,
+  agt: 8,
+  ags: 8,
+  aug: 8,
+  september: 9,
+  sept: 9,
+  sep: 9,
+  oktober: 10,
+  october: 10,
+  okt: 10,
+  oct: 10,
+  november: 11,
+  nopember: 11,
+  nov: 11,
+  desember: 12,
+  december: 12,
+  des: 12,
+  dec: 12,
+};
+
+/** Parse tanggal ISO, D/M/Y (format Indonesia), atau nama bulan ID/EN → YYYY-MM-DD. */
+function parseHumanDate(value: unknown): string | null {
+  const s = String(value || "")
+    .trim()
+    .toLowerCase();
+  if (!s) return null;
+
+  let m = s.match(/(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (m) return ymd(+m[1], +m[2], +m[3]);
+
+  m = s.match(/\b(\d{1,2})[/.-](\d{1,2})[/.-](\d{2,4})\b/);
+  if (m) {
+    const year = m[3].length === 2 ? 2000 + Number(m[3]) : Number(m[3]);
+    return ymd(year, +m[2], +m[1]);
+  }
+
+  m = s.match(/\b(\d{1,2})\s+([a-z]+)\.?,?\s+(\d{4})\b/);
+  if (m && MONTHS[m[2]]) return ymd(+m[3], MONTHS[m[2]], +m[1]);
+
+  m = s.match(/\b([a-z]+)\.?\s+(\d{1,2}),?\s+(\d{4})\b/);
+  if (m && MONTHS[m[1]]) return ymd(+m[3], MONTHS[m[1]], +m[2]);
+
+  return null;
+}
+
+function ymd(year: number, month: number, day: number) {
+  if (year < 2000 || year > 2100 || month < 1 || month > 12 || day < 1 || day > 31) return null;
+  const date = new Date(Date.UTC(year, month - 1, day));
+  if (date.getUTCMonth() !== month - 1) return null;
+  return date.toISOString().slice(0, 10);
+}
+
+/** "Diposting 3 hari yang lalu", "Posted 2d ago", "Posted on 12 Sep 2026", dll. */
+function extractPostedDate(text: string, today: string): string | null {
+  const region = text.slice(0, 6000);
+
+  const absolute = region.match(
+    /(?:diposting|dipasang|diiklankan|dipublikasikan|tanggal posting|tanggal tayang|date posted|posted on|posted|published)\s*(?:pada|on)?\s*:?\s*([0-9]{1,2}\s+[A-Za-z]+\.?,?\s+[0-9]{4}|[0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{1,2}[/.-][0-9]{1,2}[/.-][0-9]{2,4}|\b[A-Za-z]{3,}\.?\s+[0-9]{1,2},?\s+[0-9]{4})/i,
+  );
+  const absoluteDate = parseHumanDate(absolute?.[1]);
+  if (absoluteDate) return absoluteDate;
+
+  if (
+    /(?:diposting|dipasang|diiklankan|diperbarui|posted|updated|listed)\s*(?:pada\s*)?(?:hari ini|today|baru saja|just now)/i.test(
+      region,
+    )
+  ) {
+    return today;
+  }
+  if (
+    /(?:diposting|dipasang|diiklankan|diperbarui|posted|updated|listed)\s*(?:pada\s*)?(?:kemarin|yesterday)/i.test(
+      region,
+    )
+  ) {
+    return addDays(today, -1);
+  }
+
+  const relativePattern =
+    /(\d{1,3})\s*\+?\s*(menit|jam|hari|minggu|bulan|tahun|minutes?|mins?|hours?|hrs?|days?|weeks?|months?|years?|bln|mo|[mhdwy])\b\s*\+?\s*(yang\s+lalu|lalu|ago)/gi;
+  for (const relative of region.matchAll(relativePattern)) {
+    const amount = Number(relative[1]);
+    const unit = relative[2].toLowerCase();
+    const indonesian = /lalu/i.test(relative[3]);
+    const isLongUnit = /^(bulan|tahun|months?|years?|bln|mo|y)$/.test(unit);
+    // "berdiri sejak 20 tahun yang lalu" bukan tanggal posting — satuan bulan/tahun
+    // hanya dipercaya kalau didahului kata kunci posting.
+    const prefix = region.slice(Math.max(0, (relative.index ?? 0) - 30), relative.index);
+    if (
+      isLongUnit &&
+      !/(diposting|dipasang|diiklankan|diperbarui|ditayangkan|posted|updated|listed)/i.test(prefix)
+    )
+      continue;
+
+    let days: number;
+    if (/^(menit|minutes?|mins?|m|jam|hours?|hrs?)$/.test(unit)) days = 0;
+    // "3h yang lalu" (ID) = 3 hari; "3h ago" (EN) = 3 jam.
+    else if (unit === "h") days = indonesian ? amount : 0;
+    else if (/^(hari|days?|d)$/.test(unit)) days = amount;
+    else if (/^(minggu|weeks?|w)$/.test(unit)) days = amount * 7;
+    else if (/^(bulan|months?|bln|mo)$/.test(unit)) days = amount * 30;
+    else days = amount * 365;
+
+    return addDays(today, -days);
+  }
+  return null;
+}
+
+function extractDeadline(text: string) {
+  const match = text.match(
+    /(?:deadline|batas (?:akhir )?(?:lamaran|pendaftaran|pengiriman|waktu)|ditutup(?: pada)?|tutup pada|closing date|close date|apply before|lamar sebelum|kirim lamaran (?:paling lambat|sebelum)|berlaku (?:hingga|sampai)|valid (?:until|through)|expires?(?: on)?)[^\n\d]{0,30}?([0-9]{1,2}\s+[A-Za-zÀ-ÿ]+\.?,?\s+[0-9]{4}|[0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{1,2}[/.-][0-9]{1,2}[/.-][0-9]{2,4}|\b[A-Za-z]{3,}\.?\s+[0-9]{1,2},?\s+[0-9]{4})/i,
+  );
+  return parseHumanDate(match?.[1] || null);
+}
+
+/** Tanggal posting di masa depan = salah parse, abaikan. */
+function validPostedDate(date: string | null, today: string) {
+  if (!date || date > today) return null;
+  return date;
+}
+
+/** Deadline >400 hari ke depan hampir pasti salah parse, abaikan. */
+function validDeadline(date: string | null, today: string) {
+  if (!date) return null;
+  if (daysBetween(today, date) > 400) return null;
+  return date;
+}
+
+function jakartaToday() {
+  return new Date(Date.now() + 7 * 3600_000).toISOString().slice(0, 10);
+}
+
+function addDays(date: string, days: number) {
+  const d = new Date(`${date}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
+function daysBetween(from: string, to: string) {
+  return Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86_400_000);
+}
+
+function endOfDayJakarta(date: string) {
+  return new Date(`${date}T23:59:59+07:00`).toISOString();
 }
 
 // ---------------------------------------------------------------------------
 // AI EXTRACTION
 // ---------------------------------------------------------------------------
 
-async function extractJobsWithAi(
-  query: string,
-  location: string,
-  results: SearchResult[],
-  limit: number,
-  log: Logger,
-) {
+/** Return map: index halaman di `pages` → lowongan hasil ekstraksi AI. */
+async function extractJobsWithAi(pages: AssessedPage[], today: string, log: Logger) {
   const aiKey = Deno.env.get("AI_API_KEY");
   if (!aiKey) throw new Error("AI_API_KEY tidak dikonfigurasi.");
 
-  const richResults = results.filter((r) => r.original_content && r.original_content.length > 300);
-  const snippetResults = results.filter(
-    (r) => !r.original_content || r.original_content.length <= 300,
-  );
+  const batches: number[][] = [];
+  for (let i = 0; i < pages.length; i += AI_PAGES_PER_BATCH) {
+    batches.push(pages.slice(i, i + AI_PAGES_PER_BATCH).map((_, j) => i + j));
+  }
 
-  log.info("ai_batch_split", { rich: richResults.length, snippet: snippetResults.length });
-
-  const batchLimit = Math.ceil(limit / 2);
-  const batches: ExtractedJob[][] = [];
-
-  if (richResults.length > 0) {
-    log.info("ai_batch_start", {
-      mode: "rich",
-      inputs: Math.min(richResults.length, limit),
-      target: batchLimit,
+  const results = new Map<number, ExtractedJob>();
+  await mapWithConcurrency(batches, AI_BATCH_CONCURRENCY, async (indexes) => {
+    const jobs = await extractBatch(
+      indexes.map((i) => pages[i]),
+      today,
+      aiKey,
+      log,
+    ).catch((err) => {
+      log.error("ai_batch_failed", { message: err instanceof Error ? err.message : String(err) });
+      return new Map<number, ExtractedJob>();
     });
-    const batch1 = await extractBatch(
-      query,
-      location,
-      richResults.slice(0, limit),
-      batchLimit,
-      aiKey,
-      "rich",
-      log,
-    );
-    log.info("ai_batch_done", { mode: "rich", jobs: batch1.length });
-    batches.push(batch1);
-  }
+    for (const [localIndex, job] of jobs) results.set(indexes[localIndex], job);
+  });
 
-  if (snippetResults.length > 0 && (batches[0]?.length ?? 0) < limit) {
-    const remaining = limit - (batches[0]?.length || 0);
-    log.info("ai_batch_start", {
-      mode: "snippet",
-      inputs: Math.min(snippetResults.length, 16),
-      target: remaining,
-    });
-    const batch2 = await extractBatch(
-      query,
-      location,
-      snippetResults.slice(0, 16),
-      remaining,
-      aiKey,
-      "snippet",
-      log,
-    );
-    log.info("ai_batch_done", { mode: "snippet", jobs: batch2.length });
-    batches.push(batch2);
-  }
-
-  // FIX: Jika sama sekali tidak ada hasil setelah split, coba extraction dengan semua data
-  if (batches.every((b) => b.length === 0) && results.length > 0) {
-    log.warn("ai_all_batches_empty", { reason: "retrying with combined results" });
-    const combined = await extractBatch(
-      query,
-      location,
-      results.slice(0, limit),
-      limit,
-      aiKey,
-      "rich",
-      log,
-    );
-    batches.push(combined);
-  }
-
-  const allJobs = batches.flat().map((job) => enhanceJobFromSources(job, results));
-  const seen = new Set<string>();
-  const deduped = allJobs
-    .filter((job) => {
-      const key = normalizeForDedup(`${job.title}|${job.company}`);
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    })
-    .slice(0, limit);
-
-  log.info("ai_dedup", { before: allJobs.length, after: deduped.length });
-  return deduped;
+  log.info("ai_extract_done", { pages: pages.length, jobs: results.size });
+  return results;
 }
 
+/** Return map: index halaman di batch (0-based) → lowongan. */
 async function extractBatch(
-  query: string,
-  location: string,
-  results: SearchResult[],
-  limit: number,
+  pages: AssessedPage[],
+  today: string,
   aiKey: string,
-  mode: "rich" | "snippet",
   log: Logger,
   attempt = 1,
-) {
-  const modeNote =
-    mode === "rich"
-      ? "Konten halaman lengkap tersedia di field original_content — ekstrak detail sebanyak mungkin."
-      : "Gunakan snippet dan judul untuk mengekstrak informasi. Lebih ringkas tapi tetap akurat.";
+): Promise<Map<number, ExtractedJob>> {
+  const payload = pages.map((page, index) => ({
+    page_id: index + 1,
+    url: page.result.url,
+    search_title: page.result.title || null,
+    structured_job_posting: page.result.structured || null,
+    content: prepareAiContent(page.text, AI_CONTENT_CHARS),
+  }));
 
   const prompt = [
     "Kamu adalah parser lowongan kerja Indonesia yang sangat teliti.",
-    `Ekstrak maksimal ${limit} lowongan pekerjaan dari data berikut dan kembalikan JSON valid: {"jobs":[...]}`,
-    "Jangan membuat, menebak, atau menambah informasi yang tidak ada di DATA SUMBER.",
-    "Output harus ringkas. Jangan menyalin isi halaman penuh.",
+    `Hari ini: ${today}.`,
+    `Ada ${pages.length} halaman. Kembalikan JSON valid: {"jobs":[...]} dengan TEPAT satu objek per halaman (pakai page_id yang sama).`,
+    "Jangan membuat, menebak, atau menambah informasi yang tidak ada di halaman.",
     "",
-    "=== INSTRUKSI FIELD ===",
-    "WAJIB ADA: title, company, location, description",
-    "ISI JIKA ADA: type, level, industry, salary_min, salary_max, salary_currency, salary_period,",
-    "             responsibilities, requirements, qualifications, benefits, tech_stack, work_mode, deadline",
-    "",
-    "=== PANDUAN PENGISIAN ===",
-    "title         : Nama jabatan yang tepat (misal: 'Senior Frontend Engineer', bukan 'Lowongan IT')",
-    "company       : Nama perusahaan lengkap dan benar",
-    "location      : Kota/provinsi (misal: 'Jakarta Selatan', 'Bandung', 'Remote')",
-    "description   : Ringkasan 1-2 kalimat dari sumber, maksimal 280 karakter.",
-    "responsibilities: Hanya tanggung jawab yang eksplisit tertulis di sumber, tiap item dipisah newline (\\n). Null jika tidak ada.",
-    "requirements  : Hanya requirement wajib yang eksplisit tertulis di sumber, tiap item dipisah \\n. Null jika tidak ada.",
-    "qualifications: Hanya skill/kualifikasi yang eksplisit tertulis di sumber, tiap item dipisah \\n. Null jika tidak ada.",
-    "benefits      : Hanya fasilitas/benefit yang eksplisit tertulis di sumber, tiap item dipisah \\n. Null jika tidak ada.",
-    "tech_stack    : Hanya tools/teknologi yang eksplisit tertulis di sumber, pisah dengan koma. Null jika tidak ada.",
-    "work_mode     : 'onsite' | 'remote' | 'hybrid'",
+    "=== FIELD ===",
+    "page_id       : angka page_id dari input",
+    "is_job_detail : true HANYA jika halaman adalah detail SATU lowongan spesifik. false jika halaman listing/hasil pencarian,",
+    "                artikel, halaman login/consent, profil perusahaan, atau isinya tidak jelas. Jika false, field lain boleh null.",
+    "is_closed     : true jika halaman menyatakan lowongan sudah ditutup/kedaluwarsa/tidak menerima lamaran.",
+    "title         : Nama jabatan persis (misal 'Senior Frontend Engineer'). Tanpa nama perusahaan, kota, atau nama situs.",
+    "company       : Nama perusahaan yang merekrut. null jika tidak disebut/dirahasiakan. JANGAN isi nama job board (Jobstreet, Glints, dll).",
+    "location      : Kota/kabupaten (+ provinsi jika ada), misal 'Jakarta Selatan' atau 'Bandung, Jawa Barat'. 'Remote' jika full remote.",
+    "posted_date   : Tanggal lowongan diposting/diperbarui, format YYYY-MM-DD. Hitung dari teks relatif (misal '3 hari yang lalu') memakai tanggal hari ini. null jika tidak ada.",
+    "deadline      : Tanggal tutup lamaran YYYY-MM-DD, null jika tidak ada.",
+    "description   : Ringkasan 2-3 kalimat tentang peran ini dari halaman, maksimal 400 karakter.",
+    "responsibilities, requirements, qualifications, benefits : item yang eksplisit tertulis, dipisah \\n, maksimal 8 item per field. null jika tidak ada.",
+    "tech_stack    : tools/teknologi yang eksplisit tertulis, pisah koma. null jika tidak ada.",
+    "work_mode     : 'onsite' | 'remote' | 'hybrid' | null",
     "type          : 'full-time' | 'part-time' | 'contract' | 'internship'",
     "level         : 'entry' | 'mid' | 'senior' | 'manager' | 'director'",
-    "salary_min    : Angka bulat (IDR), null jika tidak disebutkan",
-    "salary_max    : Angka bulat (IDR), null jika tidak disebutkan",
+    "industry      : bidang industri perusahaan jika jelas, null jika tidak",
+    "salary_min, salary_max : angka bulat sesuai mata uang, null jika tidak disebutkan",
     "salary_currency: 'IDR' | 'USD' | dll, null jika tidak ada",
     "salary_period : 'monthly' | 'yearly' | null",
-    "deadline      : Tanggal tutup lamaran format YYYY-MM-DD, null jika tidak ada",
-    "source_url    : URL lengkap halaman lowongan",
     "",
-    "=== ATURAN KUALITAS ===",
-    "- Satu URL = satu lowongan (jangan duplikasi)",
-    "- Jangan mengarang deskripsi, tanggung jawab, requirement, benefit, gaji, deadline, company, atau posisi.",
-    "- Jika informasi tidak muncul eksplisit di sumber, isi null. Jangan isi dengan asumsi umum untuk role tersebut.",
-    "- Boleh merapikan bahasa, tetapi maknanya harus tetap sama dengan sumber asli.",
-    "- Jika company tidak jelas, gunakan domain URL sebagai petunjuk",
-    "- Jika halaman adalah listing umum (bukan detail 1 lowongan), ekstrak hanya lowongan yang title, company, location, dan URL-nya jelas",
-    "- Tulis dalam Bahasa Indonesia yang natural dan profesional tanpa menambahkan fakta baru",
-    "- Batasi responsibilities/requirements/qualifications/benefits maksimal 5 item singkat per field",
-    `- ${modeNote}`,
+    "=== ATURAN ===",
+    "- Pertahankan bahasa asli halaman (jangan terjemahkan) agar isi bisa diverifikasi ke sumber.",
+    "- Abaikan navigasi, footer, cookie banner, dan daftar lowongan lain di halaman.",
+    "- Jika informasi tidak muncul eksplisit, isi null.",
+    "- Output hanya JSON, tanpa markdown.",
     "",
-    `Keyword: ${query}`,
-    `Target lokasi: ${location}`,
-    `Maksimal job: ${limit}`,
-    "",
-    "=== DATA SUMBER ===",
-    JSON.stringify(buildAiSourcePayload(results, mode, limit), null, 2),
+    "=== HALAMAN ===",
+    JSON.stringify(payload),
   ].join("\n");
 
-  const maxTokens = Math.min(4096, Math.max(1400, limit * 520));
+  const maxTokens = Math.min(4096, 400 + pages.length * 750);
 
   const t0 = Date.now();
   const res = await fetch(AI_GATEWAY_URL, {
@@ -858,7 +1386,7 @@ async function extractBatch(
 
   if (!res.ok) {
     const text = await res.text().catch(() => "");
-    log.error("ai_call_failed", { mode, status: res.status, body: text.slice(0, 300) });
+    log.error("ai_call_failed", { status: res.status, body: text.slice(0, 300) });
     throw new Error("AI extraction gagal.");
   }
 
@@ -866,174 +1394,109 @@ async function extractBatch(
   const usage = data.usage || {};
   const finishReason = data.choices?.[0]?.finish_reason ?? null;
   log.info("ai_call_ok", {
-    mode,
+    pages: pages.length,
     attempt,
     latency_ms: Date.now() - t0,
     prompt_tokens: usage.prompt_tokens ?? null,
     completion_tokens: usage.completion_tokens ?? null,
-    total_tokens: usage.total_tokens ?? null,
     finish_reason: finishReason,
   });
 
   const content = data.choices?.[0]?.message?.content || "{}";
   const parsed = parseJobsFromContent(content);
-  const jobs = parsed.jobs.slice(0, limit);
+  if (parsed.recovered) log.warn("ai_parse_recovered", { attempt, jobs: parsed.jobs.length });
 
-  if (finishReason === "length") {
-    log.warn("ai_response_truncated", { mode, attempt, recovered_jobs: jobs.length });
-  }
-
-  if (parsed.recovered && jobs.length > 0) {
-    log.warn("ai_parse_recovered", { mode, attempt, jobs: jobs.length });
-  }
-
-  if (jobs.length === 0) {
-    log.warn("ai_parse_unexpected", { mode, attempt, content_preview: content.slice(0, 200) });
-
-    if (finishReason === "length" && attempt < 2 && results.length > 1) {
-      const retryResults = results.slice(0, Math.max(3, Math.ceil(results.length / 2)));
-      const retryLimit = Math.max(1, Math.min(limit, 4));
-      log.warn("ai_retry_compact", {
-        mode,
-        attempt: attempt + 1,
-        inputs: retryResults.length,
-        target: retryLimit,
-      });
-      return extractBatch(query, location, retryResults, retryLimit, aiKey, mode, log, attempt + 1);
+  const byPage = new Map<number, ExtractedJob>();
+  for (const job of parsed.jobs) {
+    const index = Number(job.page_id) - 1;
+    if (Number.isInteger(index) && index >= 0 && index < pages.length && !byPage.has(index)) {
+      byPage.set(index, job);
     }
   }
 
-  return jobs;
-}
-
-function buildAiSourcePayload(results: SearchResult[], mode: "rich" | "snippet", limit: number) {
-  const sourceLimit =
-    mode === "rich"
-      ? Math.min(results.length, Math.max(Math.min(limit, RICH_AI_SOURCE_LIMIT), 3))
-      : Math.min(results.length, Math.max(limit * 2, 8));
-  const contentLimit = mode === "rich" ? RICH_AI_CONTENT_CHARS : SNIPPET_AI_CONTENT_CHARS;
-
-  return results.slice(0, sourceLimit).map((r) => ({
-    title: r.title,
-    url: r.url,
-    snippet: r.content?.slice(0, 320),
-    full_content: compactJobSourceText(r.original_content || r.content || "", contentLimit) || null,
-  }));
-}
-
-function compactJobSourceText(value: unknown, maxLength: number) {
-  const source = cleanContent(value, maxLength * 3);
-  if (!source) return "";
-
-  const importantPattern =
-    /title:|company:|description:|employment type|qualifications|responsibilities|skills|salary|valid through|requirement|persyaratan|kualifikasi|tanggung jawab|deskripsi|benefit|fasilitas|remote|hybrid|onsite|full-time|part-time|contract|intern/i;
-
-  const lines = source
-    .split(/\n+/)
-    .map((line) => line.trim())
-    .filter((line) => line.length > 2 && !isJobContentNoise(line));
-  const lead = lines.slice(0, 36);
-  const important = lines.filter((line) => importantPattern.test(line)).slice(0, 42);
-
-  const seen = new Set<string>();
-  const merged = [...important, ...lead].filter((line) => {
-    const key = normalizeWords(line).slice(0, 100);
-    if (!key || seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
-
-  return cleanContent(merged.join("\n"), maxLength);
-}
-
-// ---------------------------------------------------------------------------
-// ROW BUILDER
-// ---------------------------------------------------------------------------
-
-function toJobRow(
-  job: ExtractedJob,
-  fallbackQuery: string,
-  fallbackLocation: string,
-  sourceResults: SearchResult[] = [],
-) {
-  const title = cleanJobTitle(job.title || fallbackQuery);
-  const company = cleanJobText(job.company || "", 120);
-  const location = cleanJobText(job.location || fallbackLocation, 120);
-  const description = cleanJobDescription(job.description || "", 2000);
-  const matchedSource = findSourceForJob({ ...job, title, company, location }, sourceResults);
-  const fallbackSourceUrl = sourceResults.map((result) => cleanUrl(result.url)).find(Boolean);
-  const sourceUrl =
-    cleanUrl(job.source_url) || cleanUrl(matchedSource?.url) || fallbackSourceUrl || null;
-  const sourceText = matchedSource
-    ? cleanContent(
-      `${matchedSource.title}\n${matchedSource.content}\n${matchedSource.original_content || ""}`,
-      24000,
-    )
-    : "";
-  const parsedSalary = sourceText ? parseSalaryRange(sourceText) : null;
-  const aiCurrency = normalizeSalaryCurrency(job.salary_currency);
-  const hasGroundedSalary = Boolean(parsedSalary?.min || parsedSalary?.max);
-  const salaryMin = normalizeSalary(hasGroundedSalary ? parsedSalary?.min : job.salary_min);
-  const salaryMax = normalizeSalary(hasGroundedSalary ? parsedSalary?.max : job.salary_max);
-  const salaryCurrency = hasGroundedSalary
-    ? parsedSalary?.currency || "IDR"
-    : aiCurrency && isSalaryCurrencyGrounded(aiCurrency, sourceText)
-      ? aiCurrency
-      : "IDR";
-
-  if (!title || !company || !location || description.length < 24) return null;
-
-  return {
-    slug: buildSlug(title, company, location),
-    title,
-    company,
-    location,
-    type: normalizeType(job.type),
-    level: normalizeLevel(job.level),
-    industry: cleanJobText(job.industry || "", 80) || null,
-    salary_min: salaryMin,
-    salary_max: salaryMax,
-    salary_currency: salaryMin || salaryMax ? salaryCurrency || "IDR" : "IDR",
-    salary_period:
-      salaryMin || salaryMax
-        ? parsedSalary?.period || normalizeSalaryPeriod(job.salary_period)
-        : "monthly",
-    description,
-    responsibilities: cleanListText(job.responsibilities || "", 2000) || null,
-    requirements: cleanListText(job.requirements || "", 2000) || null,
-    qualifications: cleanListText(job.qualifications || "", 2000) || null,
-    benefits: cleanListText(job.benefits || "", 1000) || null,
-    tech_stack: cleanJobText(job.tech_stack || "", 500) || null,
-    work_mode: normalizeWorkMode(job.work_mode),
-    deadline: parseDeadline(job.deadline),
-    source_url: sourceUrl,
-    is_active: true,
-    updated_at: new Date().toISOString(),
-  };
-}
-
-// ---------------------------------------------------------------------------
-// SOURCE-BASED ENHANCEMENT
-// ---------------------------------------------------------------------------
-
-function enhanceJobFromSources(job: ExtractedJob, results: SearchResult[]): ExtractedJob {
-  const source = findSourceForJob(job, results);
-  if (!source) return stripUngroundedDetails(job);
-  const sourceUrl = cleanUrl(job.source_url) || cleanUrl(source.url);
-
-  const text = cleanContent(
-    `${source.title}\n${source.content}\n${source.original_content || ""}`,
-    24000,
-  );
-  if (text.length < 120) {
-    return {
-      ...stripUngroundedDetails(job),
-      source_url: sourceUrl,
-    };
+  // Respons terpotong: ulangi sekali untuk halaman yang belum terjawab.
+  const missing = pages.map((_, i) => i).filter((i) => !byPage.has(i));
+  if (finishReason === "length" && attempt < 2 && missing.length > 0) {
+    log.warn("ai_retry_missing", { attempt: attempt + 1, pages: missing.length });
+    const retried = await extractBatch(
+      missing.map((i) => pages[i]),
+      today,
+      aiKey,
+      log,
+      attempt + 1,
+    );
+    for (const [retryIndex, job] of retried) byPage.set(missing[retryIndex], job);
   }
 
-  const salary = parseSalaryRange(text);
+  return byPage;
+}
+
+/** Rapikan markdown/teks halaman untuk AI: buang gambar, link jadi teks, baris noise & duplikat. */
+function prepareAiContent(text: string, maxLength: number) {
+  const seen = new Set<string>();
+  const lines = text
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, " ")
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .split(/\n+/)
+    .map((line) => line.replace(/\s+/g, " ").trim())
+    .filter((line) => line.length > 2 && !isJobContentNoise(line))
+    .filter((line) => {
+      const key = normalizeWords(line).slice(0, 100);
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  return lines.join("\n").slice(0, maxLength);
+}
+
+async function mapWithConcurrency<T, R>(
+  items: T[],
+  concurrency: number,
+  fn: (item: T, index: number) => Promise<R>,
+) {
+  const results: R[] = new Array(items.length);
+  let next = 0;
+  async function worker() {
+    while (next < items.length) {
+      const index = next++;
+      results[index] = await fn(items[index], index);
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(concurrency, items.length) }, worker));
+  return results;
+}
+
+// ---------------------------------------------------------------------------
+// ROW BUILDER & VALIDATION
+// ---------------------------------------------------------------------------
+
+function buildJobRow(job: ExtractedJob, page: AssessedPage, today: string) {
+  if (job.is_job_detail === false) return "not_job_detail" as const;
+  if (job.is_closed === true) return "closed" as const;
+
+  const structured = page.result.structured;
+  const text = page.text;
+
+  // Tanggal deterministik dari halaman diutamakan; tanggal dari AI hanya cadangan.
+  const postedAt = page.postedAt || validPostedDate(parseHumanDate(job.posted_date), today);
+  const deadline = page.deadline || validDeadline(parseHumanDate(job.deadline), today);
+  const freshness = freshnessRejection(postedAt, deadline, today);
+  if (freshness) return freshness;
+  if (page.result.board === "other" && !postedAt && !deadline) return "undated" as const;
+
+  const title = cleanJobTitle(structured?.title || job.title);
+  const company = cleanCompanyName(structured?.company || job.company);
+  if (!isValidJobTitle(title) || !company || normalizeWords(company) === normalizeWords(title))
+    return "low_quality" as const;
+
+  if (structured?.country && !/^(id|idn|indonesia)$/i.test(structured.country))
+    return "foreign_location" as const;
+  const workMode = normalizeWorkMode(job.work_mode) || inferWorkMode(text);
+  const location = normalizeLocation(structured?.location || job.location, workMode);
+  if (!location) return "foreign_location" as const;
+
   const responsibilities =
+    filterGroundedListText(job.responsibilities, text) ||
     extractSectionItems(text, [
       "responsibilities",
       "job description",
@@ -1042,8 +1505,9 @@ function enhanceJobFromSources(job: ExtractedJob, results: SearchResult[]): Extr
       "apa yang akan kamu lakukan",
       "what you will do",
       "the role",
-    ]) || filterGroundedListText(job.responsibilities, text);
+    ]);
   const requirements =
+    filterGroundedListText(job.requirements, text) ||
     extractSectionItems(text, [
       "requirements",
       "persyaratan",
@@ -1052,66 +1516,211 @@ function enhanceJobFromSources(job: ExtractedJob, results: SearchResult[]): Extr
       "what you will need",
       "qualifications",
       "requirements and skills",
-    ]) || filterGroundedListText(job.requirements, text);
+    ]);
   const qualifications =
+    filterGroundedListText(job.qualifications, text) ||
     extractSectionItems(text, [
       "preferred qualifications",
       "nice to have",
       "skill yang dibutuhkan",
       "skills",
       "kompetensi",
-    ]) || filterGroundedListText(job.qualifications, text);
+    ]);
   const benefits =
-    extractSectionItems(text, ["benefits", "perks", "fasilitas", "benefit", "what we offer"]) ||
-    filterGroundedListText(job.benefits, text);
+    filterGroundedListText(job.benefits, text) ||
+    extractSectionItems(text, ["benefits", "perks", "fasilitas", "benefit", "what we offer"]);
+
+  const description = buildSourceDescription(text, job.description, responsibilities);
+  if (description.length < 60) return "low_quality" as const;
+
+  const parsedSalary = parseSalaryRange(text);
+  const hasGroundedSalary = Boolean(parsedSalary.min || parsedSalary.max);
+  const aiCurrency = normalizeSalaryCurrency(job.salary_currency);
+  const salaryMin = normalizeSalary(hasGroundedSalary ? parsedSalary.min : job.salary_min);
+  const salaryMax = normalizeSalary(hasGroundedSalary ? parsedSalary.max : job.salary_max);
+  const salaryCurrency = hasGroundedSalary
+    ? parsedSalary.currency || "IDR"
+    : aiCurrency && isSalaryCurrencyGrounded(aiCurrency, text)
+      ? aiCurrency
+      : "IDR";
+  const hasSalary = Boolean(salaryMin || salaryMax);
+  const now = new Date().toISOString();
 
   return {
-    ...job,
-    source_url: sourceUrl,
-    salary_min: job.salary_min ?? salary.min,
-    salary_max: job.salary_max ?? salary.max,
-    salary_currency: job.salary_currency || salary.currency,
-    salary_period: job.salary_period || salary.period,
-    description: buildSourceDescription(text, job.description, responsibilities),
-    responsibilities,
-    requirements,
-    qualifications,
-    benefits,
+    slug: buildSlug(title, company, primaryCity(location)),
+    title,
+    company,
+    location,
+    type: normalizeType(structured?.employmentType || job.type),
+    level: normalizeLevel(job.level || title),
+    industry: cleanJobText(job.industry || "", 80) || null,
+    salary_min: salaryMin,
+    salary_max: salaryMax,
+    salary_currency: hasSalary ? salaryCurrency : "IDR",
+    salary_period: hasSalary
+      ? parsedSalary.period || normalizeSalaryPeriod(job.salary_period)
+      : "monthly",
+    description,
+    responsibilities: cleanListText(responsibilities || "", 2000) || null,
+    requirements: cleanListText(requirements || "", 2000) || null,
+    qualifications: cleanListText(qualifications || "", 2000) || null,
+    benefits: cleanListText(benefits || "", 1000) || null,
     tech_stack: extractTechStack(text) || filterGroundedInlineText(job.tech_stack, text),
-    work_mode: job.work_mode || inferWorkMode(text),
-    deadline: job.deadline || extractDeadline(text),
+    work_mode: workMode,
+    deadline,
+    posted_at: postedAt ? new Date(`${postedAt}T00:00:00+07:00`).toISOString() : null,
+    expires_at: computeExpiresAt(postedAt, deadline, today),
+    last_seen_at: now,
+    source_url: page.result.url,
+    is_active: true,
+    updated_at: now,
   };
 }
 
-function stripUngroundedDetails(job: ExtractedJob): ExtractedJob {
-  return {
-    ...job,
-    description: "",
-    responsibilities: null,
-    requirements: null,
-    qualifications: null,
-    benefits: null,
-    tech_stack: null,
-  };
+/**
+ * Kapan lowongan otomatis disembunyikan (lihat cron deactivate_expired_job_listings):
+ * deadline jika ada, kalau tidak tanggal posting + MAX_POSTED_AGE_DAYS, kalau
+ * tidak ada keduanya DEFAULT_TTL_DAYS sejak terakhir terlihat.
+ */
+function computeExpiresAt(postedAt: string | null, deadline: string | null, today: string) {
+  if (deadline) return endOfDayJakarta(deadline);
+  if (postedAt) return endOfDayJakarta(addDays(postedAt, MAX_POSTED_AGE_DAYS));
+  return endOfDayJakarta(addDays(today, DEFAULT_TTL_DAYS));
 }
 
-function findSourceForJob(job: ExtractedJob, results: SearchResult[]) {
-  const jobUrl = cleanUrl(job.source_url);
-  if (jobUrl) {
-    const exact = results.find((result) => cleanUrl(result.url) === jobUrl);
-    if (exact) return exact;
+async function reuseExistingSlugs(
+  admin: ReturnType<typeof getAdminClient>,
+  rows: JobRow[],
+  log: Logger,
+) {
+  const { data, error } = await admin
+    .from("job_listings")
+    .select("slug, title, company, source_url")
+    .eq("is_active", true)
+    .order("created_at", { ascending: false })
+    .limit(3000);
+
+  if (error) {
+    log.warn("existing_lookup_failed", { message: error.message });
+    return;
   }
 
-  const jobKey = normalizeForDedup(`${job.title}|${job.company}`);
-  return results.find((result) => {
-    const resultKey = normalizeForDedup(`${result.title}|${result.content}`);
-    return (
-      resultKey.includes(normalizeForDedup(job.title).slice(0, 24)) ||
-      (job.company && resultKey.includes(normalizeForDedup(job.company).slice(0, 18))) ||
-      resultKey.includes(jobKey.slice(0, 30))
-    );
-  });
+  const byKey = new Map<string, string>();
+  const byUrl = new Map<string, string>();
+  for (const existing of data || []) {
+    byKey.set(jobIdentityKey(existing.title, existing.company), existing.slug);
+    if (existing.source_url) byUrl.set(existing.source_url, existing.slug);
+  }
+
+  let reused = 0;
+  for (const row of rows) {
+    const slug = byUrl.get(row.source_url) || byKey.get(jobIdentityKey(row.title, row.company));
+    if (slug && slug !== row.slug) {
+      row.slug = slug;
+      reused++;
+    }
+  }
+  log.info("existing_slugs_reused", { reused, checked: data?.length || 0 });
 }
+
+function jobIdentityKey(title: string, company: string) {
+  const companyKey = normalizeWords(company)
+    .replace(/\b(pt|cv|tbk|persero|indonesia)\b/g, "")
+    .replace(/\s+/g, "");
+  return `${normalizeForDedup(title)}|${companyKey}`;
+}
+
+const JOB_BOARD_NAMES =
+  /^(jobstreet|jobstreet indonesia|jobstreet by seek|glints|kalibrr|dealls|linkedin|indeed|glassdoor|karir com|loker id|jobs id|topkarir|seek)$/;
+
+function cleanCompanyName(value: unknown) {
+  const company = cleanJobText(value || "", 120)
+    .replace(/\s*[-|–]\s*(jobstreet|glints|kalibrr|dealls|indeed|linkedin)\b.*$/i, "")
+    .trim();
+  const normalized = normalizeWords(company);
+  if (!normalized || normalized.length < 2) return "";
+  if (JOB_BOARD_NAMES.test(normalized)) return "";
+  if (
+    /^(tidak disebutkan|tidak diketahui|tidak ada|n a|na|null|none|unknown|hidden|various|company|perusahaan|client|klien kami|our client)$/.test(
+      normalized,
+    )
+  )
+    return "";
+  // Pengiklan dirahasiakan / placeholder ("Private Advertiser", "a multinational company").
+  if (
+    /\b(confidential|rahasia|anonim|anonymous|private advertiser|employer provided|tidak disebutkan)\b/.test(
+      normalized,
+    ) ||
+    /\b(a|an|sebuah)\s+(multinational|leading|well known|reputable|growing|fast growing)\b/.test(
+      normalized,
+    )
+  )
+    return "";
+  return company;
+}
+
+function isValidJobTitle(title: string) {
+  if (title.length < 3 || title.length > 120) return false;
+  const normalized = normalizeWords(title);
+  if (!normalized) return false;
+  // Judul halaman pencarian, bukan jabatan.
+  if (/^(lowongan|loker|lowongan kerja|cari kerja|info loker)\b/.test(normalized)) return false;
+  if (/\b(jobs?|lowongan|loker)\s+(in|di|at)\b/.test(normalized)) return false;
+  if (/\b\d+\s*(lowongan|loker|jobs?|results?|hasil|vacancies)\b/.test(normalized)) return false;
+  if (/\bjobs$/.test(normalized)) return false;
+  return true;
+}
+
+const FOREIGN_LOCATION =
+  /\b(singapore|singapura|malaysia|kuala lumpur|selangor|penang|johor|philippines|filipina|manila|makati|taguig|pasig|cebu|quezon|vietnam|viet nam|ho chi minh|hanoi|ha noi|thailand|bangkok|india|bangalore|bengaluru|mumbai|taiwan|taipei|hong kong|australia|sydney|melbourne|japan|tokyo|korea|seoul|china|shanghai|beijing|shenzhen|united states|usa|united kingdom|london|dubai|uae)\b/i;
+
+/**
+ * Rapikan lokasi: buang ", Jakarta Raya" & duplikat, ganti placeholder dengan
+ * "Indonesia"/"Remote". Return null untuk lokasi di luar Indonesia.
+ */
+function normalizeLocation(value: unknown, workMode: string | null) {
+  const raw = cleanJobText(value || "", 160);
+  if (/[Ạ-ỹ]|quận|phường/i.test(raw)) return null;
+  if (FOREIGN_LOCATION.test(raw) && !/indonesia/i.test(raw)) return null;
+
+  const normalized = normalizeWords(raw);
+  if (/^(remote|full remote|wfh|work from home|anywhere)/.test(normalized)) return "Remote";
+  if (
+    !normalized ||
+    /^(tidak disebutkan|tidak diketahui|on site|onsite|hybrid|wfo|n a|na|various|multiple locations|beberapa lokasi|unknown|seluruh indonesia)$/.test(
+      normalized,
+    )
+  ) {
+    return workMode === "remote" ? "Remote" : "Indonesia";
+  }
+
+  const parts = raw
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean);
+  const meaningful = parts.filter(
+    (part) =>
+      !/^(dki\s+)?jakarta raya$|^daerah khusus ibukota jakarta$|^indonesia$|^id$/i.test(part),
+  );
+  const seen = new Set<string>();
+  const unique = (meaningful.length > 0 ? meaningful : parts.slice(0, 1))
+    .map((part) => (/^(dki\s+)?jakarta raya$/i.test(part) ? "Jakarta" : part))
+    .filter((part) => {
+      const key = normalizeWords(part);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  return unique.slice(0, 2).join(", ") || "Indonesia";
+}
+
+function primaryCity(location: string) {
+  return location.split(",")[0].trim();
+}
+
+// ---------------------------------------------------------------------------
+// SOURCE-BASED EXTRACTION HELPERS
+// ---------------------------------------------------------------------------
 
 function parseSalaryRange(text: string): SalaryRange {
   const salaryText = extractSalaryContext(text);
@@ -1261,9 +1870,9 @@ function extractSectionItems(text: string, headings: string[]) {
         .replace(/^[*-]\s*/, "")
         .trim(),
     )
-    .filter((item) => item.length > 8 && item.length < 240)
+    .filter((item) => item.length > 8 && item.length < 240 && !isJobContentNoise(item))
     .slice(0, 10);
-  return items.length > 0 ? items.join("\n") : cleanText(section, 1200) || null;
+  return items.length > 0 ? items.join("\n") : null;
 }
 
 function extractSectionText(text: string, headings: string[]) {
@@ -1272,7 +1881,7 @@ function extractSectionText(text: string, headings: string[]) {
   const stop =
     "responsibilities|requirements|qualifications|benefits|perks|about|company|deskripsi|kualifikasi|persyaratan|tanggung jawab|fasilitas|benefit|skills|apply|lamar|deadline";
   const pattern = new RegExp(
-    `(?:^|\\n)\\s*(?:${escapedHeadings})\\s*:?\\s*\\n?([\\s\\S]{80,1800}?)(?=\\n\\s*(?:${stop})\\s*:?\\s*\\n|$)`,
+    `(?:^|\\n)[#*\\s]*(?:${escapedHeadings})[*\\s]*:?\\s*\\n?([\\s\\S]{80,1800}?)(?=\\n[#*\\s]*(?:${stop})[*\\s]*:?\\s*\\n|$)`,
     "i",
   );
   const match = normalized.match(pattern);
@@ -1284,39 +1893,34 @@ function buildSourceDescription(
   aiDescription?: string | null,
   responsibilities?: string | null,
 ) {
-  const sourceDescription =
-    extractSectionText(sourceText, [
-      "about the job",
-      "about this role",
-      "ringkasan",
-      "overview",
-      "deskripsi pekerjaan",
-      "job description",
-      "the role",
-    ]) || firstReadableParagraph(sourceText);
+  // Ringkasan AI dipakai hanya kalau isinya bisa diverifikasi ke halaman sumber.
+  if (isTextGrounded(aiDescription, sourceText)) {
+    const description = cleanJobDescription(aiDescription, 2000);
+    if (description.length >= 60) return description;
+  }
 
+  const sourceDescription = extractSectionText(sourceText, [
+    "about the job",
+    "about this role",
+    "about the role",
+    "ringkasan",
+    "overview",
+    "deskripsi pekerjaan",
+    "job description",
+    "the role",
+  ]);
   if (sourceDescription) {
     const description = cleanJobDescription(sourceDescription, 2000);
     if (description) return description;
   }
 
-  const groundedAiDescription = isTextGrounded(aiDescription, sourceText)
-    ? cleanJobDescription(aiDescription, 2000)
-    : "";
-  const groundedResponsibilities = responsibilities
-    ? cleanJobDescription(responsibilities, 900)
-    : "";
-
-  return cleanText(
-    [groundedAiDescription, groundedResponsibilities].filter(Boolean).join(" "),
-    2000,
-  );
+  return responsibilities ? cleanJobDescription(responsibilities, 900) : "";
 }
 
 function filterGroundedListText(value: string | null | undefined, sourceText: string) {
   const items = String(value || "")
     .split(/\n|;|•|·/)
-    .map((item) => item.trim())
+    .map((item) => item.replace(/^[-*\d.)\s]+/, "").trim())
     .filter(Boolean)
     .filter((item) => isTextGrounded(item, sourceText))
     .slice(0, 10);
@@ -1329,7 +1933,7 @@ function filterGroundedInlineText(value: string | null | undefined, sourceText: 
     .split(/,|\n|;/)
     .map((item) => item.trim())
     .filter((item) => Boolean(item) && !isJobContentNoise(item))
-    .filter((item) => isTextGrounded(item, sourceText))
+    .filter((item) => normalizeWords(sourceText).includes(normalizeWords(item)))
     .slice(0, 12);
 
   return items.length > 0 ? items.join(", ") : null;
@@ -1375,15 +1979,6 @@ function meaningfulTokens(value: string | null | undefined) {
     .slice(0, 16);
 }
 
-function firstReadableParagraph(text: string) {
-  return (
-    text
-      .split(/\n{2,}|(?<=\.)\s+(?=[A-Z0-9A-Z])/)
-      .map((item) => item.trim())
-      .find((item) => item.length > 120 && item.length < 900 && !isJobContentNoise(item)) || ""
-  );
-}
-
 function extractTechStack(text: string) {
   const keywords = [
     "React",
@@ -1397,7 +1992,6 @@ function extractTechStack(text: string) {
     "Java",
     "PHP",
     "Laravel",
-    "Go",
     "Golang",
     "PostgreSQL",
     "MySQL",
@@ -1421,18 +2015,12 @@ function inferWorkMode(text: string) {
   return normalizeWorkMode(text);
 }
 
-function extractDeadline(text: string) {
-  const match = text.match(
-    /(?:deadline|batas lamaran|ditutup|closing date|apply before)[^\n\d]{0,30}([0-9]{1,2}\s+[A-Za-zÀ-ÿ]+\s+[0-9]{4}|[0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{1,2}[/-][0-9]{1,2}[/-][0-9]{2,4})/i,
-  );
-  return parseDeadline(match?.[1] || null);
-}
-
-function extractStructuredJobPosting(html: string) {
+function extractStructuredJobPosting(html: string): { text: string; job: StructuredJob | null } {
   const blocks = Array.from(
     html.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi),
   );
   const parts: string[] = [];
+  let job: StructuredJob | null = null;
 
   for (const block of blocks) {
     const jsonText = decodeHtmlEntities(block[1] || "").trim();
@@ -1441,10 +2029,47 @@ function extractStructuredJobPosting(html: string) {
     for (const node of nodes) {
       if (!isJobPostingNode(node)) continue;
       parts.push(structuredJobToText(node));
+      job ??= structuredJobFields(node);
     }
   }
 
-  return parts.join("\n\n");
+  return { text: parts.join("\n\n"), job };
+}
+
+function structuredJobFields(node: Record<string, unknown>): StructuredJob {
+  const hiring = node.hiringOrganization;
+  const company =
+    typeof hiring === "string" ? hiring : (hiring as Record<string, unknown> | undefined)?.name;
+
+  const locations = Array.isArray(node.jobLocation) ? node.jobLocation : [node.jobLocation];
+  const address = ((locations[0] as Record<string, unknown> | undefined)?.address || {}) as Record<
+    string,
+    unknown
+  >;
+  const country =
+    typeof address.addressCountry === "string"
+      ? address.addressCountry
+      : ((address.addressCountry as Record<string, unknown> | undefined)?.name as
+          | string
+          | undefined);
+  const isRemote = String(node.jobLocationType || "").toUpperCase() === "TELECOMMUTE";
+  const location = isRemote
+    ? "Remote"
+    : [address.addressLocality, address.addressRegion].filter(Boolean).map(String).join(", ");
+
+  const employmentType = Array.isArray(node.employmentType)
+    ? node.employmentType.join(", ")
+    : node.employmentType;
+
+  return {
+    title: node.title ? stripHtml(String(node.title)).trim() : null,
+    company: company ? String(company) : null,
+    location: location || null,
+    country: !isRemote && country ? String(country) : null,
+    datePosted: node.datePosted ? String(node.datePosted) : null,
+    validThrough: node.validThrough ? String(node.validThrough) : null,
+    employmentType: employmentType ? String(employmentType) : null,
+  };
 }
 
 function flattenStructuredNodes(value: unknown): Record<string, unknown>[] {
@@ -1475,6 +2100,7 @@ function structuredJobToText(node: Record<string, unknown>) {
       `Responsibilities: ${node.responsibilities || ""}`,
       `Skills: ${node.skills || ""}`,
       `Salary: ${JSON.stringify(baseSalary || {})}`,
+      `Date posted: ${node.datePosted || ""}`,
       `Valid through: ${node.validThrough || ""}`,
     ].join("\n"),
     12000,
@@ -1489,7 +2115,7 @@ function escapeRegExp(value: string) {
 // HELPERS
 // ---------------------------------------------------------------------------
 
-function normalizeType(value?: string) {
+function normalizeType(value?: string | null) {
   const clean = String(value || "").toLowerCase();
   if (clean.includes("part")) return "part-time";
   if (clean.includes("contract") || clean.includes("kontrak") || clean.includes("freelance"))
@@ -1516,6 +2142,7 @@ function normalizeLevel(value?: string) {
     clean.includes("entry") ||
     clean.includes("junior") ||
     clean.includes("jr.") ||
+    clean.includes("intern") ||
     clean.includes("graduate")
   )
     return "entry";
@@ -1524,15 +2151,10 @@ function normalizeLevel(value?: string) {
 
 function normalizeWorkMode(value?: string | null) {
   const clean = String(value || "").toLowerCase();
+  if (clean.includes("hybrid") || clean.includes("wfo/wfh")) return "hybrid";
   if (clean.includes("remote") || clean.includes("wfh") || clean.includes("work from home"))
     return "remote";
-  if (
-    clean.includes("hybrid") ||
-    clean.includes("flexible") ||
-    clean.includes("fleksibel") ||
-    clean.includes("wfo/wfh")
-  )
-    return "hybrid";
+  if (clean.includes("flexible") || clean.includes("fleksibel")) return "hybrid";
   if (clean.includes("onsite") || clean.includes("on-site") || clean.includes("wfo"))
     return "onsite";
   return null;
@@ -1542,7 +2164,6 @@ function normalizeSalaryPeriod(value?: string | null) {
   const clean = String(value || "").toLowerCase();
   if (clean.includes("year") || clean.includes("tahun") || clean.includes("annual"))
     return "yearly";
-  if (clean.includes("month") || clean.includes("bulan")) return "monthly";
   return "monthly";
 }
 
@@ -1552,38 +2173,16 @@ function normalizeSalary(value?: number | null) {
   return salary > 0 ? salary : null;
 }
 
-function parseDeadline(value?: string | null) {
-  if (!value) return null;
-  try {
-    const d = new Date(value);
-    if (!Number.isNaN(d.getTime())) return d.toISOString().split("T")[0];
-  } catch {
-    // Ignore invalid dates
-  }
-  return null;
-}
-
-function cleanUrl(value?: string | null) {
-  if (!value) return null;
-  try {
-    const url = new URL(value);
-    if (url.protocol !== "https:" && url.protocol !== "http:") return null;
-    return url.toString();
-  } catch {
-    return null;
-  }
-}
-
 function buildSlug(...parts: string[]) {
   const base = parts
     .join(" ")
     .toLowerCase()
     .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[̀-ͯ]/g, "")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 72);
-  const hash = hashString(parts.join("|")).toString(36).slice(0, 8);
+  const hash = hashString(parts.join("|").toLowerCase()).toString(36).slice(0, 8);
   return `${base || "lowongan"}-${hash}`;
 }
 
@@ -1596,10 +2195,10 @@ function hashString(value: string) {
 }
 
 function normalizeForDedup(value: string) {
-  return value
+  return String(value || "")
     .toLowerCase()
     .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[̀-ͯ]/g, "")
     .replace(/[^a-z0-9]/g, "")
     .slice(0, 60);
 }
@@ -1608,7 +2207,7 @@ function normalizeWords(value: unknown) {
   return String(value || "")
     .toLowerCase()
     .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[̀-ͯ]/g, "")
     .replace(/[^a-z0-9]+/g, " ")
     .replace(/\s+/g, " ")
     .trim();
@@ -1638,8 +2237,8 @@ function normalizeParsedJobs(parsed: unknown): ExtractedJob[] {
 function normalizeParsedJob(value: unknown): ExtractedJob | null {
   if (!value || typeof value !== "object") return null;
   const record = value as Record<string, unknown>;
-  if (!record.title && !record.company && !record.source_url) return null;
-  return record as ExtractedJob;
+  if (record.page_id === undefined || record.page_id === null) return null;
+  return record as unknown as ExtractedJob;
 }
 
 function extractCompleteJobsFromTruncatedJson(content: string): ExtractedJob[] {
@@ -1720,25 +2319,39 @@ function cleanText(value: unknown, maxLength: number) {
     .slice(0, maxLength);
 }
 
-/**
- * FIX: cleanJobTitle disederhanakan — tidak terlalu agresif.
- * Regex lama bisa ikut menghapus judul job yang valid.
- */
 function cleanJobTitle(value: unknown) {
-  return (
-    stripAngleBrackets(String(value || ""))
-      .replace(/\s+/g, " ")
-      .trim()
-      // Hapus timestamp relatif di awal (misal: "2 hari yang lalu Backend Developer")
-      .replace(/^\d+\s+(?:menit|jam|hari|minggu|bulan|tahun)\s+yang\s+lalu\s*/i, "")
-      // Hapus prefix "Image N"
-      .replace(/^image\s+\d+\s*/i, "")
-      // Hapus markdown heading
-      .replace(/^#+\s*/, "")
-      // Hapus suffix sumber (misal: "Backend Developer | LinkedIn")
-      .replace(/\s*\|\s*(?:linkedin|jobstreet|glints|kalibrr|indeed).*$/i, "")
-      .trim()
-      .slice(0, 120)
+  const title = stripAngleBrackets(String(value || ""))
+    .replace(/\s+/g, " ")
+    .trim()
+    // Timestamp relatif di awal (misal: "2 hari yang lalu Backend Developer")
+    .replace(/^\d+\s+(?:menit|jam|hari|minggu|bulan|tahun)\s+yang\s+lalu\s*/i, "")
+    .replace(/^image\s+\d+\s*/i, "")
+    .replace(/^#+\s*/, "")
+    // Prefix iklan: "Lowongan Kerja Data Analyst", "Hiring: Data Analyst"
+    .replace(
+      /^(?:lowongan kerja|lowongan|loker|we are hiring|hiring|dibutuhkan|urgent(?:ly)? (?:hiring|needed))\s*[:\-–]?\s+/i,
+      "",
+    )
+    // Suffix sumber/perusahaan: "Backend Developer | Jobstreet", "... di PT ABC"
+    .replace(/\s*[|–-]\s*(?:linkedin|jobstreet|glints|kalibrr|dealls|indeed)\b.*$/i, "")
+    .replace(/\s+(?:di|at)\s+(?:pt|cv)\.?\s.*$/i, "")
+    .trim()
+    .slice(0, 120);
+
+  return isShouting(title) ? toTitleCase(title) : title;
+}
+
+function isShouting(value: string) {
+  const letters = value.replace(/[^A-Za-z]/g, "");
+  return letters.length > 6 && letters === letters.toUpperCase();
+}
+
+/** "FULL-STACK DEVELOPER (PHP)" → "Full-Stack Developer (PHP)"; akronim ≤3 huruf tetap kapital. */
+function toTitleCase(value: string) {
+  return value.replace(/[A-Za-z]+/g, (word) =>
+    word.length <= 3 && word === word.toUpperCase() && !/^(AND|THE|DAN|DI|OF|FOR)$/.test(word)
+      ? word
+      : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase(),
   );
 }
 
@@ -1749,6 +2362,7 @@ function cleanJobText(value: unknown, maxLength: number) {
     .replace(/^\d+\s+(?:menit|jam|hari|minggu|bulan|tahun)\s+yang\s+lalu\s*/gi, "")
     .replace(/^Image\s+\d+\s*/gi, "")
     .replace(/#{1,6}\s*/g, "")
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
     .replace(/\s+/g, " ")
     .trim()
     .slice(0, maxLength);
@@ -1810,7 +2424,7 @@ function cleanListText(value: unknown, maxLength: number) {
     .replace(/[ \t]+/g, " ")
     .replace(/\n{3,}/g, "\n\n")
     .split("\n")
-    .map((line) => line.trim())
+    .map((line) => line.replace(/\[([^\]]*)\]\([^)]*\)/g, "$1").trim())
     .filter(Boolean)
     .join("\n")
     .slice(0, maxLength);
