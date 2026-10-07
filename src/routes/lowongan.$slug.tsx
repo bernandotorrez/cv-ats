@@ -217,103 +217,50 @@ function LowonganDetailPage() {
 
   return (
     <main className="overflow-x-clip bg-background">
-      <section className="border-b border-border/70">
-        <div className="container-page py-8 md:py-12">
-          <Button asChild variant="ghost" size="sm" className="mb-8">
-            <Link to="/lowongan">
-              <ArrowLeft className="h-4 w-4" />
-              Kembali ke Lowongan
-            </Link>
-          </Button>
+      <div className="container-page py-8 md:py-10">
+        <Button asChild variant="ghost" size="sm" className="mb-6">
+          <Link to="/lowongan">
+            <ArrowLeft className="h-4 w-4" />
+            Kembali ke Lowongan
+          </Link>
+        </Button>
 
-          <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
-            <div>
-              <Badge className="mb-5 gap-2 border-emerald-200 bg-emerald-100 px-4 py-2 text-sm text-emerald-950 shadow-sm hover:bg-emerald-100">
-                <Sparkles className="h-4 w-4" aria-hidden="true" />
-                Detail lowongan
-              </Badge>
+        {/* Mobile: header → isi lowongan → panel lamar. Desktop: panel lamar sticky di
+            kanan, isi lowongan langsung di bawah judul tanpa perlu scroll. */}
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-8">
+          <header className="lg:col-start-1 lg:row-start-1">
+            <h1 className="max-w-4xl font-display text-3xl font-bold leading-tight text-foreground sm:text-4xl lg:text-5xl">
+              {job.title}
+            </h1>
 
-              <h1 className="max-w-4xl font-display text-4xl font-bold leading-[1.04] text-foreground sm:text-5xl lg:text-6xl">
-                {job.title}
-              </h1>
-
-              <div className="mt-5 flex flex-wrap items-center gap-3 text-base text-muted-foreground">
-                <span className="inline-flex items-center gap-2 font-medium text-foreground">
-                  <Building2 className="h-5 w-5 text-primary" />
-                  {job.company}
-                </span>
-                <span className="inline-flex items-center gap-2">
-                  <MapPin className="h-5 w-5" />
-                  {job.location}
-                </span>
-                <span className="inline-flex items-center gap-2">
-                  <Calendar className="h-5 w-5" />
-                  {postedDate}
-                </span>
-              </div>
-
-              <div className="mt-6 flex flex-wrap gap-2">
-                <Badge className="bg-primary/10 text-primary hover:bg-primary/10">
-                  {levelLabel(job.level)}
-                </Badge>
-                <Badge variant="secondary">{typeLabel(job.type)}</Badge>
-                {job.work_mode && <Badge variant="outline">{workModeLabel(job.work_mode)}</Badge>}
-                {job.industry && <Badge variant="outline">{job.industry}</Badge>}
-                {salaryText && <Badge variant="outline">{salaryText}</Badge>}
-                {deadlineText && <Badge variant="outline">Deadline {deadlineText}</Badge>}
-              </div>
-
-              <p className="mt-6 max-w-3xl text-lg leading-8 text-muted-foreground">
-                {descriptionParagraphs[0] ||
-                  `Peluang ${job.title} di ${job.company}. Baca detail role, requirement, dan siapkan CV yang relevan sebelum melamar.`}
-              </p>
+            <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-base text-muted-foreground">
+              <span className="inline-flex items-center gap-2 font-medium text-foreground">
+                <Building2 className="h-5 w-5 text-primary" />
+                {job.company}
+              </span>
+              <span className="inline-flex items-center gap-2">
+                <MapPin className="h-5 w-5" />
+                {job.location}
+              </span>
+              <span className="inline-flex items-center gap-2">
+                <Calendar className="h-5 w-5" />
+                Diposting {postedDate}
+              </span>
             </div>
 
-            <ApplyPanel job={job} salaryText={salaryText} />
-          </div>
-        </div>
-      </section>
+            <div className="mt-5 flex flex-wrap gap-2">
+              <Badge className="bg-primary/10 text-primary hover:bg-primary/10">
+                {levelLabel(job.level)}
+              </Badge>
+              <Badge variant="secondary">{typeLabel(job.type)}</Badge>
+              {job.work_mode && <Badge variant="outline">{workModeLabel(job.work_mode)}</Badge>}
+              {job.industry && <Badge variant="outline">{job.industry}</Badge>}
+              {salaryText && <Badge variant="outline">{salaryText}</Badge>}
+              {deadlineText && <Badge variant="outline">Deadline {deadlineText}</Badge>}
+            </div>
+          </header>
 
-      <section className="container-page py-10 md:py-14">
-        <div className="grid gap-4 md:grid-cols-3">
-          {[
-            { icon: Briefcase, label: "Tipe kerja", value: typeLabel(job.type) },
-            { icon: GraduationCap, label: "Level", value: levelLabel(job.level) },
-            { icon: DollarSign, label: "Estimasi gaji", value: salaryText || "Tidak dicantumkan" },
-            {
-              icon: Laptop,
-              label: "Mode kerja",
-              value: job.work_mode ? workModeLabel(job.work_mode) : "Belum dicantumkan",
-            },
-            { icon: CalendarDays, label: "Deadline", value: deadlineText || "Belum dicantumkan" },
-            {
-              icon: ListChecks,
-              label: "Tech stack",
-              value: techItems.slice(0, 3).join(", ") || "Tidak dicantumkan",
-            },
-          ].map((item) => (
-            <Card key={item.label} className="border-border/80 shadow-sm">
-              <CardContent className="flex items-center gap-4 p-5">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                  <item.icon className="h-5 w-5" aria-hidden="true" />
-                </div>
-                <div>
-                  <p className="text-xs font-medium uppercase text-muted-foreground">
-                    {item.label}
-                  </p>
-                  <p className="mt-1 font-display text-xl font-bold text-foreground">
-                    {item.value}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </section>
-
-      <section className="bg-muted/45 py-12 md:py-16">
-        <div className="container-page grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
-          <div className="space-y-5">
+          <div className="min-w-0 space-y-5 lg:col-start-1 lg:row-start-2">
             <ContentCard
               icon={FileText}
               eyebrow="Role overview"
@@ -328,56 +275,50 @@ function LowonganDetailPage() {
                     </p>
                   ))}
                 </div>
-              ) : (
-                <p className="leading-7 text-muted-foreground">
-                  Deskripsi pekerjaan belum tersedia lengkap dari sumber asli.
-                </p>
-              )}
+              ) : null}
             </ContentCard>
 
-            <ContentCard
-              icon={ListChecks}
-              eyebrow="Tanggung jawab"
-              title="Responsibilities"
-              fallback="Tanggung jawab belum dicantumkan secara terpisah."
-            >
-              <Checklist items={responsibilityItems} />
-            </ContentCard>
+            {responsibilityItems.length > 0 && (
+              <ContentCard
+                icon={ListChecks}
+                eyebrow="Tanggung jawab"
+                title="Responsibilities"
+                fallback=""
+              >
+                <Checklist items={responsibilityItems} />
+              </ContentCard>
+            )}
 
-            <ContentCard
-              icon={ShieldCheck}
-              eyebrow="Yang perlu disiapkan"
-              title="Job requirements"
-              fallback="Requirement belum dicantumkan secara terpisah."
-            >
-              <Checklist items={requirementItems} />
-            </ContentCard>
+            {requirementItems.length > 0 && (
+              <ContentCard
+                icon={ShieldCheck}
+                eyebrow="Yang perlu disiapkan"
+                title="Job requirements"
+                fallback=""
+              >
+                <Checklist items={requirementItems} />
+              </ContentCard>
+            )}
 
-            <ContentCard
-              icon={BadgeCheck}
-              eyebrow="Kualifikasi kandidat"
-              title="Skill dan kualifikasi"
-              fallback="Kualifikasi belum dicantumkan secara terpisah."
-            >
-              <Checklist items={qualificationItems} />
-            </ContentCard>
+            {qualificationItems.length > 0 && (
+              <ContentCard
+                icon={BadgeCheck}
+                eyebrow="Kualifikasi kandidat"
+                title="Skill dan kualifikasi"
+                fallback=""
+              >
+                <Checklist items={qualificationItems} />
+              </ContentCard>
+            )}
 
-            <ContentCard
-              icon={Gift}
-              eyebrow="Benefit"
-              title="Fasilitas dan benefit"
-              fallback="Benefit belum dicantumkan secara terpisah."
-            >
-              <Checklist items={benefitItems} />
-            </ContentCard>
+            {benefitItems.length > 0 && (
+              <ContentCard icon={Gift} eyebrow="Benefit" title="Fasilitas dan benefit" fallback="">
+                <Checklist items={benefitItems} />
+              </ContentCard>
+            )}
 
             {techItems.length > 0 && (
-              <ContentCard
-                icon={Laptop}
-                eyebrow="Tools"
-                title="Tech stack dan tools"
-                fallback="Tech stack belum dicantumkan."
-              >
+              <ContentCard icon={Laptop} eyebrow="Tools" title="Tech stack dan tools" fallback="">
                 <div className="flex flex-wrap gap-2">
                   {techItems.map((item) => (
                     <Badge key={item} variant="secondary" className="px-3 py-1.5">
@@ -387,38 +328,35 @@ function LowonganDetailPage() {
                 </div>
               </ContentCard>
             )}
-          </div>
 
-          <aside className="space-y-4 lg:sticky lg:top-24">
-            <Card className="border-border/80 shadow-sm">
-              <CardContent className="p-5">
-                <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                  <Lightbulb className="h-5 w-5" aria-hidden="true" />
+            <Card className="border-border/80 bg-muted/45 shadow-sm">
+              <CardContent className="p-5 md:p-6">
+                <div className="mb-4 flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                    <Lightbulb className="h-5 w-5" aria-hidden="true" />
+                  </div>
+                  <h2 className="font-display text-xl font-bold text-foreground">
+                    Sebelum klik lamar
+                  </h2>
                 </div>
-                <h2 className="font-display text-2xl font-bold text-foreground">
-                  Sebelum klik lamar
-                </h2>
-                <p className="mt-3 leading-7 text-muted-foreground">
-                  Simpan keyword utama dari halaman ini. CV yang terasa spesifik biasanya lebih kuat
-                  daripada CV yang sama untuk semua lowongan.
-                </p>
+                <div className="grid gap-3 sm:grid-cols-3">
+                  {prepCards.map((item) => (
+                    <div key={item.title} className="rounded-lg border bg-card p-4">
+                      <item.icon className="mb-2 h-5 w-5 text-primary" aria-hidden="true" />
+                      <h3 className="font-semibold text-foreground">{item.title}</h3>
+                      <p className="mt-1 text-sm leading-6 text-muted-foreground">{item.desc}</p>
+                    </div>
+                  ))}
+                </div>
               </CardContent>
             </Card>
+          </div>
 
-            <div className="grid gap-3">
-              {prepCards.map((item) => (
-                <div key={item.title} className="rounded-lg border bg-card p-4 shadow-sm">
-                  <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                    <item.icon className="h-5 w-5" aria-hidden="true" />
-                  </div>
-                  <h3 className="font-semibold text-foreground">{item.title}</h3>
-                  <p className="mt-2 text-sm leading-6 text-muted-foreground">{item.desc}</p>
-                </div>
-              ))}
-            </div>
-          </aside>
+          <div className="lg:col-start-2 lg:row-span-2 lg:row-start-1">
+            <ApplyPanel job={job} salaryText={salaryText} />
+          </div>
         </div>
-      </section>
+      </div>
 
       <section className="container-page py-12 md:py-16">
         <div className="grid gap-6 rounded-lg border border-border bg-card p-6 shadow-sm md:grid-cols-[1fr_auto] md:items-center md:p-8">
@@ -842,23 +780,27 @@ function Fact({ icon: Icon, label, value }: { icon: LucideIcon; label: string; v
   );
 }
 
+/** Pisah per baris kosong; blok panjang tanpa jeda dipecah tiap ~3 kalimat agar enak dibaca. */
 function parseParagraphs(value?: string | null) {
   return String(value || "")
-    .split(/\n{2,}|(?<=\.)\s+(?=[A-Z0-9A-Z])/)
-    .map((item) => item.trim())
+    .split(/\n{2,}|\n(?=\S)/)
+    .map((block) => block.trim())
     .filter(Boolean)
-    .slice(0, 6);
+    .flatMap((block) => {
+      if (block.length < 450) return [block];
+      const sentences = block.split(/(?<=[.!?])\s+(?=[A-Z0-9])/);
+      const chunks: string[] = [];
+      for (let i = 0; i < sentences.length; i += 3)
+        chunks.push(sentences.slice(i, i + 3).join(" "));
+      return chunks;
+    });
 }
 
 function parseList(value?: string | null) {
   return String(value || "")
-    .split(/\n|;|(?:^|\s)[*-]\s+/)
-    .map((item) =>
-      item
-        .replace(/^[0-9]+[.)]\s*/, "")
-        .replace(/^[*-]\s*/, "")
-        .trim(),
-    )
+    .split(/\n|;/)
+    .filter((item) => !/^\s*#{1,6}\s/.test(item))
+    .map((item) => item.replace(/^\s*(?:[-*•]\s+|\d{1,2}[.)]\s+)/, "").trim())
     .filter((item) => item.length > 2)
     .slice(0, 12);
 }

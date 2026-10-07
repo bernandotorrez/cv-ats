@@ -1356,7 +1356,8 @@ async function extractBatch(
     "location      : Kota/kabupaten (+ provinsi jika ada), misal 'Jakarta Selatan' atau 'Bandung, Jawa Barat'. 'Remote' jika full remote.",
     "posted_date   : Tanggal lowongan diposting/diperbarui, format YYYY-MM-DD. Hitung dari teks relatif (misal '3 hari yang lalu') memakai tanggal hari ini. null jika tidak ada.",
     "deadline      : Tanggal tutup lamaran YYYY-MM-DD, null jika tidak ada.",
-    "description   : Ringkasan 2-3 kalimat tentang peran ini dari halaman, maksimal 400 karakter.",
+    "description   : Gambaran peran 3-6 kalimat (maks 1000 karakter) dari halaman: tujuan peran, ruang lingkup kerja, konteks tim/perusahaan.",
+    "                BUKAN salinan daftar requirements. Pisahkan paragraf dengan \\n\\n.",
     "responsibilities, requirements, qualifications, benefits : item yang eksplisit tertulis, dipisah \\n, maksimal 8 item per field. null jika tidak ada.",
     "tech_stack    : tools/teknologi yang eksplisit tertulis, pisah koma. null jika tidak ada.",
     "work_mode     : 'onsite' | 'remote' | 'hybrid' | null",
@@ -1555,7 +1556,8 @@ async function polishBatch(
     "  qualifications   = skill/kualifikasi tambahan atau nice-to-have yang bukan duplikat requirements",
     "  benefits         = fasilitas/tunjangan untuk karyawan",
     "- Satu item tidak boleh muncul di lebih dari satu list. Maksimal 8 item per list. Kalau tidak ada, isi [].",
-    "- description: 2-3 kalimat ringkasan peran, maksimal 400 karakter, tanpa markdown dan tanpa daftar.",
+    "- description: gambaran lengkap peran, 3-6 kalimat (400-1000 karakter) dalam 1-2 paragraf dipisah \\n\\n, tanpa markdown/daftar.",
+    "  Isi: tujuan peran, ruang lingkup pekerjaan, dan konteks perusahaan/tim yang ada di sumber. Jangan sekadar menyalin requirements.",
     "- tech_stack: nama tools/teknologi saja (misal 'Vue.js', 'Nuxt.js'), maksimal 12.",
     "",
     "=== DATA ===",
@@ -1565,7 +1567,7 @@ async function polishBatch(
   const { content } = await callAiJson(
     "Kamu adalah editor data lowongan kerja yang teliti. Output hanya JSON valid. Jangan gunakan markdown.",
     prompt,
-    Math.min(4096, 300 + rows.length * 700),
+    Math.min(4096, 300 + rows.length * 900),
     aiKey,
     log,
     { stage: "polish", rows: rows.length },
@@ -1692,7 +1694,8 @@ function buildJobRow(job: ExtractedJob, page: AssessedPage, today: string) {
     salary_max: salaryMax,
     salary_currency: hasSalary ? salaryCurrency : "IDR",
     salary_period: hasSalary
-      ? parsedSalary.period || normalizeSalaryPeriod(job.salary_period)
+      ? parsedSalary.period ||
+        sanePeriod(normalizeSalaryPeriod(job.salary_period), salaryMax || salaryMin, salaryCurrency)
       : "monthly",
     description,
     responsibilities: cleanListText(responsibilities || "", 2000) || null,
@@ -1863,9 +1866,9 @@ function parseSalaryRange(text: string): SalaryRange {
   }
 
   const source = salaryText.toLowerCase();
-  const period = /tahun|year|annual|annually/.test(source)
+  const structuredPeriod = /"unitText"\s*:\s*"(YEAR|ANNUAL)/i.test(salaryText)
     ? "yearly"
-    : /bulan|month|monthly|per month|\/mo|\/bulan/.test(source)
+    : /"unitText"\s*:\s*"MONTH/i.test(salaryText)
       ? "monthly"
       : null;
   const structuredMin = salaryText.match(/"minValue"\s*:\s*"?([0-9.,]+)"?/i);
@@ -1877,7 +1880,7 @@ function parseSalaryRange(text: string): SalaryRange {
       normalizeSalaryCurrency(structuredCurrency?.[1]) || inferSalaryCurrency(source);
     const min = parseSalaryNumber(structuredMin?.[1] || structuredValue?.[1], undefined, currency);
     const max = parseSalaryNumber(structuredMax?.[1] || structuredValue?.[1], undefined, currency);
-    return { min, max, currency, period };
+    return { min, max, currency, period: sanePeriod(structuredPeriod, max || min, currency) };
   }
   const currency = inferSalaryCurrency(source);
 
@@ -1896,7 +1899,11 @@ function parseSalaryRange(text: string): SalaryRange {
         min: min && max ? Math.min(min, max) : min,
         max: min && max ? Math.max(min, max) : max,
         currency: currency || "IDR",
-        period: period || "monthly",
+        period: sanePeriod(
+          salaryPeriodNear(salaryText, match.index ?? 0),
+          Math.max(min || 0, max || 0),
+          currency,
+        ),
       };
     }
   }
@@ -1909,8 +1916,27 @@ function parseSalaryRange(text: string): SalaryRange {
     min: /mulai|start|from/i.test(single?.[0] || "") ? amount : null,
     max: /hingga|up to|max/i.test(single?.[0] || "") ? amount : null,
     currency: amount ? currency || "IDR" : null,
-    period: amount ? period || "monthly" : null,
+    period: amount
+      ? sanePeriod(salaryPeriodNear(salaryText, single?.index ?? 0), amount, currency)
+      : null,
   };
+}
+
+/** Periode gaji dari baris tempat angka gaji ditemukan saja (bukan "pengalaman 2 tahun"). */
+function salaryPeriodNear(text: string, index: number) {
+  const lineStart = text.lastIndexOf("\n", index) + 1;
+  const lineEnd = text.indexOf("\n", index);
+  const line = text.slice(lineStart, lineEnd === -1 ? undefined : lineEnd).toLowerCase();
+  if (/bulan|month|\/mo\b|\/bln/.test(line)) return "monthly";
+  if (/per tahun|\/tahun|\/thn|year|annual|annum|p\.a\./.test(line)) return "yearly";
+  return null;
+}
+
+/** Default bulanan; gaji IDR "tahunan" di bawah Rp36jt hampir pasti salah baca. */
+function sanePeriod(period: string | null, amount: number | null, currency: string | null) {
+  if (period === "yearly" && (currency || "IDR") === "IDR" && (amount || 0) < 36_000_000)
+    return "monthly";
+  return period || "monthly";
 }
 
 function extractSalaryContext(text: string) {
@@ -1924,7 +1950,7 @@ function extractSalaryContext(text: string) {
     .map((line) => line.trim())
     .filter(Boolean)
     .filter((line) =>
-      /salary|gaji|upah|kompensasi|rp|idr|rupiah|usd|dollar|\$|juta|jt|million|ribu|\/bulan|per month|monthly|tahun|year/i.test(
+      /salary|gaji|upah|kompensasi|\brp\.?\s?\d|\bidr\b|rupiah|\busd\b|dollar|\$\s?\d|\d\s?(juta|jt)\b|million/i.test(
         line,
       ),
     )
@@ -2521,8 +2547,16 @@ function cleanJobText(value: unknown, maxLength: number) {
     .slice(0, maxLength);
 }
 
+/** Seperti cleanJobText tapi mempertahankan jeda paragraf (\n\n). */
 function cleanJobDescription(value: unknown, maxLength: number) {
-  const description = cleanJobText(value, maxLength);
+  const description = String(value || "")
+    .replace(/\r/g, "\n")
+    .split(/\n\s*\n/)
+    .map((paragraph) => cleanJobText(paragraph, maxLength))
+    .filter((paragraph) => paragraph && !isJobContentNoise(paragraph))
+    .join("\n\n")
+    .slice(0, maxLength)
+    .trim();
   return isJobContentNoise(description) ? "" : description;
 }
 
