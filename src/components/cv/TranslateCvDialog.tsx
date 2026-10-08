@@ -125,7 +125,7 @@ export function TranslateCvDialog({
 
   return (
     <Dialog open={target !== null} onOpenChange={(open) => !open && handleClose()}>
-      <DialogContent className="max-h-[90dvh] w-[calc(100vw-2rem)] grid-cols-[minmax(0,1fr)] gap-0 overflow-y-auto overflow-x-hidden rounded-3xl border border-gray-200 p-0 shadow-2xl sm:max-w-lg">
+      <DialogContent className="max-h-[90dvh] w-[calc(100vw-2rem)] grid-cols-[minmax(0,1fr)] gap-0 overflow-y-auto overflow-x-hidden rounded-3xl border border-gray-200 p-0 shadow-2xl sm:max-w-lg md:max-w-2xl">
         <DialogHeader className="space-y-0 border-b border-gray-200 bg-green-50 px-5 py-4 pr-12 text-left">
           <div className="flex items-center gap-3">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-green-700 text-white">
@@ -225,13 +225,13 @@ export function TranslateCvDialog({
           )}
         </div>
 
-        <DialogFooter className="flex flex-col-reverse gap-2 border-t border-gray-200 bg-gray-50 p-4 sm:flex-row sm:flex-wrap sm:justify-end sm:space-x-0">
+        <DialogFooter className="flex flex-col-reverse gap-2 border-t border-gray-200 bg-gray-50 p-4 sm:flex-col-reverse sm:space-x-0 md:flex-row md:items-center md:justify-end">
           <Button
             type="button"
             variant="ghost"
             onClick={handleClose}
             disabled={loading}
-            className="h-11 rounded-xl font-semibold text-gray-700"
+            className="h-11 w-full rounded-xl font-semibold text-gray-700 md:w-auto"
           >
             Batal
           </Button>
@@ -240,14 +240,14 @@ export function TranslateCvDialog({
             variant="outline"
             disabled={loading}
             onClick={() => target && onLabelsOnly(target)}
-            className="h-11 rounded-xl border-2 border-gray-300 font-bold hover:border-green-700 hover:bg-green-50"
+            className="h-11 w-full rounded-xl border-2 border-gray-300 font-bold md:w-auto hover:border-green-700 hover:bg-green-50"
           >
             Ganti judul bagian saja
           </Button>
           {locked || exhausted ? (
             <Button
               asChild
-              className="h-11 gap-2 rounded-xl bg-green-700 font-bold text-white hover:bg-green-800"
+              className="h-11 w-full gap-2 rounded-xl bg-green-700 md:w-auto font-bold text-white hover:bg-green-800"
             >
               <Link to="/harga">
                 <Languages aria-hidden="true" className="h-4 w-4" />
@@ -259,7 +259,7 @@ export function TranslateCvDialog({
               type="button"
               onClick={handleTranslate}
               disabled={loading || plan === null}
-              className="h-11 gap-2 rounded-xl bg-green-700 font-bold text-white hover:bg-green-800"
+              className="h-11 w-full gap-2 rounded-xl bg-green-700 md:w-auto font-bold text-white hover:bg-green-800"
             >
               {loading ? (
                 <>
