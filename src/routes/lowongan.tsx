@@ -170,6 +170,7 @@ function LowonganPage() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [jobs, setJobs] = useState<Job[]>([]);
+  const [lastSyncAt, setLastSyncAt] = useState<Date | null>(null);
   const [savedJobIds, setSavedJobIds] = useState<Set<string>>(new Set());
   const [savingJobId, setSavingJobId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
@@ -182,6 +183,7 @@ function LowonganPage() {
 
   useEffect(() => {
     void loadJobs();
+    void loadLastSync();
   }, []);
 
   useEffect(() => {
@@ -210,6 +212,16 @@ function LowonganPage() {
       setJobs([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Waktu terakhir cron scraping jalan (bukan tanggal lowongan terbaru).
+  const loadLastSync = async () => {
+    try {
+      const { data } = await (supabase as any).rpc("get_last_job_sync");
+      if (data) setLastSyncAt(new Date(data as string));
+    } catch {
+      setLastSyncAt(null);
     }
   };
 
@@ -309,10 +321,11 @@ function LowonganPage() {
 
   const totalRemote = jobs.filter((job) => job.location.toLowerCase().includes("remote")).length;
   const totalCompanies = new Set(jobs.map((job) => job.company)).size;
-  const latestDate = jobs[0]?.created_at
-    ? new Date(jobs[0].posted_at || jobs[0].created_at).toLocaleDateString("id-ID", {
+  const latestDate = lastSyncAt
+    ? lastSyncAt.toLocaleDateString("id-ID", {
         day: "numeric",
         month: "short",
+        timeZone: "Asia/Jakarta",
       })
     : "-";
 
