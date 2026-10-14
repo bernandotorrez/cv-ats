@@ -187,14 +187,17 @@ Deno.serve(async (req: Request) => {
 
     let result: string;
     try {
+      // Mode guided wajib membalas JSON {reply, extracted}; chat bebas membalas teks polos.
       result = await aiComplete(
         sanitizedMessages,
-        {
-          temperature: 0.7,
-          maxTokens: MAX_TOKENS,
-          jsonMode: jsonMode === true,
-          useGuidedPrompt: true, // Use specialized CV chat prompt with stronger guardrails
-        },
+        isGuidedMode
+          ? {
+              temperature: 0.5,
+              maxTokens: MAX_TOKENS,
+              jsonMode: jsonMode === true,
+              persona: "guided",
+            }
+          : { temperature: 0.6, maxTokens: MAX_TOKENS, persona: "chat" },
         lang,
       );
     } catch (e) {

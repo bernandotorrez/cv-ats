@@ -183,6 +183,7 @@ function CvEditorPage() {
     open: boolean;
     loading: boolean;
     originalText: string;
+    context?: string;
     variants: PolishVariant[] | null;
     onAccept: ((polished: string) => void) | null;
   }>({ open: false, loading: false, originalText: "", variants: null, onAccept: null });
@@ -656,6 +657,7 @@ function CvEditorPage() {
         open: true,
         loading: true,
         originalText: text,
+        context,
         variants: null,
         onAccept: onApply,
       });
@@ -1120,9 +1122,9 @@ function CvEditorPage() {
         }}
         onRegenerateAll={() => {
           if (polishPanel.onAccept) {
-            const { originalText } = polishPanel;
+            const { originalText, context } = polishPanel;
             setPolishPanel((prev) => ({ ...prev, loading: true, variants: null }));
-            polishTextVariants({ data: { text: originalText, language: cvLanguage } })
+            polishTextVariants({ data: { text: originalText, context, language: cvLanguage } })
               .then((r) =>
                 setPolishPanel((prev) => ({ ...prev, loading: false, variants: r.variants })),
               )

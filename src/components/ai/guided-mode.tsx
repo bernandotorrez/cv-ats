@@ -184,16 +184,16 @@ Panduan ekstraksi per step:
 - greeting/headline: { "personal": { "headline": "posisi yang dilamar DALAM BAHASA INGGRIS yang profesional" } }
 - summary: { "personal": { "summary": "ringkasan profesional 2-3 kalimat yang menarik dan ATS-friendly" } }
 - experience_count: { "experience_count": jumlah }
-- experience_detail: { "experiences": [{ "id": "exp-1", "company": "nama perusahaan", "position": "jabatan dalam Bahasa Inggris", "startDate": "2020-01", "endDate": "2023-12", "description": "3-5 bullet points dengan kata kerja aktif, metrik kuantitatif, dan pencapaian konkret. Format: • Poin 1\\n• Poin 2\\n• Poin 3" }] }
+- experience_detail: { "experiences": [{ "id": "exp-1", "company": "nama perusahaan", "position": "jabatan dalam Bahasa Inggris", "startDate": "2020-01", "endDate": "2023-12", "description": "3-5 bullet points dengan kata kerja aktif dan pencapaian konkret dari jawaban pengguna. Format: • Poin 1\\n• Poin 2\\n• Poin 3" }] }
 - education: { "educations": [{ "id": "edu-1", "school": "nama institusi lengkap", "degree": "gelar (S1/S2/D3/dll)", "field": "jurusan", "startDate": "2016-08", "endDate": "2020-06" }] }
 - skills: { "skills": [{ "id": "skill-1", "name": "nama skill yang spesifik dan profesional", "level": "Intermediate" }] }
 
 PENTING - POLES KONTEN:
-1. Headline: Ubah ke Bahasa Inggris profesional (contoh: "Software Engineer" bukan "programmer")
+1. Headline: Gunakan nama jabatan standar industri (contoh: "Software Engineer" bukan "programmer"), tanpa menaikkan senioritas
 2. Summary: Buat ringkasan 2-3 kalimat yang menarik, highlight keahlian utama dan value proposition
 3. Job Description: 
-   - Gunakan kata kerja aktif (Led, Developed, Managed, Increased, Implemented)
-   - Tambahkan metrik kuantitatif jika memungkinkan (contoh: "Increased sales by 30%")
+   - Gunakan kata kerja aktif (Memimpin, Mengembangkan, Mengelola, Meningkatkan, Mengimplementasikan)
+   - Gunakan angka/metrik HANYA jika disebut pengguna — JANGAN mengarang angka
    - Format bullet points dengan • di awal
    - 3-5 poin per pengalaman
 4. Skills: Gunakan nama skill yang spesifik dan industri-standard
@@ -201,7 +201,7 @@ PENTING - POLES KONTEN:
 6. Untuk tanggal gunakan format YYYY-MM atau YYYY
 7. Untuk level skill gunakan: Beginner, Intermediate, Advanced, atau Expert
 
-JANGAN hanya copy-paste jawaban user. POLES dan PROFESIONALKAN kontennya!
+JANGAN hanya copy-paste jawaban user. POLES dan PROFESIONALKAN kontennya, tetapi JANGAN menambah fakta yang tidak disebut user!
 
 Jika ini step terakhir, beri rangkuman dan katakan CV sudah siap.`,
         },

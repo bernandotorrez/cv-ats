@@ -8,6 +8,7 @@ import {
   errorResponse,
   getAdminClient,
   getLanguageInstruction,
+  getCvWritingRules,
   getUserId,
   reserveQuota,
   type CvUiLang,
@@ -134,6 +135,13 @@ ATURAN PENTING:
 - Pertahankan schema data CV yang sama: personal, experiences, educations, skills, languages, certificates.
 - Pertahankan id item yang sudah ada.
 - Jika ada keyword lowongan yang tidak bisa dimasukkan dengan jujur, masukkan ke cautions, bukan dipaksakan.
+- Jangan menghapus item pengalaman/pendidikan; cukup ubah wording dan urutan prioritas skill (paling relevan dengan lowongan di depan).
+- Pakai istilah keyword persis seperti penulisan di lowongan bila pengalaman user memang mendukungnya.
+- Headline: nama jabatan sesuai lowongan bila sejalan dengan pengalaman user, tanpa menaikkan senioritas.
+- Summary: 2–4 kalimat yang menghubungkan pengalaman nyata user dengan kebutuhan utama lowongan.
+- Deskripsi pengalaman: bullet diawali "• " dipisah "\\n", 3–6 poin per item. Pertahankan semua angka yang sudah ada.
+${getCvWritingRules(lang)}
+- changes: catat perubahan paling berdampak (maks 10), before/after ringkas, reason menjelaskan keyword/kebutuhan lowongan yang disasar.
 - Output HARUS JSON valid saja tanpa markdown.
 
 LOWONGAN:

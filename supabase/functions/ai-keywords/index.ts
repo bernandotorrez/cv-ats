@@ -8,6 +8,8 @@ import {
   errorResponse,
   getAdminClient,
   getUserId,
+  getLanguageInstruction,
+  fenced,
   reserveQuota,
   type CvUiLang,
 } from "../_shared/ai-common.ts";
@@ -52,19 +54,27 @@ Deno.serve(async (req: Request) => {
       throw new Error("Keyword Extractor tidak tersedia di paket kamu. Silakan upgrade.");
     }
 
-    const prompt = `Analisis deskripsi pekerjaan berikut dan ekstrak keyword. Output HARUS JSON valid (tanpa markdown wrapper).
+    const prompt = `TUGAS: Sebagai ATS specialist, ekstrak keyword dari job description berikut agar kandidat bisa menyesuaikan CV-nya.
+${targetRole ? `TARGET POSISI: ${targetRole}\n` : ""}
+${fenced("job_description", jobDescription)}
 
-DESKRIPSI:
-${jobDescription}
-${targetRole ? `\nTarget Posisi: ${targetRole}` : ""}
+ATURAN:
+- Ambil HANYA yang disebut atau tersirat kuat di job description. Jangan menambah skill/tools yang tidak ada.
+- Tulis keyword persis seperti penulisan di job description (ATS mencocokkan teks). Jika ada singkatan populer, sertakan keduanya, mis. "Search Engine Optimization (SEO)".
+- Urutkan setiap daftar dari yang paling penting: disebut berulang, ada di bagian persyaratan/wajib, atau disebut di awal.
+- hard_skills (5–12): kompetensi teknis/fungsional, tools, software, metodologi, sertifikasi teknis.
+- soft_skills (3–6): hanya yang disebut atau tersirat jelas.
+- qualifications (3–6): syarat pendidikan, lama pengalaman, sertifikasi, bahasa, atau syarat lain — tulis ringkas (mis. "S1 Teknik Informatika", "Min. 2 tahun pengalaman").
+- action_verbs (5–8): kata kerja aktif ${getLanguageInstruction(lang)} yang cocok dengan tanggung jawab di job description, untuk mengawali bullet pengalaman di CV.
+- keywords_summary: 2–3 kalimat ${getLanguageInstruction(lang)} — keyword mana yang wajib muncul dan di bagian CV mana menaruhnya (headline, summary, skill, pengalaman).
 
-Output JSON:
+OUTPUT: JSON object saja:
 {
-  "hard_skills": string[] (5-10 technical skills),
-  "soft_skills": string[] (3-5 soft skills),
-  "qualifications": string[] (3-5 kualifikasi),
-  "action_verbs": string[] (5-8 kata kerja aksi untuk CV),
-  "keywords_summary": string (2 kalimat strategi keyword)
+  "hard_skills": string[],
+  "soft_skills": string[],
+  "qualifications": string[],
+  "action_verbs": string[],
+  "keywords_summary": string
 }`;
 
     // H3: reservasi kuota SEBELUM memanggil AI; dikembalikan jika AI/parsing gagal

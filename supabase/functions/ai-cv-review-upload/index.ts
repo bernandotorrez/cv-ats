@@ -96,9 +96,14 @@ FORMAT REVIEW:
 - DETEKSI BAHASA CV: Analisis bahasa utama pada teks CV yang diekstrak (apakah Bahasa Inggris atau Bahasa Indonesia).
 - BAHASA SUGGESTED TEXT: Field 'suggested' BERISI TEKS REKOMENDASI PERBAIKAN YANG AKAN DISALIN / DIAPLIKASIKAN KE CV PENGGUNA.
   * Field 'suggested' WAJIB MENGGUNAKAN BAHASA YANG SAMA PERSIS dengan bahasa CV / teks aslinya:
-  * Jika CV / teks aslinya dalam BAHASA INGGRIS (English), maka 'suggested' WAJIB ditulis dalam BAHASA INGGRIS profesional (gunakan action verbs seperti "Led", "Spearheaded", "Developed", "Increased by 30%", "Optimized", dsb). JANGAN PERNAH menyarankan teks rekomendasi berbahasa Indonesia jika teks CV berbahasa Inggris!
+  * Jika CV / teks aslinya dalam BAHASA INGGRIS (English), maka 'suggested' WAJIB ditulis dalam BAHASA INGGRIS profesional (gunakan action verbs seperti "Led", "Spearheaded", "Developed", "Increased", "Optimized", dsb). JANGAN PERNAH menyarankan teks rekomendasi berbahasa Indonesia jika teks CV berbahasa Inggris!
   * Jika CV / teks aslinya dalam BAHASA INDONESIA, maka 'suggested' WAJIB ditulis dalam BAHASA INDONESIA profesional (gunakan kata kerja aktif seperti "Memimpin", "Mengembangkan", "Meningkatkan", dsb).
   * JANGAN PERNAH mencampur bahasa atau menerjemahkan bahasa CV. Jika CV dalam bahasa Inggris, teks perbaikan WAJIB tetap dalam bahasa Inggris.
+
+## 🔒 ATURAN KEJUJURAN (WAJIB):
+- Teks pengganti ('suggested') TIDAK BOLEH mengarang fakta: angka, persentase, nominal, ukuran tim, tools, atau pencapaian yang tidak ada di CV.
+- Jika angka akan memperkuat kalimat tetapi tidak ada di CV, gunakan placeholder kurung siku seperti [X%], [X orang], [Rp X] dan jelaskan di 'impact' bahwa user perlu menggantinya dengan angka sebenarnya.
+- Kritik harus spesifik dan merujuk isi CV yang nyata; hindari nasihat umum yang berlaku untuk semua CV.
 
 ## 🎯 SKOR KESELURUHAN (0-100)
 Berikan skor berdasarkan:
@@ -107,6 +112,7 @@ Berikan skor berdasarkan:
 - Konten & Relevansi (30%): Apakah pengalaman sesuai posisi?
 - Pengalaman & Pencapaian (25%): Apakah ada metrik & dampak?
 - Presentasi & Writing (15%): Apakah bahasa profesional & jelas?
+Kalibrasi: 85+ hanya untuk CV yang benar-benar siap kirim; 70–84 baik dengan revisi minor; 50–69 perlu perbaikan nyata; <50 lemah. Jangan inflasi skor.
 
 ## ✅ KEKUATAN CV (3-5 point)
 Yang sudah BAIK dan harus dipertahankan
@@ -117,8 +123,8 @@ Yang perlu DIPERBAIKI dengan urgensi tinggi
 ## 💡 SARAN SPESIFIK (5-7 actionable items)
 Saran KONKRET dan DAPAT DIIMPLEMENTASI langsung:
 - BAHASA SUGGESTION: 'suggested' WAJIB dalam bahasa yang sama dengan 'current' / CV (jika CV EN -> suggested EN; jika CV ID -> suggested ID)
-- Contoh untuk CV Bahasa Inggris: "Ubah 'Responsible for sales and marketing' → 'Drove 35% revenue growth in 8 months, exceeding sales targets ($500k target → $675k achieved)'"
-- Contoh untuk CV Bahasa Indonesia: "Ubah 'Bertanggung jawab atas penjualan' → 'Meningkatkan penjualan 35% dalam 8 bulan (Rp 500jt target → Rp 675jt tercapai)'"
+- Contoh untuk CV Bahasa Inggris (angka tidak ada di CV → placeholder): "Ubah 'Responsible for sales and marketing' → 'Drove sales and marketing initiatives that grew revenue by [X%] across [X] key accounts'"
+- Contoh untuk CV Bahasa Indonesia (angka 20 klien ADA di CV → dipakai): "Ubah 'Bertanggung jawab atas penjualan ke 20 klien' → 'Mengelola portofolio 20 klien korporat dan meningkatkan nilai penjualan sebesar [X%]'"
 - Prioritas: Urutkan dari dampak tertinggi ke terendah
 
 ## 📊 PERBANDINGAN DENGAN STANDAR INDUSTRI

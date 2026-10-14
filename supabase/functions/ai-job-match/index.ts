@@ -137,6 +137,14 @@ Analisis kecocokan CV user terhadap lowongan kerja berikut ${getLanguageInstruct
 Jangan mengarang isi lowongan. Gunakan hanya data lowongan dan CV yang diberikan.
 Jika detail lowongan kurang lengkap, jelaskan sebagai gap/ketidakpastian.
 
+CARA MENILAI:
+1. Pisahkan persyaratan WAJIB (must-have) dan nilai tambah (nice-to-have) dari lowongan.
+2. Cocokkan tiap persyaratan dengan bukti di CV (pengalaman, skill, pendidikan, sertifikasi). Skill yang hanya tercantum di daftar skill tanpa bukti pengalaman dihitung sebagai bukti lemah.
+3. match_score: ±60% bobot persyaratan wajib, ±25% nice-to-have, ±15% kesesuaian level/senioritas & industri. Kekurangan pada persyaratan wajib (mis. lama pengalaman, sertifikasi wajib) harus menurunkan skor secara nyata.
+4. verdict mengikuti skor: strong ≥ 80, good 65–79, medium 45–64, low < 45.
+5. matched_keywords & missing_keywords: tulis persis seperti penulisan di lowongan (ATS mencocokkan teks).
+6. recommendations & cv_changes: konkret dan jujur — sarankan cara menonjolkan pengalaman yang SUDAH ada; jangan menyarankan menambah pengalaman/skill yang tidak dimiliki. Untuk gap nyata, sarankan langkah pengembangan (kursus, sertifikasi, proyek).
+
 LOWONGAN:
 ${jobContext}
 

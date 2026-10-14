@@ -118,7 +118,7 @@ Deno.serve(async (req: Request) => {
       return json(req, { error: "AI_API_KEY tidak dikonfigurasi." }, 500);
     }
 
-    const prompt = buildPrompt(subtest, count, category, difficulty, startNumber, dontRepeat);
+    const prompt = buildPrompt(subtest, count, category, difficulty, dontRepeat);
 
     const res = await fetch(AI_GATEWAY_URL, {
       method: "POST",
@@ -134,8 +134,7 @@ Deno.serve(async (req: Request) => {
         messages: [
           {
             role: "system",
-            content:
-              "Kamu adalah pembuat soal CPNS SKD yang sangat berpengalaman. Output hanya JSON valid. Jangan gunakan markdown.",
+            content: SYSTEM_PROMPT,
           },
           { role: "user", content: prompt },
         ],
@@ -150,23 +149,29 @@ Deno.serve(async (req: Request) => {
 
     const data = await res.json();
     const content = data.choices?.[0]?.message?.content || "{}";
-    const parsed = parseQuestions(content);
+    const rawQuestions = parseQuestions(content);
+    const valid = rawQuestions
+      .map((q) => cleanQuestion(q, subtest))
+      .filter((q): q is CleanQuestion => q !== null);
+    const skipped = rawQuestions.length - valid.length;
+    const parsed = valid.slice(0, count);
+    if (skipped > 0) console.warn(`tryout-generate-questions: ${skipped} soal AI tidak valid dibuang`);
 
-    if (!parsed || parsed.length === 0) {
+    if (parsed.length === 0) {
       return json(req, { error: "AI tidak menghasilkan soal yang valid.", raw: content }, 500);
     }
 
     // Insert ke database
-    const rows = parsed.map((q: any, idx: number) => ({
+    const rows = parsed.map((q, idx) => ({
       exam_set_id: examSetId,
       subtest,
       question_number: startNumber + idx,
-      question_text: q.question_text || "",
-      options: q.options || [],
-      correct_answer: subtest === "tkp" ? null : q.correct_answer || null,
-      scores: subtest === "tkp" ? q.scores || null : null,
-      explanation: q.explanation || null,
-      category: category || q.category || null,
+      question_text: q.question_text,
+      options: q.options,
+      correct_answer: q.correct_answer,
+      scores: q.scores,
+      explanation: q.explanation,
+      category: category || q.category,
       difficulty,
     }));
 
@@ -195,6 +200,7 @@ Deno.serve(async (req: Request) => {
     return json(req, {
       success: true,
       generated: inserted?.length || 0,
+      skipped,
       start_number: startNumber,
       questions: inserted,
     });
@@ -213,15 +219,22 @@ function json(req: Request, body: unknown, status = 200) {
   });
 }
 
+const SYSTEM_PROMPT = `Kamu adalah penyusun soal SKD CPNS (TWK, TIU, TKP) yang sangat berpengalaman dan teliti, mengikuti kisi-kisi resmi BKN.
+
+PRINSIP:
+1. AKURAT: setiap fakta (Pancasila, UUD NRI 1945 hasil amandemen, sejarah, ketatanegaraan) harus benar dan tidak bisa diperdebatkan. Jangan memakai fakta yang mudah berubah (nama pejabat aktif, data statistik terbaru). Jika ragu akan sebuah fakta, buat soal lain.
+2. SATU KUNCI: untuk TWK/TIU tepat satu pilihan benar; pengecoh masuk akal tapi jelas salah bagi yang paham materi.
+3. KONSISTEN: "explanation" harus mendukung kunci jawaban; hitung ulang soal numerik sebelum menulis kunci.
+4. Bahasa Indonesia baku sesuai EYD. Teks polos: tanpa HTML, markdown, atau gambar (soal figural/pola dideskripsikan dengan teks/simbol).
+5. Output hanya objek JSON valid, tanpa markdown dan tanpa teks lain.`;
+
 function buildPrompt(
   subtest: string,
   count: number,
   category: string,
   difficulty: string,
-  startNumber: number,
   dontRepeat: string[] = [],
 ): string {
-  const categoryHint = category ? `kategori "${category}"` : `berbagai kategori relevan`;
   const difficultyDesc =
     difficulty === "easy"
       ? "mudah (fresh graduate harus bisa)"
@@ -234,87 +247,128 @@ function buildPrompt(
     dontRepeat.length > 0
       ? [
           "",
-          "JANGAN membuat soal yang sama atau sangat mirip dengan soal-soal yang sudah ada berikut ini:",
+          "SOAL YANG SUDAH ADA (jangan dibuat ulang atau sekadar diparafrasekan):",
           ...dontRepeat.map((t) => `- ${t.slice(0, 120)}`),
         ].join("\n")
       : "";
 
+  const common = [
+    `Tingkat kesulitan: ${difficultyDesc}.`,
+    "Setiap soal punya tepat 5 pilihan dengan key A, B, C, D, E (urut), masing-masing teks singkat tanpa awalan huruf.",
+    "Jangan buat soal yang sama atau sangat mirip dengan soal lain di batch ini maupun daftar soal yang sudah ada.",
+  ];
+
   if (subtest === "tkp") {
     return [
       `Buatkan ${count} soal TKP (Tes Karakteristik Pribadi) untuk simulasi SKD CPNS.`,
-      `Tingkat kesulitan: ${difficultyDesc}.`,
-      category ? `Fokus kategori: ${category}.` : "Campurkan berbagai kategori: Pelayanan Publik, Jejaring Kerja, Profesionalisme, Integritas.",
+      category
+        ? `Fokus kategori: ${category}.`
+        : "Campurkan kategori: Pelayanan Publik, Jejaring Kerja, Sosial Budaya, Teknologi Informasi dan Komunikasi, Profesionalisme, Anti Radikalisme.",
+      ...common,
       "",
-      "Format setiap soal:",
-      "- question_text: situasi kerja nyata di pemerintahan (1-2 kalimat)",
-      "- options: 5 pilihan (A/B/C/D/E), masing-masing 1 kalimat pendek",
-      "- scores: objek {A:n, B:n, C:n, D:n, E:n} di mana n = 1-5 (5=paling baik, 1=paling buruk)",
-      "- explanation: mengapa skor tertinggi paling baik (1 kalimat)",
-      "- category: sub-kategori soal",
-      "",
-      "ATURAN PENTING:",
-      "- Jangan buat soal yang sama atau sangat mirip (periksa daftar soal yang sudah ada di bawah).",
-      "- Setiap soal harus punya 1 jawaban terbaik (skor 5) dan 1 terburuk (skor 1).",
-      "- Pilihan harus realistis dan relevan dengan konteks ASN Indonesia.",
-      "",
-      `Nomor soal mulai dari ${startNumber}.`,
+      "ATURAN TKP:",
+      "- question_text: situasi kerja nyata ASN/instansi pemerintah (1-3 kalimat), diakhiri pertanyaan sikap (mis. \"Sikap Anda adalah...\").",
+      "- scores: setiap pilihan mendapat skor berbeda 1-5 (permutasi 1,2,3,4,5; tidak boleh ada skor ganda). 5 = sikap paling ideal ASN (proaktif, solutif, berintegritas, melayani), 1 = paling buruk (menghindar, melanggar aturan, merugikan publik).",
+      "- Acak posisi pilihan skor 5 antar soal (jangan selalu A atau E). Semua pilihan harus terdengar masuk akal; perbedaan skor ditentukan oleh tingkat inisiatif, tanggung jawab, dan kepentingan publik.",
+      "- explanation: 1-2 kalimat mengapa pilihan skor 5 paling tepat dan pilihan skor 1 paling tidak tepat.",
+      "- category: sub-kategori soal.",
       avoidLines,
       "",
-      'Output JSON: {"questions": [{question_number, question_text, options:[{key,text}], scores:{A:5,B:4,...}, explanation, category}]}',
+      "FORMAT OUTPUT:",
+      '{"questions":[{"question_text":"...","options":[{"key":"A","text":"..."},{"key":"B","text":"..."},{"key":"C","text":"..."},{"key":"D","text":"..."},{"key":"E","text":"..."}],"scores":{"A":3,"B":5,"C":1,"D":4,"E":2},"explanation":"...","category":"..."}]}',
     ].join("\n");
   }
 
-  if (subtest === "twk") {
-    return [
-      `Buatkan ${count} soal TWK (Tes Wawasan Kebangsaan) untuk simulasi SKD CPNS.`,
-      `Tingkat kesulitan: ${difficultyDesc}.`,
-      category ? `Fokus kategori: ${category}.` : "Campurkan kategori: Pancasila, UUD 1945, NKRI, Bhinneka Tunggal Ika, Peristiwa Bersejarah.",
-      "",
-      "Format setiap soal:",
-      "- question_text: pertanyaan pilihan ganda (1-2 kalimat)",
-      "- options: 5 pilihan (A/B/C/D/E), masing-masing 1 frasa/kalimat pendek",
-      "- correct_answer: huruf pilihan yang benar (A/B/C/D/E)",
-      "- explanation: penjelasan mengapa jawaban itu benar (1-2 kalimat)",
-      "- category: sub-kategori soal",
-      "",
-      "ATURAN PENTING:",
-      "- Soal harus faktual dan jawaban benar harus akurat.",
-      "- Jangan buat soal yang ambigu atau bisa diperdebatkan.",
-      "- Pilihan salah harus plausible tapi jelas salah.",
-      "- Jangan buat soal yang sama atau mirip dengan soal yang sudah ada (lihat daftar di bawah).",
-      "",
-      `Nomor soal mulai dari ${startNumber}.`,
-      avoidLines,
-      "",
-      'Output JSON: {"questions": [{question_number, question_text, options:[{key,text}], correct_answer, explanation, category}]}',
-    ].join("\n");
-  }
-
-  // TIU
+  const isTwk = subtest === "twk";
   return [
-    `Buatkan ${count} soal TIU (Tes Intelegensi Umum) untuk simulasi SKD CPNS.`,
-    `Tingkat kesulitan: ${difficultyDesc}.`,
-    category ? `Fokus kategori: ${category}.` : "Campurkan kategori: Verbal (sinonim/antonim/analogi), Numerik (hitungan/barisan/deret), Figural (pola gambar/logika), Logis (silogisme/analisis).",
+    isTwk
+      ? `Buatkan ${count} soal TWK (Tes Wawasan Kebangsaan) untuk simulasi SKD CPNS.`
+      : `Buatkan ${count} soal TIU (Tes Intelegensi Umum) untuk simulasi SKD CPNS.`,
+    category
+      ? `Fokus kategori: ${category}.`
+      : isTwk
+        ? "Campurkan kategori: Nasionalisme, Integritas, Bela Negara, Pilar Negara (Pancasila, UUD NRI 1945, NKRI, Bhinneka Tunggal Ika), Bahasa Indonesia."
+        : "Campurkan kategori: Verbal (sinonim/antonim/analogi), Numerik (hitungan/barisan/deret/soal cerita), Figural (pola/serial berbasis teks atau simbol), Logis (silogisme/analisis).",
+    ...common,
     "",
-    "Format setiap soal:",
-    "- question_text: pertanyaan pilihan ganda (1-2 kalimat)",
-    "- options: 5 pilihan (A/B/C/D/E)",
-    "- correct_answer: huruf pilihan yang benar (A/B/C/D/E)",
-    "- explanation: penjelasan cara menyelesaikan (1-2 kalimat)",
-    "- category: sub-kategori (Verbal/Numerik/Figural/Logis)",
-    "",
-    "ATURAN PENTING:",
-    "- Untuk soal numerik, pastikan perhitungan benar.",
-    "- Untuk soal verbal, pastikan sinonim/antonim/analogi akurat.",
-    "- Untuk soal figural, deskripsikan pola dengan jelas (karena tidak ada gambar).",
-    "- Pilihan salah harus plausible.",
-    "- Jangan buat soal yang sama atau mirip dengan soal yang sudah ada (lihat daftar di bawah).",
-    "",
-    `Nomor soal mulai dari ${startNumber}.`,
+    `ATURAN ${isTwk ? "TWK" : "TIU"}:`,
+    "- question_text: pertanyaan pilihan ganda (1-3 kalimat).",
+    "- correct_answer: satu huruf A-E. Sebarkan kunci jawaban secara merata antar soal (jangan didominasi satu huruf).",
+    isTwk
+      ? "- Rujuk pasal/sila/peristiwa secara tepat; hindari soal opini atau yang jawabannya bergantung tafsir."
+      : "- Numerik: hitung langkah demi langkah dan pastikan hasilnya tepat sama dengan salah satu pilihan. Verbal: pastikan sinonim/antonim/analogi sesuai KBBI. Figural/logis: pola harus punya satu jawaban yang bisa diturunkan dari teks soal.",
+    isTwk
+      ? "- explanation: 1-2 kalimat mengapa jawaban benar (sebut dasar: pasal, sila, atau peristiwa)."
+      : "- explanation: 1-3 kalimat cara menyelesaikan (langkah hitungan/alasan).",
+    `- category: sub-kategori soal${isTwk ? "" : " (Verbal/Numerik/Figural/Logis)"}.`,
     avoidLines,
     "",
-    'Output JSON: {"questions": [{question_number, question_text, options:[{key,text}], correct_answer, explanation, category}]}',
+    "FORMAT OUTPUT:",
+    '{"questions":[{"question_text":"...","options":[{"key":"A","text":"..."},{"key":"B","text":"..."},{"key":"C","text":"..."},{"key":"D","text":"..."},{"key":"E","text":"..."}],"correct_answer":"C","explanation":"...","category":"..."}]}',
   ].join("\n");
+}
+
+const OPTION_KEYS = ["A", "B", "C", "D", "E"] as const;
+
+type CleanQuestion = {
+  question_text: string;
+  options: { key: string; text: string }[];
+  correct_answer: string | null;
+  scores: Record<string, number> | null;
+  explanation: string | null;
+  category: string | null;
+};
+
+/**
+ * Validasi soal dari AI sebelum disimpan: 5 opsi A-E berisi teks, kunci A-E untuk TWK/TIU,
+ * dan skor TKP berupa permutasi 1..5. Soal yang tidak memenuhi dibuang (tidak disimpan rusak).
+ */
+function cleanQuestion(raw: unknown, subtest: string): CleanQuestion | null {
+  if (!raw || typeof raw !== "object") return null;
+  const q = raw as Record<string, unknown>;
+  const questionText = typeof q.question_text === "string" ? q.question_text.trim() : "";
+  if (!questionText || !Array.isArray(q.options) || q.options.length !== 5) return null;
+
+  const options = q.options.map((opt, i) => {
+    const text =
+      typeof opt === "string"
+        ? opt
+        : opt && typeof opt === "object"
+          ? String((opt as Record<string, unknown>).text ?? "")
+          : "";
+    // Buang awalan "A. " / "A) " bila AI tetap menuliskannya
+    return { key: OPTION_KEYS[i], text: text.replace(/^[A-E][.)]\s+/, "").trim() };
+  });
+  if (options.some((o) => !o.text)) return null;
+
+  let correctAnswer: string | null = null;
+  let scores: Record<string, number> | null = null;
+  if (subtest === "tkp") {
+    const rawScores = q.scores && typeof q.scores === "object" ? q.scores : null;
+    if (!rawScores) return null;
+    scores = {};
+    for (const key of OPTION_KEYS) {
+      scores[key] = Number((rawScores as Record<string, unknown>)[key]);
+    }
+    const sorted = Object.values(scores).sort((a, b) => a - b);
+    if (sorted.join(",") !== "1,2,3,4,5") return null;
+  } else {
+    correctAnswer = String(q.correct_answer ?? "")
+      .trim()
+      .toUpperCase();
+    if (!(OPTION_KEYS as readonly string[]).includes(correctAnswer)) return null;
+  }
+
+  const explanation = typeof q.explanation === "string" ? q.explanation.trim() : "";
+  const category = typeof q.category === "string" ? q.category.trim() : "";
+  return {
+    question_text: questionText,
+    options,
+    correct_answer: correctAnswer,
+    scores,
+    explanation: explanation || null,
+    category: category || null,
+  };
 }
 
 function parseQuestions(content: string): any[] {

@@ -9,6 +9,7 @@ import {
   getAdminClient,
   getUserId,
   getLanguageInstruction,
+  fenced,
   reserveQuota,
   type CvUiLang,
 } from "../_shared/ai-common.ts";
@@ -76,26 +77,41 @@ Deno.serve(async (req: Request) => {
 
     const cvText = JSON.stringify(cvData, null, 2);
 
-    const prompt = `Buatkan surat lamaran (cover letter) profesional ${getLanguageInstruction(lang)}.
+    const isEn = lang === "en";
+    const prompt = `TUGAS: Tulis surat lamaran kerja (cover letter) ${getLanguageInstruction(lang)} berdasarkan data CV kandidat dan lowongan berikut.
 
-DATA CV:
-${cvText}
+DATA CV KANDIDAT (JSON):
+${fenced("data_cv", cvText)}
 
-DESKRIPSI PEKERJAAN:
-${jobDescription}
-${companyName ? `\nPerusahaan: ${companyName}` : ""}
-${positionName ? `\nPosisi: ${positionName}` : ""}
-${jobSource ? `\nSumber Informasi Lowongan: ${jobSource}` : ""}
+LOWONGAN:
+${fenced("job_description", jobDescription)}
+${companyName ? `Perusahaan: ${companyName}\n` : ""}${positionName ? `Posisi: ${positionName}\n` : ""}${jobSource ? `Sumber info lowongan: ${jobSource}\n` : ""}
+LANGKAH BERPIKIR (jangan ditulis di output):
+1. Identifikasi 3–4 kebutuhan utama dari lowongan (skill, pengalaman, tanggung jawab inti).
+2. Cari bukti terkuat di CV untuk tiap kebutuhan — pengalaman, pencapaian, proyek, atau skill yang benar-benar ada.
+3. Susun surat yang menghubungkan bukti tersebut ke kebutuhan lowongan secara eksplisit.
 
-PEDOMAN:
-1. Pembukaan & Intro: Sapa rekruter secara profesional. Hindari kalimat klise kaku seperti "Dengan ini saya bermaksud melamar...". Mulailah dengan kalimat pembuka yang menarik, menyebut posisi, perusahaan, dan sumber informasi lowongan (${jobSource || "informasi lowongan"}).
-2. Mengapa Saya (Dampak Kuantitatif): Tuliskan 2-3 pencapaian relevan dari CV, lengkap dengan metrik kuantitatif (angka, persentase, nominal, efisiensi waktu, dll.) untuk membuktikan dampak nyata dari keahlian Anda.
-3. Mengapa Perusahaan Ini (Value Fit): Tunjukkan ketertarikan Anda pada misi/industri perusahaan, dan bagaimana Anda dapat membantu memecahkan masalah atau berkontribusi pada tujuan mereka.
-4. Penutup: Kalimat penutup yang percaya diri namun sopan, ajakan untuk berdiskusi/wawancara (call to action), serta sebutkan kontak Anda (email/telepon) untuk mempermudah rekruter.
-5. Gaya Bahasa & Nada: ${lang === "en" ? "Professional English, confident, warm and engaging, 250-400 words. Avoid generic boilerplate text." : "Bahasa Indonesia profesional formal, percaya diri, hangat, dan mengalir (tidak kaku/statis). JANGAN gunakan kalimat birokratis kuno seperti 'Saya yang bertanda tangan di bawah ini' atau 'Demikian surat lamaran ini saya buat'."}
-6. JANGAN gunakan format markdown seperti **tebal** atau *miring* di dalam teks surat. Tulis teks polos biasa.
+ATURAN KEJUJURAN:
+- Gunakan HANYA pengalaman, pencapaian, angka, dan skill yang ada di data CV. Jangan mengarang angka atau pencapaian; bila CV tidak punya angka, jelaskan dampaknya secara kualitatif dan spesifik.
+- Tentang perusahaan, gunakan hanya info dari lowongan/nama perusahaan. Jangan mengarang misi, produk, penghargaan, atau nilai perusahaan.
+- Jangan pakai placeholder dalam kurung siku. Jika nama perusahaan tidak diketahui, gunakan rujukan umum (${isEn ? '"your company"' : '"perusahaan Bapak/Ibu"'}).
 
-OUTPUT: HANYA teks surat polos (plain text) tanpa format markdown seperti **, tanpa kata pembuka/penutup tambahan.`;
+STRUKTUR:
+- Salam pembuka: ${isEn ? '"Dear Hiring Manager," (or "Dear [Company] Recruitment Team," when the company is known)' : '"Yth. Tim Rekrutmen [nama perusahaan]," atau "Yth. Bapak/Ibu HRD [nama perusahaan]," (tanpa nama perusahaan bila tidak diketahui)'}.
+- Paragraf 1 — pembuka (2–3 kalimat): sebut posisi, perusahaan, sumber lowongan (bila ada), dan satu kalimat pembuka yang langsung menunjukkan kualifikasi terkuat. Hindari ${isEn ? '"I am writing to apply for..."' : '"Dengan hormat, saya yang bertanda tangan di bawah ini..." dan "Dengan ini saya bermaksud melamar..."'}.
+- Paragraf 2 — bukti kecocokan (paling panjang): 2–3 pengalaman/pencapaian paling relevan dari CV, masing-masing dikaitkan eksplisit dengan kebutuhan lowongan. Sertakan angka bila ada di CV.
+- Paragraf 3 — kontribusi: apa yang akan kandidat kontribusikan pada tanggung jawab di lowongan dan kenapa peran ini cocok dengan arah kariernya.
+- Paragraf 4 — penutup: ajakan wawancara yang percaya diri dan sopan, sebut email/telepon dari CV (bila ada), dan ucapan terima kasih.
+- Salam penutup ${isEn ? '"Sincerely,"' : '"Hormat saya,"'} lalu nama lengkap kandidat dari CV.
+
+GAYA:
+- 250–380 kata (di luar salam). Paragraf dipisah satu baris kosong.
+- ${isEn ? 'Professional, warm, confident English; vary sentence openings — avoid starting most sentences with "I".' : 'Bahasa Indonesia profesional yang hangat, percaya diri, dan mengalir; sapa pembaca dengan "Bapak/Ibu". Hindari kalimat birokratis kuno seperti "Demikian surat lamaran ini saya buat".'}
+- Sesuaikan nada dengan industri (startup: lugas dan energik; korporat/perbankan/pemerintahan: lebih formal).
+- Masukkan 3–5 keyword penting dari lowongan secara natural.
+- Teks polos: tanpa markdown (**tebal**, *miring*, heading), tanpa subjek email, tanggal, atau blok alamat.
+
+OUTPUT: hanya teks surat, dari salam pembuka sampai nama.`;
 
     // H3: reservasi kuota SEBELUM memanggil AI (estimasi token = maxTokens)
     const MAX_TOKENS = 2000;

@@ -13,7 +13,9 @@ import {
   errorResponse,
   getAdminClient,
   getUserId,
-  getActionVerbExamples,
+  getCvWritingRules,
+  getLanguageStyle,
+  fenced,
   reserveQuota,
   type CvUiLang,
 } from "../_shared/ai-common.ts";
@@ -73,11 +75,20 @@ Deno.serve(async (req: Request) => {
       throw new ValidationError("Teks terlalu pendek untuk diperbaiki (minimal 5 karakter).");
     }
 
-    const ctxLine = context ? `\nKONTEKS: ${context}` : "";
-    const languageRule =
-      lang === "en"
-        ? "The final output MUST be in professional English."
-        : "Output akhir WAJIB dalam Bahasa Indonesia formal dan profesional.";
+    const isEn = lang === "en";
+    const ctxLine = context ? `\nKONTEKS ITEM: ${context}` : "";
+    const languageRule = isEn
+      ? "The final output MUST be in English (translate if the original is in another language). Style: " +
+        getLanguageStyle(lang)
+      : "Output akhir WAJIB dalam Bahasa Indonesia (terjemahkan bila teks asli berbahasa lain). Gaya: " +
+        getLanguageStyle(lang);
+    const coreRules = `ATURAN WAJIB:
+1. PERTAHANKAN SEMUA FAKTA: nama, tools, angka, persentase, nominal, durasi, dan ruang lingkup. JANGAN menambah fakta, angka, tools, atau pencapaian baru, JANGAN menambah placeholder, dan jangan menghilangkan informasi penting.
+2. ${languageRule}
+3. Perbaiki ejaan, tata bahasa, dan istilah teknis (penulisan standar, mis. "Microsoft Excel", "JavaScript").
+4. Format: bullet points, setiap poin diawali "• " dan satu poin per baris. Jika teks asli berupa paragraf, pecah menjadi poin-poin logis. Gabungkan poin yang redundan; jumlah poin mengikuti jumlah ide di teks asli (umumnya 2–6).
+5. Penulisan poin:
+${getCvWritingRules(lang)}`;
 
     if (wantVariants) {
       // ── Multi-variant mode ──────────────────────────────────────────────
@@ -87,7 +98,7 @@ Deno.serve(async (req: Request) => {
               {
                 key: "impactful",
                 label: "Impactful",
-                desc: "Focus on strong action verbs and quantifiable achievements.",
+                desc: "Strong action verbs; frame each point as a contribution or result.",
               },
               {
                 key: "clear",
@@ -104,7 +115,7 @@ Deno.serve(async (req: Request) => {
               {
                 key: "impactful",
                 label: "Impactful",
-                desc: "Fokus pada kata kerja aktif kuat dan pencapaian terukur (angka/metrik).",
+                desc: "Kata kerja aktif yang kuat; bingkai tiap poin sebagai kontribusi atau hasil.",
               },
               {
                 key: "clear",
@@ -118,25 +129,23 @@ Deno.serve(async (req: Request) => {
               },
             ];
 
-      const prompt = `Kamu adalah penulis CV profesional. Buatkan 3 versi perbaikan teks berikut dengan gaya berbeda.${ctxLine}
+      const prompt = `TUGAS: Tulis ulang teks deskripsi CV di bawah menjadi 3 versi yang lebih profesional, kuat, dan ATS-friendly — masing-masing dengan gaya berbeda.${ctxLine}
 
-ATURAN UMUM:
-- ${languageRule}
-- ${getActionVerbExamples(lang)}
-- Tambahkan metrik/angka jika memungkinkan
-- Gunakan format BULLET POINTS (awali tiap poin dengan karakter '-') karena teks ini adalah deskripsi. Pastikan baris baru di dalam string JSON di-escape dengan '\\n'.
-- JANGAN ubah fakta — hanya perbaiki bahasa dan struktur
-- JANGAN tambahkan informasi yang tidak ada di teks asli
+${coreRules}
 
-TEKS ASLI:
-${text}
+GAYA TIAP VERSI (ketiganya harus terasa jelas berbeda, bukan sekadar ganti 1–2 kata):
+- "${tones[0].label}": ${tones[0].desc} Letakkan hasil/angka yang sudah ada di teks di posisi menonjol; ubah kalimat tugas menjadi kalimat kontribusi.
+- "${tones[1].label}": ${tones[1].desc} Maksimal ±15 kata per poin, buang kata yang tidak perlu, keyword utama tetap ada.
+- "${tones[2].label}": ${tones[2].desc} Variasikan struktur kalimat dan pilihan kata yang lebih hidup — tetap formal dan faktual.
 
-Buatkan TEPAT 3 versi dalam format JSON berikut (tanpa markdown, hanya JSON mentah):
+${fenced("teks_asli", text)}
+
+OUTPUT: JSON object saja. Baris baru di dalam string ditulis sebagai \\n.
 {
   "variants": [
-    {"tone": "${tones[0].label}", "polished": "<versi 1 — ${tones[0].desc}>"},
-    {"tone": "${tones[1].label}", "polished": "<versi 2 — ${tones[1].desc}>"},
-    {"tone": "${tones[2].label}", "polished": "<versi 3 — ${tones[2].desc}>"}
+    {"tone": "${tones[0].label}", "polished": "• ...\\n• ..."},
+    {"tone": "${tones[1].label}", "polished": "• ...\\n• ..."},
+    {"tone": "${tones[2].label}", "polished": "• ...\\n• ..."}
   ]
 }`;
 
@@ -156,6 +165,7 @@ Buatkan TEPAT 3 versi dalam format JSON berikut (tanpa markdown, hanya JSON ment
             .replace(/\s*```$/, "")
             .trim();
           parsed = JSON.parse(cleaned);
+          if (!Array.isArray(parsed?.variants)) throw new Error("Invalid format");
         } catch {
           throw new Error("AI gagal menghasilkan variasi teks. Silakan coba lagi.");
         }
@@ -167,7 +177,9 @@ Buatkan TEPAT 3 versi dalam format JSON berikut (tanpa markdown, hanya JSON ment
       return corsResponse(
         {
           original: text,
-          variants: parsed.variants,
+          variants: parsed.variants
+            .filter((v) => typeof v?.polished === "string" && v.polished.trim())
+            .map((v) => ({ tone: String(v.tone || ""), polished: normalizeBullets(v.polished) })),
         },
         200,
         req,
@@ -175,22 +187,13 @@ Buatkan TEPAT 3 versi dalam format JSON berikut (tanpa markdown, hanya JSON ment
     }
 
     // ── Single polish mode (backward compatible) ─────────────────────────
-    const prompt = `Perbaiki teks deskripsi pengalaman kerja/pendidikan berikut agar lebih profesional, impactful, dan ATS-friendly.${ctxLine}
+    const prompt = `TUGAS: Tulis ulang teks deskripsi CV di bawah agar lebih profesional, kuat, dan ATS-friendly.${ctxLine}
 
-ATURAN:
-- ${languageRule}
-- ${getActionVerbExamples(lang)}
-- Tambahkan metrik/angka jika memungkinkan (contoh: ${lang === "en" ? '"increased 30%", "managed team of 5"' : '"meningkatkan 30%", "mengelola tim 5 orang"'})
-- ${lang === "en" ? "Professional & formal English" : "Bahasa Indonesia formal & profesional"}
-- Gunakan format BULLET POINTS (awali tiap poin dengan karakter '-')
-- JANGAN ubah fakta — hanya perbaiki bahasa dan struktur
-- JANGAN tambahkan informasi yang tidak ada di teks asli
-- Output LANGSUNG teks yang sudah diperbaiki, tanpa kata pembuka
+${coreRules}
 
-TEKS ASLI:
-${text}
+${fenced("teks_asli", text)}
 
-TEKS PERBAIKAN:`;
+OUTPUT: hanya teks hasil perbaikan (bullet "• "), tanpa kalimat pembuka/penutup, tanpa tanda kutip.`;
 
     // H3: reservasi kuota SEBELUM memanggil AI; dikembalikan jika AI gagal
     const reservation = await reserveQuota(admin, userId, "polish", 300);
@@ -208,12 +211,13 @@ TEKS PERBAIKAN:`;
     }
 
     // Clean up any markdown or quotes
-    const polished = result
-      .replace(/^["']|["']$/g, "")
-      .replace(/^```[\s\S]*?\n?/, "")
-      .replace(/\n?```$/, "")
-      .replace(/^\* /gm, "- ") // normalize markdown bullet * → -
-      .trim();
+    const polished = normalizeBullets(
+      result
+        .replace(/^```[a-z]*\s*/i, "")
+        .replace(/\s*```$/, "")
+        .trim()
+        .replace(/^["']|["']$/g, ""),
+    );
 
     return corsResponse(
       {
@@ -227,3 +231,12 @@ TEKS PERBAIKAN:`;
     return errorResponse(e, req);
   }
 });
+
+/** Seragamkan bullet markdown ("-", "*") menjadi "• " agar konsisten dengan AI Saran. */
+function normalizeBullets(text: string): string {
+  return text
+    .split("\n")
+    .map((line) => line.replace(/^(\s*)[-*]\s+/, "$1• "))
+    .join("\n")
+    .trim();
+}

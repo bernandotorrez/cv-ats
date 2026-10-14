@@ -1,9 +1,9 @@
 /**
- * Normalisasi daftar pertanyaan interview dari AI — logika murni (tanpa Deno/jaringan).
+ * Normalisasi pertanyaan & evaluasi interview dari AI — logika murni (tanpa Deno/jaringan).
  *
- * `generate` memakai jsonMode (balasan wajib objek JSON) padahal prompt meminta array, jadi AI
- * bisa membalas {"questions":[...]}, {"pertanyaan":[...]}, array of string, dsb. Sebelumnya hanya
- * kunci `questions` yang dibaca; bentuk lain menjadi daftar kosong tanpa pesan error.
+ * `generate` memakai jsonMode (balasan wajib objek JSON). Prompt meminta {"questions":[...]},
+ * tetapi AI kadang tetap membalas {"pertanyaan":[...]}, array of string, dsb., jadi semua bentuk
+ * itu tetap dibaca di sini.
  */
 
 export interface InterviewQuestion {
@@ -67,4 +67,68 @@ export function normalizeQuestions(parsed: unknown): InterviewQuestion[] {
     if (result.length >= MAX_QUESTIONS) break;
   }
   return result;
+}
+
+// ─── Normalisasi hasil evaluasi jawaban ───────────────────────────
+
+export interface AnswerEvaluation {
+  id: string;
+  score: number;
+  strength: string;
+  weakness: string;
+  suggestion: string;
+}
+
+export interface InterviewEvaluation {
+  evaluations: AnswerEvaluation[];
+  overall_score: number;
+  feedback: string;
+}
+
+const clampScore = (value: unknown): number | null => {
+  const n = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(n) ? Math.max(0, Math.min(100, Math.round(n))) : null;
+};
+const text = (value: unknown, max: number) =>
+  typeof value === "string" ? value.trim().slice(0, max) : "";
+
+/**
+ * Rapikan evaluasi dari AI: satu entri per pertanyaan (urutan & id mengikuti `questionIds`),
+ * skor dibatasi 0-100, dan `overall_score` dihitung ulang sebagai rata-rata skor per pertanyaan
+ * (pertanyaan tanpa evaluasi = 0) agar konsisten dengan rubrik, bukan angka bebas dari AI.
+ * null bila AI tidak mengembalikan evaluasi apa pun.
+ */
+export function normalizeEvaluation(
+  parsed: unknown,
+  questionIds: string[],
+): InterviewEvaluation | null {
+  if (typeof parsed !== "object" || parsed === null) return null;
+  const obj = parsed as Record<string, unknown>;
+  const raw = Array.isArray(obj.evaluations) ? obj.evaluations : [];
+
+  const byId = new Map<string, Record<string, unknown>>();
+  raw.forEach((item, index) => {
+    if (typeof item !== "object" || item === null) return;
+    const entry = item as Record<string, unknown>;
+    const id = String(entry.id ?? questionIds[index] ?? "").trim();
+    if (id && !byId.has(id)) byId.set(id, entry);
+  });
+  if (byId.size === 0) return null;
+
+  const evaluations = questionIds.map((id): AnswerEvaluation => {
+    const entry = byId.get(id);
+    return {
+      id,
+      score: clampScore(entry?.score) ?? 0,
+      strength: text(entry?.strength, 1_000),
+      weakness: text(entry?.weakness, 1_000),
+      suggestion: text(entry?.suggestion, 2_000),
+    };
+  });
+  const total = evaluations.reduce((sum, e) => sum + e.score, 0);
+  return {
+    evaluations,
+    overall_score: evaluations.length ? Math.round(total / evaluations.length) : 0,
+    feedback: text(obj.feedback, 5_000),
+  };
 }

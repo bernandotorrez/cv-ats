@@ -5,11 +5,15 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders, corsHeadersStatic } from "./cors.ts";
 import { ValidationError } from "./validation.ts";
 import {
+  type AiPersona,
   type CvUiLang,
-  getSystemPrompt,
-  getChatSystemPrompt,
+  getPersonaPrompt,
   getLanguageInstruction,
   getActionVerbExamples,
+  getCvWritingRules,
+  getLanguageStyle,
+  summarizeCvForPrompt,
+  fenced,
 } from "./cv-prompts.ts";
 
 // ─── Types ─────────────────────────────────────────────────────────
@@ -24,7 +28,8 @@ export interface AiCompletionOptions {
   temperature?: number;
   maxTokens?: number;
   jsonMode?: boolean;
-  useGuidedPrompt?: boolean;
+  /** System prompt yang dipakai: default (tugas CV), chat (panel chat bebas), guided (panduan JSON). */
+  persona?: AiPersona;
 }
 
 // ─── Constants ─────────────────────────────────────────────────────
@@ -188,7 +193,14 @@ export async function checkAndTrackQuota(
 
 // ─── AI Gateway ────────────────────────────────────────────────────
 
-export { getLanguageInstruction, getActionVerbExamples };
+export {
+  getLanguageInstruction,
+  getActionVerbExamples,
+  getCvWritingRules,
+  getLanguageStyle,
+  summarizeCvForPrompt,
+  fenced,
+};
 export type { CvUiLang };
 
 export async function aiComplete(
@@ -201,13 +213,12 @@ export async function aiComplete(
     temperature = 0.7,
     maxTokens = 2048,
     jsonMode = false,
-    useGuidedPrompt = false,
+    persona = "default",
   } = options;
 
   if (!AI_API_KEY) throw new Error("AI_API_KEY tidak dikonfigurasi.");
 
-  // Use specialized prompt for guided CV chat
-  const systemPrompt = useGuidedPrompt ? getChatSystemPrompt(language) : getSystemPrompt(language);
+  const systemPrompt = getPersonaPrompt(persona, language);
 
   const body: Record<string, unknown> = {
     model,

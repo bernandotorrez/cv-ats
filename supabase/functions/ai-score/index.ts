@@ -9,6 +9,7 @@ import {
   getAdminClient,
   getUserId,
   getLanguageInstruction,
+  fenced,
   reserveQuota,
   type CvUiLang,
 } from "../_shared/ai-common.ts";
@@ -83,29 +84,45 @@ Deno.serve(async (req: Request) => {
     }
 
     const cvText = JSON.stringify(cvData, null, 2);
-    const jdText = jobDescription ? `\nDESKRIPSI PEKERJAAN:\n${jobDescription}` : "";
+    const jdText = jobDescription
+      ? `\nDESKRIPSI PEKERJAAN (acuan utama relevansi & keyword):\n${fenced("job_description", jobDescription)}`
+      : "";
 
-    const prompt = `Analisis CV berikut dan berikan skor ATS ${getLanguageInstruction(lang)}.
-${jdText}
-Target posisi: ${targetRole || "tidak disebutkan"}
+    const prompt = `TUGAS: Nilai CV berikut sebagai ATS specialist & recruiter senior — objektif, konsisten, dan tidak murah hati. Semua teks ${getLanguageInstruction(lang)}.
+TARGET POSISI: ${targetRole || "tidak disebutkan (nilai berdasarkan arah karier yang tersirat di CV)"}${jdText}
 
-DATA CV:
-${cvText}
+DATA CV (JSON):
+${fenced("data_cv", cvText)}
 
-Output HARUS JSON valid (tanpa markdown wrapper):
+RUBRIK (setiap dimensi 0–100):
+- relevance: relevansi headline, summary, dan pengalaman dengan target posisi/JD. Tanpa target & JD: kejelasan dan konsistensi arah karier.
+- skills_match: kecocokan skill di CV dengan kebutuhan posisi (JD bila ada; jika tidak, kebutuhan umum posisi target).
+- experience: kualitas deskripsi pengalaman/magang/organisasi — kata kerja aktif, pencapaian & angka vs sekadar daftar tugas, kejelasan ruang lingkup, progres karier.
+- format: kelengkapan & kerapian untuk ATS — kontak (email, telepon, lokasi), headline, summary, tanggal konsisten, bullet rapi, tidak ada section/item kosong.
+- keywords: kehadiran keyword industri/JD dengan penulisan standar, tersebar di headline, summary, skill, dan pengalaman.
+
+KALIBRASI SKOR:
+- 90–100: luar biasa, siap kirim hampir tanpa revisi.
+- 75–89: baik, perlu revisi minor.
+- 60–74: cukup, ada beberapa kelemahan nyata.
+- 40–59: lemah, butuh perbaikan besar.
+- <40: sangat kurang atau banyak bagian kosong.
+Section kosong, summary generik, atau deskripsi yang hanya berisi daftar tugas HARUS menurunkan skor secara nyata. Jangan memberi skor tinggi hanya karena CV panjang.
+overall_score = round(0.25×relevance + 0.20×skills_match + 0.25×experience + 0.15×format + 0.15×keywords).
+
+ISI TEKS:
+- summary: 2–3 kalimat penilaian keseluruhan yang jujur.
+- strengths & weaknesses: spesifik dan merujuk bagian CV yang nyata (mis. "Pengalaman di PT X belum menyebut hasil kerja"), bukan nasihat umum.
+- suggestions: 5–7 tindakan konkret, urut dari dampak terbesar. Sebut bagian yang diubah dan contoh singkat perbaikannya. Jangan menyarankan mengarang pengalaman, angka, atau skill.
+
+OUTPUT: JSON object saja:
 {
-  "overall_score": number (0-100),
-  "breakdown": {
-    "relevance": number (0-100),
-    "skills_match": number (0-100),
-    "experience": number (0-100),
-    "format": number (0-100),
-    "keywords": number (0-100)
-  },
-  "summary": string (2-3 kalimat ${getLanguageInstruction(lang)}),
+  "overall_score": number,
+  "breakdown": {"relevance": number, "skills_match": number, "experience": number, "format": number, "keywords": number},
+  "summary": string,
   "strengths": string[] (3-5),
   "weaknesses": string[] (3-5),
-  "suggestions": string[] (5-7 actionable)
+  "suggestions": string[] (5-7)
 }`;
 
     // H3: reservasi kuota SEBELUM memanggil AI; dikembalikan jika AI/parsing gagal
@@ -119,6 +136,7 @@ Output HARUS JSON valid (tanpa markdown wrapper):
         lang,
       );
       parsed = parseJsonObject(result);
+      parsed.overall_score = computeOverall(parsed.breakdown) ?? parsed.overall_score;
     } catch (e) {
       await reservation.release();
       throw e;
@@ -166,4 +184,25 @@ function parseJsonObject(result: string): Record<string, unknown> {
     }
     throw new Error("Gagal parse hasil scoring. Silakan coba lagi.");
   }
+}
+
+const SCORE_WEIGHTS = {
+  relevance: 0.25,
+  skills_match: 0.2,
+  experience: 0.25,
+  format: 0.15,
+  keywords: 0.15,
+} as const;
+
+/** Hitung ulang overall dari breakdown agar konsisten dengan bobot rubrik (null jika data tidak lengkap). */
+function computeOverall(breakdown: unknown): number | null {
+  if (!breakdown || typeof breakdown !== "object") return null;
+  const values = breakdown as Record<string, unknown>;
+  let total = 0;
+  for (const [key, weight] of Object.entries(SCORE_WEIGHTS)) {
+    const value = Number(values[key]);
+    if (!Number.isFinite(value)) return null;
+    total += Math.min(100, Math.max(0, value)) * weight;
+  }
+  return Math.round(total);
 }
