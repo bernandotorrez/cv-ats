@@ -57,6 +57,7 @@ import { Route as TipsInterviewSlugRouteImport } from './routes/tips-interview.$
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
 import { Route as AuthenticatedAdminAnalyticsRouteImport } from './routes/_authenticated/admin/analytics'
 import { Route as AuthenticatedAdminJobsRouteImport } from './routes/_authenticated/admin/jobs'
+import { Route as AuthenticatedAdminPaymentsRouteImport } from './routes/_authenticated/admin/payments'
 import { Route as AuthenticatedAdminTemplatesRouteImport } from './routes/_authenticated/admin/templates'
 import { Route as AuthenticatedAdminTryoutRouteImport } from './routes/_authenticated/admin/tryout'
 import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin/users'
@@ -319,6 +320,12 @@ const AuthenticatedAdminJobsRoute = AuthenticatedAdminJobsRouteImport.update({
   path: '/jobs',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const AuthenticatedAdminPaymentsRoute =
+  AuthenticatedAdminPaymentsRouteImport.update({
+    id: '/payments',
+    path: '/payments',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminTemplatesRoute =
   AuthenticatedAdminTemplatesRouteImport.update({
     id: '/templates',
@@ -480,6 +487,7 @@ export interface FileRoutesByFullPath {
   '/tips-interview/$slug': typeof TipsInterviewSlugRoute
   '/admin/analytics': typeof AuthenticatedAdminAnalyticsRoute
   '/admin/jobs': typeof AuthenticatedAdminJobsRoute
+  '/admin/payments': typeof AuthenticatedAdminPaymentsRoute
   '/admin/templates': typeof AuthenticatedAdminTemplatesRoute
   '/admin/tryout': typeof AuthenticatedAdminTryoutRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
@@ -548,6 +556,7 @@ export interface FileRoutesByTo {
   '/tips-interview/$slug': typeof TipsInterviewSlugRoute
   '/admin/analytics': typeof AuthenticatedAdminAnalyticsRoute
   '/admin/jobs': typeof AuthenticatedAdminJobsRoute
+  '/admin/payments': typeof AuthenticatedAdminPaymentsRoute
   '/admin/templates': typeof AuthenticatedAdminTemplatesRoute
   '/admin/tryout': typeof AuthenticatedAdminTryoutRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
@@ -619,6 +628,7 @@ export interface FileRoutesById {
   '/tips-interview/$slug': typeof TipsInterviewSlugRoute
   '/_authenticated/admin/analytics': typeof AuthenticatedAdminAnalyticsRoute
   '/_authenticated/admin/jobs': typeof AuthenticatedAdminJobsRoute
+  '/_authenticated/admin/payments': typeof AuthenticatedAdminPaymentsRoute
   '/_authenticated/admin/templates': typeof AuthenticatedAdminTemplatesRoute
   '/_authenticated/admin/tryout': typeof AuthenticatedAdminTryoutRoute
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
@@ -690,6 +700,7 @@ export interface FileRouteTypes {
     | '/tips-interview/$slug'
     | '/admin/analytics'
     | '/admin/jobs'
+    | '/admin/payments'
     | '/admin/templates'
     | '/admin/tryout'
     | '/admin/users'
@@ -758,6 +769,7 @@ export interface FileRouteTypes {
     | '/tips-interview/$slug'
     | '/admin/analytics'
     | '/admin/jobs'
+    | '/admin/payments'
     | '/admin/templates'
     | '/admin/tryout'
     | '/admin/users'
@@ -828,6 +840,7 @@ export interface FileRouteTypes {
     | '/tips-interview/$slug'
     | '/_authenticated/admin/analytics'
     | '/_authenticated/admin/jobs'
+    | '/_authenticated/admin/payments'
     | '/_authenticated/admin/templates'
     | '/_authenticated/admin/tryout'
     | '/_authenticated/admin/users'
@@ -1223,6 +1236,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminJobsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/payments': {
+      id: '/_authenticated/admin/payments'
+      path: '/payments'
+      fullPath: '/admin/payments'
+      preLoaderRoute: typeof AuthenticatedAdminPaymentsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/templates': {
       id: '/_authenticated/admin/templates'
       path: '/templates'
@@ -1369,6 +1389,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminAnalyticsRoute: typeof AuthenticatedAdminAnalyticsRoute
   AuthenticatedAdminJobsRoute: typeof AuthenticatedAdminJobsRoute
+  AuthenticatedAdminPaymentsRoute: typeof AuthenticatedAdminPaymentsRoute
   AuthenticatedAdminTemplatesRoute: typeof AuthenticatedAdminTemplatesRoute
   AuthenticatedAdminTryoutRoute: typeof AuthenticatedAdminTryoutRoute
   AuthenticatedAdminUsersRoute: typeof AuthenticatedAdminUsersRoute
@@ -1378,6 +1399,7 @@ interface AuthenticatedAdminRouteChildren {
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminAnalyticsRoute: AuthenticatedAdminAnalyticsRoute,
   AuthenticatedAdminJobsRoute: AuthenticatedAdminJobsRoute,
+  AuthenticatedAdminPaymentsRoute: AuthenticatedAdminPaymentsRoute,
   AuthenticatedAdminTemplatesRoute: AuthenticatedAdminTemplatesRoute,
   AuthenticatedAdminTryoutRoute: AuthenticatedAdminTryoutRoute,
   AuthenticatedAdminUsersRoute: AuthenticatedAdminUsersRoute,

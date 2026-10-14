@@ -22,6 +22,7 @@ import {
   BriefcaseBusiness,
   Trophy,
   Menu,
+  Receipt,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -32,6 +33,7 @@ const NAV_ITEMS = [
   { to: "/admin" as const, icon: LayoutDashboard, label: "Dashboard" },
   { to: "/admin/analytics" as const, icon: BarChart3, label: "Analitik Pengunjung" },
   { to: "/admin/users" as const, icon: Users, label: "Users" },
+  { to: "/admin/payments" as const, icon: Receipt, label: "Pembayaran" },
   { to: "/admin/templates" as const, icon: Palette, label: "Templates" },
   { to: "/admin/jobs" as const, icon: BriefcaseBusiness, label: "Lowongan" },
   { to: "/admin/tryout" as const, icon: Trophy, label: "Tryout" },

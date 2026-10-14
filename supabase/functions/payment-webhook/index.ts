@@ -14,7 +14,7 @@
  */
 
 import { getAdminClient } from "../_shared/ai-common.ts";
-import { runInBackground, sendPaymentEmail } from "../_shared/email.ts";
+import { runInBackground, sendPaymentSuccessEmails } from "../_shared/email.ts";
 
 const TIMESTAMP_TOLERANCE_SEC = 5 * 60;
 
@@ -139,9 +139,9 @@ Deno.serve(async (req: Request) => {
       if (error) throw new Error(error.message);
       console.log(`payment-webhook: ${orderId} fulfilled`, result);
 
-      // Email konfirmasi hanya saat aktivasi pertama (bukan webhook ulang)
+      // Email konfirmasi (pembeli) + notifikasi CS, terpisah; hanya saat aktivasi pertama
       if (result && (result as { already_fulfilled?: boolean }).already_fulfilled === false) {
-        runInBackground(sendSuccessEmail(admin, orderId));
+        runInBackground(sendPaymentSuccessEmails(admin, orderId, "webhook"));
       }
     } else if (eventType === "payment.failed" || eventType === "payment.expired") {
       const newStatus = eventType === "payment.failed" ? "failed" : "expired";
@@ -186,18 +186,6 @@ Deno.serve(async (req: Request) => {
     return text("Temporary error", 500);
   }
 });
-
-async function sendSuccessEmail(admin: ReturnType<typeof getAdminClient>, orderId: string) {
-  const { data: order } = await admin
-    .from("payment_orders")
-    .select(
-      "order_id, user_id, product_name, product_type, amount_idr, gateway_amount_idr, paid_at, fulfillment_result",
-    )
-    .eq("order_id", orderId)
-    .maybeSingle();
-  if (!order) return;
-  await sendPaymentEmail(admin, order.user_id, "success", order);
-}
 
 function text(body: string, status: number) {
   return new Response(body, { status, headers: { "Content-Type": "text/plain" } });

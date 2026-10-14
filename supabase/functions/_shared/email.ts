@@ -2,7 +2,8 @@
  * Email transaksional via Brevo.
  *
  * Keamanan:
- * - Penerima SELALU email akun (auth.users) milik userId — tidak pernah dari input client.
+ * - Penerima SELALU email akun (auth.users) milik userId — tidak pernah dari input client —
+ *   atau email CS internal (ADMIN_NOTIFY_EMAIL) untuk notifikasi admin.
  * - Semua nilai dinamis di-escape sebelum masuk HTML.
  * - Kegagalan kirim email tidak boleh menggagalkan proses utama (pembayaran/webhook).
  *
@@ -10,6 +11,7 @@
  * - BREVO_API_KEY (wajib; jika kosong email dilewati dengan log)
  * - EMAIL_FROM (opsional, default "CV Pintar <no-reply@cvpintar.web.id>" — harus sender/domain terverifikasi di Brevo)
  * - SITE_URL (opsional, default https://cvpintar.web.id)
+ * - ADMIN_NOTIFY_EMAIL (opsional, default cs@cvpintar.web.id) — penerima notifikasi pembayaran sukses
  */
 import type { getAdminClient } from "./ai-common.ts";
 
@@ -18,6 +20,7 @@ type AdminClient = ReturnType<typeof getAdminClient>;
 const BREVO_API_URL = "https://api.brevo.com/v3/smtp/email";
 const FROM_EMAIL = Deno.env.get("EMAIL_FROM") || "CV Pintar <no-reply@cvpintar.web.id>";
 export const SITE_URL = (Deno.env.get("SITE_URL") || "https://cvpintar.web.id").replace(/\/+$/, "");
+const ADMIN_NOTIFY_EMAIL = Deno.env.get("ADMIN_NOTIFY_EMAIL") || "cs@cvpintar.web.id";
 
 declare const EdgeRuntime: { waitUntil(promise: Promise<unknown>): void } | undefined;
 
@@ -230,6 +233,8 @@ export interface PaymentEmailOrder {
   paid_at?: string | null;
   product_type?: string;
   fulfillment_result?: Record<string, unknown> | null;
+  quantity?: number;
+  payment_method?: string | null;
 }
 
 export function paymentPendingEmail(order: PaymentEmailOrder, name: string) {
@@ -280,15 +285,7 @@ export function paymentSuccessEmail(order: PaymentEmailOrder, name: string) {
     ["Total dibayar", formatIdr(total)],
     ["Dibayar pada", formatDateTimeWib(order.paid_at)],
   ];
-  if (typeof result.date_end === "string")
-    rows.push(["Aktif sampai", formatDateTimeWib(result.date_end)]);
-  if (typeof result.upload_cv_end_date === "string") {
-    rows.push(["Upload CV aktif sampai", formatDateTimeWib(result.upload_cv_end_date)]);
-  }
-  if (typeof result.quota_pro_photo_purchased === "number") {
-    rows.push(["Sisa kuota Foto Pro (beli)", String(result.quota_pro_photo_purchased)]);
-  }
-  if (typeof result.credits === "number") rows.push(["Kredit tryout", `${result.credits}x`]);
+  rows.push(...activationRows(result));
   rows.push(["No. Order", order.order_id]);
 
   const next = NEXT_STEP[order.product_type || ""] || NEXT_STEP.tier;
@@ -331,5 +328,104 @@ export async function sendPaymentEmail(
   } catch (e) {
     console.error(`sendPaymentEmail(${kind}) failed:`, e);
     return false;
+  }
+}
+
+/** Baris hasil aktivasi (dipakai email user & admin). */
+function activationRows(result: Record<string, unknown>): Array<[string, string]> {
+  const rows: Array<[string, string]> = [];
+  if (typeof result.date_end === "string")
+    rows.push(["Aktif sampai", formatDateTimeWib(result.date_end)]);
+  if (typeof result.upload_cv_end_date === "string") {
+    rows.push(["Upload CV aktif sampai", formatDateTimeWib(result.upload_cv_end_date)]);
+  }
+  if (typeof result.quota_pro_photo_purchased === "number") {
+    rows.push(["Sisa kuota Foto Pro (beli)", String(result.quota_pro_photo_purchased)]);
+  }
+  if (typeof result.credits === "number") rows.push(["Kredit tryout", `${result.credits}x`]);
+  return rows;
+}
+
+/** Notifikasi internal ke CS: ada pembayaran sukses. */
+export function paymentAdminNotificationEmail(
+  order: PaymentEmailOrder,
+  buyer: { email: string; name: string; userId: string },
+  source: "webhook" | "manual",
+) {
+  const total = order.gateway_amount_idr ?? order.amount_idr;
+  const fee = total - order.amount_idr;
+  const rows: Array<[string, string]> = [
+    ["Pembeli", buyer.name || "-"],
+    ["Email", buyer.email || "-"],
+    ["User ID", buyer.userId],
+    [
+      "Produk",
+      `${order.product_name}${order.quantity && order.quantity > 1 ? ` ×${order.quantity}` : ""}`,
+    ],
+    ["Harga", formatIdr(order.amount_idr)],
+    ...(fee > 0 ? ([["Fee", formatIdr(fee)]] as Array<[string, string]>) : []),
+    ["Total dibayar", formatIdr(total)],
+    ["Metode", (order.payment_method || "-").toUpperCase()],
+    ["Dibayar pada", formatDateTimeWib(order.paid_at)],
+    ...activationRows(order.fulfillment_result || {}),
+    [
+      "Diaktifkan lewat",
+      source === "manual" ? "Aktivasi manual admin" : "Webhook SumoPod (otomatis)",
+    ],
+    ["No. Order", order.order_id],
+  ];
+  const layout: LayoutOptions = {
+    headerTitle: "💰 Pembayaran Masuk",
+    heading: `${formatIdr(order.amount_idr)} — ${order.product_name}`,
+    introHtml: `Pembayaran dari <strong>${escapeHtml(buyer.email || buyer.userId)}</strong> sudah diterima dan produknya sudah aktif di akun pembeli.`,
+    summaryTitle: "Detail Pembayaran",
+    rows,
+    button: { label: "Lihat di Admin", url: `${SITE_URL}/admin/payments` },
+  };
+  return {
+    subject: `[CV Pintar] Pembayaran masuk ${formatIdr(order.amount_idr)}: ${order.product_name} (${order.order_id})`,
+    html: renderLayout(layout),
+    text: renderText(
+      layout,
+      `Pembayaran dari ${buyer.email || buyer.userId} sudah diterima dan produknya sudah aktif.`,
+    ),
+  };
+}
+
+/**
+ * Pembayaran sukses: kirim 2 email TERPISAH — konfirmasi ke pembeli dan
+ * notifikasi ke CS (ADMIN_NOTIFY_EMAIL). Tidak pernah melempar error.
+ */
+export async function sendPaymentSuccessEmails(
+  admin: AdminClient,
+  orderId: string,
+  source: "webhook" | "manual",
+): Promise<void> {
+  try {
+    const { data: order, error } = await admin
+      .from("payment_orders")
+      .select(
+        "order_id, user_id, product_name, product_type, quantity, amount_idr, gateway_amount_idr, payment_method, paid_at, fulfillment_result",
+      )
+      .eq("order_id", orderId)
+      .maybeSingle();
+    if (error || !order) {
+      console.error("sendPaymentSuccessEmails: order tidak ditemukan", orderId, error?.message);
+      return;
+    }
+
+    const account = await getAccountEmail(admin, order.user_id);
+    const buyer = { email: account?.email ?? "", name: account?.name ?? "", userId: order.user_id };
+
+    const sends: Promise<boolean>[] = [];
+    if (account) {
+      sends.push(sendEmail({ to: account.email, ...paymentSuccessEmail(order, account.name) }));
+    }
+    sends.push(
+      sendEmail({ to: ADMIN_NOTIFY_EMAIL, ...paymentAdminNotificationEmail(order, buyer, source) }),
+    );
+    await Promise.all(sends);
+  } catch (e) {
+    console.error("sendPaymentSuccessEmails failed:", e);
   }
 }
