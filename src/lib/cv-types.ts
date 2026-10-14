@@ -127,6 +127,17 @@ export const TEMPLATES = [
     description: "Elegan dengan aksen cokelat dan layout foto overlap.",
     isNeedLevelingSkill: true,
   },
+  {
+    id: "padang",
+    name: "Padang",
+    description: "Satu kolom ATS-friendly, teks polos dengan aksen biru yang rapi.",
+  },
+  {
+    id: "manado",
+    name: "Manado",
+    description: "Kreatif dua kolom dengan sidebar teal gelap dan aksen amber.",
+    isNeedLevelingSkill: true,
+  },
 ] as const;
 
 export type TemplateId = (typeof TEMPLATES)[number]["id"];

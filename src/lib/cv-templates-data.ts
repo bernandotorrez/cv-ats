@@ -1,9 +1,17 @@
 import type { TemplateSlug } from "@/components/site/TemplatePreview";
 
 const FREE_TEMPLATES = ["jakarta", "bandung"];
-const PRO_TEMPLATES = ["semarang", "surabaya", "malang", "ubud", "bogor"];
+const PRO_TEMPLATES = ["semarang", "surabaya", "malang", "ubud", "bogor", "padang", "manado"];
 
 export const templatesData = [
+  {
+    slug: "manado" as TemplateSlug,
+    name: "Manado",
+    desc: "Dua kolom kreatif dengan sidebar teal gelap, aksen amber, dan timeline pengalaman. Tampil menonjol tanpa kehilangan kesan profesional.",
+    bestFor: "Creative, Product & Brand",
+    tags: ["Kreatif", "Timeline", "Sidebar"],
+    type: "Kreatif",
+  },
   {
     slug: "ubud" as TemplateSlug,
     name: "Ubud",
@@ -50,6 +58,14 @@ export const templatesData = [
     desc: "Tegas tanpa berlebihan. Pilihan aman untuk corporate, management trainee, dan posisi profesional.",
     bestFor: "Corporate & management",
     tags: ["Korporat", "Formal", "Manager"],
+    type: "ATS-Friendly",
+  },
+  {
+    slug: "padang" as TemplateSlug,
+    name: "Padang",
+    desc: "Satu kolom, teks polos, dan hierarki yang jelas. Paling aman untuk sistem ATS di BUMN, perbankan, dan perusahaan multinasional.",
+    bestFor: "BUMN, banking & corporate",
+    tags: ["ATS", "Satu Kolom", "Formal"],
     type: "ATS-Friendly",
   },
   {

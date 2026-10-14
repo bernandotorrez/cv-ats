@@ -18,6 +18,7 @@ const DEFAULT_SECTION_ORDER = [
   { id: "organization", label: "Riwayat Organisasi" },
   { id: "skills", label: "Keahlian" },
   { id: "languages", label: "Bahasa" },
+  { id: "certificate", label: "Sertifikat" },
 ] as const;
 
 export function BogorTemplate({ data, showHeader = true, sectionOrder, language = "id" }: Props) {
@@ -31,7 +32,7 @@ export function BogorTemplate({ data, showHeader = true, sectionOrder, language 
   const textColor = "#333333";
   const headingColor = "#B58759";
 
-  const sidebarSectionIds = ["skills", "languages", "certificates"];
+  const sidebarSectionIds = ["skills", "languages", "certificate"];
   const mainSectionIds = ["personal", "experience", "education", "internship", "organization"];
 
   // Sidebar heading style
@@ -140,10 +141,10 @@ export function BogorTemplate({ data, showHeader = true, sectionOrder, language 
           );
         }
         return null;
-      case "certificates":
+      case "certificate":
         if (certificates.length > 0) {
           return (
-            <div key="certificates">
+            <div key="certificate">
               {renderSidebarHeading(t(language, "certificates"))}
               <div style={{ padding: "0 20px", display: "flex", flexDirection: "column", gap: 12 }}>
                 {certificates.map((c) => (

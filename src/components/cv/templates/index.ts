@@ -10,3 +10,5 @@ export { BaliTemplate } from "./BaliTemplate";
 export { MalangTemplate } from "./MalangTemplate";
 export { UbudTemplate } from "./UbudTemplate";
 export { BogorTemplate } from "./BogorTemplate";
+export { PadangTemplate } from "./PadangTemplate";
+export { ManadoTemplate } from "./ManadoTemplate";

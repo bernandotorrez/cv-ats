@@ -15,6 +15,7 @@ const DEFAULT_SECTION_ORDER = [
   { id: "experience", label: "Pengalaman Kerja" },
   { id: "skills", label: "Keahlian" },
   { id: "languages", label: "Bahasa" },
+  { id: "certificate", label: "Sertifikat" },
 ] as const;
 
 export function UbudTemplate({ data, showHeader = true, sectionOrder, language = "id" }: Props) {
@@ -26,7 +27,7 @@ export function UbudTemplate({ data, showHeader = true, sectionOrder, language =
   const hasPersonalContent = personal.fullName || personal.headline;
 
   // Sidebar Sections IDs
-  const sidebarSectionIds = ["skills", "languages", "certificates"];
+  const sidebarSectionIds = ["skills", "languages", "certificate"];
   // Main Content Section IDs
   const mainSectionIds = ["personal", "experience", "education", "internship", "organization"];
 
@@ -135,10 +136,10 @@ export function UbudTemplate({ data, showHeader = true, sectionOrder, language =
         }
         return null;
 
-      case "certificates":
+      case "certificate":
         if (certificates.length > 0) {
           return (
-            <div key="certificates">
+            <div key="certificate">
               {renderSidebarHeading(t(language, "certificates"))}
               <div style={{ fontSize: "8pt", lineHeight: 1.4, color: "#cbd5e1" }}>
                 {certificates.map((c) => (

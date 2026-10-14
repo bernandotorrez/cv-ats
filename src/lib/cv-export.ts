@@ -40,6 +40,11 @@ const COLOR_MALANG_PRIMARY = "1e40af";
 const COLOR_MALANG_TEXT = "1e3a8a";
 const COLOR_UBUD_PRIMARY = "8b5cf6";
 const COLOR_UBUD_TEXT = "0f172a";
+const COLOR_BOGOR_PRIMARY = "b58759";
+const COLOR_PADANG_ACCENT = "1e4e8c";
+const COLOR_PADANG_MUTED = "4b5563";
+const COLOR_MANADO_PRIMARY = "12343b";
+const COLOR_MANADO_ACCENT = "b4641c";
 
 function headingSection(text: string, spacing?: { before?: number; after?: number }): Paragraph[] {
   return [
@@ -648,6 +653,170 @@ function buildUbudHeader(cv: CvData): Paragraph[] {
   return paras;
 }
 
+function buildBogorHeader(cv: CvData): Paragraph[] {
+  const fullName = cv.personal.fullName || "Nama Lengkap";
+  const contact = [cv.personal.phone, cv.personal.email, cv.personal.location, cv.personal.linkedin]
+    .filter(Boolean)
+    .join(" • ");
+
+  const paras: Paragraph[] = [
+    new Paragraph({
+      shading: { type: ShadingType.SOLID, color: COLOR_BOGOR_PRIMARY, fill: COLOR_BOGOR_PRIMARY },
+      children: [
+        new TextRun({ text: fullName, bold: true, size: 40, font: FONT_NAME, color: "ffffff" }),
+      ],
+      spacing: { after: 0 },
+    }),
+  ];
+
+  if (cv.personal.headline) {
+    paras.push(
+      new Paragraph({
+        shading: { type: ShadingType.SOLID, color: COLOR_BOGOR_PRIMARY, fill: COLOR_BOGOR_PRIMARY },
+        children: [
+          new TextRun({ text: cv.personal.headline, size: 24, font: FONT_NAME, color: "ffffff" }),
+        ],
+        spacing: { after: 0 },
+      }),
+    );
+  }
+
+  if (contact) {
+    paras.push(
+      new Paragraph({
+        children: [new TextRun({ text: contact, size: 18, font: FONT_NAME, color: COLOR_MUTED })],
+        spacing: { before: 120, after: 120 },
+      }),
+    );
+  }
+
+  return paras;
+}
+
+function buildPadangHeader(cv: CvData): Paragraph[] {
+  const fullName = cv.personal.fullName || "Nama Lengkap";
+  const contact = [cv.personal.email, cv.personal.phone, cv.personal.location]
+    .filter(Boolean)
+    .join("  |  ");
+  const links = [cv.personal.linkedin, cv.personal.website].filter(Boolean).join("  |  ");
+
+  const paras: Paragraph[] = [
+    new Paragraph({
+      children: [
+        new TextRun({ text: fullName, bold: true, size: 44, font: FONT_NAME, color: COLOR_TEXT }),
+      ],
+      spacing: { after: 40 },
+    }),
+  ];
+
+  if (cv.personal.headline) {
+    paras.push(
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: cv.personal.headline,
+            bold: true,
+            size: 23,
+            font: FONT_NAME,
+            color: COLOR_PADANG_ACCENT,
+          }),
+        ],
+        spacing: { after: 60 },
+      }),
+    );
+  }
+
+  for (const line of [contact, links].filter(Boolean)) {
+    paras.push(
+      new Paragraph({
+        children: [
+          new TextRun({ text: line, size: 19, font: FONT_NAME, color: COLOR_PADANG_MUTED }),
+        ],
+        spacing: { after: 20 },
+      }),
+    );
+  }
+
+  paras.push(
+    new Paragraph({
+      border: {
+        bottom: { style: BorderStyle.SINGLE, size: 12, color: COLOR_PADANG_ACCENT, space: 4 },
+      },
+      spacing: { after: 120 },
+      children: [],
+    }),
+  );
+
+  return paras;
+}
+
+function buildManadoHeader(cv: CvData): Paragraph[] {
+  const fullName = cv.personal.fullName || "Nama Lengkap";
+  const contact = [
+    cv.personal.email,
+    cv.personal.phone,
+    cv.personal.location,
+    cv.personal.linkedin,
+    cv.personal.website,
+  ]
+    .filter(Boolean)
+    .join(" • ");
+
+  const paras: Paragraph[] = [
+    new Paragraph({
+      children: [
+        new TextRun({
+          text: fullName,
+          bold: true,
+          size: 48,
+          font: FONT_DISPLAY,
+          color: COLOR_MANADO_PRIMARY,
+        }),
+      ],
+      spacing: { after: 40 },
+    }),
+  ];
+
+  if (cv.personal.headline) {
+    paras.push(
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: cv.personal.headline.toUpperCase(),
+            bold: true,
+            size: 20,
+            font: FONT_NAME,
+            color: COLOR_MANADO_ACCENT,
+            characterSpacing: 40,
+          }),
+        ],
+        spacing: { after: 60 },
+      }),
+    );
+  }
+
+  if (contact) {
+    paras.push(
+      new Paragraph({
+        children: [new TextRun({ text: contact, size: 18, font: FONT_NAME, color: "64748b" })],
+        spacing: { after: 120 },
+      }),
+    );
+  }
+
+  paras.push(
+    new Paragraph({
+      border: {
+        bottom: { style: BorderStyle.SINGLE, size: 12, color: COLOR_MANADO_ACCENT, space: 4 },
+      },
+      spacing: { after: 120 },
+      children: [],
+    }),
+  );
+
+  return paras;
+}
+
 // ─── Main DOCX Generator ──────────────────────────────────────
 
 export async function generateDocx(cv: CvData, options: ExportOptions): Promise<Blob> {
@@ -683,6 +852,15 @@ export async function generateDocx(cv: CvData, options: ExportOptions): Promise<
       break;
     case "ubud":
       sections.push(...buildUbudHeader(cv));
+      break;
+    case "bogor":
+      sections.push(...buildBogorHeader(cv));
+      break;
+    case "padang":
+      sections.push(...buildPadangHeader(cv));
+      break;
+    case "manado":
+      sections.push(...buildManadoHeader(cv));
       break;
     case "jakarta":
     default:

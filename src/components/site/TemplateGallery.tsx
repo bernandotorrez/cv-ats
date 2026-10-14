@@ -19,6 +19,8 @@ import { YogyaTemplate } from "@/components/cv/templates/YogyaTemplate";
 import { MalangTemplate } from "@/components/cv/templates/MalangTemplate";
 import { UbudTemplate } from "@/components/cv/templates/UbudTemplate";
 import { BogorTemplate } from "@/components/cv/templates/BogorTemplate";
+import { PadangTemplate } from "@/components/cv/templates/PadangTemplate";
+import { ManadoTemplate } from "@/components/cv/templates/ManadoTemplate";
 
 const templateComponents = {
   bali: BaliTemplate,
@@ -32,6 +34,8 @@ const templateComponents = {
   malang: MalangTemplate,
   ubud: UbudTemplate,
   bogor: BogorTemplate,
+  padang: PadangTemplate,
+  manado: ManadoTemplate,
 };
 
 export function TemplateGallery() {

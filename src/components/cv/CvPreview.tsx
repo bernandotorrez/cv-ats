@@ -14,6 +14,8 @@ import {
   MalangTemplate,
   UbudTemplate,
   BogorTemplate,
+  PadangTemplate,
+  ManadoTemplate,
 } from "./templates";
 
 function formatDescription(text: string): string {
@@ -132,6 +134,14 @@ export function CvPreview({
       case "bogor":
         return (
           <BogorTemplate data={formattedData} sectionOrder={sectionOrder} language={language} />
+        );
+      case "padang":
+        return (
+          <PadangTemplate data={formattedData} sectionOrder={sectionOrder} language={language} />
+        );
+      case "manado":
+        return (
+          <ManadoTemplate data={formattedData} sectionOrder={sectionOrder} language={language} />
         );
       case "jakarta":
       default:

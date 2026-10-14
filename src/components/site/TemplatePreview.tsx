@@ -706,6 +706,155 @@ export const previewData = {
       },
     ],
   } as CvData,
+  padang: {
+    personal: {
+      fullName: "Rina Marlina",
+      headline: "Financial Analyst",
+      email: "rina.marlina@email.com",
+      phone: "0813-2233-4455",
+      location: "Padang, Sumatera Barat",
+      linkedin: "linkedin.com/in/rinamarlina",
+      summary:
+        "Financial Analyst dengan 4+ tahun pengalaman di perbankan dan BUMN. Terbiasa menyusun laporan keuangan, analisis anggaran, dan model proyeksi untuk mendukung keputusan manajemen.",
+      summaryAlign: "justify" as const,
+    },
+    experiences: [
+      {
+        id: "1",
+        position: "Financial Analyst",
+        company: "Bank Nagari",
+        location: "Padang",
+        startDate: "Feb 2022",
+        current: true,
+        endDate: "",
+        description:
+          "• Menyusun laporan kinerja keuangan bulanan untuk 32 kantor cabang\n• Membangun model proyeksi kredit yang memangkas waktu analisis 40%\n• Mendampingi audit internal dan eksternal tanpa temuan material",
+      },
+      {
+        id: "2",
+        position: "Staf Akuntansi",
+        company: "PT Semen Padang",
+        location: "Padang",
+        startDate: "Jul 2020",
+        current: false,
+        endDate: "Jan 2022",
+        description:
+          "• Mengelola rekonsiliasi bank dan jurnal penyesuaian bulanan\n• Mengotomasi laporan aging piutang dengan Excel Power Query",
+      },
+    ],
+    educations: [
+      {
+        id: "1",
+        school: "Universitas Andalas",
+        degree: "S1",
+        field: "Akuntansi",
+        startDate: "2016",
+        endDate: "2020",
+        description: "IPK 3.71 · Asisten Laboratorium Akuntansi Keuangan",
+      },
+    ],
+    skills: [
+      { id: "1", name: "Financial Modeling" },
+      { id: "2", name: "Budgeting & Forecasting" },
+      { id: "3", name: "Microsoft Excel (Advanced)" },
+      { id: "4", name: "SAP FI" },
+      { id: "5", name: "Power BI" },
+    ],
+    languages: [
+      { id: "1", name: "Bahasa Indonesia", level: "Native" },
+      { id: "2", name: "English", level: "Professional" },
+    ],
+    certificates: [
+      {
+        id: "1",
+        name: "Certified Financial Analyst (Level 1)",
+        issuer: "CFA Institute",
+        date: "2023",
+      },
+    ],
+    internships: [],
+    organizations: [
+      {
+        id: "1",
+        name: "Himpunan Mahasiswa Akuntansi Unand",
+        role: "Bendahara Umum",
+        startDate: "2018",
+        endDate: "2019",
+        description: "• Mengelola anggaran organisasi senilai Rp120 juta per tahun",
+      },
+    ],
+  } as CvData,
+  manado: {
+    personal: {
+      fullName: "Kevin Lumowa",
+      headline: "Product Designer",
+      email: "kevin.lumowa@email.com",
+      phone: "0821-7788-9900",
+      location: "Manado, Sulawesi Utara",
+      linkedin: "linkedin.com/in/kevinlumowa",
+      website: "kevinlumowa.design",
+      summary:
+        "Product Designer dengan 5 tahun pengalaman merancang aplikasi mobile dan web untuk startup fintech dan travel. Menggabungkan riset pengguna, desain sistem, dan prototyping untuk menghasilkan produk yang mudah dipakai.",
+      summaryAlign: "left" as const,
+    },
+    experiences: [
+      {
+        id: "1",
+        position: "Senior Product Designer",
+        company: "Torang Travel",
+        location: "Remote",
+        startDate: "Mar 2022",
+        current: true,
+        endDate: "",
+        description:
+          "• Memimpin redesain alur pemesanan yang menaikkan konversi 23%\n• Membangun design system dengan 120+ komponen di Figma\n• Mentoring 3 desainer junior",
+      },
+      {
+        id: "2",
+        position: "UI/UX Designer",
+        company: "Kawanua Fintech",
+        location: "Jakarta",
+        startDate: "Jan 2019",
+        current: false,
+        endDate: "Feb 2022",
+        description:
+          "• Merancang onboarding e-KYC dengan tingkat penyelesaian 87%\n• Menjalankan 40+ sesi usability testing",
+      },
+    ],
+    educations: [
+      {
+        id: "1",
+        school: "Universitas Sam Ratulangi",
+        degree: "S1",
+        field: "Teknik Informatika",
+        startDate: "2014",
+        endDate: "2018",
+      },
+    ],
+    skills: [
+      { id: "1", name: "Figma", level: "Expert" },
+      { id: "2", name: "User Research", level: "Advanced" },
+      { id: "3", name: "Prototyping", level: "Expert" },
+      { id: "4", name: "Design System", level: "Advanced" },
+      { id: "5", name: "HTML & CSS", level: "Intermediate" },
+    ],
+    languages: [
+      { id: "1", name: "Bahasa Indonesia", level: "Native" },
+      { id: "2", name: "English", level: "Fluent" },
+    ],
+    certificates: [{ id: "1", name: "Google UX Design", issuer: "Coursera", date: "2021" }],
+    internships: [],
+    organizations: [
+      {
+        id: "1",
+        name: "Komunitas Desainer Manado",
+        role: "Co-founder",
+        startDate: "2020",
+        endDate: "Sekarang",
+        description: "• Mengadakan meetup desain bulanan dengan 300+ anggota",
+      },
+    ],
+  } as CvData,
 };
 
 // Template mapping untuk halaman /template
@@ -721,6 +870,8 @@ export const templateMap = {
   malang: { name: "Malang", premium: true },
   ubud: { name: "Ubud", premium: true },
   bogor: { name: "Bogor", premium: true },
+  padang: { name: "Padang", premium: true },
+  manado: { name: "Manado", premium: true },
 } as const;
 
 export type TemplateSlug = keyof typeof previewData;
