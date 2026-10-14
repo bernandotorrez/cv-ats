@@ -16,6 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { cn } from "@/lib/utils";
 import { downloadInvoicePdf, formatDate, formatIdr } from "@/lib/invoice";
+import { isPaymentLinkOpen, paymentDisplayStatus } from "@/lib/payment";
 
 export const Route = createFileRoute("/_authenticated/pembayaran")({
   head: () =>
@@ -55,13 +56,7 @@ const FILTERS: Array<{ key: Filter; label: string }> = [
   { key: "other", label: "Gagal / Kedaluwarsa" },
 ];
 
-/** Status tampilan: pending yang sudah lewat expires_at dianggap kedaluwarsa. */
-function displayStatus(o: Order): OrderStatus {
-  if (o.status === "pending" && o.expires_at && new Date(o.expires_at) <= new Date()) {
-    return "expired";
-  }
-  return o.status;
-}
+const displayStatus = (o: Order): OrderStatus => paymentDisplayStatus(o.status, o.expires_at);
 
 const STATUS_UI: Record<OrderStatus, { label: string; className: string }> = {
   paid: {
@@ -229,7 +224,8 @@ function PembayaranPage() {
             const status = displayStatus(o);
             const ui = STATUS_UI[status];
             const total = o.gateway_amount_idr ?? o.amount_idr;
-            const canPay = status === "pending" && !!o.payment_link_url;
+            const canPay = status === "pending" && isPaymentLinkOpen(o);
+            const linkClosed = status === "pending" && !canPay;
             return (
               <li key={o.id}>
                 <Card className="rounded-2xl">
@@ -243,6 +239,14 @@ function PembayaranPage() {
                       </div>
                       <Badge className={cn("shrink-0", ui.className)}>{ui.label}</Badge>
                     </div>
+
+                    {linkClosed && (
+                      <p className="rounded-lg bg-amber-50 p-2 text-xs text-amber-800 dark:bg-amber-900/30 dark:text-amber-200">
+                        Link pembayaran sudah tidak bisa dibuka. Jika QR sudah kamu buka sebelumnya,
+                        selesaikan pembayaran di QR tersebut. Akses aktif otomatis setelah
+                        pembayaran terkonfirmasi.
+                      </p>
+                    )}
 
                     <div className="flex flex-wrap items-end justify-between gap-3">
                       <div>

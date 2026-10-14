@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import {
   ArrowRight,
   BadgeCheck,
@@ -32,10 +33,52 @@ import {
 import { buildSeo } from "@/lib/seo";
 import { CtaBanner, Eyebrow, PageHero, SectionHeader } from "@/components/site/marketing";
 import { useCheckout, type ProductKey } from "@/lib/payment";
+import { useAuth } from "@/lib/auth-context";
+import { checkAndHandleSubscription, type Tier } from "@/lib/subscription";
 
 const WHATSAPP_NUMBER = "6285190607141";
 
 type Checkout = ReturnType<typeof useCheckout>;
+
+const TIER_RANK: Record<string, number> = { Free: 0, Starter: 1, Pro: 2 };
+const TIER_NAME: Record<Tier, string> = { free: "Free", starter: "Starter", pro: "Pro" };
+
+interface CurrentPlan {
+  name: string;
+  dateEnd: string | null;
+}
+
+/** Paket aktif user yang login (null untuk tamu / Free). */
+function useCurrentPlan(): CurrentPlan | null {
+  const { user } = useAuth();
+  const [plan, setPlan] = useState<CurrentPlan | null>(null);
+
+  useEffect(() => {
+    if (!user?.id) {
+      setPlan(null);
+      return;
+    }
+    let cancelled = false;
+    void checkAndHandleSubscription(user.id).then(({ tier, dateEnd }) => {
+      if (!cancelled) setPlan(tier === "free" ? null : { name: TIER_NAME[tier], dateEnd });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
+
+  return plan;
+}
+
+const formatPlanEnd = (iso: string | null) =>
+  iso
+    ? new Date(iso).toLocaleDateString("id-ID", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+        timeZone: "Asia/Jakarta",
+      })
+    : "";
 
 function getTierProduct(tierName: string): ProductKey | null {
   if (tierName === "Starter") return "tier:starter";
@@ -251,6 +294,7 @@ function NewTabHint() {
 
 function HargaPage() {
   const checkout = useCheckout();
+  const currentPlan = useCurrentPlan();
   return (
     <div className="overflow-hidden bg-white">
       <PageHero
@@ -293,7 +337,12 @@ function HargaPage() {
           </h2>
           <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-3 lg:items-start">
             {tiers.map((tier) => (
-              <PricingCard key={tier.name} tier={tier} checkout={checkout} />
+              <PricingCard
+                key={tier.name}
+                tier={tier}
+                checkout={checkout}
+                currentPlan={currentPlan}
+              />
             ))}
           </div>
           <p className="mt-8 text-center text-sm text-gray-600">
@@ -607,10 +656,23 @@ function HargaPage() {
   );
 }
 
-function PricingCard({ tier, checkout }: { tier: (typeof tiers)[number]; checkout: Checkout }) {
+function PricingCard({
+  tier,
+  checkout,
+  currentPlan,
+}: {
+  tier: (typeof tiers)[number];
+  checkout: Checkout;
+  currentPlan: CurrentPlan | null;
+}) {
   const featured = !!tier.popular;
   const isFree = tier.name === "Free";
   const product = getTierProduct(tier.name);
+  const currentRank = currentPlan ? (TIER_RANK[currentPlan.name] ?? 0) : 0;
+  const tierRank = TIER_RANK[tier.name] ?? 0;
+  const isCurrent = !!currentPlan && currentPlan.name === tier.name;
+  // Paket lebih rendah tidak bisa dibeli selama paket yang lebih tinggi aktif
+  const isLower = !!currentPlan && !isFree && tierRank < currentRank;
   const keyFeatures = tier.features.slice(0, KEY_FEATURE_COUNT);
   const more = tier.features.length - keyFeatures.length;
   const Icon = isFree ? Gift : tier.name === "Starter" ? Wand2 : BadgeCheck;
@@ -688,11 +750,15 @@ function PricingCard({ tier, checkout }: { tier: (typeof tiers)[number]; checkou
         <button
           type="button"
           onClick={() => product && checkout.checkout(product)}
-          disabled={!product || !!checkout.pending}
+          disabled={!product || !!checkout.pending || isLower}
           data-analytics-event={`click_pricing_${tier.name.toLowerCase()}`}
-          className={`${btnBase} ${btnTone} disabled:cursor-wait disabled:opacity-70`}
+          className={`${btnBase} ${btnTone} disabled:opacity-70 ${isLower ? "disabled:cursor-not-allowed" : "disabled:cursor-wait"}`}
         >
-          {tier.cta}
+          {isLower
+            ? `Paket ${currentPlan!.name} kamu aktif`
+            : isCurrent
+              ? `Perpanjang ${tier.name}`
+              : tier.cta}
           {product && checkout.pending === product ? (
             <Loader2 aria-hidden="true" className="h-5 w-5 animate-spin" />
           ) : (
@@ -701,7 +767,15 @@ function PricingCard({ tier, checkout }: { tier: (typeof tiers)[number]; checkou
         </button>
       )}
       <p className={`mt-3 text-center text-xs ${featured ? "text-green-50" : "text-gray-600"}`}>
-        {isFree ? "Bisa upgrade kapan saja" : "Pembayaran aman via QRIS · Refund 7 hari"}
+        {isFree
+          ? "Bisa upgrade kapan saja"
+          : isLower
+            ? `Bisa dibeli setelah paket ${currentPlan!.name} berakhir ${formatPlanEnd(currentPlan!.dateEnd)}`
+            : isCurrent
+              ? `Aktif sampai ${formatPlanEnd(currentPlan!.dateEnd)} · ditambah 30 hari`
+              : currentPlan && tierRank > currentRank
+                ? `Sisa hari paket ${currentPlan.name} dikonversi ke ${tier.name}`
+                : "Pembayaran aman via QRIS · Refund 7 hari"}
       </p>
 
       <ul className="mt-6 space-y-3 text-sm">

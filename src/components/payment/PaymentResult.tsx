@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
-import type { PaymentOrderStatus } from "@/lib/payment";
+import { isPaymentLinkOpen, type PaymentOrderStatus } from "@/lib/payment";
 
 type Order = {
   order_id: string;
@@ -92,10 +92,7 @@ export function PaymentResult({
     };
   }, [authLoading, user, orderId, variant]);
 
-  const canContinuePaying =
-    order?.status === "pending" &&
-    !!order.payment_link_url &&
-    (!order.expires_at || new Date(order.expires_at) > new Date());
+  const canContinuePaying = !!order && isPaymentLinkOpen(order);
 
   let icon = <Loader2 className="h-7 w-7 animate-spin" />;
   let tone = "bg-primary/10 text-primary";

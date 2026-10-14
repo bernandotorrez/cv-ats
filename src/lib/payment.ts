@@ -9,9 +9,45 @@ import { supabase } from "@/integrations/supabase/client";
 const BASE_URL = (import.meta.env.VITE_SUPABASE_URL || "") + "/functions/v1";
 
 export type ProductKey =
-  "tier:starter" | "tier:pro" | "addon:upload_cv" | "addon:pro_photo" | `tryout:${string}`;
+  | "tier:starter"
+  | "tier:pro"
+  | "addon:upload_cv"
+  | "addon:pro_photo"
+  | `tryout:${string}`;
 
 export type PaymentOrderStatus = "pending" | "paid" | "failed" | "expired" | "cancelled";
+
+// Link bayar SumoPod berlaku sampai expires_at; QR yang sudah dibuka tetap bisa
+// dibayar 7 hari setelahnya. Sama dengan payment_order_display_status() di database.
+const QR_VALID_AFTER_LINK_MS = 7 * 24 * 60 * 60 * 1000;
+
+/** Status untuk ditampilkan: pending baru kedaluwarsa setelah link + masa QR habis. */
+export function paymentDisplayStatus(
+  status: PaymentOrderStatus,
+  expiresAt: string | null,
+): PaymentOrderStatus {
+  if (
+    status === "pending" &&
+    expiresAt &&
+    new Date(expiresAt).getTime() + QR_VALID_AFTER_LINK_MS <= Date.now()
+  ) {
+    return "expired";
+  }
+  return status;
+}
+
+/** Link pembayaran masih bisa dibuka (untuk tombol "Bayar Sekarang"). */
+export function isPaymentLinkOpen(o: {
+  status: PaymentOrderStatus;
+  payment_link_url: string | null;
+  expires_at: string | null;
+}): boolean {
+  return (
+    o.status === "pending" &&
+    !!o.payment_link_url &&
+    (!o.expires_at || new Date(o.expires_at) > new Date())
+  );
+}
 
 export interface CreatePaymentResult {
   order_id: string;

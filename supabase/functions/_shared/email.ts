@@ -332,10 +332,32 @@ export async function sendPaymentEmail(
 }
 
 /** Baris hasil aktivasi (dipakai email user & admin). */
+export type PaymentActivationSource = "webhook" | "manual" | "reconcile";
+
+const SOURCE_LABEL: Record<PaymentActivationSource, string> = {
+  webhook: "Webhook SumoPod (otomatis)",
+  manual: "Aktivasi manual admin",
+  reconcile: "Cek status ke SumoPod (webhook tidak masuk)",
+};
+
+const TIER_LABEL: Record<string, string> = { starter: "Starter", pro: "Pro" };
+
 function activationRows(result: Record<string, unknown>): Array<[string, string]> {
   const rows: Array<[string, string]> = [];
+  if (typeof result.tier === "string") {
+    rows.push(["Paket aktif", TIER_LABEL[result.tier] ?? result.tier]);
+  }
   if (typeof result.date_end === "string")
     rows.push(["Aktif sampai", formatDateTimeWib(result.date_end)]);
+  if (result.mode === "upgrade" && typeof result.bonus_days === "number" && result.bonus_days > 0) {
+    rows.push(["Bonus dari sisa paket lama", `${result.bonus_days} hari`]);
+  }
+  if (result.mode === "converted") {
+    rows.push([
+      "Catatan",
+      "Paket lebih tinggi tetap aktif, pembayaran dikonversi jadi perpanjangan",
+    ]);
+  }
   if (typeof result.upload_cv_end_date === "string") {
     rows.push(["Upload CV aktif sampai", formatDateTimeWib(result.upload_cv_end_date)]);
   }
@@ -350,7 +372,7 @@ function activationRows(result: Record<string, unknown>): Array<[string, string]
 export function paymentAdminNotificationEmail(
   order: PaymentEmailOrder,
   buyer: { email: string; name: string; userId: string },
-  source: "webhook" | "manual",
+  source: PaymentActivationSource,
 ) {
   const total = order.gateway_amount_idr ?? order.amount_idr;
   const fee = total - order.amount_idr;
@@ -368,10 +390,7 @@ export function paymentAdminNotificationEmail(
     ["Metode", (order.payment_method || "-").toUpperCase()],
     ["Dibayar pada", formatDateTimeWib(order.paid_at)],
     ...activationRows(order.fulfillment_result || {}),
-    [
-      "Diaktifkan lewat",
-      source === "manual" ? "Aktivasi manual admin" : "Webhook SumoPod (otomatis)",
-    ],
+    ["Diaktifkan lewat", SOURCE_LABEL[source]],
     ["No. Order", order.order_id],
   ];
   const layout: LayoutOptions = {
@@ -399,7 +418,7 @@ export function paymentAdminNotificationEmail(
 export async function sendPaymentSuccessEmails(
   admin: AdminClient,
   orderId: string,
-  source: "webhook" | "manual",
+  source: PaymentActivationSource,
 ): Promise<void> {
   try {
     const { data: order, error } = await admin

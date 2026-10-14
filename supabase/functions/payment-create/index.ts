@@ -89,6 +89,44 @@ Deno.serve(async (req: Request) => {
       return json(req, { error: e instanceof Error ? e.message : "Produk tidak valid." }, 400);
     }
 
+    // Tolak downgrade selama paket yang lebih tinggi masih aktif (sisa hari akan hangus)
+    if (product.type === "tier") {
+      const { data: activeSub } = await admin
+        .from("user_subscriptions")
+        .select("date_end, subscription_tiers!inner(name, price_monthly)")
+        .eq("user_id", userId)
+        .eq("status", "active")
+        .order("date_end", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      const current =
+        (activeSub as {
+          date_end: string | null;
+          subscription_tiers?: { name?: string; price_monthly?: number };
+        } | null) ?? null;
+      const currentPrice = current?.subscription_tiers?.price_monthly ?? 0;
+      if (
+        current?.date_end &&
+        new Date(current.date_end) > new Date() &&
+        currentPrice > product.amount
+      ) {
+        const until = new Intl.DateTimeFormat("id-ID", {
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+          timeZone: "Asia/Jakarta",
+        }).format(new Date(current.date_end));
+        return json(
+          req,
+          {
+            error: `Paket ${current.subscription_tiers?.name ?? "kamu"} masih aktif sampai ${until}. Paket yang lebih rendah bisa dibeli setelah masa aktifnya habis.`,
+            code: "downgrade_not_allowed",
+          },
+          409,
+        );
+      }
+    }
+
     // Pakai ulang order pending yang sama & masih lama berlakunya (hindari spam order)
     const { data: existing } = await admin
       .from("payment_orders")

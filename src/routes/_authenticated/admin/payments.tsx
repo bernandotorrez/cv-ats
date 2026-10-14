@@ -15,6 +15,7 @@ import {
   Zap,
   Loader2,
   RefreshCw,
+  ShieldCheck,
   Search,
 } from "lucide-react";
 import { buildSeo } from "@/lib/seo";
@@ -199,6 +200,37 @@ function describeActivation(o: PaymentRow): { activated: string | null; now: str
   }
 }
 
+/** Panggil edge function admin dengan JWT sesi saat ini. */
+async function callAdminFunction<T>(name: string, body: unknown): Promise<T> {
+  const { data: sessionData } = await supabase.auth.getSession();
+  const token = sessionData.session?.access_token;
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  if (!token || !supabaseUrl) {
+    throw new Error("Session admin tidak valid. Silakan login ulang.");
+  }
+  const response = await fetch(`${supabaseUrl}/functions/v1/${name}`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const data = (await response.json().catch(() => ({}))) as T & { error?: string };
+  if (!response.ok || data.error) {
+    throw new Error(data.error ?? response.statusText);
+  }
+  return data;
+}
+
+interface ReconcileResponse {
+  checked: number;
+  counts: Record<string, number>;
+  results: Array<{
+    order_id: string;
+    action: string;
+    gateway_status: string | null;
+    error?: string;
+  }>;
+}
+
 function AdminPaymentsPage() {
   const [rows, setRows] = useState<PaymentRow[]>([]);
   const [summary, setSummary] = useState<Summary | null>(null);
@@ -211,6 +243,7 @@ function AdminPaymentsPage() {
   const [downloading, setDownloading] = useState<string | null>(null);
   const [fulfillTarget, setFulfillTarget] = useState<PaymentRow | null>(null);
   const [fulfilling, setFulfilling] = useState(false);
+  const [reconciling, setReconciling] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -248,30 +281,13 @@ function AdminPaymentsPage() {
 
   const handleFulfill = async () => {
     if (!fulfillTarget) return;
-    const { data: sessionData } = await supabase.auth.getSession();
-    const token = sessionData.session?.access_token;
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    if (!token || !supabaseUrl) {
-      toast.error("Session admin tidak valid. Silakan login ulang.");
-      return;
-    }
-
     setFulfilling(true);
     try {
       // Lewat edge function agar email ke pembeli & CS ikut terkirim
-      const response = await fetch(`${supabaseUrl}/functions/v1/admin-payment-fulfill`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ order_id: fulfillTarget.order_id }),
-      });
-      const data = (await response.json().catch(() => ({}))) as {
-        error?: string;
-        already_fulfilled?: boolean;
-      };
-      if (!response.ok || data.error) {
-        toast.error(`Gagal mengaktifkan: ${data.error ?? response.statusText}`);
-        return;
-      }
+      const data = await callAdminFunction<{ already_fulfilled?: boolean }>(
+        "admin-payment-fulfill",
+        { order_id: fulfillTarget.order_id },
+      );
       toast.success(
         data.already_fulfilled
           ? `${fulfillTarget.order_id} sudah aktif sebelumnya.`
@@ -279,10 +295,40 @@ function AdminPaymentsPage() {
       );
       setFulfillTarget(null);
       void load();
-    } catch {
-      toast.error("Gagal menghubungi server.");
+    } catch (e) {
+      toast.error(`Gagal mengaktifkan: ${e instanceof Error ? e.message : "server error"}`);
     } finally {
       setFulfilling(false);
+    }
+  };
+
+  // Cek order "Menunggu" ke SumoPod untuk pembayaran yang webhook-nya tidak masuk
+  const handleReconcile = async () => {
+    setReconciling(true);
+    try {
+      const data = await callAdminFunction<ReconcileResponse>("payment-reconcile", {});
+      const c = data.counts;
+      if (data.checked === 0) {
+        toast.info("Tidak ada order menunggu yang perlu dicek.");
+      } else {
+        const summary = [
+          `${data.checked} order dicek`,
+          c.fulfilled && `${c.fulfilled} diaktifkan`,
+          (c.expired || c.failed) && `${(c.expired ?? 0) + (c.failed ?? 0)} kedaluwarsa/gagal`,
+          c.unchanged && `${c.unchanged} masih menunggu`,
+          c.error && `${c.error} error`,
+        ]
+          .filter(Boolean)
+          .join(" · ");
+        const firstError = data.results.find((r) => r.action === "error")?.error;
+        if (c.error) toast.warning(summary, { description: firstError });
+        else toast.success(summary);
+      }
+      void load();
+    } catch (e) {
+      toast.error(`Gagal cek status: ${e instanceof Error ? e.message : "server error"}`);
+    } finally {
+      setReconciling(false);
     }
   };
 
@@ -344,10 +390,26 @@ function AdminPaymentsPage() {
             className="pl-9"
           />
         </div>
-        <Button variant="outline" size="sm" onClick={() => void load()} disabled={loading}>
-          <RefreshCw className={cn("mr-2 h-4 w-4", loading && "animate-spin")} />
-          Muat ulang
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => void handleReconcile()}
+            disabled={reconciling}
+            title="Cek order Menunggu ke SumoPod; yang sudah Completed langsung diaktifkan"
+          >
+            {reconciling ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <ShieldCheck className="mr-2 h-4 w-4" />
+            )}
+            Cek status ke SumoPod
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => void load()} disabled={loading}>
+            <RefreshCw className={cn("mr-2 h-4 w-4", loading && "animate-spin")} />
+            Muat ulang
+          </Button>
+        </div>
       </div>
 
       <div role="tablist" aria-label="Filter status" className="flex flex-wrap gap-2">
