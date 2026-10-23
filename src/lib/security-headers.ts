@@ -7,7 +7,7 @@
 // CSP directives tailored for cvpintar.web.id
 //
 // SECURITY NOTES:
-// - 'unsafe-eval' removed: nothing in the client bundle needs it. pdfjs-dist 5.x
+// - 'unsafe-eval' removed: nothing in the client bundle needs it. pdfjs-dist 6.x
 //   contains no eval/new Function; bluebird (via mammoth) only uses
 //   `new Function` outside the browser (canEvaluate = no navigator).
 // - 'unsafe-inline' is still required in script-src: TanStack Start injects
