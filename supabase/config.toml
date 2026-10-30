@@ -13,3 +13,8 @@ verify_jwt = false
 # The function rejects every request without a valid CRON_SECRET.
 [functions.reset-monthly-quota]
 verify_jwt = false
+
+# Invoked by pg_cron via pg_net with an x-cron-secret header and no JWT.
+# The function rejects every request without a valid CRON_SECRET.
+[functions.abuse-alert-digest]
+verify_jwt = false

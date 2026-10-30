@@ -1,6 +1,29 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { getVisitorId } from "@/lib/analytics";
+
+const DEVICE_REGISTERED_KEY = "cvp_device_registered";
+
+/**
+ * Catat device (cvp_visitor_id) & IP akun ini sekali per sesi browser untuk
+ * deteksi multi-akun Free (lihat RPC register_device). Gagal = diam saja.
+ */
+function registerDeviceOnce(userId: string) {
+  try {
+    if (sessionStorage.getItem(DEVICE_REGISTERED_KEY) === userId) return;
+    sessionStorage.setItem(DEVICE_REGISTERED_KEY, userId);
+  } catch {
+    // sessionStorage tidak tersedia: tetap catat (idempotent di server)
+  }
+  // register_device belum ada di generated types
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  void (supabase as any)
+    .rpc("register_device", { p_visitor_id: getVisitorId() })
+    .then(({ error }: { error: { message: string } | null }) => {
+      if (error) console.warn("register_device failed:", error.message);
+    });
+}
 
 interface AuthContextValue {
   user: User | null;
@@ -30,6 +53,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     return () => subscription.unsubscribe();
   }, []);
+
+  const userId = session?.user?.id;
+  useEffect(() => {
+    if (userId) registerDeviceOnce(userId);
+  }, [userId]);
 
   const signOut = async () => {
     try {

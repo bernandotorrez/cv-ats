@@ -55,6 +55,7 @@ import { Route as ShareTokenRouteImport } from './routes/share.$token'
 import { Route as SitemapXmlRouteImport } from './routes/sitemap.xml'
 import { Route as TipsInterviewSlugRouteImport } from './routes/tips-interview.$slug'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
+import { Route as AuthenticatedAdminAbuseRouteImport } from './routes/_authenticated/admin/abuse'
 import { Route as AuthenticatedAdminAnalyticsRouteImport } from './routes/_authenticated/admin/analytics'
 import { Route as AuthenticatedAdminJobsRouteImport } from './routes/_authenticated/admin/jobs'
 import { Route as AuthenticatedAdminPaymentsRouteImport } from './routes/_authenticated/admin/payments'
@@ -309,6 +310,11 @@ const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const AuthenticatedAdminAbuseRoute = AuthenticatedAdminAbuseRouteImport.update({
+  id: '/abuse',
+  path: '/abuse',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
 const AuthenticatedAdminAnalyticsRoute =
   AuthenticatedAdminAnalyticsRouteImport.update({
     id: '/analytics',
@@ -485,6 +491,7 @@ export interface FileRoutesByFullPath {
   '/share/$token': typeof ShareTokenRoute
   '/sitemap/xml': typeof SitemapXmlRoute
   '/tips-interview/$slug': typeof TipsInterviewSlugRoute
+  '/admin/abuse': typeof AuthenticatedAdminAbuseRoute
   '/admin/analytics': typeof AuthenticatedAdminAnalyticsRoute
   '/admin/jobs': typeof AuthenticatedAdminJobsRoute
   '/admin/payments': typeof AuthenticatedAdminPaymentsRoute
@@ -554,6 +561,7 @@ export interface FileRoutesByTo {
   '/share/$token': typeof ShareTokenRoute
   '/sitemap/xml': typeof SitemapXmlRoute
   '/tips-interview/$slug': typeof TipsInterviewSlugRoute
+  '/admin/abuse': typeof AuthenticatedAdminAbuseRoute
   '/admin/analytics': typeof AuthenticatedAdminAnalyticsRoute
   '/admin/jobs': typeof AuthenticatedAdminJobsRoute
   '/admin/payments': typeof AuthenticatedAdminPaymentsRoute
@@ -626,6 +634,7 @@ export interface FileRoutesById {
   '/share/$token': typeof ShareTokenRoute
   '/sitemap/xml': typeof SitemapXmlRoute
   '/tips-interview/$slug': typeof TipsInterviewSlugRoute
+  '/_authenticated/admin/abuse': typeof AuthenticatedAdminAbuseRoute
   '/_authenticated/admin/analytics': typeof AuthenticatedAdminAnalyticsRoute
   '/_authenticated/admin/jobs': typeof AuthenticatedAdminJobsRoute
   '/_authenticated/admin/payments': typeof AuthenticatedAdminPaymentsRoute
@@ -698,6 +707,7 @@ export interface FileRouteTypes {
     | '/share/$token'
     | '/sitemap/xml'
     | '/tips-interview/$slug'
+    | '/admin/abuse'
     | '/admin/analytics'
     | '/admin/jobs'
     | '/admin/payments'
@@ -767,6 +777,7 @@ export interface FileRouteTypes {
     | '/share/$token'
     | '/sitemap/xml'
     | '/tips-interview/$slug'
+    | '/admin/abuse'
     | '/admin/analytics'
     | '/admin/jobs'
     | '/admin/payments'
@@ -838,6 +849,7 @@ export interface FileRouteTypes {
     | '/share/$token'
     | '/sitemap/xml'
     | '/tips-interview/$slug'
+    | '/_authenticated/admin/abuse'
     | '/_authenticated/admin/analytics'
     | '/_authenticated/admin/jobs'
     | '/_authenticated/admin/payments'
@@ -1222,6 +1234,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/abuse': {
+      id: '/_authenticated/admin/abuse'
+      path: '/abuse'
+      fullPath: '/admin/abuse'
+      preLoaderRoute: typeof AuthenticatedAdminAbuseRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/analytics': {
       id: '/_authenticated/admin/analytics'
       path: '/analytics'
@@ -1387,6 +1406,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedAdminRouteChildren {
+  AuthenticatedAdminAbuseRoute: typeof AuthenticatedAdminAbuseRoute
   AuthenticatedAdminAnalyticsRoute: typeof AuthenticatedAdminAnalyticsRoute
   AuthenticatedAdminJobsRoute: typeof AuthenticatedAdminJobsRoute
   AuthenticatedAdminPaymentsRoute: typeof AuthenticatedAdminPaymentsRoute
@@ -1397,6 +1417,7 @@ interface AuthenticatedAdminRouteChildren {
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
+  AuthenticatedAdminAbuseRoute: AuthenticatedAdminAbuseRoute,
   AuthenticatedAdminAnalyticsRoute: AuthenticatedAdminAnalyticsRoute,
   AuthenticatedAdminJobsRoute: AuthenticatedAdminJobsRoute,
   AuthenticatedAdminPaymentsRoute: AuthenticatedAdminPaymentsRoute,

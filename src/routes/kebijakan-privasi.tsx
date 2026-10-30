@@ -52,6 +52,10 @@ const dataTypes = [
     label: "Aktivitas layanan",
     desc: "Data teknis seperti fitur yang dipakai untuk membantu kami memperbaiki produk secara anonim.",
   },
+  {
+    label: "Perangkat dan alamat IP",
+    desc: "ID perangkat browser dan alamat IP saat login, dipakai hanya untuk keamanan dan mencegah penyalahgunaan paket gratis.",
+  },
 ];
 
 const usageItems = [

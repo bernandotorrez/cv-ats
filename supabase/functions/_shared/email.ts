@@ -12,6 +12,7 @@
  * - EMAIL_FROM (opsional, default "CV Pintar <no-reply@cvpintar.web.id>" — harus sender/domain terverifikasi di Brevo)
  * - SITE_URL (opsional, default https://cvpintar.web.id)
  * - ADMIN_NOTIFY_EMAIL (opsional, default cs@cvpintar.web.id) — penerima notifikasi pembayaran sukses
+ *   dan ringkasan alert akun ganda
  */
 import type { getAdminClient } from "./ai-common.ts";
 
@@ -447,4 +448,76 @@ export async function sendPaymentSuccessEmails(
   } catch (e) {
     console.error("sendPaymentSuccessEmails failed:", e);
   }
+}
+
+// ─── Anti-abuse: akun ganda ────────────────────────────────────────
+
+export interface AbuseAlertAccount {
+  user_id: string;
+  email: string | null;
+  name: string;
+  created_at: string;
+  tier: string;
+  pdf_downloads: number;
+}
+
+export interface AbuseAlertDigestItem {
+  id: string;
+  signal: "device" | "ip";
+  signal_value: string;
+  blocked_download: boolean;
+  updated_at: string;
+  accounts: AbuseAlertAccount[];
+}
+
+const MAX_DIGEST_ALERTS = 20;
+
+/** Ringkasan alert akun ganda untuk CS (ADMIN_NOTIFY_EMAIL). */
+export function abuseAlertDigestEmail(alerts: AbuseAlertDigestItem[]) {
+  const shown = alerts.slice(0, MAX_DIGEST_ALERTS);
+  const rows: Array<[string, string]> = [];
+  for (const alert of shown) {
+    const label =
+      alert.signal === "device"
+        ? `Device sama (${alert.signal_value.slice(0, 8)}…)`
+        : `IP sama (${alert.signal_value})`;
+    rows.push([
+      label,
+      `${alert.accounts.length} akun${alert.blocked_download ? " · download diblokir" : ""}`,
+    ]);
+    for (const acc of alert.accounts) {
+      rows.push([
+        `   ${acc.email || acc.user_id}`,
+        `${acc.tier} · ${acc.pdf_downloads} PDF · daftar ${formatDateTimeWib(acc.created_at)}`,
+      ]);
+    }
+  }
+  if (alerts.length > shown.length) {
+    rows.push(["Lainnya", `+${alerts.length - shown.length} alert — lihat di admin`]);
+  }
+
+  const layout: LayoutOptions = {
+    headerTitle: "🚨 Akun Ganda Terdeteksi",
+    heading: `${alerts.length} alert baru`,
+    introHtml:
+      "Ada akun Free yang memakai <strong>device</strong> atau <strong>IP</strong> yang sama dengan akun lain. Device sama otomatis memblokir download PDF gratis; IP sama hanya sinyal (IP seluler/kantor bisa dipakai bersama).",
+    summaryTitle: "Detail Alert",
+    rows,
+    button: { label: "Tinjau di Admin", url: `${SITE_URL}/admin/abuse` },
+    noteHtml:
+      "Tandai <em>Abaikan</em> di admin jika device/IP memang dipakai bersama — device yang diabaikan tidak lagi memblokir download.",
+  };
+  return {
+    subject: `[CV Pintar] ${alerts.length} alert akun ganda baru`,
+    html: renderLayout(layout),
+    text: renderText(
+      layout,
+      `Ada ${alerts.length} alert akun Free dengan device atau IP yang sama dengan akun lain.`,
+    ),
+  };
+}
+
+/** Kirim ringkasan alert akun ganda ke CS. Return true jika diterima Brevo. */
+export function sendAbuseAlertDigest(alerts: AbuseAlertDigestItem[]): Promise<boolean> {
+  return sendEmail({ to: ADMIN_NOTIFY_EMAIL, ...abuseAlertDigestEmail(alerts) });
 }

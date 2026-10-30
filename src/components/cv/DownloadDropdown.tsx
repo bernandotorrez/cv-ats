@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import type { CvData, TemplateId } from "@/lib/cv-types";
 import { generateDocx, downloadBlob, downloadPdf } from "@/lib/cv-export";
 import { supabase } from "@/integrations/supabase/client";
+import { getVisitorId } from "@/lib/analytics";
 
 interface Props {
   cv: CvData;
@@ -20,6 +21,13 @@ interface Props {
 type DownloadStatus = {
   count: number;
   quota: number | null;
+};
+
+type RecordDownloadResult = {
+  allowed: boolean;
+  reason?: "quota" | "device" | "docx_locked";
+  count?: number;
+  quota?: number | null;
 };
 
 type SubscriptionWithDownloadQuota = {
@@ -42,13 +50,15 @@ export function DownloadDropdown({
   const [loading, setLoading] = useState<string | null>(null);
   const [pdfDownloadCount, setPdfDownloadCount] = useState<number | null>(null);
   const [pdfDownloadQuota, setPdfDownloadQuota] = useState<number | null>(showWatermark ? 1 : null);
+  const [deviceBlocked, setDeviceBlocked] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const isFreeTier = showWatermark;
   const pdfLimitReached =
     isFreeTier &&
-    pdfDownloadQuota !== null &&
-    pdfDownloadCount !== null &&
-    pdfDownloadCount >= pdfDownloadQuota;
+    (deviceBlocked ||
+      (pdfDownloadQuota !== null &&
+        pdfDownloadCount !== null &&
+        pdfDownloadCount >= pdfDownloadQuota));
 
   const fetchDownloadStatus = useCallback(async (): Promise<DownloadStatus> => {
     if (!userId) {
@@ -95,29 +105,37 @@ export function DownloadDropdown({
     }
   }, [fetchDownloadStatus]);
 
-  const trackDownload = async (downloadType: "pdf" | "docx") => {
-    if (!cvId || !userId) return;
-    try {
-      await supabase.from("cv_downloads").insert({
-        cv_id: cvId,
-        user_id: userId,
-        download_type: downloadType,
-        template_id: templateId,
-        file_name: `${fileName}.${downloadType}`,
-        user_tier: isFreeTier ? "free" : null,
-      });
+  /**
+   * Cek kuota & catat download di database (RPC record_cv_download).
+   * Untuk Free, server juga menolak jika jatah gratis di device ini sudah
+   * dipakai akun lain (reason "device").
+   */
+  const recordDownload = async (downloadType: "pdf" | "docx"): Promise<RecordDownloadResult> => {
+    if (!cvId || !userId) throw new Error("CV atau user belum siap");
 
+    // record_cv_download belum ada di generated types
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (supabase as any).rpc("record_cv_download", {
+      p_cv_id: cvId,
+      p_download_type: downloadType,
+      p_template_id: templateId,
+      p_file_name: `${fileName}.${downloadType}`,
+      p_visitor_id: getVisitorId(),
+    });
+    if (error) throw error;
+
+    const result = data as RecordDownloadResult;
+    if (result.allowed) {
       // cv_analytics belum ada di generated types
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (supabase as any).from("cv_analytics").insert({
-        cv_id: cvId,
-        user_id: userId,
-        event_type: "download",
-      });
-    } catch (error) {
-      console.error("Download tracking error:", error);
-      if (downloadType === "pdf" && isFreeTier) throw error;
+      await (supabase as any)
+        .from("cv_analytics")
+        .insert({ cv_id: cvId, user_id: userId, event_type: "download" })
+        .then(({ error: analyticsError }: { error: unknown }) => {
+          if (analyticsError) console.error("Download analytics error:", analyticsError);
+        });
     }
+    return result;
   };
 
   // Close on click outside
@@ -138,23 +156,43 @@ export function DownloadDropdown({
 
   const handleDownloadPdf = async () => {
     setLoading("pdf");
-    const status = await refreshDownloadStatus();
 
-    if (!status) {
-      setLoading(null);
-      toast.error("Gagal memeriksa kuota download. Coba lagi sebentar.");
-      return;
+    let result: RecordDownloadResult;
+    try {
+      result = await recordDownload("pdf");
+    } catch (error) {
+      console.error("Download quota check error:", error);
+      if (isFreeTier) {
+        setLoading(null);
+        toast.error("Gagal memeriksa kuota download. Coba lagi sebentar.");
+        return;
+      }
+      // Paket berbayar tidak dibatasi: pencatatan gagal tidak menghalangi download
+      result = { allowed: true };
     }
 
-    if (status.quota !== null && status.count >= status.quota) {
+    if (!result.allowed) {
       setLoading(null);
-      toast.error("Kuota download PDF Free sudah habis. Upgrade ke Starter untuk lanjut.");
+      if (result.reason === "device") {
+        setDeviceBlocked(true);
+        toast.error(
+          <span>
+            Jatah download gratis di perangkat ini sudah terpakai, Silahkan{" "}
+            <a href="/harga" className="font-semibold underline">
+              Upgrade Tier kamu
+            </a>
+          </span>,
+        );
+      } else {
+        if (typeof result.count === "number") setPdfDownloadCount(result.count);
+        if (result.quota !== undefined) setPdfDownloadQuota(result.quota);
+        toast.error("Kuota download PDF Free sudah habis. Upgrade ke Starter untuk lanjut.");
+      }
       return;
     }
 
     try {
-      await trackDownload("pdf");
-      setPdfDownloadCount(status.count + 1);
+      if (typeof result.count === "number") setPdfDownloadCount(result.count);
       await downloadPdf(cv, `${fileName}.pdf`);
     } catch (error) {
       console.error("PDF generation error:", error);
@@ -174,7 +212,9 @@ export function DownloadDropdown({
       const blob = await generateDocx(cv, { template: templateId, watermark: false });
       downloadBlob(blob, `${fileName}.docx`);
       setOpen(false);
-      await trackDownload("docx");
+      await recordDownload("docx").catch((error) =>
+        console.error("Download tracking error:", error),
+      );
     } catch (e) {
       console.error("DOCX generation error:", e);
     } finally {
@@ -247,7 +287,16 @@ export function DownloadDropdown({
           {isFreeTier && (
             <div className="px-3 py-2 border-t border-border mt-1">
               <p className="text-xs text-muted-foreground">
-                Free tier hanya bisa 1x download PDF dengan watermark.
+                {deviceBlocked ? (
+                  <>
+                    Jatah download gratis di perangkat ini sudah terpakai, Silahkan{" "}
+                    <Link to="/harga" className="font-semibold text-foreground underline">
+                      Upgrade Tier kamu
+                    </Link>
+                  </>
+                ) : (
+                  "Free tier hanya bisa 1x download PDF dengan watermark."
+                )}
               </p>
               {pdfLimitReached && (
                 <Button asChild size="sm" className="mt-2 h-8 w-full text-xs">
