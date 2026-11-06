@@ -1,23 +1,56 @@
 /**
- * /tryout/$examId/hasil/$attemptId — Halaman hasil + pembahasan.
+ * /tryout/$examId/hasil/$attemptId — Hasil, analisis, dan pembahasan.
+ *
+ * Bagian:
+ * 1. Kesiapan + skor per subtes vs passing grade (jarak poin & soal).
+ * 2. Posisi di antara peserta (rank, persentil, rata-rata) + progres.
+ * 3. Rekomendasi belajar & analisis per kategori / kesulitan.
+ * 4. Pembahasan (paket dengan pembahasan) dengan filter Salah/Kosong/Ragu.
  */
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { ArrowLeft, Trophy, RotateCcw, Home, BookOpen, ChevronDown } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  ArrowLeft,
+  BookOpen,
+  Clock,
+  Home,
+  Lock,
+  RotateCcw,
+  Trophy,
+  Calendar,
+  AlertCircle,
+  Dumbbell,
+  Printer,
+} from "lucide-react";
 import { buildSeo } from "@/lib/seo";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton-loading";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
-import { ScoreCard, ScoreBreakdown, QuestionResultCard } from "@/components/tryout";
+import {
+  ScoreBreakdown,
+  QuestionResultCard,
+  ReadinessBanner,
+  PeerComparison,
+  RecommendationList,
+  HistoryTrend,
+  PracticeMode,
+} from "@/components/tryout";
+import { questionOutcome } from "@/lib/tryout-options";
 import { formatDuration } from "@/lib/tryout-scoring";
+import { buildRecommendations, readiness, subtestGaps } from "@/lib/tryout-analysis";
+import { callTryoutFunction, TryoutApiError } from "@/lib/tryout-api";
 import type {
+  TryoutExplanationDetail,
   TryoutAttempt,
-  TryoutExamSet,
-  TryoutQuestionFull,
   TryoutAttemptStats,
+  TryoutExamSet,
+  TryoutResultResponse,
+  TryoutSubtest,
 } from "@/lib/tryout-types";
+import { SUBTEST_INFO } from "@/lib/tryout-types";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/tryout/$examId/hasil/$attemptId")({
   head: () =>
@@ -30,107 +63,185 @@ export const Route = createFileRoute("/_authenticated/tryout/$examId/hasil/$atte
   component: TryoutResultPage,
 });
 
+type Filter = "all" | "wrong" | "empty" | "flagged" | "correct";
+
+const FILTER_LABEL: Record<Filter, string> = {
+  all: "Semua",
+  wrong: "Salah",
+  empty: "Kosong",
+  flagged: "Ragu",
+  correct: "Benar",
+};
+
 function TryoutResultPage() {
   const { user } = useAuth();
   const { examId, attemptId } = Route.useParams();
   const [loading, setLoading] = useState(true);
-  const [attempt, setAttempt] = useState<TryoutAttempt | null>(null);
-  const [examSet, setExamSet] = useState<TryoutExamSet | null>(null);
-  const [questions, setQuestions] = useState<TryoutQuestionFull[]>([]);
-  const [hasPembahasan, setHasPembahasan] = useState(false);
-  const [expandedSubtest, setExpandedSubtest] = useState<"twk" | "tiu" | "tkp" | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [data, setData] = useState<TryoutResultResponse | null>(null);
+  const [partial, setPartial] = useState(false);
+  const [subtest, setSubtest] = useState<TryoutSubtest>("twk");
+  const [filter, setFilter] = useState<Filter>("all");
+  const [practiceOpen, setPracticeOpen] = useState(false);
+
+  // Simpan pembahasan detail yang sudah dimuat agar tidak diminta ulang saat
+  // filter/tab berganti atau saat dibuka di mode latihan.
+  const handleDetailLoaded = useCallback((questionId: string, detail: TryoutExplanationDetail) => {
+    setData((prev) =>
+      prev
+        ? {
+            ...prev,
+            questions: prev.questions.map((q) =>
+              q.id === questionId ? { ...q, explanation_detail: detail } : q,
+            ),
+          }
+        : prev,
+    );
+  }, []);
 
   useEffect(() => {
+    if (!user?.id) return;
     void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [attemptId]);
+  }, [attemptId, user?.id]);
 
   async function load() {
     setLoading(true);
+    setError(null);
     try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const { data: sessionData } = await supabase.auth.getSession();
-      const token = sessionData.session?.access_token;
-
-      const res = await fetch(`${supabaseUrl}/functions/v1/tryout-result`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ attempt_id: attemptId }),
+      const res = await callTryoutFunction<TryoutResultResponse>("tryout-result", {
+        attempt_id: attemptId,
       });
-
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || "Gagal memuat hasil");
+      setData(res);
+      setPartial(false);
+    } catch (err) {
+      if (err instanceof TryoutApiError && err.status === 404) {
+        setData(null);
+        setError("Hasil tidak ditemukan.");
+        return;
       }
-
-      setAttempt(data.attempt as TryoutAttempt);
-      setExamSet(data.exam_set as TryoutExamSet);
-      setQuestions((data.questions || []) as TryoutQuestionFull[]);
-      setHasPembahasan(!!data.has_pembahasan);
-    } catch (error) {
-      console.error("Load result error:", error);
-
-      // Fallback: tampilkan skor dari attempt milik sendiri (RLS SELECT).
-      // Soal, kunci jawaban & pembahasan HANYA lewat edge function tryout-result.
+      // Fallback: skor dari attempt milik sendiri (RLS SELECT). Soal, kunci &
+      // pembahasan HANYA lewat edge function tryout-result.
       const { data: att } = await supabase
         .from("tryout_attempts")
         .select("*, tryout_exam_sets(*)")
         .eq("id", attemptId)
         .neq("status", "in_progress")
         .maybeSingle();
-
       if (att) {
-        setAttempt(att as unknown as TryoutAttempt);
-        setExamSet((att as any).tryout_exam_sets as TryoutExamSet);
-        setQuestions([]);
-        setHasPembahasan(false);
+        const row = att as unknown as TryoutAttempt & { tryout_exam_sets: TryoutExamSet };
+        setData({
+          attempt: row,
+          exam_set: row.tryout_exam_sets,
+          questions: [],
+          has_pembahasan: false,
+          insights: null,
+          history: [],
+        });
+        setPartial(true);
+      } else {
+        setError(err instanceof Error ? err.message : "Gagal memuat hasil");
       }
     } finally {
       setLoading(false);
     }
   }
 
+  const derived = useMemo(() => {
+    if (!data) return null;
+    const { attempt, exam_set } = data;
+    const stats = (attempt.stats || {}) as TryoutAttemptStats;
+    const gaps = subtestGaps(attempt, exam_set);
+    return {
+      stats,
+      gaps,
+      readiness: readiness(attempt, gaps),
+      recommendations: buildRecommendations({ attempt, examSet: exam_set, stats, gaps }),
+    };
+  }, [data]);
+
   if (loading) {
     return (
-      <div className="container-page py-8">
-        <Skeleton className="h-10 w-32 mb-6" />
-        <Skeleton className="h-72 w-full rounded-2xl mb-4" />
-        <Skeleton className="h-48 w-full rounded-2xl" />
+      <div className="container-page space-y-4 py-8">
+        <Skeleton className="h-10 w-40" />
+        <Skeleton className="h-64 w-full rounded-2xl" />
+        <div className="grid gap-4 md:grid-cols-2">
+          <Skeleton className="h-48 w-full rounded-2xl" />
+          <Skeleton className="h-48 w-full rounded-2xl" />
+        </div>
       </div>
     );
   }
 
-  if (!attempt || !examSet) {
+  if (!data || !derived) {
     return (
       <div className="container-page py-20 text-center">
-        <h1 className="font-display text-2xl font-bold">Hasil Tidak Ditemukan</h1>
-        <Button asChild className="mt-6">
-          <Link to={"/tryout" as never}>Kembali ke Dashboard</Link>
-        </Button>
+        <AlertCircle className="mx-auto h-12 w-12 text-muted-foreground" />
+        <h1 className="mt-4 font-display text-2xl font-bold">{error || "Hasil Tidak Ditemukan"}</h1>
+        <div className="mt-6 flex justify-center gap-2">
+          <Button asChild variant="outline">
+            <Link to={"/tryout" as never}>Kembali ke Dashboard</Link>
+          </Button>
+          <Button onClick={() => void load()}>Muat ulang</Button>
+        </div>
       </div>
     );
   }
 
-  const stats: TryoutAttemptStats = (attempt.stats || {}) as TryoutAttemptStats;
-  const grouped = {
-    twk: questions.filter((q) => q.subtest === "twk"),
-    tiu: questions.filter((q) => q.subtest === "tiu"),
-    tkp: questions.filter((q) => q.subtest === "tkp"),
+  const { attempt, exam_set: examSet, questions, has_pembahasan: hasPembahasan } = data;
+  const answers = attempt.answers || {};
+  const flaggedSet = new Set(attempt.flagged_questions || []);
+
+  // Nomor tampilan = urutan saat ujian (TWK → TIU → TKP).
+  const numbered = questions.map((q, i) => ({ q, no: i + 1 }));
+  const inSubtest = numbered.filter(({ q }) => q.subtest === subtest);
+  const matches = (q: (typeof questions)[number], f: Filter) => {
+    const outcome = questionOutcome(
+      { subtest: q.subtest, correct_answer: q.correct_answer ?? null },
+      answers[q.id],
+    );
+    // TKP: "belum maksimal" = dijawab tapi bukan opsi skor tertinggi.
+    const tkpLow = outcome === "tkp" && (q.scores?.[answers[q.id]] ?? 5) < 5;
+    switch (f) {
+      case "wrong":
+        return outcome === "wrong" || tkpLow;
+      case "empty":
+        return outcome === "empty";
+      case "flagged":
+        return flaggedSet.has(q.id);
+      case "correct":
+        return outcome === "correct" || (outcome === "tkp" && !tkpLow);
+      default:
+        return true;
+    }
   };
+  const filtered = inSubtest.filter(({ q }) => matches(q, filter));
+  const filterCounts = Object.fromEntries(
+    (Object.keys(FILTER_LABEL) as Filter[]).map((f) => [
+      f,
+      inSubtest.filter(({ q }) => matches(q, f)).length,
+    ]),
+  ) as Record<Filter, number>;
 
   return (
-    <div className="container-page space-y-6 py-5 md:py-8">
+    <div className="container-page space-y-5 py-5 md:py-8">
       {/* Top actions */}
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2 print:hidden">
         <Button asChild variant="ghost" size="sm" className="gap-1.5">
           <Link to={"/tryout" as never}>
             <ArrowLeft className="h-4 w-4" /> Dashboard Tryout
           </Link>
         </Button>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5"
+            onClick={() => window.print()}
+            title="Cetak atau simpan sebagai PDF"
+          >
+            <Printer className="h-4 w-4" /> Cetak / PDF
+          </Button>
           <Button asChild variant="outline" size="sm" className="gap-1.5">
             <Link to={"/tryout/leaderboard" as never}>
               <Trophy className="h-4 w-4" /> Leaderboard
@@ -144,108 +255,202 @@ function TryoutResultPage() {
         </div>
       </div>
 
-      {/* Hero result */}
-      <section className="rounded-2xl border bg-card p-5 sm:p-6">
-        <Badge variant="secondary" className="mb-3 gap-1.5 bg-primary/10 text-primary">
+      {/* Header */}
+      <header>
+        <Badge variant="secondary" className="mb-2 gap-1.5 bg-primary/10 text-primary">
           <Trophy className="h-3 w-3" /> {examSet.name}
         </Badge>
-        <div className="flex flex-wrap items-baseline gap-3">
-          <h1 className="font-display text-2xl font-bold sm:text-3xl">Hasil Tryout</h1>
-          <span className="text-sm text-muted-foreground">
-            {new Date(attempt.started_at).toLocaleDateString("id-ID", {
+        <h1 className="font-display text-2xl font-bold sm:text-3xl">Hasil Tryout SKD</h1>
+        <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+          <span className="inline-flex items-center gap-1.5">
+            <Calendar className="h-3.5 w-3.5" />
+            {new Date(attempt.finished_at || attempt.started_at).toLocaleString("id-ID", {
               day: "numeric",
               month: "long",
               year: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
             })}
-            {" · "}
-            {formatDuration(attempt.duration_seconds)}
           </span>
+          <span className="inline-flex items-center gap-1.5">
+            <Clock className="h-3.5 w-3.5" />
+            {formatDuration(attempt.duration_seconds)} dari {examSet.duration_minutes} menit
+          </span>
+          {attempt.status === "timed_out" && (
+            <span className="rounded-md bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800 dark:bg-amber-950/60 dark:text-amber-300">
+              Dikumpulkan otomatis (waktu habis)
+            </span>
+          )}
         </div>
-      </section>
+      </header>
 
-      {/* Score Card */}
-      <ScoreCard
+      {partial && (
+        <div className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300">
+          Sebagian data hasil gagal dimuat (koneksi). Skor tetap ditampilkan.{" "}
+          <button type="button" className="font-semibold underline" onClick={() => void load()}>
+            Muat ulang
+          </button>
+        </div>
+      )}
+
+      <ReadinessBanner
+        readiness={derived.readiness}
         total={attempt.score_total}
-        maxTotal={550}
-        twk={attempt.score_twk}
-        tiu={attempt.score_tiu}
-        tkp={attempt.score_tkp}
-        passOverall={attempt.pass_overall}
-        passTwk={attempt.pass_twk}
-        passTiu={attempt.pass_tiu}
-        passTkp={attempt.pass_tkp}
-        passingGrade={{
-          twk: examSet.passing_grade_twk,
-          tiu: examSet.passing_grade_tiu,
-          tkp: examSet.passing_grade_tkp,
-        }}
+        gaps={derived.gaps}
       />
 
-      {/* Analytics Breakdown */}
-      {stats && (stats.twk || stats.tiu || stats.tkp) && (
-        <section>
-          <h2 className="mb-3 font-display text-lg font-bold">Analisis Detail</h2>
-          <ScoreBreakdown stats={stats} />
-        </section>
+      <div className="grid gap-5 lg:grid-cols-2">
+        {data.insights ? (
+          <PeerComparison
+            insights={data.insights}
+            scores={{
+              total: attempt.score_total,
+              twk: attempt.score_twk,
+              tiu: attempt.score_tiu,
+              tkp: attempt.score_tkp,
+            }}
+          />
+        ) : null}
+        <RecommendationList items={derived.recommendations} />
+        <HistoryTrend history={data.history} currentId={attempt.id} />
+      </div>
+
+      {(derived.stats.twk || derived.stats.tiu || derived.stats.tkp) && (
+        <ScoreBreakdown stats={derived.stats} />
       )}
 
-      {/* Pembahasan (Paket Lengkap) */}
-      {hasPembahasan && questions.length > 0 && (
-        <section>
-          <div className="mb-3 flex items-center justify-between">
+      {/* Pembahasan */}
+      {hasPembahasan && questions.length > 0 ? (
+        <section className="space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 className="flex items-center gap-2 font-display text-lg font-bold">
-              <BookOpen className="h-4 w-4 text-primary" /> Pembahasan
+              <BookOpen className="h-4 w-4 text-primary" /> Pembahasan Soal
             </h2>
-            <span className="text-xs text-muted-foreground">Klik untuk membuka</span>
+            <Button
+              size="sm"
+              variant="secondary"
+              className="gap-1.5 print:hidden"
+              onClick={() => setPracticeOpen(true)}
+            >
+              <Dumbbell className="h-4 w-4" /> Latihan ulang soal salah
+            </Button>
           </div>
 
-          <div className="space-y-3">
-            {(["twk", "tiu", "tkp"] as const).map((sub) => {
-              const isOpen = expandedSubtest === sub;
-              const subQuestions = grouped[sub];
-              const correct = subQuestions.filter(
-                (q) => attempt.answers[q.id] === q.correct_answer,
-              ).length;
-              return (
-                <div key={sub} className="overflow-hidden rounded-2xl border bg-card">
+          <div className="sticky top-0 z-20 -mx-1 space-y-2 bg-background/95 px-1 py-2 backdrop-blur print:hidden">
+            <div className="grid grid-cols-3 gap-1 rounded-xl border bg-card p-1">
+              {(["twk", "tiu", "tkp"] as const).map((s) => {
+                const count = numbered.filter(({ q }) => q.subtest === s).length;
+                if (!count) return null;
+                return (
                   <button
+                    key={s}
                     type="button"
-                    onClick={() => setExpandedSubtest(isOpen ? null : sub)}
-                    className="flex w-full items-center justify-between px-5 py-4"
+                    onClick={() => {
+                      setSubtest(s);
+                      setFilter("all");
+                    }}
+                    className={cn(
+                      "rounded-lg px-3 py-1.5 text-sm font-semibold transition",
+                      subtest === s
+                        ? cn(SUBTEST_INFO[s].color, "border dark:bg-muted")
+                        : "text-muted-foreground hover:bg-muted",
+                    )}
                   >
-                    <div className="flex items-center gap-3">
-                      <span className="font-display text-lg font-bold uppercase">{sub}</span>
-                      <span className="text-sm text-muted-foreground">
-                        {subQuestions.length} soal · {correct} benar
-                      </span>
-                    </div>
-                    <ChevronDown
-                      className={`h-5 w-5 text-muted-foreground transition ${isOpen ? "rotate-180" : ""}`}
-                    />
+                    {SUBTEST_INFO[s].label}{" "}
+                    <span className="text-xs font-normal opacity-80">({count})</span>
                   </button>
-                  {isOpen && (
-                    <div className="space-y-3 border-t bg-muted/10 p-3 sm:p-4">
-                      {subQuestions.map((q, idx) => (
-                        <QuestionResultCard
-                          key={q.id}
-                          question={q}
-                          questionNumber={idx + 1}
-                          userAnswer={attempt.answers[q.id]}
-                          showExplanation
-                          isTkp={q.subtest === "tkp"}
-                        />
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
+            <div className="flex gap-1.5 overflow-x-auto pb-0.5">
+              {(Object.keys(FILTER_LABEL) as Filter[])
+                .filter((f) => !(subtest === "tkp" && f === "correct"))
+                .map((f) => (
+                  <button
+                    key={f}
+                    type="button"
+                    onClick={() => setFilter(f)}
+                    className={cn(
+                      "shrink-0 rounded-full border px-3 py-1 text-xs font-semibold transition",
+                      filter === f
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "bg-card text-muted-foreground hover:bg-muted",
+                    )}
+                  >
+                    {subtest === "tkp" && f === "wrong" ? "Belum maksimal" : FILTER_LABEL[f]}{" "}
+                    <span className="opacity-80">{filterCounts[f]}</span>
+                  </button>
+                ))}
+            </div>
+          </div>
+
+          {/* Versi cetak: semua soal semua subtes, tanpa filter. */}
+          <div className="hidden space-y-3 print:block">
+            {numbered.map(({ q, no }) => (
+              <QuestionResultCard
+                key={`print-${q.id}`}
+                question={q}
+                displayNumber={no}
+                userAnswer={answers[q.id]}
+                isFlagged={flaggedSet.has(q.id)}
+                showExplanation
+              />
+            ))}
+          </div>
+
+          <div className="print:hidden">
+            {filtered.length === 0 ? (
+              <p className="rounded-xl border bg-muted/30 p-6 text-center text-sm text-muted-foreground">
+                Tidak ada soal untuk filter ini. 🎉
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {filtered.map(({ q, no }) => (
+                  <QuestionResultCard
+                    key={q.id}
+                    question={q}
+                    displayNumber={no}
+                    userAnswer={answers[q.id]}
+                    isFlagged={flaggedSet.has(q.id)}
+                    showExplanation
+                    attemptId={attempt.id}
+                    onDetailLoaded={handleDetailLoaded}
+                    canReport
+                  />
+                ))}
+              </div>
+            )}
           </div>
         </section>
+      ) : (
+        !partial && (
+          <section className="rounded-2xl border-2 border-dashed p-6 text-center">
+            <Lock className="mx-auto h-8 w-8 text-muted-foreground" />
+            <h2 className="mt-3 font-display text-lg font-bold">Pembahasan terkunci</h2>
+            <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
+              Lihat kunci jawaban, skor tiap opsi TKP, dan pembahasan lengkap setiap soal dengan
+              Paket Lengkap.
+            </p>
+            <Button asChild className="mt-4">
+              <Link to={"/tryout/beli" as never}>Lihat Paket Lengkap</Link>
+            </Button>
+          </section>
+        )
       )}
 
-      {/* Footer actions */}
-      <section className="flex flex-col gap-3 sm:flex-row sm:justify-center">
+      {hasPembahasan && questions.length > 0 && (
+        <PracticeMode
+          open={practiceOpen}
+          onOpenChange={setPracticeOpen}
+          items={numbered}
+          answers={answers}
+          flagged={attempt.flagged_questions || []}
+          attemptId={attempt.id}
+          onDetailLoaded={handleDetailLoaded}
+        />
+      )}
+
+      <section className="flex flex-col gap-3 pt-2 sm:flex-row sm:justify-center print:hidden">
         <Button asChild variant="outline" size="lg" className="gap-2">
           <Link to={"/tryout" as never}>
             <Home className="h-4 w-4" /> Dashboard

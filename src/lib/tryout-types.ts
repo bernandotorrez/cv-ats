@@ -40,7 +40,32 @@ export type TryoutQuestionFull = TryoutQuestionPublic & {
   scores: TryoutQuestionScores | null;
   explanation: string | null;
   explanation_image_url: string | null;
+  explanation_detail?: TryoutExplanationDetail | null;
 };
+
+/**
+ * Pembahasan detail terstruktur (dibuat AI lewat edge function tryout-explain,
+ * di-cache di tryout_questions.explanation_detail).
+ */
+export type TryoutExplanationDetail = {
+  v: 1;
+  answer: string | null;
+  summary: string;
+  concept: string;
+  steps: string[];
+  options: Record<string, string>;
+  tips: string | null;
+  reference: string | null;
+  generated_at: string;
+};
+
+export type TryoutReportReason =
+  | "kunci_salah"
+  | "soal_ambigu"
+  | "opsi_bermasalah"
+  | "typo"
+  | "pembahasan_salah"
+  | "lainnya";
 
 /**
  * Paket tryout.
@@ -125,27 +150,83 @@ export type TryoutAttempt = {
 };
 
 /**
- * Statistik per attempt (breakdown per subtes & kategori).
+ * Statistik per attempt (breakdown per subtes, kategori & tingkat kesulitan).
+ * Field bertanda opsional baru ada di attempt setelah upgrade 2026-11; attempt
+ * lama hanya punya answered/correct/wrong/empty/by_category.
  */
+export type TryoutBinaryBucket = {
+  correct: number;
+  total: number;
+  wrong?: number;
+  empty?: number;
+};
+
+export type TryoutTkpBucket = {
+  score: number;
+  total: number;
+  max?: number;
+  answered?: number;
+};
+
+export type TryoutBinaryStats = {
+  total?: number;
+  answered: number;
+  correct: number;
+  wrong: number;
+  empty: number;
+  flagged?: number;
+  flagged_correct?: number;
+  by_category?: Record<string, TryoutBinaryBucket>;
+  by_difficulty?: Record<string, TryoutBinaryBucket>;
+};
+
+export type TryoutTkpStats = {
+  total?: number;
+  answered: number;
+  empty?: number;
+  flagged?: number;
+  /** Jumlah jawaban dengan skor 5 (pilihan paling ideal). */
+  best_choice?: number;
+  by_category?: Record<string, TryoutTkpBucket>;
+  by_difficulty?: Record<string, TryoutTkpBucket>;
+};
+
 export type TryoutAttemptStats = {
-  twk?: {
-    answered: number;
-    correct: number;
-    wrong: number;
-    empty: number;
-    by_category?: Record<string, { correct: number; total: number }>;
-  };
-  tiu?: {
-    answered: number;
-    correct: number;
-    wrong: number;
-    empty: number;
-    by_category?: Record<string, { correct: number; total: number }>;
-  };
-  tkp?: {
-    answered: number;
-    by_category?: Record<string, { score: number; total: number }>;
-  };
+  twk?: TryoutBinaryStats;
+  tiu?: TryoutBinaryStats;
+  tkp?: TryoutTkpStats;
+};
+
+/** Posisi attempt di antara peserta set yang sama (RPC agregat). */
+export type TryoutInsights = {
+  participants: number;
+  rank: number;
+  percentile: number;
+  pass_rate: number | null;
+  avg: { total: number; twk: number; tiu: number; tkp: number } | null;
+  top_score: number;
+};
+
+export type TryoutHistoryPoint = {
+  id: string;
+  exam_set_id: string;
+  exam_name: string | null;
+  finished_at: string | null;
+  score_total: number;
+  score_twk: number;
+  score_tiu: number;
+  score_tkp: number;
+  pass_overall: boolean;
+};
+
+/** Respons edge function tryout-result. */
+export type TryoutResultResponse = {
+  attempt: TryoutAttempt;
+  exam_set: TryoutExamSet;
+  questions: Array<TryoutQuestionPublic & Partial<TryoutQuestionFull>>;
+  has_pembahasan: boolean;
+  insights: TryoutInsights | null;
+  history: TryoutHistoryPoint[];
 };
 
 /**
@@ -159,16 +240,29 @@ export type TryoutStartResponse = {
   duration_minutes: number;
   expires_at: string; // started_at + duration
   remaining_seconds: number;
+  resumed: boolean;
+  answers: Record<string, string>;
+  flagged: string[];
+  /** Jam server saat respons dibuat — untuk koreksi selisih jam perangkat. */
+  server_now?: string;
 };
 
 /**
- * Submit exam response.
+ * Submit exam response (ringkasan; soal & pembahasan lewat tryout-result).
  */
 export type TryoutSubmitResponse = {
-  attempt: TryoutAttempt;
-  exam_set: TryoutExamSet;
-  questions: TryoutQuestionFull[];
-  has_pembahasan: boolean;
+  attempt: Pick<
+    TryoutAttempt,
+    | "id"
+    | "exam_set_id"
+    | "status"
+    | "score_twk"
+    | "score_tiu"
+    | "score_tkp"
+    | "score_total"
+    | "pass_overall"
+  >;
+  answers_source: "submit" | "autosave";
 };
 
 /**
@@ -196,6 +290,8 @@ export type TryoutLeaderboardEntry = {
 export type TryoutLeaderboardResponse = {
   entitled: boolean;
   entries: TryoutLeaderboardEntry[];
+  my_entry?: TryoutLeaderboardEntry | null;
+  total_participants?: number;
 };
 
 /**
@@ -205,7 +301,7 @@ export type TryoutLeaderboardResponse = {
  */
 export type TryoutRpcClient = {
   rpc: (
-    fn: "save_tryout_answers" | "get_tryout_leaderboard",
+    fn: "save_tryout_answers" | "get_tryout_leaderboard" | "report_tryout_question",
     args: Record<string, unknown>,
   ) => PromiseLike<{ data: unknown; error: { message: string } | null }>;
 };

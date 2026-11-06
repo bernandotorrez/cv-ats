@@ -30,6 +30,8 @@ function TryoutLeaderboardPage() {
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [locked, setLocked] = useState(false);
+  const [myEntry, setMyEntry] = useState<LeaderboardEntry | null>(null);
+  const [participants, setParticipants] = useState(0);
 
   useEffect(() => {
     void supabase
@@ -62,10 +64,19 @@ function TryoutLeaderboardPage() {
       console.warn("Leaderboard error:", error.message);
       setEntries([]);
       setLocked(false);
+      setMyEntry(null);
+      setParticipants(0);
     } else {
-      const res = (data || {}) as { entitled?: boolean; entries?: LeaderboardEntry[] };
+      const res = (data || {}) as {
+        entitled?: boolean;
+        entries?: LeaderboardEntry[];
+        my_entry?: LeaderboardEntry | null;
+        total_participants?: number;
+      };
       setLocked(res.entitled === false);
       setEntries(res.entries || []);
+      setMyEntry(res.my_entry ?? null);
+      setParticipants(res.total_participants ?? 0);
     }
     setLoading(false);
   }
@@ -98,6 +109,23 @@ function TryoutLeaderboardPage() {
             ))}
           </TabsList>
         </Tabs>
+      )}
+
+      {!locked && !loading && (participants > 0 || myEntry) && (
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border bg-card px-4 py-3 text-sm">
+          <span className="text-muted-foreground">
+            {participants} peserta · peringkat dari skor terbaik tiap peserta
+          </span>
+          {myEntry ? (
+            <span className="font-semibold">
+              Posisi kamu: <span className="text-primary">#{myEntry.ranking}</span> · skor{" "}
+              {myEntry.score_total}
+              {activeSet === "all" ? ` (${myEntry.exam_name})` : ""}
+            </span>
+          ) : (
+            <span className="text-muted-foreground">Kamu belum masuk papan peringkat.</span>
+          )}
+        </div>
       )}
 
       <section>

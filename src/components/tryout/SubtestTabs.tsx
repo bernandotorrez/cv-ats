@@ -1,56 +1,59 @@
 /**
- * SubtestTabs — Tab untuk filter soal berdasarkan subtes (TWK/TIU/TKP).
+ * SubtestTabs — Lompat ke awal subtes (TWK/TIU/TKP) + progres per subtes.
+ * Tab aktif mengikuti subtes soal yang sedang dibuka.
  */
 import { cn } from "@/lib/utils";
 import type { TryoutSubtest } from "@/lib/tryout-types";
 import { SUBTEST_INFO } from "@/lib/tryout-types";
 
 type Props = {
-  activeSubtest: TryoutSubtest | "all";
-  counts: Record<TryoutSubtest | "all", { total: number; answered: number }>;
-  onChange: (subtest: TryoutSubtest | "all") => void;
+  activeSubtest: TryoutSubtest;
+  counts: Record<TryoutSubtest, { total: number; answered: number }>;
+  onChange: (subtest: TryoutSubtest) => void;
 };
 
 export function SubtestTabs({ activeSubtest, counts, onChange }: Props) {
-  const tabs: Array<{ key: TryoutSubtest | "all"; label: string; fullName: string }> = [
-    { key: "all", label: "Semua", fullName: "Semua Soal" },
-    { key: "twk", label: "TWK", fullName: SUBTEST_INFO.twk.fullName },
-    { key: "tiu", label: "TIU", fullName: SUBTEST_INFO.tiu.fullName },
-    { key: "tkp", label: "TKP", fullName: SUBTEST_INFO.tkp.fullName },
-  ];
+  const tabs = (["twk", "tiu", "tkp"] as const).filter((k) => counts[k].total > 0);
 
   return (
-    <div className="flex items-center gap-1 overflow-x-auto rounded-xl border bg-card p-1 shadow-sm">
-      {tabs.map((tab) => {
-        const isActive = tab.key === activeSubtest;
-        const count = counts[tab.key];
-        const info = tab.key !== "all" ? SUBTEST_INFO[tab.key] : null;
+    <div
+      className="grid gap-1 rounded-xl border bg-card p-1 shadow-sm"
+      style={{ gridTemplateColumns: `repeat(${tabs.length || 1}, minmax(0, 1fr))` }}
+      role="tablist"
+      aria-label="Subtes"
+    >
+      {tabs.map((key) => {
+        const isActive = key === activeSubtest;
+        const count = counts[key];
+        const info = SUBTEST_INFO[key];
+        const pct = count.total > 0 ? Math.round((count.answered / count.total) * 100) : 0;
         return (
           <button
-            key={tab.key}
+            key={key}
             type="button"
-            onClick={() => onChange(tab.key)}
-            title={tab.fullName}
+            role="tab"
+            aria-selected={isActive}
+            onClick={() => onChange(key)}
+            title={`${info.fullName} — lompat ke soal pertama`}
             className={cn(
-              "flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition sm:text-sm",
+              "relative overflow-hidden rounded-lg px-2 py-1.5 text-left transition sm:px-3",
               isActive
-                ? info
-                  ? info.color
-                  : "bg-primary text-primary-foreground shadow-sm"
+                ? cn(info.color, "border dark:bg-muted")
                 : "text-muted-foreground hover:bg-muted hover:text-foreground",
             )}
           >
-            {tab.label}
-            <span
-              className={cn(
-                "rounded-md px-1.5 py-0.5 text-[10px] font-bold",
-                isActive
-                  ? "bg-white/25 text-current"
-                  : "bg-muted text-muted-foreground",
-              )}
-            >
-              {count.answered}/{count.total}
-            </span>
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs font-bold sm:text-sm">{info.label}</span>
+              <span className="text-[10px] font-semibold tabular-nums sm:text-xs">
+                {count.answered}/{count.total}
+              </span>
+            </div>
+            <div className="mt-1 h-1 overflow-hidden rounded-full bg-black/5 dark:bg-white/10">
+              <div
+                className="h-full rounded-full bg-current opacity-60"
+                style={{ width: `${pct}%` }}
+              />
+            </div>
           </button>
         );
       })}

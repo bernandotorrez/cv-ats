@@ -4,7 +4,6 @@
 import { createFileRoute, Link, useNavigate, Outlet, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ArrowLeft, Play, Coins, Loader2, AlertCircle, BookOpen, Trophy } from "lucide-react";
-import { toast } from "sonner";
 import { buildSeo } from "@/lib/seo";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -102,37 +101,12 @@ function TryoutExamDetailPage() {
     if (!user?.id) return;
     setStarting(true);
     try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const { data: sessionData } = await supabase.auth.getSession();
-      const token = sessionData.session?.access_token;
-
-      const res = await fetch(`${supabaseUrl}/functions/v1/tryout-start`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ exam_set_id: examId }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        if (data.error === "NO_CREDITS") {
-          toast.error(data.message || "Kredit tidak cukup");
-          navigate({ to: "/tryout/beli" as never });
-          return;
-        }
-        throw new Error(data.error || "Gagal memulai tryout");
-      }
-
-      toast.success(data.resumed ? "Melanjutkan ujian..." : "Ujian dimulai!");
+      // Tidak memanggil tryout-start di sini: halaman ujian yang memulai/
+      // melanjutkan attempt (satu pintu, tidak ada double request).
       navigate({
         to: "/tryout/$examId/ujian" as never,
         params: { examId } as never,
       });
-    } catch (error) {
-      const msg = error instanceof Error ? error.message : "Gagal memulai tryout";
-      toast.error(msg);
     } finally {
       setStarting(false);
     }
@@ -174,7 +148,8 @@ function TryoutExamDetailPage() {
         <div className="grid gap-6 p-5 sm:p-6 lg:grid-cols-[1.5fr_1fr]">
           <div>
             <Badge variant="secondary" className="mb-3 gap-1.5 bg-primary/10 text-primary">
-              <Trophy className="h-3 w-3" /> {examSet.total_questions} Soal · {examSet.duration_minutes} Menit
+              <Trophy className="h-3 w-3" /> {examSet.total_questions} Soal ·{" "}
+              {examSet.duration_minutes} Menit
             </Badge>
             <h1 className="font-display text-2xl font-bold sm:text-3xl">{examSet.name}</h1>
             <p className="mt-2 text-sm leading-6 text-muted-foreground sm:text-base">
@@ -190,7 +165,9 @@ function TryoutExamDetailPage() {
               {remainingCredits ?? 0}
             </div>
             {noCredits ? (
-              <p className="mt-1 text-xs text-amber-700 dark:text-amber-400">Tidak cukup. Beli paket dulu.</p>
+              <p className="mt-1 text-xs text-amber-700 dark:text-amber-400">
+                Tidak cukup. Beli paket dulu.
+              </p>
             ) : (
               <p className="mt-1 text-xs text-muted-foreground">1x tryout = 1 kredit</p>
             )}
@@ -205,21 +182,53 @@ function TryoutExamDetailPage() {
           <h2 className="font-display text-lg font-bold">Format Ujian</h2>
         </div>
         <div className="grid gap-3 sm:grid-cols-3">
-          <FormatCard label="TWK" fullName="Wawasan Kebangsaan" count={examSet.twk_count} passing={examSet.passing_grade_twk} color="amber" />
-          <FormatCard label="TIU" fullName="Intelegensi Umum" count={examSet.tiu_count} passing={examSet.passing_grade_tiu} color="sky" />
-          <FormatCard label="TKP" fullName="Karakteristik Pribadi" count={examSet.tkp_count} passing={examSet.passing_grade_tkp} color="emerald" />
+          <FormatCard
+            label="TWK"
+            fullName="Wawasan Kebangsaan"
+            count={examSet.twk_count}
+            passing={examSet.passing_grade_twk}
+            color="amber"
+          />
+          <FormatCard
+            label="TIU"
+            fullName="Intelegensi Umum"
+            count={examSet.tiu_count}
+            passing={examSet.passing_grade_tiu}
+            color="sky"
+          />
+          <FormatCard
+            label="TKP"
+            fullName="Karakteristik Pribadi"
+            count={examSet.tkp_count}
+            passing={examSet.passing_grade_tkp}
+            color="emerald"
+          />
         </div>
       </section>
 
       {/* Rules */}
-      <section className="rounded-2xl border bg-amber-50 p-5 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-400">
-        <h2 className="mb-2 font-bold">⚠️ Aturan Ujian</h2>
-        <ul className="space-y-1 text-amber-800">
-          <li>• Soal akan dikirim <strong>tanpa kunci jawaban</strong> ke browser kamu. Server yang akan menilai.</li>
-          <li>• Timer 100 menit. Auto-submit saat waktu habis.</li>
-          <li>• Menjawab/mengubah browser tab akan <strong>menyimpan otomatis</strong> ke server setiap ada perubahan.</li>
-          <li>• Tidak bisa reload halaman tanpa kehilangan waktu. Hubungi admin jika ada masalah.</li>
-          <li>• 1 attempt = 1 kredit. Tidak ada pengembalian jika di-cancel.</li>
+      <section className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300">
+        <h2 className="mb-2 font-bold">⚠️ Aturan & Tips Ujian</h2>
+        <ul className="list-disc space-y-1 pl-5">
+          <li>
+            Waktu <strong>{examSet.duration_minutes} menit</strong> mulai berjalan saat ujian dibuka
+            dan <strong>tetap berjalan</strong> walau halaman ditutup. Dikumpulkan otomatis saat
+            waktu habis.
+          </li>
+          <li>
+            Jawaban <strong>tersimpan otomatis</strong> ke server. Jika koneksi/halaman terputus,
+            buka lagi ujian ini untuk melanjutkan.
+          </li>
+          <li>
+            Penilaian BKN: TWK & TIU benar = 5, salah/kosong = 0 (tidak ada minus). TKP bernilai 1–5
+            per soal. <strong>Isi semua soal.</strong>
+          </li>
+          <li>Lulus jika semua subtes mencapai passing grade (bukan hanya total skor).</li>
+          <li>
+            Pintasan keyboard: <kbd>A</kbd>–<kbd>E</kbd> pilih jawaban, <kbd>←</kbd>/<kbd>→</kbd>{" "}
+            pindah soal, <kbd>R</kbd> tandai ragu.
+          </li>
+          <li>Memulai tryout baru memakai 1 kredit. Melanjutkan ujian yang berjalan gratis.</li>
         </ul>
       </section>
 
@@ -231,17 +240,8 @@ function TryoutExamDetailPage() {
           </Link>
         </Button>
         {inProgressAttemptId ? (
-          <Button
-            size="lg"
-            className="gap-2"
-            disabled={starting}
-            onClick={handleStart}
-          >
-            {starting ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Play className="h-4 w-4" />
-            )}
+          <Button size="lg" className="gap-2" disabled={starting} onClick={handleStart}>
+            {starting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
             Lanjutkan Ujian
           </Button>
         ) : (
@@ -293,9 +293,11 @@ function FormatCard({
   color: "amber" | "sky" | "emerald";
 }) {
   const colorClass = {
-    amber: "border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-400",
+    amber:
+      "border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-400",
     sky: "border-sky-200 bg-sky-50 text-sky-900 dark:border-sky-800 dark:bg-sky-950/40 dark:text-sky-400",
-    emerald: "border-emerald-200 bg-emerald-50 text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-400",
+    emerald:
+      "border-emerald-200 bg-emerald-50 text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-400",
   }[color];
   return (
     <div className={`rounded-xl border-2 p-4 ${colorClass}`}>

@@ -29,6 +29,7 @@ import {
   Layers,
   AlertTriangle,
   ListChecks,
+  Flag,
 } from "lucide-react";
 import { buildSeo } from "@/lib/seo";
 import { cn } from "@/lib/utils";
@@ -69,6 +70,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
+import { QuestionQualityPanel } from "@/components/admin/tryout/QuestionQualityPanel";
 
 export const Route = createFileRoute("/_authenticated/admin/tryout")({
   beforeLoad: async () => {
@@ -369,7 +371,7 @@ function AdminTryoutPage() {
       )}
 
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList>
+        <TabsList className="h-auto flex-wrap justify-start">
           <TabsTrigger value="credits">
             <Coins className="mr-1.5 h-4 w-4" /> Kredit User
           </TabsTrigger>
@@ -378,6 +380,9 @@ function AdminTryoutPage() {
           </TabsTrigger>
           <TabsTrigger value="generate">
             <Sparkles className="mr-1.5 h-4 w-4" /> Generate AI
+          </TabsTrigger>
+          <TabsTrigger value="quality">
+            <Flag className="mr-1.5 h-4 w-4" /> Laporan &amp; Pembahasan
           </TabsTrigger>
         </TabsList>
 
@@ -524,6 +529,10 @@ function AdminTryoutPage() {
             onSelectSet={setGenerateExamSetId}
             onGenerated={() => void loadAll()}
           />
+        </TabsContent>
+
+        <TabsContent value="quality" className="space-y-4">
+          <QuestionQualityPanel examSets={examSets} />
         </TabsContent>
       </Tabs>
 
@@ -1218,9 +1227,41 @@ function GenerateSoalPanel({
         category: opts.category || undefined,
       }),
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Gagal generate soal");
-    return data;
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const err = new Error(
+        res.status === 429
+          ? data.error || "Terlalu banyak request generate soal. Coba lagi nanti."
+          : data.error || "Gagal generate soal",
+      ) as Error & { status?: number };
+      err.status = res.status;
+      throw err;
+    }
+    return data as {
+      success: boolean;
+      generated: number;
+      start_number: number;
+      skipped?: number;
+      rejected_by_review?: number;
+      duplicates?: number;
+      verified?: boolean;
+      questions: Array<{ id: string; question_number: number; question_text: string }>;
+    };
+  }
+
+  /** Hitung ulang jumlah soal per subtes langsung dari DB (untuk menghitung kekurangan). */
+  async function fetchSubtestCounts(): Promise<SubtestCounts | null> {
+    const results = await Promise.all(
+      (["twk", "tiu", "tkp"] as const).map((st) =>
+        supabase
+          .from("tryout_questions")
+          .select("id", { count: "exact", head: true })
+          .eq("exam_set_id", selectedSetId)
+          .eq("subtest", st),
+      ),
+    );
+    if (results.some((r) => r.error || typeof r.count !== "number")) return null;
+    return { twk: results[0].count ?? 0, tiu: results[1].count ?? 0, tkp: results[2].count ?? 0 };
   }
 
   async function handleGenerate() {
@@ -1239,7 +1280,20 @@ function GenerateSoalPanel({
         category: category || undefined,
       });
       setResult(data);
-      toast.success(`${data.generated} soal ${subtest.toUpperCase()} berhasil di-generate!`);
+      // Info tambahan: soal yang dibuang validasi/reviewer AI/duplikat
+      const dropped =
+        (Number(data.skipped) || 0) +
+        (Number(data.rejected_by_review) || 0) +
+        (Number(data.duplicates) || 0);
+      const notes = [
+        dropped > 0 ? `${dropped} kandidat dibuang` : "",
+        data.verified === false ? "tanpa verifikasi AI" : "",
+      ].filter(Boolean);
+      toast.success(
+        `${data.generated} soal ${subtest.toUpperCase()} berhasil di-generate!${
+          notes.length > 0 ? ` (${notes.join(", ")})` : ""
+        }`,
+      );
       onGenerated?.();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Gagal generate soal");
@@ -1261,15 +1315,21 @@ function GenerateSoalPanel({
       { subtest: "tkp", count: Math.max(0, selectedSet.tkp_count) },
     ];
 
-    // Pecah jadi batch kecil (max 15 soal/call) supaya tidak kelewatan token AI
-    const batches: Array<{ subtest: SubtestKey; count: number }> = [];
-    for (const t of targets) {
-      let remaining = t.count;
-      while (remaining > 0) {
-        batches.push({ subtest: t.subtest, count: Math.min(15, remaining) });
-        remaining -= 15;
+    // Pecah jadi batch kecil supaya respons AI cepat dan tidak kelewatan token
+    // (server meminta ~1.3x lalu memverifikasi, jadi batch kecil lebih aman dari timeout)
+    const BATCH_SIZE = 10;
+    const splitBatches = (items: Array<{ subtest: SubtestKey; count: number }>) => {
+      const out: Array<{ subtest: SubtestKey; count: number }> = [];
+      for (const t of items) {
+        let remaining = t.count;
+        while (remaining > 0) {
+          out.push({ subtest: t.subtest, count: Math.min(BATCH_SIZE, remaining) });
+          remaining -= BATCH_SIZE;
+        }
       }
-    }
+      return out;
+    };
+    const batches = splitBatches(targets);
 
     if (batches.length === 0) {
       toast.error("Komposisi soal set masih kosong. Edit set untuk mengatur jumlah soal.");
@@ -1295,36 +1355,73 @@ function GenerateSoalPanel({
     setGenerating(true);
     setResult(null);
     setFullResult(null);
+    const baseline: SubtestCounts = { ...currentCounts };
     const perSubtest: Record<SubtestKey, number> = { twk: 0, tiu: 0, tkp: 0 };
     let generated = 0;
     const failedBatches: string[] = [];
+    let rateLimited = false;
 
-    for (let i = 0; i < batches.length; i++) {
-      const b = batches[i];
+    // Jalankan satu putaran batch; berhenti total bila terkena rate limit
+    async function runBatches(
+      list: Array<{ subtest: SubtestKey; count: number }>,
+      labelPrefix: string,
+    ) {
+      for (let i = 0; i < list.length; i++) {
+        if (rateLimited) return;
+        const b = list[i];
+        setFullProgress({
+          done: i,
+          total: list.length,
+          label: `${labelPrefix}${b.subtest.toUpperCase()} — ${b.count} soal (batch ${i + 1}/${list.length})`,
+          generated,
+        });
+        try {
+          const data = await callGenerate({
+            subtest: b.subtest,
+            count: b.count,
+            difficulty: fullDifficulty,
+          });
+          const n = Number(data?.generated) || 0;
+          generated += n;
+          perSubtest[b.subtest] += n;
+        } catch (error) {
+          const status = (error as { status?: number })?.status;
+          if (status === 429) rateLimited = true;
+          failedBatches.push(`${b.subtest.toUpperCase()} ${b.count} soal`);
+          toast.error(
+            `Batch gagal: ${b.subtest.toUpperCase()} ${b.count} soal — ${
+              error instanceof Error ? error.message : "error tidak diketahui"
+            }`,
+          );
+          // Lanjut ke batch berikutnya, jangan berhenti di tengah (kecuali rate limit)
+        }
+      }
+    }
+
+    await runBatches(batches, "Membuat ");
+
+    // Top-up: soal yang ditolak verifier/duplikat/batch gagal membuat set belum lengkap.
+    // Hitung kekurangan per subtes terhadap target set, lalu generate ulang (maks 2 putaran).
+    const MAX_TOPUP_ROUNDS = 2;
+    for (let round = 1; round <= MAX_TOPUP_ROUNDS && !rateLimited; round++) {
       setFullProgress({
-        done: i,
-        total: batches.length,
-        label: `Membuat ${b.subtest.toUpperCase()} — ${b.count} soal (batch ${i + 1}/${batches.length})`,
+        done: 0,
+        total: 1,
+        label: `Mengecek kekurangan soal (top-up ${round}/${MAX_TOPUP_ROUNDS})...`,
         generated,
       });
-      try {
-        const data = await callGenerate({
-          subtest: b.subtest,
-          count: b.count,
-          difficulty: fullDifficulty,
-        });
-        const n = Number(data?.generated) || 0;
-        generated += n;
-        perSubtest[b.subtest] += n;
-      } catch (error) {
-        failedBatches.push(`${b.subtest.toUpperCase()} ${b.count} soal`);
-        toast.error(
-          `Batch gagal: ${b.subtest.toUpperCase()} ${b.count} soal — ${
-            error instanceof Error ? error.message : "error tidak diketahui"
-          }`,
-        );
-        // Lanjut ke batch berikutnya, jangan berhenti di tengah
-      }
+      const fresh = await fetchSubtestCounts();
+      // Fallback bila hitung ulang gagal: jumlah awal + yang berhasil di-generate
+      const counts: SubtestCounts = fresh ?? {
+        twk: baseline.twk + perSubtest.twk,
+        tiu: baseline.tiu + perSubtest.tiu,
+        tkp: baseline.tkp + perSubtest.tkp,
+      };
+      const deficits = targets
+        .map((t) => ({ subtest: t.subtest, count: Math.max(0, t.count - counts[t.subtest]) }))
+        .filter((d) => d.count > 0);
+      if (deficits.length === 0) break;
+      await runBatches(splitBatches(deficits), `Top-up ${round}/${MAX_TOPUP_ROUNDS}: melengkapi `);
     }
 
     setFullProgress(null);
@@ -1347,10 +1444,28 @@ function GenerateSoalPanel({
     ? selectedSet.twk_count + selectedSet.tiu_count + selectedSet.tkp_count
     : 110;
 
+  // Kategori resmi kisi-kisi SKD (harus sama dengan BLUEPRINT di edge function
+  // tryout-generate-questions). Kosongkan kategori agar server menyeimbangkan otomatis.
   const subtestCategories: Record<string, string[]> = {
-    twk: ["Pancasila", "UUD 1945", "NKRI", "Bhinneka Tunggal Ika", "Peristiwa Bersejarah"],
-    tiu: ["Verbal", "Numerik", "Figural", "Logis"],
-    tkp: ["Pelayanan Publik", "Jejaring Kerja", "Profesionalisme", "Integritas"],
+    twk: ["Nasionalisme", "Integritas", "Bela Negara", "Pilar Negara", "Bahasa Negara"],
+    tiu: [
+      "Verbal - Analogi",
+      "Verbal - Silogisme",
+      "Verbal - Analitis",
+      "Numerik - Berhitung",
+      "Numerik - Deret Angka",
+      "Numerik - Perbandingan Kuantitatif",
+      "Numerik - Soal Cerita",
+      "Figural",
+    ],
+    tkp: [
+      "Pelayanan Publik",
+      "Jejaring Kerja",
+      "Sosial Budaya",
+      "Teknologi Informasi dan Komunikasi",
+      "Profesionalisme",
+      "Anti Radikalisme",
+    ],
   };
 
   return (
@@ -1518,7 +1633,7 @@ function GenerateSoalPanel({
             <Input
               type="number"
               min={1}
-              max={45}
+              max={30}
               value={count}
               onChange={(e) => setCount(Number(e.target.value))}
             />

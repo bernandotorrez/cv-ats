@@ -781,6 +781,53 @@ export type Database = {
         };
         Relationships: [];
       };
+      tryout_question_reports: {
+        Row: {
+          admin_note: string | null;
+          created_at: string;
+          id: string;
+          note: string | null;
+          question_id: string;
+          reason: string;
+          resolved_at: string | null;
+          resolved_by: string | null;
+          status: string;
+          user_id: string;
+        };
+        Insert: {
+          admin_note?: string | null;
+          created_at?: string;
+          id?: string;
+          note?: string | null;
+          question_id: string;
+          reason: string;
+          resolved_at?: string | null;
+          resolved_by?: string | null;
+          status?: string;
+          user_id: string;
+        };
+        Update: {
+          admin_note?: string | null;
+          created_at?: string;
+          id?: string;
+          note?: string | null;
+          question_id?: string;
+          reason?: string;
+          resolved_at?: string | null;
+          resolved_by?: string | null;
+          status?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "tryout_question_reports_question_id_fkey";
+            columns: ["question_id"];
+            isOneToOne: false;
+            referencedRelation: "tryout_questions";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       tryout_questions: {
         Row: {
           category: string | null;
@@ -789,6 +836,8 @@ export type Database = {
           difficulty: string;
           exam_set_id: string;
           explanation: string | null;
+          explanation_detail: Json | null;
+          explanation_detail_at: string | null;
           explanation_image_url: string | null;
           id: string;
           options: Json;
@@ -805,6 +854,8 @@ export type Database = {
           difficulty?: string;
           exam_set_id: string;
           explanation?: string | null;
+          explanation_detail?: Json | null;
+          explanation_detail_at?: string | null;
           explanation_image_url?: string | null;
           id?: string;
           options: Json;
@@ -821,6 +872,8 @@ export type Database = {
           difficulty?: string;
           exam_set_id?: string;
           explanation?: string | null;
+          explanation_detail?: Json | null;
+          explanation_detail_at?: string | null;
           explanation_image_url?: string | null;
           id?: string;
           options?: Json;
