@@ -16,7 +16,10 @@ declare global {
 }
 
 const BENIX_WIDGET_SCRIPT_ID = "benix-cs-widget-sdk";
-const BENIX_WIDGET_SRC = "https://www.benixai.web.id/benix-cs-widget.js";
+// Pakai domain kanonik (tanpa www). www.benixai.web.id me-redirect (308) ke sini, sedangkan
+// widget memakai origin URL skrip ini sebagai targetOrigin postMessage ke iframe-nya →
+// dari www terjadi "target origin does not match" dan widget tidak bisa berkomunikasi.
+const BENIX_WIDGET_SRC = "https://benixai.web.id/benix-cs-widget.js";
 const BENIX_WIDGET_SELECTORS = [
   '[id*="benix" i]',
   '[class*="benix" i]',
