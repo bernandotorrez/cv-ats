@@ -48,6 +48,9 @@ const BENIX_BLOCKED_PREFIXES = [
   "/simulasi-wawancara",
   "/tools",
   "/tryout",
+  // halaman tryout publik: widget menutupi CTA & mengganggu fokus
+  "/tryout-cpns",
+  "/belajar-skd",
   // payment
   "/payment",
   // auth flows
@@ -66,8 +69,8 @@ const BENIX_BLOCKED_PREFIXES = [
 
 function isBenixWidgetAllowedPath(pathname: string): boolean {
   const path = (pathname || "/").toLowerCase();
-  // Segment-exact match: "/tryout" and "/tryout/..." are blocked, while the
-  // public marketing page "/tryout-cpns" is not.
+  // Segment-exact match: "/tryout" blocks "/tryout" and "/tryout/...", not
+  // "/tryout-cpns" (that one has its own entry).
   return !BENIX_BLOCKED_PREFIXES.some((prefix) => path === prefix || path.startsWith(`${prefix}/`));
 }
 

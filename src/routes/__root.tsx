@@ -239,9 +239,17 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           children: `
           window.dataLayer = window.dataLayer || [];
           function gtag(){dataLayer.push(arguments);}
+          // Consent Mode: fitur iklan ditolak sejak awal. Tanpa ini gtag tetap memanggil
+          // google.<tld>/ads/ga-audiences & stats.g.doubleclick.net (Google Signals / link Ads di
+          // property GA) walau allow_google_signals: false — dan diblokir CSP. Analytics tetap jalan.
+          gtag('consent', 'default', {
+            ad_storage: 'denied',
+            ad_user_data: 'denied',
+            ad_personalization: 'denied',
+            analytics_storage: 'granted',
+          });
           gtag('js', new Date());
-          // Google Signals / personalisasi iklan dimatikan: fitur itu memanggil google.<tld>/ads/ga-audiences
-          // dan stats.g.doubleclick.net yang tidak diizinkan CSP (dan memang tidak dipakai di sini).
+          // Google Signals / personalisasi iklan dimatikan (tidak dipakai di sini).
           gtag('config', '${GOOGLE_TAG_ID}', {
             allow_google_signals: false,
             allow_ad_personalization_signals: false,
