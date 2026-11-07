@@ -18,6 +18,25 @@ export const SUBTEST_MAX: Record<TryoutSubtest, number> = {
   tkp: SCORING.MAX_SCORE_TKP,
 };
 
+type CompositionLike = Partial<Pick<TryoutExamSet, "twk_count" | "tiu_count" | "tkp_count">>;
+
+/**
+ * Skor maksimal per subtes dari komposisi set (5 poin per soal untuk
+ * TWK/TIU benar dan TKP opsi terbaik). Tanpa komposisi → set penuh SKD.
+ */
+export function maxScoresOf(
+  set: CompositionLike | null | undefined,
+): Record<TryoutSubtest | "total", number> {
+  const twk = set?.twk_count != null ? set.twk_count * 5 : SUBTEST_MAX.twk;
+  const tiu = set?.tiu_count != null ? set.tiu_count * 5 : SUBTEST_MAX.tiu;
+  const tkp = set?.tkp_count != null ? set.tkp_count * 5 : SUBTEST_MAX.tkp;
+  return { twk, tiu, tkp, total: twk + tiu + tkp };
+}
+
+/** Skala ambang skor set penuh (dari 550) ke total maksimal set lain. */
+const scaleFromFull = (score: number, maxTotal: number) =>
+  Math.round((score / SCORING.MAX_SCORE_TOTAL) * maxTotal);
+
 export const SUBTEST_LABEL: Record<TryoutSubtest, string> = {
   twk: "TWK",
   tiu: "TIU",
@@ -40,8 +59,10 @@ export type SubtestGap = {
 
 export function subtestGaps(
   attempt: Pick<TryoutAttempt, "score_twk" | "score_tiu" | "score_tkp">,
-  examSet: Pick<TryoutExamSet, "passing_grade_twk" | "passing_grade_tiu" | "passing_grade_tkp">,
+  examSet: Pick<TryoutExamSet, "passing_grade_twk" | "passing_grade_tiu" | "passing_grade_tkp"> &
+    CompositionLike,
 ): SubtestGap[] {
+  const maxes = maxScoresOf(examSet);
   const rows: Array<[TryoutSubtest, number, number]> = [
     ["twk", attempt.score_twk, examSet.passing_grade_twk],
     ["tiu", attempt.score_tiu, examSet.passing_grade_tiu],
@@ -56,7 +77,7 @@ export function subtestGaps(
       subtest,
       score,
       passing,
-      max: SUBTEST_MAX[subtest],
+      max: maxes[subtest],
       passed: score >= passing,
       pointsNeeded,
       questionsNeeded: Math.ceil(pointsNeeded / perQuestion),
@@ -80,30 +101,34 @@ export function readiness(
   gaps: SubtestGap[],
 ): Readiness {
   const totalGap = gaps.reduce((s, g) => s + g.pointsNeeded, 0);
-  if (attempt.pass_overall && attempt.score_total >= 450) {
+  // Ambang set penuh (450 / 400 dari 550; "hampir" ≤ 25 poin) diskalakan ke
+  // total maksimal set ini, supaya set mini dinilai adil.
+  const maxTotal = gaps.reduce((s, g) => s + g.max, 0) || SCORING.MAX_SCORE_TOTAL;
+  const elite = scaleFromFull(450, maxTotal);
+  const competitive = scaleFromFull(400, maxTotal);
+  const closeGap = Math.max(5, scaleFromFull(25, maxTotal));
+  if (attempt.pass_overall && attempt.score_total >= elite) {
     return {
       level: "elite",
       label: "Sangat Kompetitif",
       description: "Skor kamu setara peserta papan atas. Pertahankan konsistensi dan kecepatan.",
     };
   }
-  if (attempt.pass_overall && attempt.score_total >= 400) {
+  if (attempt.pass_overall && attempt.score_total >= competitive) {
     return {
       level: "competitive",
       label: "Kompetitif",
-      description:
-        "Lulus passing grade dengan total skor yang bersaing. Kejar 450+ untuk formasi favorit.",
+      description: `Lulus passing grade dengan total skor yang bersaing. Kejar ${elite}+ untuk formasi favorit.`,
     };
   }
   if (attempt.pass_overall) {
     return {
       level: "passed",
       label: "Lulus Passing Grade",
-      description:
-        "Kamu lolos ambang batas. Persaingan formasi ditentukan total skor — target berikutnya 400+.",
+      description: `Kamu lolos ambang batas. Persaingan formasi ditentukan total skor — target berikutnya ${competitive}+.`,
     };
   }
-  if (totalGap <= 25) {
+  if (totalGap <= closeGap) {
     return {
       level: "close",
       label: "Hampir Lulus",

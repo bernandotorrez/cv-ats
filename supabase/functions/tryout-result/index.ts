@@ -89,7 +89,7 @@ Deno.serve(async (req: Request) => {
       admin
         .from("tryout_attempts")
         .select(
-          "id, exam_set_id, finished_at, score_total, score_twk, score_tiu, score_tkp, pass_overall, tryout_exam_sets(name)",
+          "id, exam_set_id, finished_at, score_total, score_twk, score_tiu, score_tkp, pass_overall, tryout_exam_sets(name, twk_count, tiu_count, tkp_count)",
         )
         .eq("user_id", userId)
         .in("status", ["completed", "timed_out"])
@@ -110,6 +110,12 @@ Deno.serve(async (req: Request) => {
         id: h.id,
         exam_set_id: h.exam_set_id,
         exam_name: h.tryout_exam_sets?.name ?? null,
+        max_total: h.tryout_exam_sets
+          ? 5 *
+            ((h.tryout_exam_sets.twk_count ?? 30) +
+              (h.tryout_exam_sets.tiu_count ?? 35) +
+              (h.tryout_exam_sets.tkp_count ?? 45))
+          : 550,
         finished_at: h.finished_at,
         score_total: h.score_total,
         score_twk: h.score_twk,

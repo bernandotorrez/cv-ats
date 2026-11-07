@@ -88,7 +88,9 @@ function TryoutDashboardPage() {
         .order("sort_order", { ascending: true }),
       supabase
         .from("tryout_attempts")
-        .select(`${ATTEMPT_SUMMARY_COLUMNS}, tryout_exam_sets(name, duration_minutes)`)
+        .select(
+          `${ATTEMPT_SUMMARY_COLUMNS}, tryout_exam_sets(name, duration_minutes, twk_count, tiu_count, tkp_count)`,
+        )
         .eq("user_id", userId)
         .in("status", ["in_progress", "completed", "timed_out"])
         .order("created_at", { ascending: false })
@@ -110,13 +112,25 @@ function TryoutDashboardPage() {
       (
         (attemptsRes.data || []) as Array<
           TryoutAttemptSummary & {
-            tryout_exam_sets?: { name: string; duration_minutes: number } | null;
+            tryout_exam_sets?: {
+              name: string;
+              duration_minutes: number;
+              twk_count: number;
+              tiu_count: number;
+              tkp_count: number;
+            } | null;
           }
         >
       ).map((a) => ({
         ...a,
         exam_name: a.tryout_exam_sets?.name ?? null,
         _duration: a.tryout_exam_sets?.duration_minutes ?? 100,
+        max_total: a.tryout_exam_sets
+          ? 5 *
+            (a.tryout_exam_sets.twk_count +
+              a.tryout_exam_sets.tiu_count +
+              a.tryout_exam_sets.tkp_count)
+          : 550,
       })),
     );
 

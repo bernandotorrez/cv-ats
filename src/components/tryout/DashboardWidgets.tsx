@@ -36,19 +36,19 @@ export function ProgressStats({ summary }: { summary: ProgressSummary }) {
       icon: <Trophy className="h-4 w-4" aria-hidden />,
       label: "Skor terbaik",
       value: summary.best != null ? String(summary.best) : "–",
-      sub: "dari 550",
+      sub: summary.bestMax != null ? `dari ${summary.bestMax}` : "skor total",
     },
     {
       icon: <Target className="h-4 w-4" aria-hidden />,
       label: "Rata-rata",
-      value: summary.average != null ? String(summary.average) : "–",
+      value: summary.averagePct != null ? `${summary.averagePct}%` : "–",
       sub:
-        summary.lastDelta == null
-          ? "skor total"
-          : summary.lastDelta >= 0
-            ? `+${summary.lastDelta} dari sebelumnya`
-            : `${summary.lastDelta} dari sebelumnya`,
-      trend: summary.lastDelta,
+        summary.lastDeltaPct == null
+          ? "dari skor maksimal"
+          : summary.lastDeltaPct >= 0
+            ? `+${summary.lastDeltaPct}% dari sebelumnya`
+            : `${summary.lastDeltaPct}% dari sebelumnya`,
+      trend: summary.lastDeltaPct,
     },
     {
       icon: <CheckCircle2 className="h-4 w-4" aria-hidden />,
@@ -289,7 +289,7 @@ export function ExamSetCard({
                 <b className="font-display text-base font-extrabold text-foreground">
                   {best.score_total}
                 </b>
-                /550
+                /{5 * (set.twk_count + set.tiu_count + set.tkp_count)}
               </div>
               <div>{done.length}x dikerjakan</div>
             </>

@@ -75,7 +75,6 @@ const SUBTESTS = [
     key: "twk",
     label: "TWK",
     name: "Wawasan Kebangsaan",
-    max: 150,
     cls: "border-amber-200 bg-amber-50/70 dark:border-amber-900 dark:bg-amber-950/30",
     bar: "bg-amber-400",
     text: "text-amber-800 dark:text-amber-300",
@@ -84,7 +83,6 @@ const SUBTESTS = [
     key: "tiu",
     label: "TIU",
     name: "Intelegensi Umum",
-    max: 175,
     cls: "border-sky-200 bg-sky-50/70 dark:border-sky-900 dark:bg-sky-950/30",
     bar: "bg-sky-400",
     text: "text-sky-800 dark:text-sky-300",
@@ -93,7 +91,6 @@ const SUBTESTS = [
     key: "tkp",
     label: "TKP",
     name: "Karakteristik Pribadi",
-    max: 225,
     cls: "border-emerald-200 bg-emerald-50/70 dark:border-emerald-900 dark:bg-emerald-950/30",
     bar: "bg-emerald-500",
     text: "text-emerald-800 dark:text-emerald-300",
@@ -190,6 +187,12 @@ function TryoutExamDetailPage() {
       ((attemptsRes.data || []) as TryoutAttemptSummary[]).map((a) => ({
         ...a,
         exam_name: (examRes.data as ExamSetRow | null)?.name ?? null,
+        max_total: examRes.data
+          ? 5 *
+            ((examRes.data as ExamSetRow).twk_count +
+              (examRes.data as ExamSetRow).tiu_count +
+              (examRes.data as ExamSetRow).tkp_count)
+          : 550,
       })),
     );
     setLoading(false);
@@ -235,6 +238,7 @@ function TryoutExamDetailPage() {
     tkp: examSet.passing_grade_tkp,
   };
   const counts = { twk: examSet.twk_count, tiu: examSet.tiu_count, tkp: examSet.tkp_count };
+  const maxTotal = 5 * (counts.twk + counts.tiu + counts.tkp);
 
   const goExam = () =>
     navigate({ to: "/tryout/$examId/ujian" as never, params: { examId } as never });
@@ -294,7 +298,7 @@ function TryoutExamDetailPage() {
                     </div>
                     <div className="flex justify-between">
                       <dt className="text-muted-foreground">Skor maks</dt>
-                      <dd className="font-bold">{s.max}</dd>
+                      <dd className="font-bold">{counts[s.key] * 5}</dd>
                     </div>
                     <div className="flex justify-between border-t pt-1">
                       <dt className="font-semibold">Passing grade</dt>
@@ -304,7 +308,9 @@ function TryoutExamDetailPage() {
                   <div className="relative mt-3 h-1.5 rounded-full bg-background/80" aria-hidden>
                     <div
                       className={cn("h-full rounded-full", s.bar)}
-                      style={{ width: `${(passing[s.key] / s.max) * 100}%` }}
+                      style={{
+                        width: `${Math.min(100, (passing[s.key] / Math.max(1, counts[s.key] * 5)) * 100)}%`,
+                      }}
                     />
                   </div>
                 </div>
@@ -351,7 +357,8 @@ function TryoutExamDetailPage() {
                 <div className="text-sm">
                   <div className="text-xs text-muted-foreground">Skor terbaik di set ini</div>
                   <div>
-                    <b className="font-display text-lg font-extrabold">{best.score_total}</b>/550 ·{" "}
+                    <b className="font-display text-lg font-extrabold">{best.score_total}</b>/
+                    {maxTotal} ·{" "}
                     <span
                       className={
                         best.pass_overall

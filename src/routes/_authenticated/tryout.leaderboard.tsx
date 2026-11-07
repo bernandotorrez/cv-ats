@@ -29,7 +29,13 @@ export const Route = createFileRoute("/_authenticated/tryout/leaderboard")({
   component: TryoutLeaderboardPage,
 });
 
-type ExamSet = { id: string; name: string };
+type ExamSet = {
+  id: string;
+  name: string;
+  twk_count: number;
+  tiu_count: number;
+  tkp_count: number;
+};
 
 function TryoutLeaderboardPage() {
   const [examSets, setExamSets] = useState<ExamSet[] | null>(null);
@@ -43,7 +49,7 @@ function TryoutLeaderboardPage() {
   useEffect(() => {
     void supabase
       .from("tryout_exam_sets")
-      .select("id, name")
+      .select("id, name, twk_count, tiu_count, tkp_count")
       .eq("is_active", true)
       .order("sort_order", { ascending: true })
       .then(({ data }) => {
@@ -129,7 +135,10 @@ function TryoutLeaderboardPage() {
             icon={<Trophy className="h-4 w-4" aria-hidden />}
             label="Skor terbaikmu"
             value={myEntry ? String(myEntry.score_total) : "–"}
-            sub="dari 550"
+            sub={(() => {
+              const es = examSets?.find((s) => s.id === activeSet);
+              return es ? `dari ${5 * (es.twk_count + es.tiu_count + es.tkp_count)}` : "skor total";
+            })()}
           />
           <Stat
             icon={<Users className="h-4 w-4" aria-hidden />}

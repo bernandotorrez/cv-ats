@@ -1573,6 +1573,22 @@ function FieldError({ id, children }: { id: string; children: ReactNode }) {
   );
 }
 
+/**
+ * Passing grade & durasi proporsional terhadap SKD penuh (110 soal, 100 menit,
+ * PG 65/80/166). TWK & TIU: jumlah soal benar minimal dibulatkan ke atas
+ * (13/30 dan 16/35) × 5 poin. TKP: 166/225 dari skor maksimal, dibulatkan ke
+ * atas. Komposisi 30/35/45 menghasilkan persis 65/80/166 dan 100 menit.
+ */
+function proportionalSettings(twk: number, tiu: number, tkp: number) {
+  const total = twk + tiu + tkp;
+  return {
+    pgTwk: Math.ceil((twk * 13) / 30) * 5,
+    pgTiu: Math.ceil((tiu * 16) / 35) * 5,
+    pgTkp: Math.ceil((tkp * 5 * 166) / 225),
+    duration: Math.max(1, Math.round((total * 100) / 110)),
+  };
+}
+
 function ExamSetDialog({
   open,
   editing,
@@ -1851,6 +1867,40 @@ function ExamSetDialog({
             title="Waktu & passing grade"
             description="Nilai ambang batas minimal per subtes (default SKD: 65 / 80 / 166)."
           >
+            {(() => {
+              const rec = proportionalSettings(twkCount, tiuCount, tkpCount);
+              const same =
+                rec.pgTwk === pgTwk &&
+                rec.pgTiu === pgTiu &&
+                rec.pgTkp === pgTkp &&
+                rec.duration === duration;
+              return (
+                <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-dashed bg-muted/30 px-3 py-2 text-[11px] text-muted-foreground">
+                  <span>
+                    Saran proporsional SKD untuk komposisi ini: PG{" "}
+                    <b className="text-foreground">
+                      {rec.pgTwk} / {rec.pgTiu} / {rec.pgTkp}
+                    </b>
+                    , durasi <b className="text-foreground">{rec.duration} menit</b>.
+                  </span>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={same ? "ghost" : "secondary"}
+                    disabled={same}
+                    className="h-7 px-2.5 text-xs"
+                    onClick={() => {
+                      setPgTwk(rec.pgTwk);
+                      setPgTiu(rec.pgTiu);
+                      setPgTkp(rec.pgTkp);
+                      setDuration(rec.duration);
+                    }}
+                  >
+                    {same ? "Sudah sesuai" : "Hitung otomatis"}
+                  </Button>
+                </div>
+              );
+            })()}
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <Label htmlFor={ids.duration}>Durasi (menit)</Label>
@@ -1905,6 +1955,24 @@ function ExamSetDialog({
                 accent="text-emerald-700 dark:text-emerald-400"
               />
             </div>
+            {(
+              [
+                ["TWK", pgTwk, twkCount * 5],
+                ["TIU", pgTiu, tiuCount * 5],
+                ["TKP", pgTkp, tkpCount * 5],
+              ] as const
+            )
+              .filter(([, pg, max]) => pg > max)
+              .map(([label, pg, max]) => (
+                <p
+                  key={label}
+                  role="alert"
+                  className="text-[11px] font-medium text-red-600 dark:text-red-400"
+                >
+                  PG {label} ({pg}) melebihi skor maksimal {label} untuk komposisi ini ({max}) —
+                  tidak ada peserta yang bisa lulus. Gunakan &ldquo;Hitung otomatis&rdquo;.
+                </p>
+              ))}
           </FormSection>
 
           <FormSection title="Visibilitas">

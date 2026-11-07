@@ -116,7 +116,9 @@ export function AttemptHistoryList({ attempts, emptyMessage, emptyAction }: Prop
                   <>
                     <div className="font-display text-xl font-extrabold tabular-nums text-foreground sm:text-2xl">
                       {a.score_total}
-                      <span className="text-xs font-medium text-muted-foreground">/550</span>
+                      <span className="text-xs font-medium text-muted-foreground">
+                        /{a.max_total ?? 550}
+                      </span>
                     </div>
                     <div
                       className={cn(

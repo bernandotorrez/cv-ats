@@ -222,6 +222,8 @@ export type TryoutHistoryPoint = {
   score_tiu: number;
   score_tkp: number;
   pass_overall: boolean;
+  /** Skor total maksimal set attempt ini (set mini < 550). */
+  max_total?: number;
 };
 
 /** Respons edge function tryout-result. */

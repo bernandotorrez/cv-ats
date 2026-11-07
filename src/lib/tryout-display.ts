@@ -24,6 +24,8 @@ export type TryoutAttemptSummary = {
   created_at: string;
   is_free?: boolean;
   exam_name?: string | null;
+  /** Skor total maksimal set attempt (dari komposisi; default 550). */
+  max_total?: number;
 };
 
 /** Kolom yang dipilih untuk TryoutAttemptSummary (jangan ambil answers/stats). */
@@ -52,29 +54,46 @@ export const isFinished = (a: Pick<TryoutAttemptSummary, "status">) =>
 
 export type ProgressSummary = {
   finished: number;
+  /** Skor terbaik (dibandingkan relatif terhadap skor maksimal set masing-masing). */
   best: number | null;
-  average: number | null;
+  bestMax: number | null;
+  /** Rata-rata persentase skor terhadap skor maksimal set (0–100). */
+  averagePct: number | null;
   passed: number;
-  lastDelta: number | null;
+  /** Selisih persentase attempt terakhir vs sebelumnya (poin persen). */
+  lastDeltaPct: number | null;
 };
 
-/** Statistik progres dari attempt yang sudah selesai (urutan bebas). */
+/**
+ * Statistik progres dari attempt yang sudah selesai (urutan bebas).
+ * Set bisa berbeda ukuran (set mini vs 110 soal), jadi perbandingan memakai
+ * persentase skor terhadap skor maksimal set masing-masing.
+ */
 export function summarizeProgress(attempts: TryoutAttemptSummary[]): ProgressSummary {
   const done = attempts
     .filter(isFinished)
     .sort((a, b) => (a.finished_at ?? a.created_at).localeCompare(b.finished_at ?? b.created_at));
   if (done.length === 0) {
-    return { finished: 0, best: null, average: null, passed: 0, lastDelta: null };
+    return {
+      finished: 0,
+      best: null,
+      bestMax: null,
+      averagePct: null,
+      passed: 0,
+      lastDeltaPct: null,
+    };
   }
-  const scores = done.map((a) => a.score_total);
-  const last = scores[scores.length - 1];
-  const prev = scores.length > 1 ? scores[scores.length - 2] : null;
+  const pct = (a: TryoutAttemptSummary) => (a.score_total / (a.max_total || 550)) * 100;
+  const best = done.reduce((b, a) => (pct(a) > pct(b) ? a : b));
+  const last = done[done.length - 1];
+  const prev = done.length > 1 ? done[done.length - 2] : null;
   return {
     finished: done.length,
-    best: Math.max(...scores),
-    average: Math.round(scores.reduce((s, x) => s + x, 0) / scores.length),
+    best: best.score_total,
+    bestMax: best.max_total || 550,
+    averagePct: Math.round(done.reduce((s, a) => s + pct(a), 0) / done.length),
     passed: done.filter((a) => a.pass_overall).length,
-    lastDelta: prev == null ? null : last - prev,
+    lastDeltaPct: prev == null ? null : Math.round(pct(last) - pct(prev)),
   };
 }
 

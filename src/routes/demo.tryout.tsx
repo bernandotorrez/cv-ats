@@ -341,6 +341,7 @@ function DemoTryoutPage() {
       )}
       {view === "skeletons" && <SkeletonsView />}
       {view === "figural" && <FiguralView />}
+      {view === "result-mini" && <MiniResultView />}
       {view === "promo" && (
         <div className="mx-auto max-w-sm px-4 py-8">
           <TryoutPromo highlight />
@@ -760,6 +761,35 @@ function FiguralView() {
         attemptId="demo"
       />
       <QuestionCard question={oddQ} displayNumber={52} totalQuestions={110} onAnswer={() => {}} />
+    </div>
+  );
+}
+
+// Set mini 10/10/10 (skor maks 150, PG proporsional 25/25/37).
+function MiniResultView() {
+  const set = {
+    passing_grade_twk: 25,
+    passing_grade_tiu: 25,
+    passing_grade_tkp: 37,
+    twk_count: 10,
+    tiu_count: 10,
+    tkp_count: 10,
+  };
+  const attempt = {
+    score_twk: 35,
+    score_tiu: 30,
+    score_tkp: 42,
+    score_total: 107,
+    pass_overall: true,
+  };
+  const gaps = subtestGaps(attempt, set);
+  return (
+    <div className="container-page py-8">
+      <ReadinessBanner
+        readiness={readiness(attempt, gaps)}
+        total={attempt.score_total}
+        gaps={gaps}
+      />
     </div>
   );
 }

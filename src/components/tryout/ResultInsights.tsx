@@ -28,7 +28,9 @@ export function ReadinessBanner({
   total: number;
   gaps: SubtestGap[];
 }) {
-  const pct = Math.round((total / 550) * 100);
+  // Total maksimal mengikuti komposisi set (set mini < 550).
+  const maxTotal = gaps.reduce((s, g) => s + g.max, 0) || 550;
+  const pct = Math.round((total / maxTotal) * 100);
   return (
     <section className="overflow-hidden rounded-2xl border bg-card shadow-sm">
       <div
@@ -37,7 +39,7 @@ export function ReadinessBanner({
           READINESS_STYLE[readiness.level],
         )}
       >
-        <ScoreRing value={total} max={550} pct={pct} />
+        <ScoreRing value={total} max={maxTotal} pct={pct} />
         <div className="min-w-0 flex-1">
           <div className="text-xs font-semibold uppercase tracking-wide opacity-90">
             Tingkat kesiapan
@@ -335,8 +337,10 @@ export function HistoryTrend({
                       ? "bg-emerald-400/70 dark:bg-emerald-500/50"
                       : "bg-muted-foreground/30",
                 )}
-                style={{ height: `${Math.max(4, (h.score_total / 550) * 100)}%` }}
-                title={`${h.exam_name ?? "Tryout"} · ${h.finished_at ? new Date(h.finished_at).toLocaleDateString("id-ID") : ""} · ${h.score_total}`}
+                style={{
+                  height: `${Math.max(4, (h.score_total / (h.max_total || 550)) * 100)}%`,
+                }}
+                title={`${h.exam_name ?? "Tryout"} · ${h.finished_at ? new Date(h.finished_at).toLocaleDateString("id-ID") : ""} · ${h.score_total}/${h.max_total || 550}`}
               />
               <span className="text-[10px] text-muted-foreground">#{i + 1}</span>
             </div>
