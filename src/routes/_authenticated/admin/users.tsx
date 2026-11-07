@@ -25,6 +25,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { invalidateAdminCache } from "@/lib/admin";
+import { UserTryoutPackages } from "@/components/admin/UserTryoutPackages";
 import {
   Users,
   Search,
@@ -81,8 +82,10 @@ export const Route = createFileRoute("/_authenticated/admin/users")({
     if (!sessionData.session) {
       throw redirect({ to: "/login", search: {} as any });
     }
-    const { data } = await supabase
-      .rpc("has_role", { _user_id: sessionData.session.user.id, _role: "admin" });
+    const { data } = await supabase.rpc("has_role", {
+      _user_id: sessionData.session.user.id,
+      _role: "admin",
+    });
     if (!data) {
       throw redirect({ to: "/dashboard" });
     }
@@ -148,7 +151,6 @@ function AdminUsersPage() {
   const [editHasUploadCv, setEditHasUploadCv] = useState(false);
   const [editQuotaProPhoto, setEditQuotaProPhoto] = useState(0);
   const [editQuotaUploadCv, setEditQuotaUploadCv] = useState(0);
-  const [editTryoutCredits, setEditTryoutCredits] = useState(0);
   const [saving, setSaving] = useState(false);
   const [pagination, setPagination] = useState<PaginationState>({
     page: 1,
@@ -236,7 +238,6 @@ function AdminUsersPage() {
     setEditHasUploadCv(u.has_upload_cv || false);
     setEditQuotaProPhoto(u.quota_pro_photo || 0);
     setEditQuotaUploadCv(u.quota_upload_cv || 0);
-    setEditTryoutCredits(u.tryout_credits || 0);
   };
 
   const handleTierChange = (tier: string) => {
@@ -291,7 +292,6 @@ function AdminUsersPage() {
         has_upload_cv: editHasUploadCv,
         quota_pro_photo: editQuotaProPhoto,
         quota_upload_cv: editQuotaUploadCv,
-        tryout_credits: editTryoutCredits,
       }),
     });
 
@@ -443,7 +443,8 @@ function AdminUsersPage() {
                     {((u.quota_pro_photo ?? 0) > 0 || (u.quota_pro_photo_purchased ?? 0) > 0) && (
                       <span className="text-muted-foreground">
                         Kuota Pro Photo: {u.quota_pro_photo ?? 0}
-                        {(u.quota_pro_photo_purchased ?? 0) > 0 && ` (+${u.quota_pro_photo_purchased} dibeli)`}
+                        {(u.quota_pro_photo_purchased ?? 0) > 0 &&
+                          ` (+${u.quota_pro_photo_purchased} dibeli)`}
                       </span>
                     )}
                     {u.tryout_credits !== undefined && u.tryout_credits > 0 && (
@@ -716,50 +717,15 @@ function AdminUsersPage() {
                 </div>
               </div>
 
-              <div className="flex flex-col space-y-1.5 py-2">
-                <Label htmlFor="quota-tryout" className="text-sm font-medium flex items-center gap-2">
-                  <Trophy className="h-4 w-4 text-amber-500" />
-                  Kredit Tryout SKD
-                </Label>
-                <p className="text-xs text-muted-foreground">
-                  Jumlah kredit tryout yang dimiliki user. User tidak bisa mengubah ini sendiri.
-                </p>
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={() => setEditTryoutCredits(Math.max(0, editTryoutCredits - 1))}
-                  >
-                    <span className="font-bold">-</span>
-                  </Button>
-                  <Input
-                    id="quota-tryout"
-                    type="number"
-                    min="0"
-                    max="100"
-                    value={editTryoutCredits}
-                    onChange={(e) => setEditTryoutCredits(parseInt(e.target.value) || 0)}
-                    className="w-20 text-center"
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={() => setEditTryoutCredits(editTryoutCredits + 1)}
-                  >
-                    <span className="font-bold">+</span>
-                  </Button>
-                  <span className="text-sm text-muted-foreground ml-2">Kredit</span>
-                </div>
-                {editUser && (
-                  <p className="text-xs text-muted-foreground">
-                    Terpakai: {editUser.tryout_used || 0} | Sisa: {(editUser.tryout_credits || 0) - (editUser.tryout_used || 0)}
-                  </p>
-                )}
-              </div>
+              {editUser && (
+                <UserTryoutPackages
+                  userId={editUser.id}
+                  userLabel={editUser.full_name || editUser.email || editUser.id.slice(0, 8)}
+                  onChanged={() =>
+                    loadUsers(pagination.page, debouncedSearch, filterTier, sortOrder)
+                  }
+                />
+              )}
 
               <div className="flex justify-end gap-2 pt-3 pb-1 bg-background border-t mt-4 sticky bottom-0 z-10">
                 <Button variant="outline" onClick={() => setEditUser(null)}>
