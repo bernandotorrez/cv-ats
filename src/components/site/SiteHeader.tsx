@@ -2,6 +2,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import {
   ArrowRight,
   BookOpen,
+  GraduationCap,
   ChevronDown,
   LayoutDashboard,
   LogOut,
@@ -42,6 +43,12 @@ const learn: LearnItem[] = [
     label: "Panduan CV ATS",
     desc: "Cara bikin CV yang lolos sistem ATS",
     icon: BookOpen,
+  },
+  {
+    to: "/belajar-skd",
+    label: "Belajar SKD CPNS",
+    desc: "Materi, tips & trik TWK, TIU, TKP",
+    icon: GraduationCap,
   },
   {
     to: "/tips-interview",

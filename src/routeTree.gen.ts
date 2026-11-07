@@ -44,6 +44,8 @@ import { Route as AuthenticatedTryoutRouteImport } from './routes/_authenticated
 import { Route as ApiAiCvReviewRouteImport } from './routes/api/ai-cv-review'
 import { Route as ApiHeadersCheckRouteImport } from './routes/api.headers-check'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
+import { Route as BelajarSkdIndexRouteImport } from './routes/belajar-skd.index'
+import { Route as BelajarSkdSlugRouteImport } from './routes/belajar-skd.$slug'
 import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
 import { Route as DemoTryoutRouteImport } from './routes/demo.tryout'
 import { Route as LowonganSlugRouteImport } from './routes/lowongan.$slug'
@@ -254,6 +256,16 @@ const ApiHeadersCheckRoute = ApiHeadersCheckRouteImport.update({
 const AuthCallbackRoute = AuthCallbackRouteImport.update({
   id: '/auth/callback',
   path: '/auth/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BelajarSkdIndexRoute = BelajarSkdIndexRouteImport.update({
+  id: '/belajar-skd/',
+  path: '/belajar-skd/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BelajarSkdSlugRoute = BelajarSkdSlugRouteImport.update({
+  id: '/belajar-skd/$slug',
+  path: '/belajar-skd/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BlogSlugRoute = BlogSlugRouteImport.update({
@@ -487,6 +499,7 @@ export interface FileRoutesByFullPath {
   '/api/ai-cv-review': typeof ApiAiCvReviewRoute
   '/api/headers-check': typeof ApiHeadersCheckRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/belajar-skd/$slug': typeof BelajarSkdSlugRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/demo/tryout': typeof DemoTryoutRoute
   '/lowongan/$slug': typeof LowonganSlugRoute
@@ -498,6 +511,7 @@ export interface FileRoutesByFullPath {
   '/share/$token': typeof ShareTokenRoute
   '/sitemap/xml': typeof SitemapXmlRoute
   '/tips-interview/$slug': typeof TipsInterviewSlugRoute
+  '/belajar-skd/': typeof BelajarSkdIndexRoute
   '/admin/abuse': typeof AuthenticatedAdminAbuseRoute
   '/admin/analytics': typeof AuthenticatedAdminAnalyticsRoute
   '/admin/jobs': typeof AuthenticatedAdminJobsRoute
@@ -558,6 +572,7 @@ export interface FileRoutesByTo {
   '/api/ai-cv-review': typeof ApiAiCvReviewRoute
   '/api/headers-check': typeof ApiHeadersCheckRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/belajar-skd/$slug': typeof BelajarSkdSlugRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/demo/tryout': typeof DemoTryoutRoute
   '/lowongan/$slug': typeof LowonganSlugRoute
@@ -569,6 +584,7 @@ export interface FileRoutesByTo {
   '/share/$token': typeof ShareTokenRoute
   '/sitemap/xml': typeof SitemapXmlRoute
   '/tips-interview/$slug': typeof TipsInterviewSlugRoute
+  '/belajar-skd': typeof BelajarSkdIndexRoute
   '/admin/abuse': typeof AuthenticatedAdminAbuseRoute
   '/admin/analytics': typeof AuthenticatedAdminAnalyticsRoute
   '/admin/jobs': typeof AuthenticatedAdminJobsRoute
@@ -632,6 +648,7 @@ export interface FileRoutesById {
   '/api/ai-cv-review': typeof ApiAiCvReviewRoute
   '/api/headers-check': typeof ApiHeadersCheckRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/belajar-skd/$slug': typeof BelajarSkdSlugRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/demo/tryout': typeof DemoTryoutRoute
   '/lowongan/$slug': typeof LowonganSlugRoute
@@ -643,6 +660,7 @@ export interface FileRoutesById {
   '/share/$token': typeof ShareTokenRoute
   '/sitemap/xml': typeof SitemapXmlRoute
   '/tips-interview/$slug': typeof TipsInterviewSlugRoute
+  '/belajar-skd/': typeof BelajarSkdIndexRoute
   '/_authenticated/admin/abuse': typeof AuthenticatedAdminAbuseRoute
   '/_authenticated/admin/analytics': typeof AuthenticatedAdminAnalyticsRoute
   '/_authenticated/admin/jobs': typeof AuthenticatedAdminJobsRoute
@@ -706,6 +724,7 @@ export interface FileRouteTypes {
     | '/api/ai-cv-review'
     | '/api/headers-check'
     | '/auth/callback'
+    | '/belajar-skd/$slug'
     | '/blog/$slug'
     | '/demo/tryout'
     | '/lowongan/$slug'
@@ -717,6 +736,7 @@ export interface FileRouteTypes {
     | '/share/$token'
     | '/sitemap/xml'
     | '/tips-interview/$slug'
+    | '/belajar-skd/'
     | '/admin/abuse'
     | '/admin/analytics'
     | '/admin/jobs'
@@ -777,6 +797,7 @@ export interface FileRouteTypes {
     | '/api/ai-cv-review'
     | '/api/headers-check'
     | '/auth/callback'
+    | '/belajar-skd/$slug'
     | '/blog/$slug'
     | '/demo/tryout'
     | '/lowongan/$slug'
@@ -788,6 +809,7 @@ export interface FileRouteTypes {
     | '/share/$token'
     | '/sitemap/xml'
     | '/tips-interview/$slug'
+    | '/belajar-skd'
     | '/admin/abuse'
     | '/admin/analytics'
     | '/admin/jobs'
@@ -850,6 +872,7 @@ export interface FileRouteTypes {
     | '/api/ai-cv-review'
     | '/api/headers-check'
     | '/auth/callback'
+    | '/belajar-skd/$slug'
     | '/blog/$slug'
     | '/demo/tryout'
     | '/lowongan/$slug'
@@ -861,6 +884,7 @@ export interface FileRouteTypes {
     | '/share/$token'
     | '/sitemap/xml'
     | '/tips-interview/$slug'
+    | '/belajar-skd/'
     | '/_authenticated/admin/abuse'
     | '/_authenticated/admin/analytics'
     | '/_authenticated/admin/jobs'
@@ -913,6 +937,7 @@ export interface RootRouteChildren {
   ApiAiCvReviewRoute: typeof ApiAiCvReviewRoute
   ApiHeadersCheckRoute: typeof ApiHeadersCheckRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
+  BelajarSkdSlugRoute: typeof BelajarSkdSlugRoute
   DemoTryoutRoute: typeof DemoTryoutRoute
   ManifestWebmanifestRoute: typeof ManifestWebmanifestRoute
   PaymentCancelRoute: typeof PaymentCancelRoute
@@ -921,6 +946,7 @@ export interface RootRouteChildren {
   SecurityTxtRoute: typeof SecurityTxtRoute
   ShareTokenRoute: typeof ShareTokenRoute
   SitemapXmlRoute: typeof SitemapXmlRoute
+  BelajarSkdIndexRoute: typeof BelajarSkdIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1168,6 +1194,20 @@ declare module '@tanstack/react-router' {
       path: '/auth/callback'
       fullPath: '/auth/callback'
       preLoaderRoute: typeof AuthCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/belajar-skd/': {
+      id: '/belajar-skd/'
+      path: '/belajar-skd'
+      fullPath: '/belajar-skd/'
+      preLoaderRoute: typeof BelajarSkdIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/belajar-skd/$slug': {
+      id: '/belajar-skd/$slug'
+      path: '/belajar-skd/$slug'
+      fullPath: '/belajar-skd/$slug'
+      preLoaderRoute: typeof BelajarSkdSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/blog/$slug': {
@@ -1613,6 +1653,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAiCvReviewRoute: ApiAiCvReviewRoute,
   ApiHeadersCheckRoute: ApiHeadersCheckRoute,
   AuthCallbackRoute: AuthCallbackRoute,
+  BelajarSkdSlugRoute: BelajarSkdSlugRoute,
   DemoTryoutRoute: DemoTryoutRoute,
   ManifestWebmanifestRoute: ManifestWebmanifestRoute,
   PaymentCancelRoute: PaymentCancelRoute,
@@ -1621,6 +1662,7 @@ const rootRouteChildren: RootRouteChildren = {
   SecurityTxtRoute: SecurityTxtRoute,
   ShareTokenRoute: ShareTokenRoute,
   SitemapXmlRoute: SitemapXmlRoute,
+  BelajarSkdIndexRoute: BelajarSkdIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

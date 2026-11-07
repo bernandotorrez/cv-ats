@@ -299,10 +299,25 @@ export function tipForCategory(category: string, subtest: TryoutSubtest): string
   return "Ulangi materi dasar wawasan kebangsaan dan kerjakan latihan soal per kategori.";
 }
 
+/**
+ * Slug modul /belajar-skd yang paling relevan untuk subtes/kategori lemah.
+ * Sengaja tidak mengimpor `skd-modules.ts` agar isi modul tidak ikut ke bundle halaman hasil.
+ */
+export function skdModuleSlugFor(subtest: TryoutSubtest, category?: string): string {
+  if (subtest === "twk") return "materi-twk";
+  if (subtest === "tkp") return "tkp-cara-menjawab";
+  const c = category ?? "";
+  if (/figural|pola|gambar/i.test(c)) return "tiu-figural";
+  if (/analogi|silogisme|analitis|verbal|logika/i.test(c)) return "tiu-verbal";
+  return "tiu-numerik";
+}
+
 export type Recommendation = {
   title: string;
   detail: string;
   tone: "danger" | "warning" | "info" | "success";
+  /** Modul belajar SKD yang relevan (slug di /belajar-skd/$slug). */
+  moduleSlug?: string;
 };
 
 export function buildRecommendations(params: {
@@ -322,6 +337,7 @@ export function buildRecommendations(params: {
         g.subtest === "tkp"
           ? `Naikkan sekitar ${g.questionsNeeded} jawaban TKP ke opsi skor tertinggi. Pelajari pola jawaban ideal di pembahasan.`
           : `Butuh ±${g.questionsNeeded} jawaban benar tambahan di ${SUBTEST_LABEL[g.subtest]} untuk lolos passing grade ${g.passing}.`,
+      moduleSlug: skdModuleSlugFor(g.subtest),
     });
   }
 
@@ -330,6 +346,7 @@ export function buildRecommendations(params: {
       tone: "warning",
       title: `${SUBTEST_LABEL[w.subtest]} · ${w.category} (${w.percent}%)`,
       detail: tipForCategory(w.category, w.subtest),
+      moduleSlug: skdModuleSlugFor(w.subtest, w.category),
     });
   }
 
@@ -351,6 +368,7 @@ export function buildRecommendations(params: {
       title: "Manajemen waktu",
       detail:
         "Waktu habis sebelum semua soal terjawab. Kerjakan TKP lebih dulu (cepat & pasti dapat poin), lalu TWK, dan sisakan TIU hitungan di akhir.",
+      moduleSlug: "manajemen-waktu-hari-h",
     });
   } else if (usedRatio < 0.5 && !attempt.pass_overall) {
     recs.push({

@@ -10,6 +10,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import {
   AlertTriangle,
   ArrowRight,
+  GraduationCap,
   BarChart3,
   BookOpen,
   Check,
@@ -27,6 +28,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { buildSeo } from "@/lib/seo";
+import { SKD_TOPIC_LABEL, skdModules } from "@/lib/skd-modules";
 import {
   Accordion,
   AccordionContent,
@@ -615,6 +617,48 @@ function TryoutCpnsLandingPage() {
               dinyatakan LULUS. Total skor tinggi tidak cukup jika satu subtes tidak memenuhi
               passing grade.
             </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Modul belajar gratis */}
+      <section aria-labelledby="belajar-heading" className="pt-20 lg:pt-28">
+        <div className="container-page">
+          <SectionHeader
+            id="belajar-heading"
+            eyebrow={
+              <>
+                <GraduationCap aria-hidden="true" className="h-4 w-4" /> Modul belajar gratis
+              </>
+            }
+            title="Belajar dulu, lalu buktikan di tryout."
+            desc="Materi inti dan trik mengerjakan TWK, TIU, dan TKP dalam modul singkat yang bisa dibaca gratis."
+          />
+          <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {skdModules.slice(0, 8).map((m, i) => (
+              <li key={m.slug}>
+                <Link
+                  to="/belajar-skd/$slug"
+                  params={{ slug: m.slug }}
+                  className="group flex h-full flex-col rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-green-600/50 hover:shadow-md"
+                >
+                  <span className="text-xs font-semibold text-green-700">
+                    Modul {i + 1} · {SKD_TOPIC_LABEL[m.topic]}
+                  </span>
+                  <span className="mt-1.5 font-display font-bold leading-snug text-gray-900 group-hover:text-green-800">
+                    {m.title}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+          <div className="mt-8 text-center">
+            <Link
+              to="/belajar-skd"
+              className="inline-flex items-center gap-1.5 font-bold text-green-700 hover:text-green-800"
+            >
+              Lihat semua modul belajar SKD <ArrowRight aria-hidden="true" className="h-4 w-4" />
+            </Link>
           </div>
         </div>
       </section>

@@ -24,6 +24,7 @@ const COLUMNS: Array<{ title: string; links: FooterLink[] }> = [
     links: [
       { to: "/panduan-cv-ats", label: "Panduan CV ATS" },
       { to: "/tips-interview", label: "Tips Interview" },
+      { to: "/belajar-skd", label: "Belajar SKD CPNS" },
       { to: "/blog", label: "Blog" },
     ],
   },

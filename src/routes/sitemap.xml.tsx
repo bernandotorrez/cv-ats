@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { blogPosts } from "@/lib/blog-posts";
 import { tipPosts } from "@/lib/tips-posts";
+import { skdModules } from "@/lib/skd-modules";
 
 const SITE_URL = "https://cvpintar.web.id";
 
@@ -27,6 +28,7 @@ const staticPaths: {
   { path: "/kebijakan-privasi", priority: "0.4", changefreq: "yearly" },
   { path: "/syarat-ketentuan", priority: "0.4", changefreq: "yearly" },
   { path: "/tryout-cpns", priority: "1.0", changefreq: "weekly" },
+  { path: "/belajar-skd", priority: "0.9", changefreq: "weekly" },
 ];
 
 export const Route = createFileRoute("/sitemap/xml")({
@@ -53,6 +55,16 @@ export const Route = createFileRoute("/sitemap/xml")({
             priority: "0.6",
             changefreq: "monthly",
             lastmod: t.updated,
+          });
+        }
+
+        // Modul belajar SKD CPNS
+        for (const m of skdModules) {
+          urls.push({
+            loc: `${SITE_URL}/belajar-skd/${m.slug}`,
+            priority: "0.8",
+            changefreq: "monthly",
+            lastmod: m.updated,
           });
         }
 

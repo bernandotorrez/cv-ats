@@ -5,7 +5,17 @@
  * - RecommendationList: rekomendasi belajar spesifik.
  * - HistoryTrend: grafik batang skor total beberapa attempt terakhir.
  */
-import { Award, Lightbulb, TrendingDown, TrendingUp, Users, Target, Minus } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import {
+  Award,
+  BookOpen,
+  Lightbulb,
+  TrendingDown,
+  TrendingUp,
+  Users,
+  Target,
+  Minus,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Readiness, Recommendation, SubtestGap } from "@/lib/tryout-analysis";
 import { SUBTEST_LABEL } from "@/lib/tryout-analysis";
@@ -269,6 +279,15 @@ export function RecommendationList({ items }: { items: Recommendation[] }) {
             <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground sm:text-sm">
               {r.detail}
             </p>
+            {r.moduleSlug && (
+              <Link
+                to="/belajar-skd/$slug"
+                params={{ slug: r.moduleSlug }}
+                className="mt-1.5 inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline sm:text-sm"
+              >
+                <BookOpen className="h-3.5 w-3.5" aria-hidden /> Pelajari modulnya
+              </Link>
+            )}
           </li>
         ))}
       </ol>

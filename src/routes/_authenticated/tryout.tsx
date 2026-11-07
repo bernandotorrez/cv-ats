@@ -6,7 +6,7 @@
  */
 import { createFileRoute, Link, useNavigate, Outlet, useRouterState } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { BookOpenCheck, History, Info, Plus, Sparkles, Trophy } from "lucide-react";
+import { BookOpenCheck, GraduationCap, History, Info, Plus, Sparkles, Trophy } from "lucide-react";
 import { buildSeo } from "@/lib/seo";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-context";
@@ -173,6 +173,11 @@ function TryoutDashboardPage() {
           }
           actions={
             <>
+              <Button asChild variant="outline" className="h-10 gap-2 rounded-xl">
+                <Link to="/belajar-skd">
+                  <GraduationCap className="h-4 w-4" aria-hidden /> Modul belajar
+                </Link>
+              </Button>
               <Button asChild variant="outline" className="h-10 gap-2 rounded-xl">
                 <Link to={"/tryout-cpns" as never}>
                   <Info className="h-4 w-4" aria-hidden /> Info tryout

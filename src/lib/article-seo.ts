@@ -1,11 +1,12 @@
 import { buildSeo, fitDescription, fitTitle, SITE_URL } from "@/lib/seo";
 import type { BlogBlock, BlogPost } from "@/lib/blog-posts";
 
-export type ArticleSection = "blog" | "tips-interview";
+export type ArticleSection = "blog" | "tips-interview" | "belajar-skd";
 
 export const SECTION_META: Record<ArticleSection, { label: string; hubLabel: string }> = {
   blog: { label: "Blog", hubLabel: "Semua artikel" },
   "tips-interview": { label: "Tips Interview", hubLabel: "Semua Tips Interview" },
+  "belajar-skd": { label: "Belajar SKD CPNS", hubLabel: "Semua Modul SKD" },
 };
 
 export function articleWordCount(post: BlogPost): number {

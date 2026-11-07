@@ -60,6 +60,12 @@ function Block({ block }: { block: BlogBlock }) {
   }
 }
 
+const HUB_PATH = {
+  blog: "/blog",
+  "tips-interview": "/tips-interview",
+  "belajar-skd": "/belajar-skd",
+} as const satisfies Record<ArticleSection, string>;
+
 /** Link ke artikel lain di bagian yang sama. */
 function PostLink({
   section,
@@ -72,34 +78,45 @@ function PostLink({
   className?: string;
   children: React.ReactNode;
 }) {
-  return section === "blog" ? (
-    <Link to="/blog/$slug" params={{ slug }} className={className}>
-      {children}
-    </Link>
-  ) : (
+  if (section === "blog")
+    return (
+      <Link to="/blog/$slug" params={{ slug }} className={className}>
+        {children}
+      </Link>
+    );
+  if (section === "belajar-skd")
+    return (
+      <Link to="/belajar-skd/$slug" params={{ slug }} className={className}>
+        {children}
+      </Link>
+    );
+  return (
     <Link to="/tips-interview/$slug" params={{ slug }} className={className}>
       {children}
     </Link>
   );
 }
 
-/** Tampilan artikel bersama untuk /blog/$slug dan /tips-interview/$slug. */
+/** Tampilan artikel bersama untuk /blog/$slug, /tips-interview/$slug, dan /belajar-skd/$slug. */
 export function ArticleView({
   post,
   section,
   related,
   meta,
+  extra,
 }: {
   post: BlogPost;
   section: ArticleSection;
   related: BlogPost[];
   /** Info tambahan di baris atas (mis. level pembaca). */
   meta?: React.ReactNode;
+  /** Konten tambahan setelah CTA, sebelum "Baca juga" (mis. navigasi modul). */
+  extra?: React.ReactNode;
 }) {
   const headings = post.body.filter((b): b is Extract<BlogBlock, { t: "h2" }> => b.t === "h2");
   const modified = post.updated !== post.date;
   const { hubLabel } = SECTION_META[section];
-  const hubTo = section === "blog" ? "/blog" : "/tips-interview";
+  const hubTo = HUB_PATH[section];
 
   return (
     <article className="container-page max-w-3xl py-12 md:py-16">
@@ -193,6 +210,8 @@ export function ArticleView({
           <ArrowRight aria-hidden="true" className="h-4 w-4" />
         </Link>
       </aside>
+
+      {extra}
 
       {related.length > 0 && (
         <section aria-labelledby="related-title" className="mt-12">
