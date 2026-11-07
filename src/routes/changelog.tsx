@@ -12,6 +12,7 @@ import {
   FileSearch,
   FileText,
   GitBranch,
+  GraduationCap,
   Highlighter,
   Languages,
   LayoutDashboard,
@@ -26,6 +27,7 @@ import {
   Smartphone,
   Sparkles,
   Target,
+  Trophy,
   Wrench,
   Zap,
 } from "lucide-react";
@@ -73,6 +75,54 @@ type Release = {
 const changelog: Release[] = [
   {
     version: APP_VERSION,
+    date: "7 November 2026",
+    title: "Tryout SKD CPNS Makin Lengkap & Modul Belajar Gratis",
+    summary:
+      "Tryout SKD kini punya soal figural bergambar, pembahasan detail, analisis hasil yang lebih tajam, dan layar ujian yang tombol navigasinya selalu terlihat. Ada juga 8 modul belajar SKD gratis lengkap dengan contoh soal dan pembahasan, serta pemberian paket tryout manual oleh admin sebagai cadangan payment gateway.",
+    highlights: [
+      {
+        icon: GraduationCap,
+        type: "Fitur baru",
+        short: "8 modul belajar SKD gratis",
+        text: "Modul Belajar SKD CPNS di halaman Belajar: strategi lolos passing grade, materi TWK, trik TIU verbal, numerik, dan figural, cara menjawab TKP bernilai 5, manajemen waktu, sampai jadwal belajar 30 hari. Setiap modul punya 3 contoh soal interaktif dengan pembahasan dan trik cepat, dan bisa dibaca tanpa login.",
+      },
+      {
+        icon: Trophy,
+        type: "Peningkatan",
+        short: "Tryout SKD makin lengkap",
+        text: "Soal disusun mengikuti kisi-kisi BKN dan dicek ulang agar tidak ada yang mirip. Hasil ujian menampilkan tingkat kesiapan, jarak ke passing grade, peringkat, dan rekomendasi belajar per kategori yang kini menaut ke modul yang relevan. Paket Lengkap menambah pembahasan detail, latihan ulang soal yang salah, dan leaderboard nasional.",
+      },
+      {
+        icon: Smartphone,
+        type: "Peningkatan",
+        short: "Layar ujian tanpa scroll",
+        text: "Tombol Sebelumnya, Selanjutnya, dan daftar soal selalu terlihat tepat di bawah soal, di HP maupun laptop. Tersedia juga mode Lanjut otomatis setelah memilih jawaban, tombol Enter untuk pindah soal, dan mode fokus tanpa header dan footer. Tombol Mulai tryout di halaman detail tidak lagi tertutup menu bawah.",
+      },
+      {
+        icon: Sparkles,
+        type: "Fitur baru",
+        short: "Soal TIU figural bergambar",
+        text: "Soal deret gambar, analogi gambar, dan mencari gambar yang berbeda kini tampil bergambar. Kunci jawabannya dihitung otomatis dari aturan gambar, jadi tidak mungkin keliru.",
+      },
+      {
+        icon: CheckCircle2,
+        type: "Perbaikan",
+        text: "Set tryout yang soalnya belum lengkap tidak bisa dimulai dan kredit tidak terpotong. Set Preview gratis kini benar-benar gratis. Skor maksimal dan tingkat kesiapan pada set mini mengikuti komposisi soalnya.",
+      },
+      {
+        icon: ShieldCheck,
+        type: "Peningkatan",
+        text: "Admin kini bisa memberikan atau membatalkan paket tryout secara manual dari halaman User, cukup dengan mencatat ID order sebagai bukti. Ini jadi cadangan jika ada kendala di payment gateway, dan kredit user tidak lagi tertimpa saat admin mengedit data user.",
+      },
+      {
+        icon: Wrench,
+        type: "Perbaikan",
+        text: "Error Content-Security-Policy dari Google Analytics dan error komunikasi widget chat sudah dibereskan. Widget chat juga disembunyikan di halaman tryout agar tidak mengganggu fokus.",
+      },
+    ],
+  },
+  {
+    version: "v1.11.0-live",
     date: "6 Oktober 2026",
     title: "Terjemah CV, Wawancara Suara & Latihan Negosiasi Gaji",
     summary:
@@ -526,7 +576,7 @@ function ChangelogPage() {
           <>
             Semua fitur baru, peningkatan, dan perbaikan CV Pintar tercatat di sini.{" "}
             <strong className="font-semibold text-gray-900">
-              Terbaru: editor CV yang lebih lega dan skor ATS yang lebih akurat.
+              Terbaru: tryout SKD CPNS makin lengkap dan modul belajar gratis.
             </strong>
           </>
         }
