@@ -1,11 +1,12 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { buildSeo } from "@/lib/seo";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
-import { Mail, Loader2, CheckCircle2, ArrowRight } from "lucide-react";
+import { useAuth } from "@/lib/auth-context";
+import { Mail, Loader2, CheckCircle2, ArrowRight, XCircle } from "lucide-react";
 
 export const Route = createFileRoute("/verify-email")({
   head: () =>
@@ -16,16 +17,49 @@ export const Route = createFileRoute("/verify-email")({
       noindex: true,
     }),
   validateSearch: (s: Record<string, unknown>) => ({
-    confirmed: typeof s.confirmed === "string" ? s.confirmed : undefined,
+    // Router mem-parse "?confirmed=true" menjadi boolean true (bukan string). Dulu dicek
+    // typeof === "string" sehingga selalu undefined dan router me-redirect (307) ke
+    // /verify-email tanpa query → user selalu mendarat di "Cek Email Kamu".
+    confirmed: s.confirmed === true || s.confirmed === "true" ? (true as const) : undefined,
   }),
   component: VerifyEmailPage,
 });
 
 function VerifyEmailPage() {
   const { confirmed } = Route.useSearch();
+  const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(false);
   const [cooldown, setCooldown] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval>>(undefined);
+  // Hasil dari link email: Supabase menaruhnya di hash URL (#access_token=… atau #error=…).
+  const [linkState, setLinkState] = useState<"pending" | "token" | "error" | "none">("pending");
+
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (/[#&]error(_code)?=/.test(hash)) setLinkState("error");
+    else if (/[#&]access_token=/.test(hash)) setLinkState("token");
+    else setLinkState("none");
+  }, []);
+
+  // Token di URL tapi sesi tak kunjung terbentuk (token rusak/kedaluwarsa): jangan berputar selamanya.
+  const [tokenTimedOut, setTokenTimedOut] = useState(false);
+  useEffect(() => {
+    if (linkState !== "token" || user) return;
+    const t = setTimeout(() => setTokenTimedOut(true), 5000);
+    return () => clearTimeout(t);
+  }, [linkState, user]);
+
+  // Email sudah terverifikasi & sesi aktif (klik link di email, atau verifikasi
+  // di tab lain yang menyinkronkan sesi) → langsung ke dashboard.
+  const verified = !!user?.email_confirmed_at;
+  const redirected = useRef(false);
+  useEffect(() => {
+    if (authLoading || !verified || redirected.current) return;
+    redirected.current = true;
+    if (confirmed === true) toast.success("Email terverifikasi! Selamat datang.");
+    void navigate({ to: "/dashboard", replace: true });
+  }, [authLoading, verified, confirmed, navigate]);
 
   // Cooldown countdown timer
   useEffect(() => {
@@ -76,8 +110,61 @@ function VerifyEmailPage() {
     }
   };
 
-  // When returning from confirmation link
-  if (confirmed === "true") {
+  // Link verifikasi kedaluwarsa / sudah dipakai
+  if (linkState === "error") {
+    return (
+      <div className="container-page flex min-h-[80vh] items-center justify-center py-12">
+        <Card className="w-full max-w-md text-center">
+          <CardHeader>
+            <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-destructive/10 text-destructive">
+              <XCircle className="h-7 w-7" />
+            </div>
+            <CardTitle className="mt-4 font-display text-2xl">Link Tidak Berlaku</CardTitle>
+            <CardDescription>
+              Link verifikasi sudah kedaluwarsa atau pernah dipakai. Jika emailmu sudah
+              terverifikasi, kamu bisa langsung masuk. Jika belum, daftar ulang atau hubungi kami.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <Button asChild size="lg" className="w-full">
+              <Link to="/login" search={{ redirect: "/dashboard" }}>
+                Masuk <ArrowRight className="ml-1 h-4 w-4" />
+              </Link>
+            </Button>
+            <p className="text-xs text-muted-foreground">
+              Butuh bantuan?{" "}
+              <Link to="/kontak" className="text-primary underline">
+                Hubungi kami
+              </Link>
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Sedang memproses sesi dari link, atau sudah terverifikasi dan sedang diarahkan
+  const processing =
+    authLoading ||
+    linkState === "pending" ||
+    verified ||
+    (linkState === "token" && !user && !tokenTimedOut);
+  if (confirmed === true && processing) {
+    return (
+      <div className="container-page flex min-h-[80vh] items-center justify-center py-12">
+        <div className="flex flex-col items-center gap-3 text-center" role="status">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="font-medium">Memverifikasi emailmu…</p>
+          <p className="text-sm text-muted-foreground">
+            Sebentar lagi kamu diarahkan ke dashboard.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Link dibuka di browser/perangkat lain (tidak ada sesi): email sudah aktif, tinggal masuk
+  if (confirmed === true) {
     return (
       <div className="container-page flex min-h-[80vh] items-center justify-center py-12">
         <Card className="w-full max-w-md text-center">
@@ -87,12 +174,12 @@ function VerifyEmailPage() {
             </div>
             <CardTitle className="mt-4 font-display text-2xl">Email Terverifikasi!</CardTitle>
             <CardDescription>
-              Akun kamu sudah aktif. Yuk mulai bikin CV ATS friendly pertamamu.
+              Akun kamu sudah aktif. Silakan masuk untuk mulai bikin CV ATS friendly pertamamu.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Button asChild size="lg" className="w-full">
-              <Link to="/dashboard">
+              <Link to="/login" search={{ redirect: "/dashboard" }}>
                 Masuk ke Dashboard <ArrowRight className="ml-1 h-4 w-4" />
               </Link>
             </Button>

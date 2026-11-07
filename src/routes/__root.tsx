@@ -302,13 +302,14 @@ const TRACKING_PARAMS = new Set([
 function CanonicalUpdater() {
   const { location } = useRouterState();
   const canonicalUrl = useMemo(() => {
-    const params = new URLSearchParams(location.search);
+    // searchStr = query mentah (string); location.search sudah di-parse (bisa boolean/number).
+    const params = new URLSearchParams(location.searchStr);
     for (const key of [...params.keys()]) {
       if (TRACKING_PARAMS.has(key)) params.delete(key);
     }
     const cleanSearch = params.toString();
     return SITE_URL + location.pathname + (cleanSearch ? `?${cleanSearch}` : "");
-  }, [location.pathname, location.search]);
+  }, [location.pathname, location.searchStr]);
 
   useEffect(() => {
     // Update atau buat tag <link rel="canonical"> di <head>
