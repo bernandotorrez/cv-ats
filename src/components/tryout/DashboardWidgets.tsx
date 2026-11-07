@@ -142,6 +142,8 @@ export type ExamSetSummary = {
   twk_count: number;
   tiu_count: number;
   tkp_count: number;
+  /** Set preview gratis — dikerjakan tanpa memakai kredit. */
+  is_free_preview?: boolean;
 };
 
 export function CompositionBar({
@@ -219,29 +221,36 @@ export function ExamSetCard({
           }
       : { label: "Belum dikerjakan", cls: "bg-muted text-muted-foreground" };
 
+  const free = !!set.is_free_preview;
   const cta = running
     ? {
         label: "Lanjutkan",
         icon: <Play className="h-4 w-4" aria-hidden />,
         variant: "default" as const,
       }
-    : !hasCredits
+    : free
       ? {
-          label: "Lihat detail",
-          icon: <ArrowRight className="h-4 w-4" aria-hidden />,
-          variant: "outline" as const,
+          label: done.length ? "Ulangi gratis" : "Mulai gratis",
+          icon: <Play className="h-4 w-4" aria-hidden />,
+          variant: "default" as const,
         }
-      : done.length
+      : !hasCredits
         ? {
-            label: "Ulangi",
-            icon: <RotateCcw className="h-4 w-4" aria-hidden />,
+            label: "Lihat detail",
+            icon: <ArrowRight className="h-4 w-4" aria-hidden />,
             variant: "outline" as const,
           }
-        : {
-            label: "Mulai",
-            icon: <Play className="h-4 w-4" aria-hidden />,
-            variant: "default" as const,
-          };
+        : done.length
+          ? {
+              label: "Ulangi",
+              icon: <RotateCcw className="h-4 w-4" aria-hidden />,
+              variant: "outline" as const,
+            }
+          : {
+              label: "Mulai",
+              icon: <Play className="h-4 w-4" aria-hidden />,
+              variant: "default" as const,
+            };
 
   return (
     <article className="group flex flex-col rounded-2xl border bg-card p-5 shadow-sm transition hover:border-primary/40 hover:shadow-md">
@@ -249,9 +258,16 @@ export function ExamSetCard({
         <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
           <BookOpenCheck className="h-5 w-5" aria-hidden />
         </span>
-        <span className={cn("rounded-full px-2.5 py-1 text-[11px] font-bold", status.cls)}>
-          {status.label}
-        </span>
+        <div className="flex flex-wrap justify-end gap-1.5">
+          {free && (
+            <span className="rounded-full bg-yellow-300 px-2.5 py-1 text-[11px] font-extrabold text-gray-950">
+              Gratis
+            </span>
+          )}
+          <span className={cn("rounded-full px-2.5 py-1 text-[11px] font-bold", status.cls)}>
+            {status.label}
+          </span>
+        </div>
       </div>
       <h3 className="mt-4 line-clamp-2 font-display text-lg font-bold text-foreground">
         {set.name}
@@ -299,7 +315,12 @@ export function ExamSetCard({
           {cta.label}
         </Button>
       </div>
-      {!running && !hasCredits && (
+      {free && !running && (
+        <p className="mt-2 text-[11px] text-muted-foreground">
+          Tidak memakai kredit · tanpa pembahasan detail
+        </p>
+      )}
+      {!running && !hasCredits && !free && (
         <p className="mt-2 inline-flex items-center gap-1 text-[11px] text-amber-700 dark:text-amber-400">
           <Coins className="h-3 w-3" aria-hidden /> Butuh 1 kredit untuk memulai
         </p>

@@ -96,6 +96,7 @@ function TryoutExamPage() {
   const [flagged, setFlagged] = useState<string[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [startedAt, setStartedAt] = useState<string | null>(null);
+  const [isFree, setIsFree] = useState(false);
   const [durationMinutes, setDurationMinutes] = useState(100);
   const [clockOffsetMs, setClockOffsetMs] = useState(0);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
@@ -165,6 +166,7 @@ function TryoutExamPage() {
       setFlagged(mergedFlagged);
       setDurationMinutes(data.duration_minutes);
       setStartedAt(data.started_at);
+      setIsFree(!!data.is_free);
 
       // Lanjutkan dari soal kosong pertama saat resume.
       if (data.resumed) {
@@ -567,8 +569,15 @@ function TryoutExamPage() {
               </Link>
             </Button>
             <div className="min-w-0">
-              <div className="truncate text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                {examSet.name}
+              <div className="flex items-center gap-1.5">
+                <span className="truncate text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  {examSet.name}
+                </span>
+                {isFree && (
+                  <span className="shrink-0 rounded-full bg-yellow-300 px-1.5 py-0.5 text-[9px] font-extrabold uppercase text-gray-950">
+                    Gratis
+                  </span>
+                )}
               </div>
               <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
                 <span>

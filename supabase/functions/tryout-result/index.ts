@@ -53,7 +53,7 @@ Deno.serve(async (req: Request) => {
     const { data: attempt, error: attErr } = await admin
       .from("tryout_attempts")
       .select(
-        `id, user_id, exam_set_id, credit_id, status, started_at, finished_at, duration_seconds, answers, flagged_questions, stats, score_twk, score_tiu, score_tkp, score_total, pass_twk, pass_tiu, pass_tkp, pass_overall, tryout_exam_sets!inner(${EXAM_SET_COLUMNS})`,
+        `id, user_id, exam_set_id, credit_id, is_free, status, started_at, finished_at, duration_seconds, answers, flagged_questions, stats, score_twk, score_tiu, score_tkp, score_total, pass_twk, pass_tiu, pass_tkp, pass_overall, tryout_exam_sets!inner(${EXAM_SET_COLUMNS})`,
       )
       .eq("id", attemptId)
       .eq("user_id", userId)
@@ -124,6 +124,7 @@ Deno.serve(async (req: Request) => {
         id: attempt.id,
         exam_set_id: examSet.id,
         status: attempt.status,
+        is_free: !!attempt.is_free,
         score_twk: attempt.score_twk,
         score_tiu: attempt.score_tiu,
         score_tkp: attempt.score_tkp,

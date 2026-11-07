@@ -267,6 +267,11 @@ function TryoutResultPage() {
             <Clock className="h-3.5 w-3.5" />
             {formatDuration(attempt.duration_seconds)} dari {examSet.duration_minutes} menit
           </span>
+          {attempt.is_free && (
+            <span className="rounded-md bg-yellow-200 px-2 py-0.5 text-xs font-semibold text-yellow-900 dark:bg-yellow-900/50 dark:text-yellow-200">
+              Tryout gratis
+            </span>
+          )}
           {attempt.status === "timed_out" && (
             <span className="rounded-md bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800 dark:bg-amber-950/60 dark:text-amber-300">
               Dikumpulkan otomatis (waktu habis)

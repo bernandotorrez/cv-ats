@@ -71,6 +71,11 @@ export function AttemptHistoryList({ attempts, emptyMessage, emptyAction }: Prop
                       ` · ${formatDuration(a.duration_seconds)}`}
                     {a.status === "timed_out" && " · waktu habis"}
                   </span>
+                  {a.is_free && (
+                    <span className="rounded-md bg-yellow-200 px-1.5 py-0.5 text-[10px] font-bold text-yellow-900 dark:bg-yellow-900/50 dark:text-yellow-200">
+                      Gratis
+                    </span>
+                  )}
                 </div>
                 {running ? (
                   <p className="mt-1 text-xs text-sky-700 dark:text-sky-300">

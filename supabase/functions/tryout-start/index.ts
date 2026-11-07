@@ -35,6 +35,7 @@ type StartRpcResult = {
   answers: Record<string, string> | null;
   flagged_questions: string[] | null;
   resumed: boolean;
+  is_free?: boolean;
 };
 
 const SLUG_RE = /^[a-z0-9][a-z0-9-]{0,119}$/i;
@@ -133,6 +134,7 @@ Deno.serve(async (req: Request) => {
 
     return json(req, {
       resumed: !!started.resumed,
+      is_free: !!started.is_free,
       attempt_id: started.attempt_id,
       exam_set: examSet,
       questions: sortQuestions((questions || []) as QuestionRow[]).map(shapePublicQuestion),

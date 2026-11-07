@@ -334,7 +334,8 @@ function DemoTryoutPage() {
           examName="Tryout SKD Set 1"
           totalQuestions={110}
           durationMinutes={100}
-          remainingCredits={4}
+          remainingCredits={0}
+          isFree
           onConfirm={() => {}}
         />
       )}
@@ -342,7 +343,7 @@ function DemoTryoutPage() {
       {view === "figural" && <FiguralView />}
       {view === "promo" && (
         <div className="mx-auto max-w-sm px-4 py-8">
-          <TryoutPromo />
+          <TryoutPromo highlight />
         </div>
       )}
     </div>
@@ -571,6 +572,7 @@ const SETS = [
   {
     id: "set-2",
     name: "Tryout SKD Set 2",
+    is_free_preview: true,
     description: "Set lanjutan dengan fokus soal numerik dan studi kasus pelayanan publik.",
     total_questions: 110,
     duration_minutes: 100,
@@ -627,14 +629,7 @@ function DashboardView() {
             <SectionTitle title="Pilih set tryout" />
             <div className="grid gap-4 sm:grid-cols-2">
               <ExamSetCard set={SETS[0]} attempts={ATTEMPTS} hasCredits onOpen={() => {}} />
-              <ExamSetCard
-                set={SETS[1]}
-                attempts={[
-                  { ...ATTEMPTS[0], id: "r", exam_set_id: "set-2", status: "in_progress" },
-                ]}
-                hasCredits
-                onOpen={() => {}}
-              />
+              <ExamSetCard set={SETS[1]} attempts={[]} hasCredits={false} onOpen={() => {}} />
             </div>
           </section>
           <section>

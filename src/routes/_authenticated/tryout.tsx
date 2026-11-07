@@ -82,7 +82,7 @@ function TryoutDashboardPage() {
       supabase
         .from("tryout_exam_sets")
         .select(
-          "id, name, description, total_questions, duration_minutes, twk_count, tiu_count, tkp_count",
+          "id, name, description, total_questions, duration_minutes, twk_count, tiu_count, tkp_count, is_free_preview",
         )
         .eq("is_active", true)
         .order("sort_order", { ascending: true }),

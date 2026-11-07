@@ -1926,7 +1926,8 @@ function ExamSetDialog({
                   Preview gratis
                 </Label>
                 <p className="text-[11px] text-muted-foreground">
-                  Ditandai sebagai set gratis (opsional).
+                  User bisa mengerjakan set ini tanpa memakai kredit. Skor & analisis tetap tampil;
+                  pembahasan detail khusus Paket Lengkap.
                 </p>
               </div>
               <Switch id={ids.preview} checked={isFreePreview} onCheckedChange={setIsFreePreview} />

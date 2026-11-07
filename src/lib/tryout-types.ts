@@ -134,6 +134,8 @@ export type TryoutAttempt = {
   user_id: string;
   exam_set_id: string;
   credit_id: string | null;
+  /** Attempt dari set preview gratis (tanpa kredit). */
+  is_free?: boolean;
   status: TryoutAttemptStatus;
   started_at: string;
   finished_at: string | null;
@@ -244,6 +246,8 @@ export type TryoutStartResponse = {
   expires_at: string; // started_at + duration
   remaining_seconds: number;
   resumed: boolean;
+  /** Attempt gratis (set preview gratis) — tidak memakai kredit. */
+  is_free?: boolean;
   answers: Record<string, string>;
   flagged: string[];
   /** Jam server saat respons dibuat — untuk koreksi selisih jam perangkat. */

@@ -22,12 +22,13 @@ export type TryoutAttemptSummary = {
   pass_tiu: boolean;
   pass_tkp: boolean;
   created_at: string;
+  is_free?: boolean;
   exam_name?: string | null;
 };
 
 /** Kolom yang dipilih untuk TryoutAttemptSummary (jangan ambil answers/stats). */
 export const ATTEMPT_SUMMARY_COLUMNS =
-  "id, exam_set_id, status, started_at, finished_at, duration_seconds, score_total, score_twk, score_tiu, score_tkp, pass_overall, pass_twk, pass_tiu, pass_tkp, created_at";
+  "id, exam_set_id, status, is_free, started_at, finished_at, duration_seconds, score_total, score_twk, score_tiu, score_tkp, pass_overall, pass_twk, pass_tiu, pass_tkp, created_at";
 
 export const rupiah = (value: number) =>
   new Intl.NumberFormat("id-ID", {

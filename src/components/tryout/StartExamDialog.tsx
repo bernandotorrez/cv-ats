@@ -22,6 +22,8 @@ type Props = {
   totalQuestions: number;
   durationMinutes: number;
   remainingCredits: number;
+  /** Set preview gratis: tidak memotong kredit. */
+  isFree?: boolean;
   onConfirm: () => void;
 };
 
@@ -32,12 +34,17 @@ export function StartExamDialog({
   totalQuestions,
   durationMinutes,
   remainingCredits,
+  isFree = false,
   onConfirm,
 }: Props) {
   const items = [
     {
       icon: <Coins className="h-4 w-4" aria-hidden />,
-      text: (
+      text: isFree ? (
+        <>
+          <b>Gratis</b> — tidak memakai kredit. Pembahasan detail tidak termasuk.
+        </>
+      ) : (
         <>
           Memakai <b>1 kredit</b> — sisa kredit setelah ini{" "}
           <b>{Math.max(0, remainingCredits - 1)}</b>.

@@ -546,6 +546,7 @@ export type Database = {
           finished_at: string | null;
           flagged_questions: Json;
           id: string;
+          is_free: boolean;
           pass_overall: boolean;
           pass_tiu: boolean;
           pass_tkp: boolean;
@@ -568,6 +569,7 @@ export type Database = {
           finished_at?: string | null;
           flagged_questions?: Json;
           id?: string;
+          is_free?: boolean;
           pass_overall?: boolean;
           pass_tiu?: boolean;
           pass_tkp?: boolean;
@@ -590,6 +592,7 @@ export type Database = {
           finished_at?: string | null;
           flagged_questions?: Json;
           id?: string;
+          is_free?: boolean;
           pass_overall?: boolean;
           pass_tiu?: boolean;
           pass_tkp?: boolean;

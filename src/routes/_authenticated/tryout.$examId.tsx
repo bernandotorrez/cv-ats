@@ -67,6 +67,7 @@ type ExamSetRow = {
   passing_grade_twk: number;
   passing_grade_tiu: number;
   passing_grade_tkp: number;
+  is_free_preview: boolean;
 };
 
 const SUBTESTS = [
@@ -163,7 +164,7 @@ function TryoutExamDetailPage() {
       supabase
         .from("tryout_exam_sets")
         .select(
-          "id, name, description, total_questions, duration_minutes, twk_count, tiu_count, tkp_count, passing_grade_twk, passing_grade_tiu, passing_grade_tkp",
+          "id, name, description, total_questions, duration_minutes, twk_count, tiu_count, tkp_count, passing_grade_twk, passing_grade_tiu, passing_grade_tkp, is_free_preview",
         )
         .eq("id", examId)
         .eq("is_active", true)
@@ -224,7 +225,9 @@ function TryoutExamDetailPage() {
   const running = attempts.find((a) => a.status === "in_progress");
   const done = attempts.filter(isFinished);
   const best = done.length ? done.reduce((b, a) => (a.score_total > b.score_total ? a : b)) : null;
-  const hasCredits = remainingCredits > 0;
+  const isFree = !!examSet.is_free_preview;
+  // Set gratis bisa dimulai tanpa kredit.
+  const hasCredits = isFree || remainingCredits > 0;
   const remaining = running ? remainingSecondsOf(running.started_at, examSet.duration_minutes) : 0;
   const passing = {
     twk: examSet.passing_grade_twk,
@@ -256,6 +259,7 @@ function TryoutExamDetailPage() {
 
       <ul className="flex flex-wrap gap-2" aria-label="Ringkasan set">
         {[
+          ...(isFree ? [{ icon: Coins, text: "Gratis · tanpa kredit" }] : []),
           { icon: FileText, text: `${examSet.total_questions} soal` },
           { icon: Clock, text: `${examSet.duration_minutes} menit` },
           { icon: ListChecks, text: "TWK → TIU → TKP" },
@@ -365,25 +369,44 @@ function TryoutExamDetailPage() {
               </div>
             )}
 
-            <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground">
-              <Coins className="h-4 w-4 text-primary" aria-hidden /> Kredit kamu
-            </p>
-            <p className="mt-1 font-display text-4xl font-extrabold tabular-nums">
-              {remainingCredits}
-            </p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              {running
-                ? "Ujian sedang berjalan — melanjutkan tidak memotong kredit."
-                : hasCredits
-                  ? "Memulai tryout memakai 1 kredit."
-                  : "Kredit habis. Beli paket untuk memulai."}
-            </p>
+            {isFree ? (
+              <div className="rounded-xl border-2 border-yellow-300 bg-yellow-50 p-3 dark:border-yellow-700 dark:bg-yellow-950/30">
+                <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-yellow-800 dark:text-yellow-300">
+                  <Coins className="h-4 w-4" aria-hidden /> Tryout gratis
+                </p>
+                <p className="mt-1 font-display text-2xl font-extrabold text-foreground">
+                  Tanpa kredit
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {running
+                    ? "Ujian gratis sedang berjalan."
+                    : "Kreditmu tidak terpakai. Skor & analisis tersedia; pembahasan detail khusus Paket Lengkap."}
+                </p>
+              </div>
+            ) : (
+              <>
+                <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  <Coins className="h-4 w-4 text-primary" aria-hidden /> Kredit kamu
+                </p>
+                <p className="mt-1 font-display text-4xl font-extrabold tabular-nums">
+                  {remainingCredits}
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {running
+                    ? "Ujian sedang berjalan — melanjutkan tidak memotong kredit."
+                    : hasCredits
+                      ? "Memulai tryout memakai 1 kredit."
+                      : "Kredit habis. Beli paket untuk memulai."}
+                </p>
+              </>
+            )}
 
             <div className="mt-4 hidden lg:block">
               <ActionButton
                 running={!!running}
                 remaining={remaining}
                 hasCredits={hasCredits}
+                isFree={isFree}
                 onResume={goExam}
                 onStart={() => setConfirmOpen(true)}
               />
@@ -398,6 +421,7 @@ function TryoutExamDetailPage() {
             running={!!running}
             remaining={remaining}
             hasCredits={hasCredits}
+            isFree={isFree}
             onResume={goExam}
             onStart={() => setConfirmOpen(true)}
           />
@@ -411,6 +435,7 @@ function TryoutExamDetailPage() {
         totalQuestions={examSet.total_questions}
         durationMinutes={examSet.duration_minutes}
         remainingCredits={remainingCredits}
+        isFree={isFree}
         onConfirm={() => {
           setConfirmOpen(false);
           goExam();
@@ -424,12 +449,14 @@ function ActionButton({
   running,
   remaining,
   hasCredits,
+  isFree = false,
   onResume,
   onStart,
 }: {
   running: boolean;
   remaining: number;
   hasCredits: boolean;
+  isFree?: boolean;
   onResume: () => void;
   onStart: () => void;
 }) {
@@ -452,7 +479,7 @@ function ActionButton({
   }
   return (
     <Button size="lg" className="h-12 w-full gap-2 rounded-xl" onClick={onStart}>
-      <Play className="h-4 w-4" aria-hidden /> Mulai tryout
+      <Play className="h-4 w-4" aria-hidden /> {isFree ? "Mulai tryout gratis" : "Mulai tryout"}
     </Button>
   );
 }
