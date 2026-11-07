@@ -1,15 +1,22 @@
 /**
- * /tryout/leaderboard — Leaderboard global tryout.
+ * /tryout/leaderboard — Papan peringkat (skor terbaik tiap peserta per set).
+ * Data lewat RPC get_tryout_leaderboard: tanpa UUID user, nama disamarkan,
+ * cek entitlement Paket Lengkap di server.
  */
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Trophy } from "lucide-react";
+import { ArrowLeft, Medal, Trophy, Users } from "lucide-react";
 import { buildSeo } from "@/lib/seo";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LeaderboardTable, type LeaderboardEntry } from "@/components/tryout";
+import {
+  LeaderboardTable,
+  PageHeaderSkeleton,
+  TryoutPageHeader,
+  type LeaderboardEntry,
+} from "@/components/tryout";
 import { supabase } from "@/integrations/supabase/client";
 import type { TryoutRpcClient } from "@/lib/tryout-types";
-import { BackButton } from "@/components/ui/back-button";
 
 export const Route = createFileRoute("/_authenticated/tryout/leaderboard")({
   head: () =>
@@ -25,8 +32,8 @@ export const Route = createFileRoute("/_authenticated/tryout/leaderboard")({
 type ExamSet = { id: string; name: string };
 
 function TryoutLeaderboardPage() {
-  const [examSets, setExamSets] = useState<ExamSet[]>([]);
-  const [activeSet, setActiveSet] = useState<string>("all");
+  const [examSets, setExamSets] = useState<ExamSet[] | null>(null);
+  const [activeSet, setActiveSet] = useState<string>("");
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [locked, setLocked] = useState(false);
@@ -42,26 +49,23 @@ function TryoutLeaderboardPage() {
       .then(({ data }) => {
         const list = (data as ExamSet[]) || [];
         setExamSets(list);
+        // Peringkat dihitung per set → default ke set pertama.
+        setActiveSet(list[0]?.id ?? "all");
       });
   }, []);
 
   useEffect(() => {
-    void loadLeaderboard();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (!activeSet) return;
+    void loadLeaderboard(activeSet);
   }, [activeSet]);
 
-  async function loadLeaderboard() {
+  async function loadLeaderboard(setId: string) {
     setLoading(true);
-    // RPC SECURITY DEFINER: tanpa UUID user + cek entitlement has_leaderboard.
     const { data, error } = await (supabase as unknown as TryoutRpcClient).rpc(
       "get_tryout_leaderboard",
-      {
-        p_exam_set_id: activeSet === "all" ? null : activeSet,
-        p_limit: 50,
-      },
+      { p_exam_set_id: setId === "all" ? null : setId, p_limit: 50 },
     );
     if (error) {
-      console.warn("Leaderboard error:", error.message);
       setEntries([]);
       setLocked(false);
       setMyEntry(null);
@@ -83,25 +87,26 @@ function TryoutLeaderboardPage() {
 
   return (
     <div className="container-page space-y-6 py-5 md:py-8">
-      <BackButton />
+      <Button asChild variant="ghost" size="sm" className="-ml-2 gap-1.5">
+        <Link to={"/tryout" as never}>
+          <ArrowLeft className="h-4 w-4" aria-hidden /> Dashboard tryout
+        </Link>
+      </Button>
 
-      <section className="overflow-hidden rounded-2xl border bg-card">
-        <div className="bg-gradient-to-br from-amber-500 via-orange-500 to-red-500 p-6 text-white sm:p-8">
-          <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-white/20 px-3 py-1 text-xs font-semibold">
-            <Trophy className="h-3.5 w-3.5" /> Leaderboard
-          </div>
-          <h1 className="font-display text-3xl font-bold sm:text-4xl">Top Pejuang SKD</h1>
-          <p className="mt-2 max-w-2xl text-sm opacity-90">
-            Bersaing sehat dengan pejuang SKD se-Indonesia. Selesaikan tryout dan masuk papan
-            peringkat.
-          </p>
-        </div>
-      </section>
+      {examSets === null ? (
+        <PageHeaderSkeleton withActions={false} />
+      ) : (
+        <TryoutPageHeader
+          eyebrow="Leaderboard nasional"
+          icon={<Trophy className="h-3.5 w-3.5" aria-hidden />}
+          title="Top pejuang SKD"
+          description="Peringkat memakai skor terbaik tiap peserta pada set yang sama. Skor sama diurutkan dari waktu pengerjaan tercepat."
+        />
+      )}
 
-      {examSets.length > 1 && (
+      {examSets && examSets.length > 1 && (
         <Tabs value={activeSet} onValueChange={setActiveSet}>
-          <TabsList>
-            <TabsTrigger value="all">Semua Set</TabsTrigger>
+          <TabsList className="h-auto flex-wrap justify-start">
             {examSets.map((es) => (
               <TabsTrigger key={es.id} value={es.id}>
                 {es.name}
@@ -111,35 +116,70 @@ function TryoutLeaderboardPage() {
         </Tabs>
       )}
 
-      {!locked && !loading && (participants > 0 || myEntry) && (
-        <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border bg-card px-4 py-3 text-sm">
-          <span className="text-muted-foreground">
-            {participants} peserta · peringkat dari skor terbaik tiap peserta
-          </span>
-          {myEntry ? (
-            <span className="font-semibold">
-              Posisi kamu: <span className="text-primary">#{myEntry.ranking}</span> · skor{" "}
-              {myEntry.score_total}
-              {activeSet === "all" ? ` (${myEntry.exam_name})` : ""}
-            </span>
-          ) : (
-            <span className="text-muted-foreground">Kamu belum masuk papan peringkat.</span>
-          )}
-        </div>
+      {!locked && !loading && (
+        <section aria-label="Posisi kamu" className="grid gap-3 sm:grid-cols-3">
+          <Stat
+            icon={<Medal className="h-4 w-4" aria-hidden />}
+            label="Peringkatmu"
+            value={myEntry ? `#${myEntry.ranking}` : "–"}
+            sub={myEntry ? "di set ini" : "selesaikan tryout untuk masuk"}
+            highlight={!!myEntry}
+          />
+          <Stat
+            icon={<Trophy className="h-4 w-4" aria-hidden />}
+            label="Skor terbaikmu"
+            value={myEntry ? String(myEntry.score_total) : "–"}
+            sub="dari 550"
+          />
+          <Stat
+            icon={<Users className="h-4 w-4" aria-hidden />}
+            label="Peserta"
+            value={participants.toLocaleString("id-ID")}
+            sub="sudah menyelesaikan set ini"
+          />
+        </section>
       )}
 
-      <section>
-        <LeaderboardTable entries={entries} loading={loading} locked={locked} />
+      <section aria-label="Daftar peringkat">
+        <LeaderboardTable
+          entries={entries}
+          loading={loading || !activeSet}
+          locked={locked}
+          variant="full"
+          showExamName={activeSet === "all"}
+        />
       </section>
+    </div>
+  );
+}
 
-      <section className="rounded-2xl border bg-muted/30 p-5 text-center text-sm text-muted-foreground">
-        <p>
-          Belum ada di papan peringkat?{" "}
-          <Link to={"/tryout" as never} className="font-semibold text-primary hover:underline">
-            Mulai tryout sekarang →
-          </Link>
-        </p>
-      </section>
+function Stat({
+  icon,
+  label,
+  value,
+  sub,
+  highlight = false,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  sub: string;
+  highlight?: boolean;
+}) {
+  return (
+    <div
+      className={
+        highlight
+          ? "rounded-2xl border border-primary/40 bg-primary/5 p-4 shadow-sm"
+          : "rounded-2xl border bg-card p-4 shadow-sm"
+      }
+    >
+      <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
+        <span className="text-primary">{icon}</span>
+        {label}
+      </div>
+      <div className="mt-1.5 font-display text-3xl font-extrabold tabular-nums">{value}</div>
+      <div className="text-[11px] text-muted-foreground">{sub}</div>
     </div>
   );
 }

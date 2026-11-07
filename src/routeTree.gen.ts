@@ -45,6 +45,7 @@ import { Route as ApiAiCvReviewRouteImport } from './routes/api/ai-cv-review'
 import { Route as ApiHeadersCheckRouteImport } from './routes/api.headers-check'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
+import { Route as DemoTryoutRouteImport } from './routes/demo.tryout'
 import { Route as LowonganSlugRouteImport } from './routes/lowongan.$slug'
 import { Route as ManifestWebmanifestRouteImport } from './routes/manifest.webmanifest'
 import { Route as PaymentCancelRouteImport } from './routes/payment.cancel'
@@ -259,6 +260,11 @@ const BlogSlugRoute = BlogSlugRouteImport.update({
   id: '/$slug',
   path: '/$slug',
   getParentRoute: () => BlogRoute,
+} as any)
+const DemoTryoutRoute = DemoTryoutRouteImport.update({
+  id: '/demo/tryout',
+  path: '/demo/tryout',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const LowonganSlugRoute = LowonganSlugRouteImport.update({
   id: '/$slug',
@@ -482,6 +488,7 @@ export interface FileRoutesByFullPath {
   '/api/headers-check': typeof ApiHeadersCheckRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/blog/$slug': typeof BlogSlugRoute
+  '/demo/tryout': typeof DemoTryoutRoute
   '/lowongan/$slug': typeof LowonganSlugRoute
   '/manifest/webmanifest': typeof ManifestWebmanifestRoute
   '/payment/cancel': typeof PaymentCancelRoute
@@ -552,6 +559,7 @@ export interface FileRoutesByTo {
   '/api/headers-check': typeof ApiHeadersCheckRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/blog/$slug': typeof BlogSlugRoute
+  '/demo/tryout': typeof DemoTryoutRoute
   '/lowongan/$slug': typeof LowonganSlugRoute
   '/manifest/webmanifest': typeof ManifestWebmanifestRoute
   '/payment/cancel': typeof PaymentCancelRoute
@@ -625,6 +633,7 @@ export interface FileRoutesById {
   '/api/headers-check': typeof ApiHeadersCheckRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/blog/$slug': typeof BlogSlugRoute
+  '/demo/tryout': typeof DemoTryoutRoute
   '/lowongan/$slug': typeof LowonganSlugRoute
   '/manifest/webmanifest': typeof ManifestWebmanifestRoute
   '/payment/cancel': typeof PaymentCancelRoute
@@ -698,6 +707,7 @@ export interface FileRouteTypes {
     | '/api/headers-check'
     | '/auth/callback'
     | '/blog/$slug'
+    | '/demo/tryout'
     | '/lowongan/$slug'
     | '/manifest/webmanifest'
     | '/payment/cancel'
@@ -768,6 +778,7 @@ export interface FileRouteTypes {
     | '/api/headers-check'
     | '/auth/callback'
     | '/blog/$slug'
+    | '/demo/tryout'
     | '/lowongan/$slug'
     | '/manifest/webmanifest'
     | '/payment/cancel'
@@ -840,6 +851,7 @@ export interface FileRouteTypes {
     | '/api/headers-check'
     | '/auth/callback'
     | '/blog/$slug'
+    | '/demo/tryout'
     | '/lowongan/$slug'
     | '/manifest/webmanifest'
     | '/payment/cancel'
@@ -901,6 +913,7 @@ export interface RootRouteChildren {
   ApiAiCvReviewRoute: typeof ApiAiCvReviewRoute
   ApiHeadersCheckRoute: typeof ApiHeadersCheckRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
+  DemoTryoutRoute: typeof DemoTryoutRoute
   ManifestWebmanifestRoute: typeof ManifestWebmanifestRoute
   PaymentCancelRoute: typeof PaymentCancelRoute
   PaymentSuccessRoute: typeof PaymentSuccessRoute
@@ -1163,6 +1176,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/blog/$slug'
       preLoaderRoute: typeof BlogSlugRouteImport
       parentRoute: typeof BlogRoute
+    }
+    '/demo/tryout': {
+      id: '/demo/tryout'
+      path: '/demo/tryout'
+      fullPath: '/demo/tryout'
+      preLoaderRoute: typeof DemoTryoutRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/lowongan/$slug': {
       id: '/lowongan/$slug'
@@ -1593,6 +1613,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAiCvReviewRoute: ApiAiCvReviewRoute,
   ApiHeadersCheckRoute: ApiHeadersCheckRoute,
   AuthCallbackRoute: AuthCallbackRoute,
+  DemoTryoutRoute: DemoTryoutRoute,
   ManifestWebmanifestRoute: ManifestWebmanifestRoute,
   PaymentCancelRoute: PaymentCancelRoute,
   PaymentSuccessRoute: PaymentSuccessRoute,

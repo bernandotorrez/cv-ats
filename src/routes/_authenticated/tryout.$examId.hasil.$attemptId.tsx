@@ -24,7 +24,6 @@ import {
 } from "lucide-react";
 import { buildSeo } from "@/lib/seo";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton-loading";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
@@ -36,6 +35,7 @@ import {
   RecommendationList,
   HistoryTrend,
   PracticeMode,
+  ResultPageSkeleton,
 } from "@/components/tryout";
 import { questionOutcome } from "@/lib/tryout-options";
 import { formatDuration } from "@/lib/tryout-scoring";
@@ -161,16 +161,7 @@ function TryoutResultPage() {
   }, [data]);
 
   if (loading) {
-    return (
-      <div className="container-page space-y-4 py-8">
-        <Skeleton className="h-10 w-40" />
-        <Skeleton className="h-64 w-full rounded-2xl" />
-        <div className="grid gap-4 md:grid-cols-2">
-          <Skeleton className="h-48 w-full rounded-2xl" />
-          <Skeleton className="h-48 w-full rounded-2xl" />
-        </div>
-      </div>
-    );
+    return <ResultPageSkeleton />;
   }
 
   if (!data || !derived) {

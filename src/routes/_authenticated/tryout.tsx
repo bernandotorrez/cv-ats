@@ -1,23 +1,41 @@
 /**
- * /tryout — Dashboard utama tryout user (auth required).
- * Menampilkan kredit, daftar set tryout, dan riwayat.
+ * /tryout — Dashboard tryout (auth required).
+ *
+ * Urutan informasi: ujian berjalan (aksi paling penting) → ringkasan progres
+ * → pilih set → riwayat. Sidebar: kredit & leaderboard ringkas.
  */
 import { createFileRoute, Link, useNavigate, Outlet, useRouterState } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { Plus, ArrowRight, Trophy, History, ListChecks } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { BookOpenCheck, History, Info, Plus, Sparkles, Trophy } from "lucide-react";
 import { buildSeo } from "@/lib/seo";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton-loading";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
 import type { TryoutRpcClient } from "@/lib/tryout-types";
 import {
-  CreditBalance,
+  ATTEMPT_SUMMARY_COLUMNS,
+  remainingSecondsOf,
+  summarizeProgress,
+  type TryoutAttemptSummary,
+} from "@/lib/tryout-display";
+import {
   AttemptHistoryList,
+  AttemptListSkeleton,
+  CreditBalance,
+  CreditBalanceSkeleton,
+  EmptyState,
+  ExamSetCard,
+  ExamSetGridSkeleton,
   LeaderboardTable,
+  PageHeaderSkeleton,
+  ProgressStats,
+  ProgressStatsSkeleton,
+  ResumeBanner,
+  SectionTitle,
+  TryoutPageHeader,
+  type ExamSetSummary,
   type LeaderboardEntry,
 } from "@/components/tryout";
-import { BackButton } from "@/components/ui/back-button";
 
 export const Route = createFileRoute("/_authenticated/tryout")({
   head: () =>
@@ -30,316 +48,225 @@ export const Route = createFileRoute("/_authenticated/tryout")({
   component: TryoutDashboardPage,
 });
 
-type TryoutCreditRow = {
-  id: string;
-  total_credits: number;
-  used_credits: number;
-  remaining_credits: number;
-  status: string;
-};
-
-type ExamSetRow = {
-  id: string;
-  slug: string;
-  name: string;
-  description: string | null;
-  total_questions: number;
-  duration_minutes: number;
-  is_active: boolean;
-};
-
-type AttemptRow = {
-  id: string;
-  exam_set_id: string;
-  status: string;
-  started_at: string;
-  finished_at: string | null;
-  duration_seconds: number | null;
-  answers: any;
-  score_total: number;
-  score_twk: number;
-  score_tiu: number;
-  score_tkp: number;
-  pass_overall: boolean;
-  pass_twk: boolean;
-  pass_tiu: boolean;
-  pass_tkp: boolean;
-  stats: any;
-  created_at: string;
-  exam_sets?: { id: string; slug: string; name: string } | null;
-};
+type Credits = { total: number; used: number; remaining: number };
 
 function TryoutDashboardPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isExactTryout = pathname === "/tryout" || pathname === "/tryout/";
+
   const [loading, setLoading] = useState(true);
-  const [credit, setCredit] = useState<TryoutCreditRow | null>(null);
-  const [examSets, setExamSets] = useState<ExamSetRow[]>([]);
-  const [attempts, setAttempts] = useState<AttemptRow[]>([]);
+  const [credits, setCredits] = useState<Credits>({ total: 0, used: 0, remaining: 0 });
+  const [examSets, setExamSets] = useState<ExamSetSummary[]>([]);
+  const [attempts, setAttempts] = useState<TryoutAttemptSummary[]>([]);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [leaderboardLocked, setLeaderboardLocked] = useState(false);
 
   useEffect(() => {
-    if (!user?.id) return;
-    void loadAll();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id]);
+    if (!user?.id || !isExactTryout) return;
+    void loadAll(user.id);
+  }, [user?.id, isExactTryout]);
 
-  async function loadAll() {
-    if (!user?.id) return;
+  async function loadAll(userId: string) {
     setLoading(true);
-
-    // Fetch kredit (aggregate remaining)
-    const { data: creditsData } = await supabase
-      .from("tryout_credits")
-      .select("id, total_credits, used_credits, remaining_credits, status")
-      .eq("user_id", user.id)
-      .eq("status", "active");
-
-    if (creditsData && creditsData.length > 0) {
-      const total = creditsData.reduce((s, c) => s + c.total_credits, 0);
-      const used = creditsData.reduce((s, c) => s + c.used_credits, 0);
-      const remaining = creditsData.reduce((s, c) => s + c.remaining_credits, 0);
-      setCredit({
-        id: creditsData[0].id,
-        total_credits: total,
-        used_credits: used,
-        remaining_credits: remaining,
-        status: "active",
-      });
-    } else {
-      setCredit({
-        id: "",
-        total_credits: 0,
-        used_credits: 0,
-        remaining_credits: 0,
-        status: "active",
-      });
-    }
-
-    // Fetch exam sets
-    const { data: setsData } = await supabase
-      .from("tryout_exam_sets")
-      .select("id, slug, name, description, total_questions, duration_minutes, is_active")
-      .eq("is_active", true)
-      .order("sort_order", { ascending: true });
-    setExamSets((setsData as ExamSetRow[]) || []);
-
-    // Fetch attempts user (10 terakhir)
-    const { data: attemptsData } = await supabase
-      .from("tryout_attempts")
-      .select("*, exam_sets:tryout_exam_sets(id, slug, name)")
-      .eq("user_id", user.id)
-      .in("status", ["in_progress", "completed", "timed_out"])
-      .order("created_at", { ascending: false })
-      .limit(10);
-    setAttempts((attemptsData as AttemptRow[]) || []);
-
-    // Fetch leaderboard (global top 10) via RPC — tanpa UUID user, cek entitlement
-    const { data: lbData, error: lbError } = await (supabase as unknown as TryoutRpcClient).rpc(
-      "get_tryout_leaderboard",
-      {
+    const nowIso = new Date().toISOString();
+    // Paralel. Hanya kolom yang dibutuhkan (tanpa answers/stats).
+    const [creditsRes, setsRes, attemptsRes, lbRes] = await Promise.all([
+      supabase
+        .from("tryout_credits")
+        .select("total_credits, used_credits, remaining_credits, expired_at")
+        .eq("user_id", userId)
+        .eq("status", "active")
+        .or(`expired_at.is.null,expired_at.gt.${nowIso}`),
+      supabase
+        .from("tryout_exam_sets")
+        .select(
+          "id, name, description, total_questions, duration_minutes, twk_count, tiu_count, tkp_count",
+        )
+        .eq("is_active", true)
+        .order("sort_order", { ascending: true }),
+      supabase
+        .from("tryout_attempts")
+        .select(`${ATTEMPT_SUMMARY_COLUMNS}, tryout_exam_sets(name, duration_minutes)`)
+        .eq("user_id", userId)
+        .in("status", ["in_progress", "completed", "timed_out"])
+        .order("created_at", { ascending: false })
+        .limit(30),
+      (supabase as unknown as TryoutRpcClient).rpc("get_tryout_leaderboard", {
         p_exam_set_id: null,
-        p_limit: 10,
-      },
+        p_limit: 5,
+      }),
+    ]);
+
+    const rows = creditsRes.data || [];
+    setCredits({
+      total: rows.reduce((s, c) => s + c.total_credits, 0),
+      used: rows.reduce((s, c) => s + c.used_credits, 0),
+      remaining: rows.reduce((s, c) => s + c.remaining_credits, 0),
+    });
+    setExamSets((setsRes.data as ExamSetSummary[]) || []);
+    setAttempts(
+      (
+        (attemptsRes.data || []) as Array<
+          TryoutAttemptSummary & {
+            tryout_exam_sets?: { name: string; duration_minutes: number } | null;
+          }
+        >
+      ).map((a) => ({
+        ...a,
+        exam_name: a.tryout_exam_sets?.name ?? null,
+        _duration: a.tryout_exam_sets?.duration_minutes ?? 100,
+      })),
     );
-    if (lbError) {
-      console.warn("Leaderboard error:", lbError.message);
+
+    if (lbRes.error) {
       setLeaderboard([]);
       setLeaderboardLocked(false);
     } else {
-      const lb = (lbData || {}) as { entitled?: boolean; entries?: LeaderboardEntry[] };
+      const lb = (lbRes.data || {}) as { entitled?: boolean; entries?: LeaderboardEntry[] };
       setLeaderboardLocked(lb.entitled === false);
       setLeaderboard(lb.entries || []);
     }
-
     setLoading(false);
   }
 
-  const hasCredits = (credit?.remaining_credits ?? 0) > 0;
+  const summary = useMemo(() => summarizeProgress(attempts), [attempts]);
+  const running = attempts.find((a) => a.status === "in_progress") as
+    | (TryoutAttemptSummary & { _duration?: number })
+    | undefined;
+  const hasCredits = credits.remaining > 0;
+  const firstName = user?.user_metadata?.full_name?.split(" ")[0];
 
-  // Jika ini child route (misal /tryout/beli), render Outlet saja
-  if (!isExactTryout) {
-    return <Outlet />;
-  }
+  if (!isExactTryout) return <Outlet />;
+
+  const openSet = (id: string) =>
+    navigate({ to: "/tryout/$examId" as never, params: { examId: id } as never });
 
   return (
     <div className="container-page space-y-6 py-5 md:py-8">
-      <BackButton />
+      {loading ? (
+        <PageHeaderSkeleton />
+      ) : (
+        <TryoutPageHeader
+          eyebrow="Tryout SKD CPNS"
+          icon={<Trophy className="h-3.5 w-3.5" aria-hidden />}
+          title={`Halo, ${firstName || "Pejuang SKD"}! 👋`}
+          description={
+            summary.finished > 0
+              ? "Lanjutkan latihanmu — fokus pada subtes yang belum lulus passing grade."
+              : "Simulasi SKD 110 soal dengan timer 100 menit. Mulai tryout pertamamu hari ini."
+          }
+          actions={
+            <>
+              <Button asChild variant="outline" className="h-10 gap-2 rounded-xl">
+                <Link to={"/tryout-cpns" as never}>
+                  <Info className="h-4 w-4" aria-hidden /> Info tryout
+                </Link>
+              </Button>
+              <Button asChild className="h-10 gap-2 rounded-xl">
+                <Link to={"/tryout/beli" as never}>
+                  <Plus className="h-4 w-4" aria-hidden /> Beli kredit
+                </Link>
+              </Button>
+            </>
+          }
+        />
+      )}
 
-      {/* Hero */}
-      <section className="relative overflow-hidden rounded-3xl border bg-card shadow-sm">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/5"></div>
-        <div className="relative z-10 grid gap-6 p-6 sm:p-8 lg:grid-cols-[1.5fr_1fr] lg:items-center">
-          <div>
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-primary ring-1 ring-primary/20">
-              <Trophy className="h-3.5 w-3.5" />
-              Tryout SKD CPNS
-            </div>
-            <h1 className="font-display text-3xl font-extrabold tracking-tight sm:text-4xl">
-              Halo, {user?.user_metadata?.full_name?.split(" ")[0] || "Pejuang SKD"}! 👋
-            </h1>
-            <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
-              Simulasi ujian SKD yang realistis. Mulai tryout, cek skor, dan bersaing di leaderboard
-              untuk persiapan maksimal.
-            </p>
-          </div>
-          <div className="flex flex-col gap-3 sm:flex-row lg:flex-col lg:justify-end xl:flex-row">
-            <Button asChild variant="outline" size="sm" className="h-10 gap-2 rounded-xl px-5">
-              <Link to={"/tryout-cpns" as never}>
-                Info Lengkap <ArrowRight className="h-4 w-4" />
-              </Link>
-            </Button>
-            <Button
-              asChild
-              size="sm"
-              className="h-10 gap-2 rounded-xl bg-gradient-to-r from-primary to-primary/80 px-5 text-primary-foreground shadow-md transition-all hover:scale-[1.02] hover:from-primary/90 hover:to-primary"
-            >
-              <Link to={"/tryout/beli" as never}>
-                <Plus className="h-4 w-4" /> Beli Kredit
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </section>
+      {!loading && running && (
+        <ResumeBanner
+          examId={running.exam_set_id}
+          examName={running.exam_name || "Tryout SKD"}
+          remainingSeconds={remainingSecondsOf(running.started_at, running._duration ?? 100)}
+        />
+      )}
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_320px] xl:grid-cols-[1fr_340px]">
-        {/* Main */}
-        <div className="space-y-8 min-w-0">
-          {/* Exam Sets */}
-          <section>
-            <div className="mb-3 flex items-center justify-between">
-              <h2 className="flex items-center gap-2 font-display text-lg font-bold">
-                <ListChecks className="h-4 w-4 text-primary" /> Pilih Set Tryout
-              </h2>
-            </div>
+      {loading ? (
+        <ProgressStatsSkeleton />
+      ) : summary.finished > 0 ? (
+        <ProgressStats summary={summary} />
+      ) : null}
+
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+        <div className="min-w-0 space-y-8">
+          <section aria-labelledby="sets-heading">
+            <SectionTitle
+              id="sets-heading"
+              icon={<BookOpenCheck className="h-4 w-4" aria-hidden />}
+              title="Pilih set tryout"
+            />
             {loading ? (
-              <div className="grid gap-3 sm:grid-cols-2">
-                {Array.from({ length: 2 }).map((_, i) => (
-                  <Skeleton key={i} className="h-40 rounded-2xl" />
-                ))}
-              </div>
+              <ExamSetGridSkeleton />
             ) : examSets.length === 0 ? (
-              <div className="rounded-2xl border bg-card p-6 text-center text-sm text-muted-foreground">
-                Belum ada set tryout yang tersedia.
-              </div>
+              <EmptyState
+                icon={<BookOpenCheck className="h-6 w-6" aria-hidden />}
+                title="Belum ada set tryout"
+                description="Set tryout baru sedang disiapkan. Cek lagi nanti, ya."
+              />
             ) : (
-              <div className="grid gap-3 sm:grid-cols-2">
-                {examSets.map((es) => {
-                  const lastAttempt = attempts.find((a) => a.exam_set_id === es.id);
-                  const status =
-                    lastAttempt?.status === "completed" || lastAttempt?.status === "timed_out"
-                      ? `Selesai · ${lastAttempt.score_total}/550`
-                      : lastAttempt?.status === "in_progress"
-                        ? "Sedang berjalan"
-                        : "Belum dikerjakan";
-
-                  return (
-                    <article
-                      key={es.id}
-                      className="group rounded-2xl border bg-card p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-md"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
-                          <Trophy className="h-5 w-5" />
-                        </div>
-                        <span
-                          className={
-                            "rounded-md px-2 py-0.5 text-[10px] font-bold " +
-                            (lastAttempt?.pass_overall
-                              ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400"
-                              : lastAttempt?.score_total
-                                ? "bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400"
-                                : "bg-muted text-muted-foreground")
-                          }
-                        >
-                          {status}
-                        </span>
-                      </div>
-                      <h3 className="mt-3 line-clamp-2 font-display text-lg font-bold text-foreground">
-                        {es.name}
-                      </h3>
-                      <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
-                        {es.description ||
-                          `${es.total_questions} soal · ${es.duration_minutes} menit`}
-                      </p>
-                      <div className="mt-4 flex flex-col items-start gap-2.5 sm:flex-row sm:items-center sm:justify-between">
-                        <p className="text-[10px] text-muted-foreground/70 leading-tight">
-                          Klik <b>Lihat Detail</b> untuk memulai tryout.
-                        </p>
-                        <Button
-                          size="sm"
-                          disabled={!hasCredits && !lastAttempt?.id}
-                          onClick={() =>
-                            navigate({
-                              to: "/tryout/$examId" as never,
-                              params: { examId: es.id } as never,
-                            })
-                          }
-                          className="gap-1.5 w-full sm:w-auto"
-                        >
-                          Lihat Detail
-                          <ArrowRight className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
-                    </article>
-                  );
-                })}
+              <div className="grid gap-4 sm:grid-cols-2">
+                {examSets.map((es) => (
+                  <ExamSetCard
+                    key={es.id}
+                    set={es}
+                    attempts={attempts.filter((a) => a.exam_set_id === es.id)}
+                    hasCredits={hasCredits}
+                    onOpen={() => openSet(es.id)}
+                  />
+                ))}
               </div>
             )}
           </section>
 
-          {/* Riwayat */}
-          <section>
-            <div className="mb-3 flex items-center justify-between">
-              <h2 className="flex items-center gap-2 font-display text-lg font-bold">
-                <History className="h-4 w-4 text-primary" /> Riwayat Tryout
-              </h2>
-            </div>
+          <section aria-labelledby="history-heading">
+            <SectionTitle
+              id="history-heading"
+              icon={<History className="h-4 w-4" aria-hidden />}
+              title="Riwayat tryout"
+            />
             {loading ? (
-              <div className="space-y-2">
-                {Array.from({ length: 3 }).map((_, i) => (
-                  <Skeleton key={i} className="h-16 rounded-xl" />
-                ))}
-              </div>
+              <AttemptListSkeleton />
             ) : (
-              <AttemptHistoryList attempts={attempts as any} />
+              <AttemptHistoryList
+                attempts={attempts.slice(0, 6)}
+                emptyAction={
+                  examSets[0] ? (
+                    <Button className="gap-2 rounded-xl" onClick={() => openSet(examSets[0].id)}>
+                      <Sparkles className="h-4 w-4" aria-hidden /> Mulai tryout pertama
+                    </Button>
+                  ) : undefined
+                }
+              />
             )}
           </section>
         </div>
 
-        {/* Sidebar */}
-        <aside className="space-y-5">
+        <aside className="space-y-6">
           {loading ? (
-            <Skeleton className="h-32 rounded-2xl" />
+            <CreditBalanceSkeleton />
           ) : (
             <CreditBalance
-              totalCredits={credit?.total_credits ?? 0}
-              usedCredits={credit?.used_credits ?? 0}
-              remainingCredits={credit?.remaining_credits ?? 0}
+              totalCredits={credits.total}
+              usedCredits={credits.used}
+              remainingCredits={credits.remaining}
             />
           )}
 
-          {/* Leaderboard */}
-          <section>
-            <div className="mb-3 flex items-center justify-between">
-              <h2 className="flex items-center gap-2 font-display text-base font-bold">
-                <Trophy className="h-4 w-4 text-amber-500" /> Leaderboard
-              </h2>
-              <Link
-                to={"/tryout/leaderboard" as never}
-                className="text-xs font-semibold text-primary hover:underline"
-              >
-                Lihat semua →
-              </Link>
-            </div>
+          <section aria-labelledby="lb-heading">
+            <SectionTitle
+              id="lb-heading"
+              icon={<Trophy className="h-4 w-4" aria-hidden />}
+              title="Leaderboard"
+              action={{ to: "/tryout/leaderboard", label: "Lihat semua" }}
+            />
             <LeaderboardTable
               entries={leaderboard}
               loading={loading}
               limit={5}
               locked={leaderboardLocked}
+              variant="compact"
+              showExamName
             />
           </section>
         </aside>

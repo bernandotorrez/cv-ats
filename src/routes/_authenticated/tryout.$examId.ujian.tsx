@@ -42,6 +42,7 @@ import {
   QuestionNavigation,
   SubtestTabs,
   ExamConfirmDialog,
+  ExamPageSkeleton,
 } from "@/components/tryout";
 import { normalizeOptions } from "@/lib/tryout-options";
 import { callTryoutFunction, TryoutApiError } from "@/lib/tryout-api";
@@ -520,17 +521,7 @@ function TryoutExamPage() {
 
   // ─── Render ──────────────────────────────────────────────────────────────
   if (loading) {
-    return (
-      <div className="container-page flex min-h-[60vh] items-center justify-center">
-        <div className="flex flex-col items-center gap-3 text-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-sm font-medium">Menyiapkan ujian…</p>
-          <p className="text-xs text-muted-foreground">
-            Memuat soal & memulihkan jawaban tersimpan
-          </p>
-        </div>
-      </div>
-    );
+    return <ExamPageSkeleton />;
   }
 
   if (loadError || !examSet || questions.length === 0) {

@@ -6,7 +6,6 @@ export { QuestionCard, QuestionResultCard } from "./QuestionCard";
 export { QuestionNavigation } from "./QuestionNavigation";
 export { SubtestTabs } from "./SubtestTabs";
 export { ExamConfirmDialog } from "./ExamConfirmDialog";
-export { ScoreCard } from "./ScoreCard";
 export { ScoreBreakdown } from "./ScoreBreakdown";
 export { CreditBalance } from "./CreditBalance";
 export { TryoutPackageCard } from "./TryoutPackageCard";
@@ -21,3 +20,13 @@ export {
 export { PracticeMode } from "./PracticeMode";
 export { ExplanationPanel } from "./ExplanationPanel";
 export { ReportQuestionDialog } from "./ReportQuestionDialog";
+export { TryoutPageHeader, SectionTitle, EmptyState } from "./TryoutLayout";
+export {
+  ProgressStats,
+  ResumeBanner,
+  ExamSetCard,
+  CompositionBar,
+  type ExamSetSummary,
+} from "./DashboardWidgets";
+export { StartExamDialog } from "./StartExamDialog";
+export * from "./skeletons";

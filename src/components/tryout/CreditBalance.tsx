@@ -1,9 +1,8 @@
 /**
- * CreditBalance — Widget sisa kredit tryout.
- * Dark mode & responsive support.
+ * CreditBalance — Saldo kredit tryout (tema hijau, selaras halaman ujian/hasil).
  */
 import { Link } from "@tanstack/react-router";
-import { Coins, Plus } from "lucide-react";
+import { Coins, Plus, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 type Props = {
@@ -24,59 +23,74 @@ export function CreditBalance({
   if (variant === "inline") {
     return (
       <div className="inline-flex items-center gap-2 rounded-full border bg-card px-3 py-1.5 text-sm">
-        <Coins className="h-4 w-4 text-amber-500" />
-        <span className="font-bold">{remainingCredits}</span>
+        <Coins className="h-4 w-4 text-primary" aria-hidden />
+        <span className="font-bold tabular-nums">{remainingCredits}</span>
         <span className="text-muted-foreground">kredit tersisa</span>
       </div>
     );
   }
 
+  const usedPct = totalCredits > 0 ? Math.round((usedCredits / totalCredits) * 100) : 0;
+
   return (
-    <div className="relative overflow-hidden rounded-3xl border bg-zinc-950 shadow-xl shadow-amber-500/5">
-      {/* Glow Effect */}
-      <div className="pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full bg-amber-500/20 blur-3xl"></div>
-      <div className="pointer-events-none absolute -bottom-12 -left-12 h-40 w-40 rounded-full bg-orange-600/20 blur-3xl"></div>
-      
-      <div className="relative z-10 p-5 sm:p-7">
-        <div className="flex items-center gap-2 text-amber-400">
-          <Coins className="h-5 w-5" />
-          <span className="text-[11px] font-bold uppercase tracking-wider text-amber-400/90">
-            Kredit Tryout
-          </span>
-        </div>
-        
-        <div className="mt-4 flex items-baseline gap-2">
-          <span className="font-display text-6xl font-black tracking-tight text-white drop-shadow-md">
+    <section
+      aria-label="Kredit tryout"
+      className="overflow-hidden rounded-2xl border bg-card shadow-sm"
+    >
+      <div className="relative bg-gradient-to-br from-primary to-emerald-700 p-5 text-primary-foreground">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-white/10 blur-2xl"
+        />
+        <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-white/85">
+          <Coins className="h-4 w-4" aria-hidden /> Kredit tryout
+        </p>
+        <div className="mt-2 flex items-baseline gap-2">
+          <span className="font-display text-5xl font-extrabold tabular-nums leading-none">
             {remainingCredits}
           </span>
-          <span className="text-sm font-medium text-zinc-400">/ {totalCredits}</span>
+          <span className="text-sm text-white/80">tersisa</span>
         </div>
-        
-        <p className="mt-2 text-xs text-zinc-400">
-          {usedCredits > 0
-            ? `${usedCredits} kredit telah digunakan`
-            : "Belum pernah dipakai"}
-        </p>
-      </div>
-
-      <div className="relative z-10 border-t border-white/10 bg-white/5 p-5">
-        {hasCredits ? (
-          <p className="text-xs text-zinc-300">
-            Setiap 1 tryout menggunakan 1 kredit. Ayo capai skor terbaikmu!
-          </p>
-        ) : (
-          <div className="space-y-3">
-            <p className="text-xs font-medium text-amber-400">
-              Kredit habis. Top-up untuk lanjut simulasi.
+        {totalCredits > 0 && (
+          <>
+            <div
+              className="mt-4 h-1.5 overflow-hidden rounded-full bg-white/20"
+              role="progressbar"
+              aria-valuenow={usedPct}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-label="Kredit terpakai"
+            >
+              <div className="h-full rounded-full bg-white" style={{ width: `${usedPct}%` }} />
+            </div>
+            <p className="mt-1.5 text-[11px] text-white/80">
+              {usedCredits} dari {totalCredits} kredit sudah dipakai
             </p>
-            <Button asChild size="sm" className="w-full gap-1.5 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 text-zinc-950 shadow-md hover:from-amber-500 hover:to-orange-500 transition-all hover:scale-[1.02]">
-              <Link to={"/tryout/beli" as never}>
-                <Plus className="h-4 w-4" /> Beli Kredit
-              </Link>
-            </Button>
-          </div>
+          </>
         )}
       </div>
-    </div>
+
+      <div className="space-y-3 p-4">
+        {hasCredits ? (
+          <p className="flex items-start gap-2 text-xs text-muted-foreground">
+            <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden />1 tryout = 1
+            kredit. Melanjutkan ujian yang sedang berjalan tidak memotong kredit lagi.
+          </p>
+        ) : (
+          <p className="text-xs font-medium text-amber-700 dark:text-amber-400">
+            Kredit habis. Beli paket untuk mulai tryout berikutnya.
+          </p>
+        )}
+        <Button
+          asChild
+          variant={hasCredits ? "outline" : "default"}
+          className="h-10 w-full gap-1.5 rounded-xl"
+        >
+          <Link to={"/tryout/beli" as never}>
+            <Plus className="h-4 w-4" aria-hidden /> {hasCredits ? "Tambah kredit" : "Beli kredit"}
+          </Link>
+        </Button>
+      </div>
+    </section>
   );
 }
