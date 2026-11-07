@@ -14,6 +14,7 @@ export function TryoutPageHeader({
   description,
   actions,
   className,
+  as: Heading = "h1",
 }: {
   eyebrow?: string;
   icon?: ReactNode;
@@ -21,6 +22,8 @@ export function TryoutPageHeader({
   description?: ReactNode;
   actions?: ReactNode;
   className?: string;
+  /** Pakai "h2" bila layout induk sudah punya h1 (mis. panel admin). */
+  as?: "h1" | "h2";
 }) {
   return (
     <header
@@ -33,9 +36,9 @@ export function TryoutPageHeader({
             {eyebrow}
           </p>
         )}
-        <h1 className="mt-1.5 font-display text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl">
+        <Heading className="mt-1.5 font-display text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl">
           {title}
-        </h1>
+        </Heading>
         {description && (
           <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
             {description}

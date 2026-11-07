@@ -5,7 +5,7 @@
  */
 import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowRight, CheckCircle2, Clock, Loader2, XCircle } from "lucide-react";
+import { ArrowRight, CheckCircle2, Clock, Coins, Loader2, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
@@ -30,8 +30,16 @@ const NEXT_STEP: Record<string, { to: string; label: string }> = {
   tier: { to: "/dashboard", label: "Ke Dashboard" },
   addon_upload_cv: { to: "/cv", label: "Ke CV Saya" },
   addon_pro_photo: { to: "/cv", label: "Ke CV Saya" },
-  tryout: { to: "/tryout", label: "Ke Dashboard Tryout" },
+  tryout: { to: "/tryout", label: "Mulai Tryout" },
 };
+
+/** Tujuan "beli lagi" per jenis produk (tryout punya halaman paket sendiri). */
+const RETRY: Record<string, { to: string; label: string }> = {
+  tryout: { to: "/tryout/beli", label: "Lihat Paket Tryout" },
+};
+const DEFAULT_RETRY = { to: "/harga", label: "Lihat Paket & Harga" };
+
+type TryoutCreditInfo = { added: number | null; available: number };
 
 const formatIdr = (n: number) =>
   new Intl.NumberFormat("id-ID", {
@@ -51,6 +59,38 @@ export function PaymentResult({
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [timedOut, setTimedOut] = useState(false);
+  const [tryoutCredit, setTryoutCredit] = useState<TryoutCreditInfo | null>(null);
+
+  // Order tryout yang sudah lunas: tampilkan kredit yang masuk & total tersedia
+  // (RLS: hanya kredit milik user sendiri).
+  useEffect(() => {
+    if (!user || order?.status !== "paid" || order.product_type !== "tryout") return;
+    let cancelled = false;
+    const nowIso = new Date().toISOString();
+    void Promise.all([
+      supabase
+        .from("tryout_credits")
+        .select("total_credits")
+        .eq("user_id", user.id)
+        .eq("payment_ref", order.order_id)
+        .maybeSingle(),
+      supabase
+        .from("tryout_credits")
+        .select("remaining_credits")
+        .eq("user_id", user.id)
+        .eq("status", "active")
+        .or(`expired_at.is.null,expired_at.gt.${nowIso}`),
+    ]).then(([added, all]) => {
+      if (cancelled) return;
+      setTryoutCredit({
+        added: added.data?.total_credits ?? null,
+        available: (all.data || []).reduce((s, c) => s + c.remaining_credits, 0),
+      });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [user, order?.status, order?.product_type, order?.order_id]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -119,7 +159,10 @@ export function PaymentResult({
       icon = <CheckCircle2 className="h-7 w-7" />;
       tone = "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300";
       title = "Pembayaran Berhasil!";
-      desc = `${order.product_name} sudah aktif di akunmu.`;
+      desc =
+        order.product_type === "tryout"
+          ? `${order.product_name} sudah aktif. Kredit tryout siap dipakai.`
+          : `${order.product_name} sudah aktif di akunmu.`;
     } else if (order.status === "pending" && variant === "success") {
       icon = timedOut ? (
         <Clock className="h-7 w-7" />
@@ -151,6 +194,7 @@ export function PaymentResult({
   }
 
   const next = order ? NEXT_STEP[order.product_type] : undefined;
+  const retry = (order && RETRY[order.product_type]) || DEFAULT_RETRY;
 
   return (
     <div className="container-page flex min-h-[80vh] items-center justify-center py-12">
@@ -182,6 +226,24 @@ export function PaymentResult({
             </dl>
           )}
 
+          {order?.status === "paid" && order.product_type === "tryout" && tryoutCredit && (
+            <div className="flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-left dark:border-emerald-900 dark:bg-emerald-950/40">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-emerald-600 text-white">
+                <Coins className="h-5 w-5" aria-hidden />
+              </span>
+              <div className="text-sm">
+                {tryoutCredit.added != null && (
+                  <p className="font-bold text-emerald-800 dark:text-emerald-300">
+                    +{tryoutCredit.added} kredit tryout masuk
+                  </p>
+                )}
+                <p className="text-emerald-700 dark:text-emerald-400">
+                  Total kredit tersedia: <b>{tryoutCredit.available}</b> · 1 kredit = 1 tryout
+                </p>
+              </div>
+            </div>
+          )}
+
           {order?.status === "paid" && next && (
             <Button asChild size="lg" className="w-full">
               <Link to={next.to as never}>
@@ -209,7 +271,7 @@ export function PaymentResult({
 
           {(!order || (order.status !== "paid" && !canContinuePaying)) && !loading && user && (
             <Button asChild size="lg" variant="outline" className="w-full">
-              <Link to="/harga">Lihat Paket & Harga</Link>
+              <Link to={retry.to as never}>{retry.label}</Link>
             </Button>
           )}
 

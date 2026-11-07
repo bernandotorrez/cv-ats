@@ -43,6 +43,7 @@ import {
   TryoutPackageCard,
   TryoutPageHeader,
 } from "@/components/tryout";
+import { TryoutPromo } from "@/components/dashboard/tryout-promo";
 import { summarizeProgress, type TryoutAttemptSummary } from "@/lib/tryout-display";
 import { buildRecommendations, readiness, subtestGaps } from "@/lib/tryout-analysis";
 import type {
@@ -337,6 +338,11 @@ function DemoTryoutPage() {
         />
       )}
       {view === "skeletons" && <SkeletonsView />}
+      {view === "promo" && (
+        <div className="mx-auto max-w-sm px-4 py-8">
+          <TryoutPromo />
+        </div>
+      )}
     </div>
   );
 }

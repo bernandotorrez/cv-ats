@@ -13,6 +13,7 @@ import {
   Clock,
   Cpu,
   Download,
+  BarChart3,
   FileText,
   Gauge,
   Highlighter,
@@ -1184,29 +1185,36 @@ function LandingPage() {
 
           <div className="grid gap-6 lg:grid-cols-2">
             {/* Tryout CPNS */}
-            <article className="relative flex flex-col overflow-hidden rounded-3xl bg-slate-950 p-7 text-white sm:p-10">
+            <article
+              aria-labelledby="home-tryout-title"
+              className="relative flex flex-col overflow-hidden rounded-3xl bg-slate-950 p-7 text-white sm:p-10"
+            >
               <div
                 aria-hidden="true"
                 className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-emerald-500/25 blur-3xl"
               />
               <div className="relative flex flex-1 flex-col">
                 <Eyebrow tone="dark">
-                  <Sparkles aria-hidden="true" className="h-3.5 w-3.5" /> Baru 2026
+                  <Sparkles aria-hidden="true" className="h-3.5 w-3.5" /> Tryout CPNS 2026
                 </Eyebrow>
-                <h3 className="mt-5 font-display text-3xl font-extrabold leading-tight sm:text-4xl">
-                  Tryout CPNS SKD <span className="block text-emerald-300">110 Soal Realistis</span>
+                <h3
+                  id="home-tryout-title"
+                  className="mt-5 font-display text-3xl font-extrabold leading-tight sm:text-4xl"
+                >
+                  Latihan SKD seperti CAT BKN,{" "}
+                  <span className="text-emerald-300">tahu persis yang harus dikejar.</span>
                 </h3>
                 <p className="mt-4 text-base leading-relaxed text-slate-300">
-                  Simulasi SKD sesuai kisi-kisi resmi BKN.{" "}
-                  <strong className="text-white">30 TWK, 35 TIU, 45 TKP</strong> — dengan timer,
-                  skor real-time, dan passing grade akurat.
+                  <strong className="text-white">110 soal (30 TWK, 35 TIU, 45 TKP)</strong> dengan
+                  timer 100 menit dan penilaian sesuai BKN. Setelah selesai, kamu langsung melihat
+                  jarak ke passing grade dan materi yang perlu dipelajari.
                 </p>
 
                 <ul className="mt-6 flex flex-wrap gap-2">
                   {[
-                    { icon: Clock, t: "100 menit" },
-                    { icon: FileText, t: "110 soal" },
-                    { icon: Zap, t: "Skor instan" },
+                    { icon: Clock, t: "110 soal · 100 menit" },
+                    { icon: BarChart3, t: "Analisis & rekomendasi" },
+                    { icon: BookOpen, t: "Pembahasan detail" },
                   ].map((c) => (
                     <li
                       key={c.t}
@@ -1218,23 +1226,29 @@ function LandingPage() {
                 </ul>
 
                 <div className="mt-8 rounded-2xl border border-white/10 bg-slate-900/80 p-5">
-                  <div className="mb-4 flex items-center justify-between">
+                  <div className="mb-4 flex items-center justify-between gap-3">
                     <p className="flex items-center gap-2 text-sm font-bold">
                       <Trophy aria-hidden="true" className="h-4 w-4 text-emerald-300" /> Contoh
                       hasil
                     </p>
                     <p className="text-sm font-bold">
-                      405 <span className="font-medium text-slate-400">/ 550</span>
+                      412 <span className="font-medium text-slate-400">/ 550</span>
                     </p>
                   </div>
                   <div className="space-y-3">
-                    <ScorePreviewBar label="TWK" score={75} max={150} passing={65} />
-                    <ScorePreviewBar label="TIU" score={120} max={175} passing={80} />
-                    <ScorePreviewBar label="TKP" score={210} max={225} passing={166} />
+                    <ScorePreviewBar label="TWK" score={100} max={150} passing={65} />
+                    <ScorePreviewBar label="TIU" score={130} max={175} passing={80} />
+                    <ScorePreviewBar label="TKP" score={182} max={225} passing={166} />
                   </div>
-                  <p className="mt-4 inline-flex w-fit items-center gap-1.5 rounded-full bg-emerald-400/15 px-3 py-1 text-xs font-semibold text-emerald-200">
-                    <CheckCircle2 aria-hidden="true" className="h-3.5 w-3.5" /> Lulus passing grade
-                  </p>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <p className="inline-flex w-fit items-center gap-1.5 rounded-full bg-emerald-400/15 px-3 py-1 text-xs font-semibold text-emerald-200">
+                      <CheckCircle2 aria-hidden="true" className="h-3.5 w-3.5" /> Lulus passing
+                      grade
+                    </p>
+                    <p className="inline-flex w-fit items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
+                      Rekomendasi: perkuat Pilar Negara
+                    </p>
+                  </div>
                 </div>
 
                 <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -1244,7 +1258,7 @@ function LandingPage() {
                     className="h-12 rounded-xl bg-emerald-400 px-7 text-base font-bold text-slate-950 hover:bg-emerald-300"
                   >
                     <Link to="/tryout-cpns">
-                      Mulai Tryout
+                      Lihat Tryout CPNS
                       <ArrowRight aria-hidden="true" className="ml-2 h-4 w-4" />
                     </Link>
                   </Button>
@@ -1254,7 +1268,9 @@ function LandingPage() {
                     variant="outline"
                     className="h-12 rounded-xl border-slate-600 bg-transparent px-7 text-base text-slate-100 hover:bg-slate-800 hover:text-white"
                   >
-                    <Link to="/tryout-cpns">Info Lengkap & Harga</Link>
+                    <Link to="/tryout-cpns" hash="paket">
+                      Lihat harga paket
+                    </Link>
                   </Button>
                 </div>
               </div>
@@ -1351,7 +1367,7 @@ function LandingPage() {
             {guides.map((item) => (
               <Link
                 key={item.title}
-                to={item.to as any}
+                to={item.to as never}
                 className="group flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white transition-all hover:-translate-y-1 hover:shadow-xl"
               >
                 <div className="aspect-[4/3] overflow-hidden bg-gray-100">

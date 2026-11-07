@@ -1,35 +1,60 @@
+/**
+ * TryoutPromo — kartu ajakan Tryout CPNS di sidebar dashboard utama.
+ * Gaya mengikuti fitur tryout (kartu hijau, komposisi TWK/TIU/TKP).
+ */
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, Trophy } from "lucide-react";
+import { ArrowRight, BarChart3, BookOpen, Clock, Trophy } from "lucide-react";
+import { CompositionBar } from "@/components/tryout/DashboardWidgets";
+
+const POINTS = [
+  { icon: Clock, text: "110 soal · timer 100 menit" },
+  { icon: BarChart3, text: "Skor, peringkat & rekomendasi belajar" },
+  { icon: BookOpen, text: "Pembahasan detail tiap soal (Paket Lengkap)" },
+];
 
 export function TryoutPromo() {
   return (
     <section
       aria-labelledby="tryout-promo-title"
-      className="rounded-3xl border border-yellow-200 bg-yellow-50 p-5 sm:p-6"
+      className="overflow-hidden rounded-2xl border bg-card shadow-sm"
     >
-      <div className="flex items-start gap-3">
-        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-yellow-300 text-gray-950">
-          <Trophy aria-hidden="true" className="h-5 w-5" />
-        </span>
-        <div className="min-w-0">
-          <p className="text-[11px] font-bold uppercase tracking-wide text-amber-800">
-            Tryout CPNS 2026
-          </p>
-          <h2 id="tryout-promo-title" className="mt-0.5 font-bold leading-snug text-gray-900">
-            Simulasi SKD 110 soal, standar BKN
-          </h2>
-          <p className="mt-1 text-sm leading-relaxed text-gray-700">
-            TWK, TIU, dan TKP dengan timer 100 menit dan skor langsung keluar.
-          </p>
-        </div>
+      <div className="relative bg-gradient-to-br from-emerald-700 to-emerald-900 p-5 text-white">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-white/10 blur-2xl"
+        />
+        <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-white/85">
+          <Trophy aria-hidden="true" className="h-3.5 w-3.5" /> Tryout CPNS 2026
+        </p>
+        <h2
+          id="tryout-promo-title"
+          className="mt-1.5 font-display text-lg font-extrabold leading-snug"
+        >
+          Latihan SKD seperti CAT BKN
+        </h2>
+        <p className="mt-1 text-sm leading-relaxed text-white/85">
+          Tahu skormu, jarak ke passing grade, dan materi yang perlu dikejar.
+        </p>
       </div>
-      <Link
-        to="/tryout"
-        className="mt-4 inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-gray-900 text-sm font-bold text-white transition-colors hover:bg-gray-800"
-      >
-        Mulai tryout
-        <ArrowRight aria-hidden="true" className="h-4 w-4" />
-      </Link>
+
+      <div className="space-y-4 p-5">
+        <CompositionBar twk={30} tiu={35} tkp={45} />
+        <ul className="space-y-2">
+          {POINTS.map((p) => (
+            <li key={p.text} className="flex items-start gap-2 text-sm text-foreground">
+              <p.icon aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+              {p.text}
+            </li>
+          ))}
+        </ul>
+        <Link
+          to="/tryout"
+          className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-primary text-sm font-bold text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2"
+        >
+          Buka tryout
+          <ArrowRight aria-hidden="true" className="h-4 w-4" />
+        </Link>
+      </div>
     </section>
   );
 }

@@ -37,7 +37,7 @@ export function CreditBalance({
       aria-label="Kredit tryout"
       className="overflow-hidden rounded-2xl border bg-card shadow-sm"
     >
-      <div className="relative bg-gradient-to-br from-primary to-emerald-700 p-5 text-primary-foreground">
+      <div className="relative bg-gradient-to-br from-emerald-700 to-emerald-900 p-5 text-white">
         <div
           aria-hidden
           className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-white/10 blur-2xl"
