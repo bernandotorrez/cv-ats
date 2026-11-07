@@ -104,6 +104,8 @@ export function ArticleView({
   related,
   meta,
   extra,
+  afterBody,
+  extraToc = [],
 }: {
   post: BlogPost;
   section: ArticleSection;
@@ -112,6 +114,10 @@ export function ArticleView({
   meta?: React.ReactNode;
   /** Konten tambahan setelah CTA, sebelum "Baca juga" (mis. navigasi modul). */
   extra?: React.ReactNode;
+  /** Konten tambahan tepat setelah isi artikel, sebelum FAQ (mis. contoh soal). */
+  afterBody?: React.ReactNode;
+  /** Entri daftar isi tambahan untuk bagian di `afterBody`. */
+  extraToc?: { id: string; label: string }[];
 }) {
   const headings = post.body.filter((b): b is Extract<BlogBlock, { t: "h2" }> => b.t === "h2");
   const modified = post.updated !== post.date;
@@ -156,7 +162,7 @@ export function ArticleView({
         <p className="mt-4 text-lg text-muted-foreground">{post.excerpt}</p>
       </header>
 
-      {headings.length >= 4 && (
+      {headings.length + extraToc.length >= 4 && (
         <nav
           aria-labelledby="toc-title"
           className="mt-8 rounded-2xl border border-border bg-muted/30 p-5"
@@ -175,6 +181,16 @@ export function ArticleView({
                 </a>
               </li>
             ))}
+            {extraToc.map((t) => (
+              <li key={t.id}>
+                <a
+                  href={`#${t.id}`}
+                  className="font-semibold text-primary underline-offset-2 hover:underline"
+                >
+                  {t.label}
+                </a>
+              </li>
+            ))}
           </ol>
         </nav>
       )}
@@ -184,6 +200,8 @@ export function ArticleView({
           <Block key={i} block={block} />
         ))}
       </div>
+
+      {afterBody}
 
       <section aria-labelledby="faq-title" className="mt-12">
         <h2 id="faq-title" className="font-display text-2xl font-bold">

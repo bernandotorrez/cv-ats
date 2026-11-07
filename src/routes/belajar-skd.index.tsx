@@ -26,6 +26,7 @@ import {
 import { buildSeo, SITE_URL } from "@/lib/seo";
 import { readingMinutes } from "@/lib/blog-posts";
 import { SKD_TOPIC_LABEL, skdModules, type SkdModuleTopic } from "@/lib/skd-modules";
+import { skdExamplesBySlug } from "@/lib/skd-examples";
 import {
   CtaBanner,
   PageHero,
@@ -41,6 +42,7 @@ const PAGE_DESC =
   "8 modul belajar SKD CPNS gratis: strategi passing grade, materi TWK, trik TIU verbal, numerik & figural, cara menjawab TKP bernilai 5, manajemen waktu, dan jadwal belajar 30 hari.";
 
 const totalMinutes = skdModules.reduce((sum, m) => sum + readingMinutes(m), 0);
+const totalExamples = Object.values(skdExamplesBySlug).reduce((sum, list) => sum + list.length, 0);
 
 const FAQ = [
   {
@@ -177,7 +179,7 @@ function BelajarSkdPage() {
           items={[
             `${skdModules.length} modul gratis`,
             `±${totalMinutes} menit baca`,
-            "TWK, TIU & TKP lengkap",
+            `${totalExamples} contoh soal & pembahasan`,
           ]}
         />
       </PageHero>
@@ -192,7 +194,7 @@ function BelajarSkdPage() {
               </>
             }
             title="Ikuti urutannya, satu modul per hari."
-            desc="Setiap modul berisi materi, contoh, jebakan yang sering muncul, dan target waktu pengerjaan."
+            desc="Setiap modul berisi materi, jebakan yang sering muncul, target waktu pengerjaan, dan contoh soal lengkap dengan pembahasan."
           />
           <ol className="grid gap-5 md:grid-cols-2">
             {skdModules.map((m, i) => {

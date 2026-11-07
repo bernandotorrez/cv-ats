@@ -6,6 +6,8 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { ArrowLeft, ArrowRight, Award, BookOpen, Layers } from "lucide-react";
 
 import { ErrorState } from "@/components/site/ErrorState";
+import { SkdExamples } from "@/components/belajar/SkdExamples";
+import { skdExamplesBySlug } from "@/lib/skd-examples";
 import { Skeleton } from "@/components/ui/skeleton-loading";
 import { ArticleView } from "@/components/blog/ArticleView";
 import { buildArticleHead } from "@/lib/article-seo";
@@ -66,6 +68,7 @@ function ModulePage() {
   const index = skdModules.findIndex((m) => m.slug === mod.slug);
   const prev = index > 0 ? skdModules[index - 1] : null;
   const next = index < skdModules.length - 1 ? skdModules[index + 1] : null;
+  const examples = skdExamplesBySlug[mod.slug] ?? [];
   const related = mod.related
     .map((slug) => skdModulesBySlug[slug])
     .filter((m): m is SkdModule => Boolean(m) && m.slug !== next?.slug);
@@ -75,6 +78,10 @@ function ModulePage() {
       post={mod}
       section="belajar-skd"
       related={related}
+      afterBody={examples.length > 0 ? <SkdExamples examples={examples} /> : null}
+      extraToc={
+        examples.length > 0 ? [{ id: "contoh-soal", label: "Contoh soal & pembahasan" }] : []
+      }
       meta={
         <>
           <span className="flex items-center gap-1 text-xs font-semibold text-primary">
