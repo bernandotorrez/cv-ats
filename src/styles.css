@@ -15,7 +15,8 @@
 
 @theme inline {
   --font-sans: "Inter Variable", "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Plus Jakarta Sans Variable", "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-display:
+    "Plus Jakarta Sans Variable", "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -187,6 +188,67 @@
   50% {
     transform: translateY(-12px);
   }
+}
+
+/* Bingkai sorotan kuning beranimasi (kartu promo Tryout CPNS di dashboard).
+   Cahaya kuning berputar mengelilingi tepi kartu + pendar lembut.
+   Mengikuti prefers-reduced-motion lewat aturan global di @layer base. */
+@keyframes highlight-spin {
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+@keyframes highlight-glow {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 0 rgb(250 204 21 / 0.35),
+      0 10px 30px -12px rgb(234 179 8 / 0.45);
+  }
+  50% {
+    box-shadow:
+      0 0 0 4px rgb(250 204 21 / 0.18),
+      0 14px 38px -10px rgb(234 179 8 / 0.6);
+  }
+}
+
+.highlight-border {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  padding: 2px;
+  border-radius: 1.125rem;
+  background: rgb(250 204 21 / 0.55);
+  animation: highlight-glow 2.8s ease-in-out infinite;
+}
+
+.highlight-border::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  left: 50%;
+  top: 50%;
+  width: 200%;
+  aspect-ratio: 1;
+  background: conic-gradient(
+    from 0deg,
+    #facc15 0deg,
+    #fef9c3 50deg,
+    #f59e0b 110deg,
+    transparent 160deg,
+    transparent 200deg,
+    #facc15 250deg,
+    #fde047 310deg,
+    #facc15 360deg
+  );
+  transform: translate(-50%, -50%);
+  animation: highlight-spin 4s linear infinite;
+}
+
+.highlight-border > * {
+  position: relative;
+  border-radius: 1rem;
 }
 
 @layer base {

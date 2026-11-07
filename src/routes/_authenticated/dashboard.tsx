@@ -938,7 +938,7 @@ function DashboardPage() {
           <div className="order-1 min-w-0">
             <RecentCvs cvs={cvs} loading={loading} onCreateCv={openCreateCv} />
           </div>
-          <div className="order-3 min-w-0">
+          <div className="order-4 min-w-0">
             <PowerFeatures
               features={powerFeatures}
               onFeatureClick={handleFeatureClick}
@@ -948,7 +948,11 @@ function DashboardPage() {
         </div>
 
         <aside className="contents lg:block lg:space-y-5" aria-label="Info akun dan rekomendasi">
+          {/* Tryout CPNS disorot di paling atas panel kanan (sebelum Paket kamu). */}
           <div className="order-2 min-w-0">
+            <TryoutPromo highlight />
+          </div>
+          <div className="order-3 min-w-0">
             <PlanCard
               tier={tier}
               tierName={tierName}
@@ -956,7 +960,7 @@ function DashboardPage() {
               quotas={usageBars}
             />
           </div>
-          <div className="order-4 min-w-0">
+          <div className="order-5 min-w-0">
             <AiRecommendations
               recommendations={recommendations}
               onAction={(action) => {
@@ -965,9 +969,6 @@ function DashboardPage() {
                 else handleFeatureClick(action);
               }}
             />
-          </div>
-          <div className="order-5 min-w-0">
-            <TryoutPromo />
           </div>
           <div className="order-6 min-w-0">
             <MentoringCta />

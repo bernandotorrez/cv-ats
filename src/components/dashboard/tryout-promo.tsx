@@ -12,20 +12,31 @@ const POINTS = [
   { icon: BookOpen, text: "Pembahasan detail tiap soal (Paket Lengkap)" },
 ];
 
-export function TryoutPromo() {
-  return (
+export function TryoutPromo({ highlight = false }: { highlight?: boolean }) {
+  const card = (
     <section
       aria-labelledby="tryout-promo-title"
-      className="overflow-hidden rounded-2xl border bg-card shadow-sm"
+      className={
+        highlight
+          ? "overflow-hidden rounded-2xl bg-card"
+          : "overflow-hidden rounded-2xl border bg-card shadow-sm"
+      }
     >
       <div className="relative bg-gradient-to-br from-emerald-700 to-emerald-900 p-5 text-white">
         <div
           aria-hidden="true"
           className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-white/10 blur-2xl"
         />
-        <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-white/85">
-          <Trophy aria-hidden="true" className="h-3.5 w-3.5" /> Tryout CPNS 2026
-        </p>
+        <div className="flex items-center justify-between gap-2">
+          <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-white/85">
+            <Trophy aria-hidden="true" className="h-3.5 w-3.5" /> Tryout CPNS 2026
+          </p>
+          {highlight && (
+            <span className="rounded-full bg-yellow-300 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-gray-950">
+              Baru
+            </span>
+          )}
+        </div>
         <h2
           id="tryout-promo-title"
           className="mt-1.5 font-display text-lg font-extrabold leading-snug"
@@ -57,4 +68,6 @@ export function TryoutPromo() {
       </div>
     </section>
   );
+
+  return highlight ? <div className="highlight-border">{card}</div> : card;
 }
