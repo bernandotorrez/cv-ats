@@ -44,6 +44,7 @@ import {
   TryoutPageHeader,
 } from "@/components/tryout";
 import { TryoutPromo } from "@/components/dashboard/tryout-promo";
+import { generateFigural, type FiguralType } from "@/lib/tryout-figural";
 import { summarizeProgress, type TryoutAttemptSummary } from "@/lib/tryout-display";
 import { buildRecommendations, readiness, subtestGaps } from "@/lib/tryout-analysis";
 import type {
@@ -338,6 +339,7 @@ function DemoTryoutPage() {
         />
       )}
       {view === "skeletons" && <SkeletonsView />}
+      {view === "figural" && <FiguralView />}
       {view === "promo" && (
         <div className="mx-auto max-w-sm px-4 py-8">
           <TryoutPromo />
@@ -713,6 +715,56 @@ function SkeletonsView() {
       <PackageGridSkeleton />
       <LeaderboardSkeleton podium rows={3} />
       <ExamDetailSkeleton />
+    </div>
+  );
+}
+
+// ─── Soal TIU figural (gambar dari generator) ───────────────────────────────
+// URL gambar meniru URL publik bucket tryout-images; saat cek visual, browser
+// otomatis mengisi URL ini dengan SVG hasil generator (seed sama).
+function demoFigural(type: FiguralType, seed: number): TryoutQuestionFull {
+  const q = generateFigural(type, "medium", seed);
+  const base = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/tryout-images/demo/${type}-${seed}`;
+  return {
+    id: `fig-${type}`,
+    subtest: "tiu",
+    question_number: 50,
+    question_text: q.question_text,
+    question_image_url: q.question_svg ? `${base}/soal.svg` : null,
+    options: q.options.map((o) => ({ key: o.key, text: o.alt, image_url: `${base}/${o.key}.svg` })),
+    category: "Figural",
+    difficulty: "medium",
+    correct_answer: q.correct_answer,
+    scores: null,
+    explanation: q.explanation,
+    explanation_image_url: null,
+    explanation_detail: q.explanation_detail,
+  };
+}
+
+function FiguralView() {
+  const serialQ = demoFigural("serial", 101);
+  const analogQ = demoFigural("analogi", 202);
+  const oddQ = demoFigural("ketidaksamaan", 303);
+  const [ans, setAns] = useState<string | undefined>(undefined);
+  return (
+    <div className="mx-auto max-w-3xl space-y-6 px-4 py-8">
+      <QuestionCard
+        question={serialQ}
+        displayNumber={50}
+        totalQuestions={110}
+        selectedAnswer={ans ?? serialQ.correct_answer!}
+        onAnswer={setAns}
+        onToggleFlag={() => {}}
+      />
+      <QuestionResultCard
+        question={analogQ}
+        displayNumber={51}
+        userAnswer={analogQ.correct_answer === "A" ? "B" : "A"}
+        showExplanation
+        attemptId="demo"
+      />
+      <QuestionCard question={oddQ} displayNumber={52} totalQuestions={110} onAnswer={() => {}} />
     </div>
   );
 }

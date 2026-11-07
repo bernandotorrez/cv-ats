@@ -61,7 +61,23 @@ export function sortQuestions<T extends Pick<QuestionRow, "subtest" | "question_
   );
 }
 
-export function normalizeOptions(raw: unknown): { key: string; text: string }[] {
+/** Gambar hanya dari bucket publik tryout-images milik project ini. */
+export function safeImageUrl(url: unknown): string | null {
+  if (typeof url !== "string" || !url) return null;
+  try {
+    const u = new URL(url);
+    const base = new URL(Deno.env.get("SUPABASE_URL") || "http://invalid");
+    if (u.host !== base.host) return null;
+    if (!u.pathname.startsWith("/storage/v1/object/public/tryout-images/")) return null;
+    return u.toString();
+  } catch {
+    return null;
+  }
+}
+
+export function normalizeOptions(
+  raw: unknown,
+): { key: string; text: string; image_url?: string }[] {
   if (!Array.isArray(raw)) return [];
   return raw
     .map((opt, i) => {
@@ -73,11 +89,13 @@ export function normalizeOptions(raw: unknown): { key: string; text: string }[] 
       }
       if (opt && typeof opt === "object") {
         const o = opt as Record<string, unknown>;
+        const image = safeImageUrl(o.image_url);
         return {
           key: String(o.key ?? String.fromCharCode(65 + i))
             .trim()
             .toUpperCase(),
           text: String(o.text ?? "").trim(),
+          ...(image ? { image_url: image } : {}),
         };
       }
       return { key: String.fromCharCode(65 + i), text: "" };
@@ -91,7 +109,7 @@ export function shapePublicQuestion(q: QuestionRow) {
     subtest: q.subtest,
     question_number: q.question_number,
     question_text: q.question_text,
-    question_image_url: q.question_image_url,
+    question_image_url: safeImageUrl(q.question_image_url),
     options: normalizeOptions(q.options),
     category: q.category,
     difficulty: q.difficulty,

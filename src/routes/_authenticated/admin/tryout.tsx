@@ -81,6 +81,9 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { supabase } from "@/integrations/supabase/client";
 import { QuestionQualityPanel } from "@/components/admin/tryout/QuestionQualityPanel";
+import { FiguralGeneratorCard } from "@/components/admin/tryout/FiguralGeneratorCard";
+import { generateFiguralBatch } from "@/lib/tryout-figural";
+import { saveFiguralQuestions } from "@/lib/tryout-figural-save";
 import { EmptyState, TryoutPageHeader } from "@/components/tryout/TryoutLayout";
 import { CompositionBar } from "@/components/tryout/DashboardWidgets";
 
@@ -741,6 +744,12 @@ function AdminTryoutPage() {
             selectedSetId={generateExamSetId}
             onSelectSet={setGenerateExamSetId}
             onGenerated={() => void loadAll()}
+          />
+          <FiguralGeneratorCard
+            examSets={examSets}
+            selectedSetId={generateExamSetId}
+            onSelectSet={setGenerateExamSetId}
+            onSaved={() => void loadAll()}
           />
         </TabsContent>
 
@@ -2058,6 +2067,9 @@ function GenerateSoalPanel({
   const [category, setCategory] = useState("");
   const [difficulty, setDifficulty] = useState<Difficulty>("medium");
   const [fullDifficulty, setFullDifficulty] = useState<Difficulty>("medium");
+  // Soal TIU figural bergambar (generator SVG) di dalam set lengkap
+  const [includeFigural, setIncludeFigural] = useState(true);
+  const [figuralCount, setFiguralCount] = useState(8);
   const [generating, setGenerating] = useState(false);
   const [result, setResult] = useState<{
     generated: number;
@@ -2090,6 +2102,7 @@ function GenerateSoalPanel({
     count: number;
     difficulty: Difficulty;
     category?: string;
+    excludeCategories?: string[];
   }) {
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
     const { data: sessionData } = await supabase.auth.getSession();
@@ -2103,6 +2116,7 @@ function GenerateSoalPanel({
         count: opts.count,
         difficulty: opts.difficulty,
         category: opts.category || undefined,
+        exclude_categories: opts.excludeCategories?.length ? opts.excludeCategories : undefined,
       }),
     });
     const data = await res.json().catch(() => ({}));
@@ -2187,11 +2201,18 @@ function GenerateSoalPanel({
     }
     if (!selectedSet) return;
 
+    const figN = includeFigural ? Math.max(0, Math.min(figuralCount, selectedSet.tiu_count)) : 0;
+    // Target total per subtes (untuk top-up) & bagian yang dibuat AI teks.
     const targets: Array<{ subtest: SubtestKey; count: number }> = [
       { subtest: "twk", count: Math.max(0, selectedSet.twk_count) },
       { subtest: "tiu", count: Math.max(0, selectedSet.tiu_count) },
       { subtest: "tkp", count: Math.max(0, selectedSet.tkp_count) },
     ];
+    const aiTargets = targets.map((t) =>
+      t.subtest === "tiu" ? { ...t, count: Math.max(0, t.count - figN) } : t,
+    );
+    // Saat figural dibuat generator gambar, AI tidak membuat kategori Figural (teks).
+    const tiuExclude = figN > 0 ? ["Figural"] : undefined;
 
     // Pecah jadi batch kecil supaya respons AI cepat dan tidak kelewatan token
     // (server meminta ~1.3x lalu memverifikasi, jadi batch kecil lebih aman dari timeout)
@@ -2207,7 +2228,7 @@ function GenerateSoalPanel({
       }
       return out;
     };
-    const batches = splitBatches(targets);
+    const batches = splitBatches(aiTargets);
 
     if (batches.length === 0) {
       toast.error("Komposisi soal set masih kosong. Edit set untuk mengatur jumlah soal.");
@@ -2258,6 +2279,7 @@ function GenerateSoalPanel({
             subtest: b.subtest,
             count: b.count,
             difficulty: fullDifficulty,
+            excludeCategories: b.subtest === "tiu" ? tiuExclude : undefined,
           });
           const n = Number(data?.generated) || 0;
           generated += n;
@@ -2273,6 +2295,30 @@ function GenerateSoalPanel({
           );
           // Lanjut ke batch berikutnya, jangan berhenti di tengah (kecuali rate limit)
         }
+      }
+    }
+
+    // Soal figural bergambar lebih dulu (cepat & tanpa AI).
+    if (figN > 0) {
+      setFullProgress({
+        done: 0,
+        total: 1,
+        label: `Membuat ${figN} soal TIU figural (gambar)...`,
+        generated,
+      });
+      try {
+        const res = await saveFiguralQuestions(
+          selectedSetId,
+          generateFiguralBatch(figN, fullDifficulty),
+        );
+        generated += res.saved;
+        perSubtest.tiu += res.saved;
+        if (res.failed > 0) failedBatches.push(`Figural ${res.failed} soal`);
+      } catch (error) {
+        failedBatches.push(`Figural ${figN} soal`);
+        toast.error(
+          `Soal figural gagal dibuat — ${error instanceof Error ? error.message : "error"}`,
+        );
       }
     }
 
@@ -2415,6 +2461,36 @@ function GenerateSoalPanel({
             Set ini sudah memiliki {totalExisting} soal. Generate akan <b>menambah</b> soal lagi
             (penomoran melanjutkan).
           </div>
+        )}
+
+        {selectedSet && selectedSet.tiu_count > 0 && (
+          <label className="mt-3 flex flex-wrap items-center gap-3 rounded-xl border bg-muted/20 px-3 py-2.5 text-sm">
+            <input
+              type="checkbox"
+              checked={includeFigural}
+              onChange={(e) => setIncludeFigural(e.target.checked)}
+              className="h-4 w-4 accent-[hsl(var(--primary))]"
+            />
+            <span className="flex-1">
+              Sertakan soal <b>TIU figural bergambar</b> (dibuat generator gambar, kunci pasti
+              konsisten)
+            </span>
+            <input
+              type="number"
+              min={1}
+              max={selectedSet.tiu_count}
+              value={figuralCount}
+              disabled={!includeFigural}
+              onChange={(e) =>
+                setFiguralCount(
+                  Math.min(selectedSet.tiu_count, Math.max(1, Number(e.target.value) || 1)),
+                )
+              }
+              aria-label="Jumlah soal figural"
+              className="w-16 rounded-md border bg-background px-2 py-1 text-sm disabled:opacity-50"
+            />
+            <span className="text-xs text-muted-foreground">dari {selectedSet.tiu_count} TIU</span>
+          </label>
         )}
 
         <Button

@@ -17,7 +17,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { sanitizeTryoutHtml } from "@/lib/sanitize";
-import { normalizeOptions, questionOutcome } from "@/lib/tryout-options";
+import {
+  hasImageOptions,
+  normalizeOptions,
+  optionListClass,
+  questionOutcome,
+  safeTryoutImageUrl,
+} from "@/lib/tryout-options";
+import { OptionVisual } from "./OptionVisual";
 import type {
   TryoutExplanationDetail,
   TryoutQuestionFull,
@@ -118,6 +125,8 @@ export function PracticeMode({
   }
 
   const current = queue[index];
+  const currentOptions = current ? normalizeOptions(current.q.options) : [];
+  const currentImageMode = hasImageOptions(currentOptions);
   const currentPick = current ? picked[current.q.id] : undefined;
 
   function choose(key: string) {
@@ -278,8 +287,17 @@ export function PracticeMode({
               dangerouslySetInnerHTML={{ __html: sanitizeTryoutHtml(current.q.question_text) }}
             />
 
-            <div className="space-y-2" role="radiogroup">
-              {normalizeOptions(current.q.options).map((o) => {
+            {safeTryoutImageUrl(current.q.question_image_url) && (
+              <img
+                src={safeTryoutImageUrl(current.q.question_image_url)!}
+                alt="Gambar soal"
+                referrerPolicy="no-referrer"
+                className="max-h-56 w-full rounded-lg border bg-white object-contain"
+              />
+            )}
+
+            <div className={optionListClass(currentImageMode)} role="radiogroup">
+              {currentOptions.map((o) => {
                 const revealed = !!currentPick;
                 const isPick = currentPick === o.key;
                 const correct = revealed && isRight(current.q, o.key);
@@ -293,7 +311,10 @@ export function PracticeMode({
                     disabled={revealed}
                     onClick={() => choose(o.key)}
                     className={cn(
-                      "flex w-full items-start gap-2.5 rounded-xl border-2 p-3 text-left text-sm transition sm:text-base",
+                      "flex w-full rounded-xl border-2 text-left text-sm transition sm:text-base",
+                      currentImageMode
+                        ? "flex-col items-center gap-1.5 p-2"
+                        : "items-start gap-2.5 p-3",
                       !revealed && "border-border hover:border-primary/40 hover:bg-primary/5",
                       revealed &&
                         correct &&
@@ -317,7 +338,11 @@ export function PracticeMode({
                     >
                       {o.key}
                     </span>
-                    <span className="flex-1 pt-1 leading-relaxed">{o.text}</span>
+                    {currentImageMode ? (
+                      <OptionVisual opt={o} />
+                    ) : (
+                      <span className="flex-1 pt-1 leading-relaxed">{o.text}</span>
+                    )}
                     {revealed && score != null && (
                       <span className="shrink-0 pt-1 text-xs font-bold text-muted-foreground">
                         {score} poin

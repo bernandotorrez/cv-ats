@@ -116,6 +116,17 @@ export async function generateExplanation(
   q: QuestionRow,
   opts: { timeoutMs?: number } = {},
 ): Promise<ExplainOutcome> {
+  // AI hanya membaca teks. Soal bergambar (TIU figural / gambar manual) tidak
+  // boleh dibahas AI karena isinya tidak terlihat → rawan mengarang. Soal
+  // figural dari generator sudah membawa pembahasan detail sendiri.
+  if (q.question_image_url || normalizeOptions(q.options).some((o) => o.image_url)) {
+    return {
+      ok: false,
+      disputed: false,
+      reason: "Soal bergambar: pembahasan detail ditulis manual oleh admin.",
+    };
+  }
+
   const aiKey = Deno.env.get("AI_API_KEY");
   if (!aiKey) return { ok: false, disputed: false, reason: "AI_API_KEY tidak dikonfigurasi" };
 

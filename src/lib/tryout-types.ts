@@ -11,7 +11,10 @@ export type TryoutDifficulty = "easy" | "medium" | "hard";
 
 export type TryoutQuestionOption = {
   key: string; // A/B/C/D/E
+  /** Teks opsi; untuk opsi bergambar dipakai sebagai teks alternatif (alt). */
   text: string;
+  /** Gambar opsi (TIU figural) dari bucket tryout-images. */
+  image_url?: string | null;
 };
 
 export type TryoutQuestionScores = {

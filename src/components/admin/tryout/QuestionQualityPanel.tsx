@@ -46,7 +46,8 @@ import {
 } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { sanitizeTryoutHtml } from "@/lib/sanitize";
-import { normalizeOptions } from "@/lib/tryout-options";
+import { normalizeOptions, safeTryoutImageUrl } from "@/lib/tryout-options";
+import { uploadManualImage } from "@/lib/tryout-figural-save";
 import type { TryoutExplanationDetail, TryoutReportReason } from "@/lib/tryout-types";
 
 /* ────────────────────────────────────────────────────────────────────────────
@@ -77,6 +78,7 @@ type QuestionRow = {
   subtest: string;
   question_number: number;
   question_text: string;
+  question_image_url: string | null;
   options: unknown;
   correct_answer: string | null;
   scores: unknown;
@@ -99,7 +101,7 @@ const OPTION_KEYS = ["A", "B", "C", "D", "E"] as const;
 type OptionKey = (typeof OPTION_KEYS)[number];
 
 const QUESTION_COLUMNS =
-  "id, exam_set_id, subtest, question_number, question_text, options, correct_answer, scores, explanation, explanation_detail, category, difficulty";
+  "id, exam_set_id, subtest, question_number, question_text, question_image_url, options, correct_answer, scores, explanation, explanation_detail, category, difficulty";
 
 const REPORT_COLUMNS =
   "id, question_id, user_id, reason, note, status, admin_note, created_at, resolved_at, resolved_by";
@@ -813,6 +815,14 @@ function QuestionPreview({ question: q, setName }: { question: QuestionRow; setN
         dangerouslySetInnerHTML={{ __html: sanitizeTryoutHtml(q.question_text) }}
       />
 
+      {safeTryoutImageUrl(q.question_image_url) && (
+        <img
+          src={safeTryoutImageUrl(q.question_image_url)!}
+          alt="Gambar soal"
+          className="mt-2 max-h-40 w-full rounded-md border bg-white object-contain object-left"
+        />
+      )}
+
       <ul className="mt-2 space-y-1" aria-label="Pilihan jawaban">
         {options.map((o) => {
           const isKey = !isTkp && q.correct_answer === o.key;
@@ -827,6 +837,13 @@ function QuestionPreview({ question: q, setName }: { question: QuestionRow; setN
               )}
             >
               <span className="font-bold">{o.key}.</span>
+              {o.image_url && (
+                <img
+                  src={o.image_url}
+                  alt={o.text || `Gambar opsi ${o.key}`}
+                  className="h-12 w-12 shrink-0 rounded border bg-white object-contain"
+                />
+              )}
               <span
                 className="min-w-0 flex-1 break-words"
                 dangerouslySetInnerHTML={{ __html: sanitizeTryoutHtml(o.text) }}
@@ -921,6 +938,12 @@ function EditQuestionDialog({
   const [saving, setSaving] = useState(false);
   const [questionText, setQuestionText] = useState("");
   const [optionTexts, setOptionTexts] = useState<Record<OptionKey, string>>(emptyOptionRecord(""));
+  // Gambar soal & opsi (opsional). Opsi bergambar tetap boleh punya teks (dipakai sebagai alt).
+  const [questionImage, setQuestionImage] = useState<string | null>(null);
+  const [optionImages, setOptionImages] = useState<Record<OptionKey, string>>(
+    emptyOptionRecord(""),
+  );
+  const [uploading, setUploading] = useState<string | null>(null);
   const [correctAnswer, setCorrectAnswer] = useState<string>("");
   const [scoreInputs, setScoreInputs] = useState<Record<OptionKey, string>>(emptyOptionRecord(""));
   const [explanation, setExplanation] = useState("");
@@ -954,6 +977,12 @@ function EditQuestionDialog({
       const sc = parseScores(q.scores);
       setOriginal(q);
       setQuestionText(q.question_text);
+      setQuestionImage(safeTryoutImageUrl(q.question_image_url));
+      setOptionImages(
+        Object.fromEntries(
+          OPTION_KEYS.map((k) => [k, opts.find((o) => o.key === k)?.image_url ?? ""]),
+        ) as Record<OptionKey, string>,
+      );
       setOptionTexts(
         Object.fromEntries(
           OPTION_KEYS.map((k) => [k, opts.find((o) => o.key === k)?.text ?? ""]),
@@ -981,10 +1010,15 @@ function EditQuestionDialog({
   function validate(): string[] {
     const errs: string[] = [];
     if (!questionText.trim()) errs.push("Teks soal wajib diisi.");
-    const emptyOpts = OPTION_KEYS.filter((k) => !optionTexts[k].trim());
-    if (emptyOpts.length > 0) errs.push(`Opsi ${emptyOpts.join(", ")} masih kosong.`);
-    const texts = OPTION_KEYS.map((k) => optionTexts[k].trim().toLowerCase()).filter(Boolean);
+    const emptyOpts = OPTION_KEYS.filter((k) => !optionTexts[k].trim() && !optionImages[k]);
+    if (emptyOpts.length > 0)
+      errs.push(`Opsi ${emptyOpts.join(", ")} masih kosong (isi teks atau unggah gambar).`);
+    const texts = OPTION_KEYS.filter((k) => !optionImages[k])
+      .map((k) => optionTexts[k].trim().toLowerCase())
+      .filter(Boolean);
     if (new Set(texts).size !== texts.length) errs.push("Ada opsi dengan teks yang sama.");
+    const imgs = OPTION_KEYS.map((k) => optionImages[k]).filter(Boolean);
+    if (new Set(imgs).size !== imgs.length) errs.push("Ada opsi dengan gambar yang sama.");
     if (isTkp) {
       const vals = OPTION_KEYS.map((k) => Number(scoreInputs[k]));
       const sorted = [...vals].sort((a, b) => a - b);
@@ -1000,13 +1034,31 @@ function EditQuestionDialog({
     return errs;
   }
 
+  async function handleUpload(slot: "soal" | OptionKey, file: File | undefined) {
+    if (!file || !original) return;
+    setUploading(slot);
+    try {
+      const url = await uploadManualImage(file, original.id, slot);
+      if (slot === "soal") setQuestionImage(url);
+      else setOptionImages((s) => ({ ...s, [slot]: url }));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Upload gambar gagal");
+    } finally {
+      setUploading(null);
+    }
+  }
+
   async function handleSave() {
     if (!original) return;
     const errs = validate();
     setErrors(errs);
     if (errs.length > 0) return;
 
-    const newOptions = OPTION_KEYS.map((k) => ({ key: k, text: optionTexts[k].trim() }));
+    const newOptions = OPTION_KEYS.map((k) => ({
+      key: k,
+      text: optionTexts[k].trim() || (optionImages[k] ? `Gambar pilihan ${k}` : ""),
+      ...(optionImages[k] ? { image_url: optionImages[k] } : {}),
+    }));
     const newScores = isTkp
       ? (Object.fromEntries(OPTION_KEYS.map((k) => [k, Number(scoreInputs[k])])) as Record<
           OptionKey,
@@ -1020,18 +1072,27 @@ function EditQuestionDialog({
     const oldOptions = normalizeOptions(original.options);
     const optionsChanged =
       oldOptions.length !== newOptions.length ||
-      newOptions.some((o, i) => oldOptions[i]?.key !== o.key || oldOptions[i]?.text !== o.text);
+      newOptions.some(
+        (o, i) =>
+          oldOptions[i]?.key !== o.key ||
+          oldOptions[i]?.text !== o.text ||
+          (oldOptions[i]?.image_url ?? "") !== (o.image_url ?? ""),
+      );
     const oldScores = parseScores(original.scores);
     const scoresChanged = isTkp
       ? OPTION_KEYS.some((k) => oldScores[k] !== newScores?.[k])
       : original.scores != null;
     const textChanged = questionText !== original.question_text;
+    const imageChanged =
+      (questionImage ?? null) !== (safeTryoutImageUrl(original.question_image_url) ?? null);
     const correctChanged = newCorrect !== original.correct_answer;
-    const contentChanged = optionsChanged || scoresChanged || textChanged || correctChanged;
+    const contentChanged =
+      optionsChanged || scoresChanged || textChanged || correctChanged || imageChanged;
 
     const payload: {
       question_text?: string;
-      options?: Array<{ key: string; text: string }>;
+      question_image_url?: string | null;
+      options?: Array<{ key: string; text: string; image_url?: string }>;
       correct_answer?: string | null;
       scores?: Record<string, number> | null;
       explanation: string | null;
@@ -1043,6 +1104,7 @@ function EditQuestionDialog({
       difficulty,
     };
     if (textChanged) payload.question_text = questionText;
+    if (imageChanged) payload.question_image_url = questionImage;
     if (optionsChanged) payload.options = newOptions;
     if (correctChanged) payload.correct_answer = newCorrect;
     if (scoresChanged) payload.scores = newScores;
@@ -1109,6 +1171,15 @@ function EditQuestionDialog({
               </p>
             </div>
 
+            <ImageSlot
+              label="Gambar soal (opsional)"
+              url={questionImage}
+              busy={uploading === "soal"}
+              onPick={(f) => void handleUpload("soal", f)}
+              onRemove={() => setQuestionImage(null)}
+              wide
+            />
+
             <fieldset className="space-y-2">
               <legend className="mb-1 text-sm font-medium">
                 Opsi jawaban {isTkp ? "& skor TKP (1–5)" : ""}
@@ -1121,13 +1192,23 @@ function EditQuestionDialog({
                   >
                     {k}
                   </Label>
-                  <Textarea
-                    id={`eq-opt-${k}`}
-                    rows={2}
-                    className="min-h-0 flex-1"
-                    value={optionTexts[k]}
-                    onChange={(e) => setOptionTexts((s) => ({ ...s, [k]: e.target.value }))}
-                  />
+                  <div className="min-w-0 flex-1 space-y-1.5">
+                    <Textarea
+                      id={`eq-opt-${k}`}
+                      rows={2}
+                      className="min-h-0"
+                      placeholder={optionImages[k] ? "Teks alternatif gambar (opsional)" : ""}
+                      value={optionTexts[k]}
+                      onChange={(e) => setOptionTexts((s) => ({ ...s, [k]: e.target.value }))}
+                    />
+                    <ImageSlot
+                      label={`Gambar opsi ${k}`}
+                      url={optionImages[k] || null}
+                      busy={uploading === k}
+                      onPick={(f) => void handleUpload(k, f)}
+                      onRemove={() => setOptionImages((s) => ({ ...s, [k]: "" }))}
+                    />
+                  </div>
                   {isTkp && (
                     <Input
                       type="number"
@@ -1581,6 +1662,74 @@ function IssueList({
           </li>
         ))}
       </ul>
+    </div>
+  );
+}
+
+/** Slot unggah gambar (PNG/JPEG/WebP ≤ 1 MB) dengan pratinjau & hapus. */
+function ImageSlot({
+  label,
+  url,
+  busy,
+  onPick,
+  onRemove,
+  wide = false,
+}: {
+  label: string;
+  url: string | null;
+  busy: boolean;
+  onPick: (file: File | undefined) => void;
+  onRemove: () => void;
+  wide?: boolean;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  return (
+    <div className="flex flex-wrap items-center gap-2 text-xs">
+      {url ? (
+        <img
+          src={url}
+          alt={label}
+          className={cn(
+            "rounded-md border bg-white object-contain",
+            wide ? "max-h-28 w-full max-w-md" : "h-14 w-14",
+          )}
+        />
+      ) : (
+        <span className="text-muted-foreground">{label}: belum ada</span>
+      )}
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/png,image/jpeg,image/webp"
+        className="sr-only"
+        aria-label={label}
+        onChange={(e) => {
+          onPick(e.target.files?.[0]);
+          e.target.value = "";
+        }}
+      />
+      <Button
+        type="button"
+        size="sm"
+        variant="outline"
+        className="h-7 gap-1 px-2 text-xs"
+        disabled={busy}
+        onClick={() => inputRef.current?.click()}
+      >
+        {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : null}
+        {url ? "Ganti" : "Unggah"}
+      </Button>
+      {url && (
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          className="h-7 px-2 text-xs text-red-600"
+          onClick={onRemove}
+        >
+          Hapus
+        </Button>
+      )}
     </div>
   );
 }

@@ -22,6 +22,7 @@ import { cn } from "@/lib/utils";
 import { sanitizeTryoutHtml } from "@/lib/sanitize";
 import { callTryoutFunction } from "@/lib/tryout-api";
 import { normalizeOptions } from "@/lib/tryout-options";
+import { OptionVisual } from "./OptionVisual";
 import type {
   TryoutExplanationDetail,
   TryoutQuestionFull,
@@ -187,6 +188,7 @@ export function ExplanationPanel({
                       >
                         {o.key}
                       </span>
+                      {o.image_url && <OptionVisual opt={o} size="sm" className="shrink-0" />}
                       <span className="flex-1">
                         {text}
                         {(isMine || score != null) && (
@@ -220,8 +222,10 @@ export function ExplanationPanel({
             )}
 
             <p className="text-[10px] text-muted-foreground">
-              Pembahasan detail disusun dengan bantuan AI dan dicek konsisten dengan kunci. Temukan
-              kekeliruan? Gunakan tombol Laporkan.
+              {options.some((o) => o.image_url)
+                ? "Pembahasan dibuat otomatis dari aturan pola gambar, sehingga selalu sesuai kunci."
+                : "Pembahasan detail disusun dengan bantuan AI dan dicek konsisten dengan kunci."}{" "}
+              Temukan kekeliruan? Gunakan tombol Laporkan.
             </p>
           </div>
         </>

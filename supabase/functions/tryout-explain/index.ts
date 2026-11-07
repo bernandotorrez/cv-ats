@@ -175,6 +175,18 @@ Deno.serve(async (req: Request) => {
           422,
         );
       }
+      if (out.reason.startsWith("Soal bergambar")) {
+        return json(
+          req,
+          {
+            error: "IMAGE_QUESTION",
+            message: isAdmin
+              ? out.reason
+              : "Pembahasan detail untuk soal bergambar belum tersedia. Lihat pembahasan singkat di atas.",
+          },
+          422,
+        );
+      }
       return json(req, { error: "Gagal membuat pembahasan detail. Coba lagi sebentar." }, 502);
     }
 

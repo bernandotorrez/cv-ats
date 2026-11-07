@@ -73,6 +73,8 @@ type GenerateBody = {
   count?: unknown;
   category?: unknown;
   difficulty?: unknown;
+  /** Kategori resmi yang TIDAK boleh dibuat AI (mis. "Figural" saat soal gambar dibuat generator SVG). */
+  exclude_categories?: unknown;
 };
 
 /* ────────────────────────────────────────────────────────────────────────────
@@ -283,6 +285,16 @@ Deno.serve(async (req: Request) => {
     const fixedCategory = requestedCategory
       ? canonicalCategory(subtest, requestedCategory) || requestedCategory
       : "";
+    const excluded = new Set<string>(
+      (Array.isArray(body.exclude_categories) ? body.exclude_categories : [])
+        .filter((c): c is string => typeof c === "string" && c.length <= 60)
+        .map((c) => canonicalCategory(subtest, sanitizeLine(c)))
+        .filter((c): c is string => !!c),
+    );
+    const allowedCategories = BLUEPRINT[subtest].map((c) => c.name).filter((n) => !excluded.has(n));
+    if (!fixedCategory && allowedCategories.length === 0) {
+      return json(req, { error: "Semua kategori dikecualikan." }, 400);
+    }
 
     const aiKey = Deno.env.get("AI_API_KEY");
     if (!aiKey) {
@@ -355,11 +367,7 @@ Deno.serve(async (req: Request) => {
     );
     const quota = fixedCategory
       ? null
-      : allocateQuota(
-          BLUEPRINT[subtest].map((c) => c.name),
-          existingCategoryCounts,
-          generateCount,
-        );
+      : allocateQuota(allowedCategories, existingCategoryCounts, generateCount);
 
     const prompt = buildPrompt({
       subtest,
@@ -446,9 +454,12 @@ Deno.serve(async (req: Request) => {
     }
 
     // ── 4. Ambil `count` soal (seimbang per kategori bila tanpa kategori admin) ──
+    const pool = excluded.size
+      ? accepted.filter((q) => !excluded.has(canonicalCategory(subtest, q.category || "") || ""))
+      : accepted;
     const picked = fixedCategory
-      ? accepted.slice(0, count)
-      : pickBalanced(accepted, count, existingCategoryCounts);
+      ? pool.slice(0, count)
+      : pickBalanced(pool, count, existingCategoryCounts);
 
     if (picked.length === 0) {
       return json(

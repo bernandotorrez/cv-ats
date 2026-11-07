@@ -16,7 +16,14 @@ import type {
 } from "@/lib/tryout-types";
 import { SUBTEST_INFO } from "@/lib/tryout-types";
 import { DIFFICULTY_LABEL } from "@/lib/tryout-analysis";
-import { normalizeOptions, questionOutcome } from "@/lib/tryout-options";
+import {
+  hasImageOptions,
+  normalizeOptions,
+  optionListClass,
+  questionOutcome,
+  safeTryoutImageUrl,
+} from "@/lib/tryout-options";
+import { OptionVisual } from "./OptionVisual";
 import { ExplanationPanel } from "./ExplanationPanel";
 import { ReportQuestionDialog } from "./ReportQuestionDialog";
 
@@ -43,6 +50,8 @@ export function QuestionCard({
 }: QuestionProps) {
   const [imageExpanded, setImageExpanded] = useState(false);
   const options = normalizeOptions(question.options);
+  const imageMode = hasImageOptions(options);
+  const questionImage = safeTryoutImageUrl(question.question_image_url);
   const info = SUBTEST_INFO[question.subtest];
 
   return (
@@ -107,7 +116,12 @@ export function QuestionCard({
         </div>
       </div>
 
-      {question.question_image_url && (
+      <div
+        className="prose prose-sm mb-5 max-w-none select-none text-foreground dark:prose-invert sm:mb-6 sm:text-base"
+        dangerouslySetInnerHTML={{ __html: sanitizeTryoutHtml(question.question_text) }}
+      />
+
+      {questionImage && (
         <button
           type="button"
           onClick={() => setImageExpanded(!imageExpanded)}
@@ -115,12 +129,13 @@ export function QuestionCard({
           aria-label={imageExpanded ? "Perkecil gambar soal" : "Perbesar gambar soal"}
         >
           <img
-            src={question.question_image_url}
+            src={questionImage}
             alt="Gambar soal"
             loading="lazy"
             referrerPolicy="no-referrer"
+            draggable={false}
             className={cn(
-              "w-full transition",
+              "w-full select-none bg-white transition",
               imageExpanded ? "max-h-none" : "max-h-48 object-contain sm:max-h-64",
             )}
           />
@@ -128,11 +143,10 @@ export function QuestionCard({
       )}
 
       <div
-        className="prose prose-sm mb-5 max-w-none select-none text-foreground dark:prose-invert sm:mb-6 sm:text-base"
-        dangerouslySetInnerHTML={{ __html: sanitizeTryoutHtml(question.question_text) }}
-      />
-
-      <div role="radiogroup" aria-labelledby={`q-${question.id}-title`} className="space-y-2">
+        role="radiogroup"
+        aria-labelledby={`q-${question.id}-title`}
+        className={optionListClass(imageMode)}
+      >
         {options.map((opt) => {
           const selected = selectedAnswer === opt.key;
           return (
@@ -143,7 +157,10 @@ export function QuestionCard({
               aria-checked={selected}
               onClick={() => onAnswer(opt.key)}
               className={cn(
-                "group flex w-full items-start gap-2.5 rounded-xl border-2 p-3 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 sm:gap-3 sm:p-3.5",
+                "group flex w-full rounded-xl border-2 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
+                imageMode
+                  ? "flex-col items-center gap-1.5 p-2"
+                  : "items-start gap-2.5 p-3 sm:gap-3 sm:p-3.5",
                 selected
                   ? "border-primary bg-primary/5 ring-2 ring-primary/20 dark:bg-primary/10"
                   : "border-border bg-background hover:border-primary/40 hover:bg-primary/5 dark:hover:bg-primary/10",
@@ -159,10 +176,16 @@ export function QuestionCard({
               >
                 {opt.key}
               </span>
-              <span className="flex-1 select-none pt-1 text-sm leading-relaxed sm:pt-1.5 sm:text-base">
-                {opt.text}
-              </span>
-              {selected && <Check className="mt-1.5 h-4 w-4 shrink-0 text-primary" aria-hidden />}
+              {imageMode ? (
+                <OptionVisual opt={opt} />
+              ) : (
+                <span className="flex-1 select-none pt-1 text-sm leading-relaxed sm:pt-1.5 sm:text-base">
+                  {opt.text}
+                </span>
+              )}
+              {selected && !imageMode && (
+                <Check className="mt-1.5 h-4 w-4 shrink-0 text-primary" aria-hidden />
+              )}
             </button>
           );
         })}
@@ -196,6 +219,8 @@ export function QuestionResultCard({
 }: ResultProps) {
   const [reportOpen, setReportOpen] = useState(false);
   const options = normalizeOptions(question.options);
+  const imageMode = hasImageOptions(options);
+  const questionImage = safeTryoutImageUrl(question.question_image_url);
   const isTkp = question.subtest === "tkp";
   const scores = question.scores ?? null;
   const maxScore = scores ? Math.max(...Object.values(scores)) : null;
@@ -262,7 +287,17 @@ export function QuestionResultCard({
         dangerouslySetInnerHTML={{ __html: sanitizeTryoutHtml(question.question_text) }}
       />
 
-      <div className="space-y-2">
+      {questionImage && (
+        <img
+          src={questionImage}
+          alt="Gambar soal"
+          loading="lazy"
+          referrerPolicy="no-referrer"
+          className="mb-5 max-h-64 w-full rounded-lg border bg-white object-contain"
+        />
+      )}
+
+      <div className={optionListClass(imageMode)}>
         {options.map((opt) => {
           const isUserChoice = userAnswer === opt.key;
           const optScore = scores?.[opt.key];
@@ -275,7 +310,10 @@ export function QuestionResultCard({
             <div
               key={opt.key}
               className={cn(
-                "flex items-start gap-2.5 rounded-xl border-2 p-3 text-sm sm:gap-3 sm:p-3.5 sm:text-base",
+                "flex rounded-xl border-2 text-sm sm:text-base",
+                imageMode
+                  ? "flex-col items-center gap-1.5 p-2"
+                  : "items-start gap-2.5 p-3 sm:gap-3 sm:p-3.5",
                 isKey
                   ? "border-emerald-400 bg-emerald-50 dark:bg-emerald-950/40"
                   : isWrongChoice
@@ -299,8 +337,17 @@ export function QuestionResultCard({
               >
                 {opt.key}
               </span>
-              <span className="flex-1 pt-1 leading-relaxed">{opt.text}</span>
-              <div className="flex shrink-0 flex-col items-end gap-1 pt-1">
+              {imageMode ? (
+                <OptionVisual opt={opt} />
+              ) : (
+                <span className="flex-1 pt-1 leading-relaxed">{opt.text}</span>
+              )}
+              <div
+                className={cn(
+                  "flex shrink-0 gap-1",
+                  imageMode ? "flex-col items-center" : "flex-col items-end pt-1",
+                )}
+              >
                 {isTkp && optScore != null && (
                   <span
                     className={cn(
