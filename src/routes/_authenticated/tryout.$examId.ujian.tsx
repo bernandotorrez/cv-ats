@@ -682,7 +682,7 @@ function TryoutExamPage() {
         </div>
       )}
 
-      <div className="container-page space-y-4 py-4 pb-28 md:py-6 md:pb-28">
+      <div className="container-page space-y-4 py-4 md:py-6">
         <SubtestTabs
           activeSubtest={activeSubtest}
           counts={{
@@ -751,6 +751,71 @@ function TryoutExamPage() {
                 onToggleFlag={() => handleToggleFlag(currentQuestion.id)}
               />
             )}
+            {/* Navigasi soal: tepat di bawah kartu soal; menempel di bawah layar bila soal panjang */}
+            <div className="sticky bottom-0 z-20 -mx-4 mt-3 border-t bg-background/95 px-4 pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_24px_-16px_rgba(0,0,0,0.25)] backdrop-blur sm:mx-0 sm:rounded-xl sm:border sm:px-3 sm:pb-0">
+              <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 py-2.5">
+                <Button
+                  variant="outline"
+                  disabled={currentIndex === 0}
+                  onClick={() => goTo(currentIndex - 1)}
+                  className="h-11 gap-1 justify-self-start lg:min-w-[150px]"
+                >
+                  <ChevronLeft className="h-4 w-4" aria-hidden />
+                  <span className="sm:hidden">Prev</span>
+                  <span className="hidden sm:inline">Sebelumnya</span>
+                </Button>
+
+                <div className="flex flex-col items-center gap-0.5">
+                  <Button
+                    variant="secondary"
+                    onClick={() => setNavOpen(true)}
+                    className="h-11 gap-1.5 px-3 lg:hidden"
+                    aria-label="Buka daftar soal"
+                  >
+                    <Grid3X3 className="h-4 w-4" aria-hidden />
+                    <span className="tabular-nums">
+                      {currentIndex + 1}/{total}
+                    </span>
+                  </Button>
+                  <div className="hidden text-center lg:block">
+                    <div className="text-sm font-semibold tabular-nums text-foreground">
+                      Soal {currentIndex + 1} dari {total}
+                    </div>
+                    <div
+                      className={cn(
+                        "text-[11px] font-medium",
+                        currentAnswered
+                          ? "text-emerald-600 dark:text-emerald-400"
+                          : "text-muted-foreground",
+                      )}
+                    >
+                      {currentAnswered
+                        ? `Dijawab ${answers[currentQuestion!.id]}`
+                        : "Belum dijawab"}
+                    </div>
+                  </div>
+                </div>
+
+                {currentIndex === total - 1 ? (
+                  <Button
+                    onClick={() => setConfirmOpen(true)}
+                    className="h-11 gap-1 justify-self-end bg-emerald-600 hover:bg-emerald-700 lg:min-w-[150px]"
+                  >
+                    Kumpulkan <Send className="h-4 w-4" aria-hidden />
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={() => goTo(currentIndex + 1)}
+                    variant={currentAnswered ? "default" : "outline"}
+                    className="h-11 gap-1 justify-self-end lg:min-w-[150px]"
+                    title="Soal berikutnya (→ atau Enter)"
+                  >
+                    {currentAnswered ? "Selanjutnya" : "Lewati"}
+                    <ChevronRight className="h-4 w-4" aria-hidden />
+                  </Button>
+                )}
+              </div>
+            </div>
           </div>
 
           {/* Sidebar desktop */}
@@ -781,73 +846,6 @@ function TryoutExamPage() {
               </p>
             </div>
           </aside>
-        </div>
-      </div>
-
-      {/* Bar navigasi soal — selalu terlihat (desktop & HP), tidak perlu scroll */}
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t bg-background/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_24px_-16px_rgba(0,0,0,0.25)] backdrop-blur">
-        <div className="container-page grid grid-cols-[1fr_auto_1fr] items-center gap-2 py-2.5 lg:grid-cols-[1fr_auto_1fr_340px] lg:gap-4">
-          <Button
-            variant="outline"
-            disabled={currentIndex === 0}
-            onClick={() => goTo(currentIndex - 1)}
-            className="h-11 gap-1 justify-self-start lg:min-w-[150px]"
-          >
-            <ChevronLeft className="h-4 w-4" aria-hidden />
-            <span className="sm:hidden">Prev</span>
-            <span className="hidden sm:inline">Sebelumnya</span>
-          </Button>
-
-          <div className="flex flex-col items-center gap-0.5">
-            <Button
-              variant="secondary"
-              onClick={() => setNavOpen(true)}
-              className="h-11 gap-1.5 px-3 lg:hidden"
-              aria-label="Buka daftar soal"
-            >
-              <Grid3X3 className="h-4 w-4" aria-hidden />
-              <span className="tabular-nums">
-                {currentIndex + 1}/{total}
-              </span>
-            </Button>
-            <div className="hidden text-center lg:block">
-              <div className="text-sm font-semibold tabular-nums text-foreground">
-                Soal {currentIndex + 1} dari {total}
-              </div>
-              <div
-                className={cn(
-                  "text-[11px] font-medium",
-                  currentAnswered
-                    ? "text-emerald-600 dark:text-emerald-400"
-                    : "text-muted-foreground",
-                )}
-              >
-                {currentAnswered ? `Dijawab ${answers[currentQuestion!.id]}` : "Belum dijawab"}
-              </div>
-            </div>
-          </div>
-
-          {currentIndex === total - 1 ? (
-            <Button
-              onClick={() => setConfirmOpen(true)}
-              className="h-11 gap-1 justify-self-end bg-emerald-600 hover:bg-emerald-700 lg:min-w-[150px]"
-            >
-              Kumpulkan <Send className="h-4 w-4" aria-hidden />
-            </Button>
-          ) : (
-            <Button
-              onClick={() => goTo(currentIndex + 1)}
-              variant={currentAnswered ? "default" : "outline"}
-              className="h-11 gap-1 justify-self-end lg:min-w-[150px]"
-              title="Soal berikutnya (→ atau Enter)"
-            >
-              {currentAnswered ? "Selanjutnya" : "Lewati"}
-              <ChevronRight className="h-4 w-4" aria-hidden />
-            </Button>
-          )}
-
-          {/* Kolom kosong selebar sidebar agar tombol sejajar kartu soal di desktop */}
-          <div className="hidden lg:block" aria-hidden />
         </div>
       </div>
 

@@ -413,6 +413,9 @@ function RootComponent() {
   const pathname = routerState.location.pathname;
   const isSharePage = pathname.startsWith("/share/") || pathname.startsWith("/portfolio/");
   const isCvBuilderPage = /^\/cv\/[^/]+\/?$/.test(pathname);
+  // Halaman ujian tryout = mode fokus: punya top bar & bar navigasi soal sendiri.
+  const isTryoutExamPage = /^\/tryout\/[^/]+\/ujian\/?$/.test(pathname);
+  const hideSiteChrome = isSharePage || isCvBuilderPage || isTryoutExamPage;
   const authenticatedRoutePrefixes = [
     "/admin",
     "/akun",
@@ -445,13 +448,13 @@ function RootComponent() {
         </a>
         <div className="flex min-h-screen flex-col">
           {/* CV builder punya header sendiri (EditorToolbar) dan tampil layar penuh */}
-          {!isSharePage && !isCvBuilderPage && <SiteHeader />}
+          {!hideSiteChrome && <SiteHeader />}
           <main id="main" className="flex-1">
             <Suspense fallback={<PageLoadingFallback />}>
               <Outlet />
             </Suspense>
           </main>
-          {!isSharePage && !isCvBuilderPage && <SiteFooter />}
+          {!hideSiteChrome && <SiteFooter />}
         </div>
         <Toaster />
         <Analytics />
