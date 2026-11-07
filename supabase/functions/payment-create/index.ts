@@ -24,11 +24,14 @@ import { runInBackground, sendPaymentEmail } from "../_shared/email.ts";
 const SUMOPOD_API_URL =
   Deno.env.get("SUMOPOD_PAY_API_URL") || "https://api-pay.sumopod.com/api/v1/payments";
 const SITE_URL = (Deno.env.get("SITE_URL") || "https://cvpintar.web.id").replace(/\/+$/, "");
-// Host halaman bayar yang dipercaya (SumoPod memakai checkout.pymnt.app).
+// Host halaman bayar yang dipercaya. SumoPod pernah memakai checkout.pymnt.app,
+// sekarang mengirim short link Xendit (xen.to → checkout.xendit.co).
 // Tambahan bisa diset via secret SUMOPOD_PAY_LINK_HOSTS="host1,host2".
 const TRUSTED_PAYMENT_HOSTS = [
   "sumopod.com",
   "pymnt.app",
+  "xen.to",
+  "xendit.co",
   ...(Deno.env.get("SUMOPOD_PAY_LINK_HOSTS") || "")
     .split(",")
     .map((h) => h.trim().toLowerCase())
