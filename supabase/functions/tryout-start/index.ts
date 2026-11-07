@@ -99,6 +99,17 @@ Deno.serve(async (req: Request) => {
           409,
         );
       }
+      if (msg.includes("SET_INCOMPLETE")) {
+        return json(
+          req,
+          {
+            error: "SET_INCOMPLETE",
+            message:
+              "Set tryout ini sedang disiapkan dan soalnya belum lengkap. Kredit kamu tidak terpakai — coba set lain atau kembali nanti.",
+          },
+          409,
+        );
+      }
       if (msg.includes("EXAM_SET_NOT_FOUND")) {
         return json(req, { error: "Set tryout tidak ditemukan atau tidak aktif." }, 404);
       }

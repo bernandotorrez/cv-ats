@@ -473,6 +473,18 @@ function AdminTryoutPage() {
   }).length;
 
   async function toggleActive(es: ExamSetRow) {
+    if (!es.is_active) {
+      const c = questionCounts[es.id] ?? { twk: 0, tiu: 0, tkp: 0 };
+      const incomplete = c.twk < es.twk_count || c.tiu < es.tiu_count || c.tkp < es.tkp_count;
+      if (
+        incomplete &&
+        !window.confirm(
+          `Soal "${es.name}" belum lengkap (TWK ${c.twk}/${es.twk_count} · TIU ${c.tiu}/${es.tiu_count} · TKP ${c.tkp}/${es.tkp_count}).\n\nSet akan terlihat oleh user, tetapi tryout baru tidak bisa dimulai sampai soal lengkap. Tetap aktifkan?`,
+        )
+      ) {
+        return;
+      }
+    }
     setTogglingSetId(es.id);
     const { error } = await supabase
       .from("tryout_exam_sets")
@@ -1584,7 +1596,8 @@ function ExamSetDialog({
   const [pgTiu, setPgTiu] = useState(80);
   const [pgTkp, setPgTkp] = useState(166);
   const [sortOrder, setSortOrder] = useState(1);
-  const [isActive, setIsActive] = useState(true);
+  // Set baru default NONAKTIF: aktifkan setelah soal lengkap & ditinjau.
+  const [isActive, setIsActive] = useState(false);
   const [isFreePreview, setIsFreePreview] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
@@ -1621,7 +1634,7 @@ function ExamSetDialog({
       setPgTiu(80);
       setPgTkp(166);
       setSortOrder(1);
-      setIsActive(true);
+      setIsActive(false);
       setIsFreePreview(false);
     }
   }, [open, editing]);
@@ -1901,7 +1914,8 @@ function ExamSetDialog({
                   Set aktif
                 </Label>
                 <p className="text-[11px] text-muted-foreground">
-                  Terlihat dan bisa dikerjakan user.
+                  Terlihat oleh user. Tryout baru hanya bisa dimulai setelah jumlah soal sesuai
+                  komposisi. Biarkan nonaktif sampai soal selesai di-generate & ditinjau.
                 </p>
               </div>
               <Switch id={ids.active} checked={isActive} onCheckedChange={setIsActive} />
@@ -2069,7 +2083,8 @@ function GenerateSoalPanel({
   const [fullDifficulty, setFullDifficulty] = useState<Difficulty>("medium");
   // Soal TIU figural bergambar (generator SVG) di dalam set lengkap
   const [includeFigural, setIncludeFigural] = useState(true);
-  const [figuralCount, setFiguralCount] = useState(8);
+  // Prediksi umum komposisi CAT: ±10 figural (3 analogi, 3 ketidaksamaan, 4 serial).
+  const [figuralCount, setFiguralCount] = useState(10);
   const [generating, setGenerating] = useState(false);
   const [result, setResult] = useState<{
     generated: number;
