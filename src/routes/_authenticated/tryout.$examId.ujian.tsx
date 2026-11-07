@@ -87,6 +87,15 @@ function TryoutExamPage() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
+  // Lanjut otomatis ke soal berikutnya setelah memilih jawaban (preferensi lokal).
+  const [autoNext, setAutoNext] = useState(() => {
+    try {
+      return typeof window !== "undefined" && localStorage.getItem("tryout_auto_next") === "1";
+    } catch {
+      return false;
+    }
+  });
+  const autoNextTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   const [attemptId, setAttemptId] = useState<string | null>(null);
@@ -395,10 +404,16 @@ function TryoutExamPage() {
   // ─── 5. Handlers ─────────────────────────────────────────────────────────
   const total = questions.length;
   const currentQuestion = questions[currentIndex];
+  const currentAnswered = !!(currentQuestion && answers[currentQuestion.id]);
 
   const goTo = useCallback(
     (idx: number) => {
       if (idx < 0 || idx >= total) return;
+      // Navigasi manual membatalkan "lanjut otomatis" yang masih menunggu.
+      if (autoNextTimer.current) {
+        clearTimeout(autoNextTimer.current);
+        autoNextTimer.current = null;
+      }
       setCurrentIndex(idx);
       setNavOpen(false);
       if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
@@ -413,13 +428,44 @@ function TryoutExamPage() {
       answersRef.current = next;
       setAnswers(next);
       markDirty();
+      // Lanjut otomatis: jeda singkat agar pilihan sempat terlihat; memilih
+      // ulang dalam jeda ini membatalkan perpindahan sebelumnya.
+      if (autoNext) {
+        if (autoNextTimer.current) clearTimeout(autoNextTimer.current);
+        const idx = questions.findIndex((q) => q.id === questionId);
+        if (idx >= 0 && idx < questions.length - 1) {
+          autoNextTimer.current = setTimeout(() => goTo(idx + 1), 450);
+        }
+      }
     },
-    [markDirty],
+    [markDirty, autoNext, questions, goTo],
   );
+
+  useEffect(
+    () => () => {
+      if (autoNextTimer.current) clearTimeout(autoNextTimer.current);
+    },
+    [],
+  );
+
+  const toggleAutoNext = () => {
+    setAutoNext((v) => {
+      try {
+        localStorage.setItem("tryout_auto_next", v ? "0" : "1");
+      } catch {
+        /* abaikan */
+      }
+      return !v;
+    });
+  };
 
   const handleClear = useCallback(
     (questionId: string) => {
       if (submittingRef.current || !answersRef.current[questionId]) return;
+      if (autoNextTimer.current) {
+        clearTimeout(autoNextTimer.current);
+        autoNextTimer.current = null;
+      }
       const next = { ...answersRef.current };
       delete next[questionId];
       answersRef.current = next;
@@ -459,7 +505,12 @@ function TryoutExamPage() {
       } else if (/^[1-5]$/.test(k) && keys[Number(k) - 1]) {
         e.preventDefault();
         handleAnswer(currentQuestion.id, keys[Number(k) - 1]);
-      } else if (e.key === "ArrowRight") {
+      } else if (
+        e.key === "ArrowRight" ||
+        (e.key === "Enter" &&
+          // Enter = soal berikutnya, kecuali fokus di tombol lain (mis. Kumpulkan).
+          (target?.tagName !== "BUTTON" || target.getAttribute("role") === "radio"))
+      ) {
         e.preventDefault();
         goTo(currentIndex + 1);
       } else if (e.key === "ArrowLeft") {
@@ -631,7 +682,7 @@ function TryoutExamPage() {
         </div>
       )}
 
-      <div className="container-page space-y-4 py-4 pb-28 md:py-6 lg:pb-6">
+      <div className="container-page space-y-4 py-4 pb-28 md:py-6 md:pb-28">
         <SubtestTabs
           activeSubtest={activeSubtest}
           counts={{
@@ -645,11 +696,43 @@ function TryoutExamPage() {
           }}
         />
 
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <button
+            type="button"
+            role="switch"
+            aria-checked={autoNext}
+            onClick={toggleAutoNext}
+            className={cn(
+              "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
+              autoNext
+                ? "border-primary bg-primary/10 text-primary"
+                : "bg-card text-muted-foreground hover:bg-muted",
+            )}
+            title="Pindah ke soal berikutnya otomatis setelah memilih jawaban"
+          >
+            <span
+              className={cn(
+                "relative h-4 w-7 rounded-full transition",
+                autoNext ? "bg-primary" : "bg-muted-foreground/30",
+              )}
+              aria-hidden
+            >
+              <span
+                className={cn(
+                  "absolute top-0.5 h-3 w-3 rounded-full bg-white shadow transition-all",
+                  autoNext ? "left-3.5" : "left-0.5",
+                )}
+              />
+            </span>
+            Lanjut otomatis
+          </button>
+        </div>
+
         {showShortcuts && (
           <div className="rounded-xl border bg-muted/30 p-3 text-xs text-muted-foreground">
             <span className="font-semibold text-foreground">Pintasan:</span> <Kbd>A</Kbd>–
-            <Kbd>E</Kbd> pilih jawaban · <Kbd>←</Kbd> <Kbd>→</Kbd> pindah soal · <Kbd>R</Kbd> tandai
-            ragu · <Kbd>Backspace</Kbd> hapus jawaban
+            <Kbd>E</Kbd> pilih jawaban · <Kbd>←</Kbd> <Kbd>→</Kbd> / <Kbd>Enter</Kbd> pindah soal ·{" "}
+            <Kbd>R</Kbd> tandai ragu · <Kbd>Backspace</Kbd> hapus jawaban
           </div>
         )}
 
@@ -668,30 +751,6 @@ function TryoutExamPage() {
                 onToggleFlag={() => handleToggleFlag(currentQuestion.id)}
               />
             )}
-
-            {/* Navigasi desktop */}
-            <div className="mt-4 hidden items-center justify-between gap-2 lg:flex">
-              <Button
-                variant="outline"
-                disabled={currentIndex === 0}
-                onClick={() => goTo(currentIndex - 1)}
-                className="gap-1.5"
-              >
-                <ChevronLeft className="h-4 w-4" /> Sebelumnya
-              </Button>
-              {currentIndex === total - 1 ? (
-                <Button
-                  onClick={() => setConfirmOpen(true)}
-                  className="gap-1.5 bg-emerald-600 hover:bg-emerald-700"
-                >
-                  <Send className="h-4 w-4" /> Kumpulkan Ujian
-                </Button>
-              ) : (
-                <Button onClick={() => goTo(currentIndex + 1)} className="gap-1.5">
-                  Selanjutnya <ChevronRight className="h-4 w-4" />
-                </Button>
-              )}
-            </div>
           </div>
 
           {/* Sidebar desktop */}
@@ -725,40 +784,70 @@ function TryoutExamPage() {
         </div>
       </div>
 
-      {/* Bottom bar mobile */}
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden">
-        <div className="container-page grid grid-cols-[1fr_auto_1fr] items-center gap-2 py-2.5">
+      {/* Bar navigasi soal — selalu terlihat (desktop & HP), tidak perlu scroll */}
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t bg-background/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_24px_-16px_rgba(0,0,0,0.25)] backdrop-blur">
+        <div className="container-page grid grid-cols-[1fr_auto_1fr] items-center gap-2 py-2.5 lg:grid-cols-[1fr_auto_1fr_340px] lg:gap-4">
           <Button
             variant="outline"
             disabled={currentIndex === 0}
             onClick={() => goTo(currentIndex - 1)}
-            className="gap-1"
+            className="h-11 gap-1 justify-self-start lg:min-w-[150px]"
           >
-            <ChevronLeft className="h-4 w-4" /> Prev
+            <ChevronLeft className="h-4 w-4" aria-hidden />
+            <span className="sm:hidden">Prev</span>
+            <span className="hidden sm:inline">Sebelumnya</span>
           </Button>
-          <Button
-            variant="secondary"
-            onClick={() => setNavOpen(true)}
-            className="gap-1.5 px-3"
-            aria-label="Buka daftar soal"
-          >
-            <Grid3X3 className="h-4 w-4" />
-            <span className="tabular-nums">
-              {currentIndex + 1}/{total}
-            </span>
-          </Button>
+
+          <div className="flex flex-col items-center gap-0.5">
+            <Button
+              variant="secondary"
+              onClick={() => setNavOpen(true)}
+              className="h-11 gap-1.5 px-3 lg:hidden"
+              aria-label="Buka daftar soal"
+            >
+              <Grid3X3 className="h-4 w-4" aria-hidden />
+              <span className="tabular-nums">
+                {currentIndex + 1}/{total}
+              </span>
+            </Button>
+            <div className="hidden text-center lg:block">
+              <div className="text-sm font-semibold tabular-nums text-foreground">
+                Soal {currentIndex + 1} dari {total}
+              </div>
+              <div
+                className={cn(
+                  "text-[11px] font-medium",
+                  currentAnswered
+                    ? "text-emerald-600 dark:text-emerald-400"
+                    : "text-muted-foreground",
+                )}
+              >
+                {currentAnswered ? `Dijawab ${answers[currentQuestion!.id]}` : "Belum dijawab"}
+              </div>
+            </div>
+          </div>
+
           {currentIndex === total - 1 ? (
             <Button
               onClick={() => setConfirmOpen(true)}
-              className="gap-1 bg-emerald-600 hover:bg-emerald-700"
+              className="h-11 gap-1 justify-self-end bg-emerald-600 hover:bg-emerald-700 lg:min-w-[150px]"
             >
-              Kumpulkan <Send className="h-4 w-4" />
+              Kumpulkan <Send className="h-4 w-4" aria-hidden />
             </Button>
           ) : (
-            <Button onClick={() => goTo(currentIndex + 1)} className="gap-1">
-              Next <ChevronRight className="h-4 w-4" />
+            <Button
+              onClick={() => goTo(currentIndex + 1)}
+              variant={currentAnswered ? "default" : "outline"}
+              className="h-11 gap-1 justify-self-end lg:min-w-[150px]"
+              title="Soal berikutnya (→ atau Enter)"
+            >
+              {currentAnswered ? "Selanjutnya" : "Lewati"}
+              <ChevronRight className="h-4 w-4" aria-hidden />
             </Button>
           )}
+
+          {/* Kolom kosong selebar sidebar agar tombol sejajar kartu soal di desktop */}
+          <div className="hidden lg:block" aria-hidden />
         </div>
       </div>
 

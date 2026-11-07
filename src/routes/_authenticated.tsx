@@ -42,7 +42,9 @@ function AuthGate() {
   const navigate = useNavigate();
   const isCvBuilderPage = /^\/cv\/[^/]+\/?$/.test(pathname);
   const isAdminPage = pathname === "/admin" || pathname.startsWith("/admin/");
-  const hideBottomNav = isCvBuilderPage || isAdminPage;
+  // Halaman ujian tryout punya bar navigasi soal sendiri di bawah layar.
+  const isTryoutExamPage = /^\/tryout\/[^/]+\/ujian\/?$/.test(pathname);
+  const hideBottomNav = isCvBuilderPage || isAdminPage || isTryoutExamPage;
 
   // Belum login (load pertama / sesi berakhir): ke login lalu kembali ke halaman ini.
   // Dipicu sekali saja: navigate() dipanggil lagi di setiap render selama navigasi masih
