@@ -1,7 +1,7 @@
 /**
  * /tryout/leaderboard — Papan peringkat (skor terbaik tiap peserta per set).
  * Data lewat RPC get_tryout_leaderboard: tanpa UUID user, nama disamarkan,
- * cek entitlement Paket Lengkap di server.
+ * cek entitlement paket (flag has_leaderboard) di server.
  */
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";

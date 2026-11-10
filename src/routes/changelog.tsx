@@ -90,7 +90,7 @@ const changelog: Release[] = [
         icon: Trophy,
         type: "Peningkatan",
         short: "Tryout SKD makin lengkap",
-        text: "Soal disusun mengikuti kisi-kisi BKN dan dicek ulang agar tidak ada yang mirip. Hasil ujian menampilkan tingkat kesiapan, jarak ke passing grade, peringkat, dan rekomendasi belajar per kategori yang kini menaut ke modul yang relevan. Paket Lengkap menambah pembahasan detail, latihan ulang soal yang salah, dan leaderboard nasional.",
+        text: "Soal disusun mengikuti kisi-kisi BKN dan dicek ulang agar tidak ada yang mirip. Hasil ujian menampilkan tingkat kesiapan, jarak ke passing grade, peringkat, dan rekomendasi belajar per kategori yang kini menaut ke modul yang relevan. Semua paket berbayar, termasuk Tryout Satuan, kini dilengkapi pembahasan detail, latihan ulang soal yang salah, dan leaderboard nasional.",
       },
       {
         icon: Smartphone,

@@ -9,7 +9,7 @@ import { CompositionBar } from "@/components/tryout/DashboardWidgets";
 const POINTS = [
   { icon: Clock, text: "110 soal · timer 100 menit" },
   { icon: BarChart3, text: "Skor, peringkat & rekomendasi belajar" },
-  { icon: BookOpen, text: "Pembahasan detail tiap soal (Paket Lengkap)" },
+  { icon: BookOpen, text: "Pembahasan detail tiap soal & leaderboard" },
 ];
 
 export function TryoutPromo({ highlight = false }: { highlight?: boolean }) {

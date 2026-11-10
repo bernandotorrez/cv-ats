@@ -424,11 +424,11 @@ function TryoutResultPage() {
             <Lock className="mx-auto h-8 w-8 text-muted-foreground" />
             <h2 className="mt-3 font-display text-lg font-bold">Pembahasan terkunci</h2>
             <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
-              Lihat kunci jawaban, skor tiap opsi TKP, dan pembahasan lengkap setiap soal dengan
-              Paket Lengkap.
+              Kunci jawaban, skor tiap opsi TKP, dan pembahasan lengkap setiap soal tersedia untuk
+              tryout yang memakai kredit paket, mulai dari Tryout Satuan.
             </p>
             <Button asChild className="mt-4">
-              <Link to={"/tryout/beli" as never}>Lihat Paket Lengkap</Link>
+              <Link to={"/tryout/beli" as never}>Lihat Paket Tryout</Link>
             </Button>
           </section>
         )

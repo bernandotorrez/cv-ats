@@ -64,10 +64,10 @@ export function LeaderboardTable({
         </span>
         <h3 className="mt-3 font-display text-base font-bold">Leaderboard terkunci</h3>
         <p className="mx-auto mt-1 max-w-xs text-sm text-muted-foreground">
-          Bandingkan skormu dengan peserta lain lewat Paket Lengkap.
+          Leaderboard terbuka setelah kamu membeli paket tryout apa pun, termasuk Tryout Satuan.
         </p>
         <Button asChild size="sm" className="mt-4 rounded-lg">
-          <Link to={"/tryout/beli" as never}>Lihat Paket Lengkap</Link>
+          <Link to={"/tryout/beli" as never}>Lihat Paket Tryout</Link>
         </Button>
       </div>
     );

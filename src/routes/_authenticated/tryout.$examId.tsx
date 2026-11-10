@@ -387,7 +387,7 @@ function TryoutExamDetailPage() {
                 <p className="mt-1 text-xs text-muted-foreground">
                   {running
                     ? "Ujian gratis sedang berjalan."
-                    : "Kreditmu tidak terpakai. Skor & analisis tersedia; pembahasan detail khusus Paket Lengkap."}
+                    : "Kreditmu tidak terpakai. Skor & analisis tersedia; pembahasan detail khusus tryout berbayar."}
                 </p>
               </div>
             ) : (

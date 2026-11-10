@@ -4,7 +4,7 @@
  * - Berikan paket tryout secara manual (mis. saat payment gateway bermasalah).
  *   Memakai edge function `tryout-activate-credit` yang sama dengan Admin → Tryout,
  *   sehingga hasilnya identik dengan pembelian: satu baris `tryout_credits` baru
- *   dengan paket aslinya (Paket Lengkap ikut membuka pembahasan & leaderboard).
+ *   dengan paket aslinya (fitur pembahasan & leaderboard mengikuti flag paket).
  * - Lihat riwayat paket user, ubah jumlah kredit per paket, atau batalkan paket
  *   yang salah diberikan (status → refunded). Ditulis langsung lewat RLS admin.
  */

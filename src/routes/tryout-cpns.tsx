@@ -54,7 +54,7 @@ const SITE = "https://cvpintar.web.id";
 const faqs = [
   {
     q: "Apakah tryout ini gratis?",
-    a: "Tidak. Setiap tryout memakai 1 kredit. Kredit didapat dengan membeli Tryout Satuan (1x tryout, Rp15.000) atau Paket Lengkap (5x tryout, Rp50.000). Pembayaran via QRIS dan kredit aktif otomatis setelah pembayaran berhasil.",
+    a: "Ada set percobaan bertanda Gratis untuk mencoba tampilan ujian. Selebihnya, setiap tryout memakai 1 kredit yang didapat dengan membeli Tryout Satuan (1x tryout, Rp15.000) atau Paket Lengkap (5x tryout, Rp50.000). Pembayaran via QRIS dan kredit aktif otomatis setelah pembayaran berhasil.",
   },
   {
     q: "Apakah soalnya mirip ujian asli?",
@@ -66,7 +66,7 @@ const faqs = [
   },
   {
     q: "Apa bedanya Tryout Satuan dan Paket Lengkap?",
-    a: "Keduanya berisi tryout 110 soal dengan hasil skor, tingkat kesiapan, peringkat, dan rekomendasi belajar per kategori. Paket Lengkap berisi 5 kredit dan menambahkan pembahasan detail setiap soal, mode latihan ulang soal yang salah, serta akses leaderboard nasional.",
+    a: "Fiturnya sama persis: tryout 110 soal, hasil skor, tingkat kesiapan, rekomendasi belajar, pembahasan detail setiap soal, mode latihan ulang soal yang salah, dan leaderboard nasional. Bedanya hanya jumlah kredit: Tryout Satuan berisi 1 kredit (Rp15.000), sedangkan Paket Lengkap berisi 5 kredit (Rp50.000), sehingga hanya Rp10.000 per tryout.",
   },
   {
     q: "Apakah kredit tryout punya masa berlaku?",
@@ -82,7 +82,7 @@ const faqs = [
   },
   {
     q: "Bisa mengulang set soal yang sama?",
-    a: "Bisa, selama kamu masih punya kredit. Setiap percobaan baru memakai 1 kredit. Pengguna Paket Lengkap juga bisa latihan ulang soal yang salah dari halaman hasil tanpa memakai kredit dan tanpa mengubah skor.",
+    a: "Bisa, selama kamu masih punya kredit. Setiap percobaan baru memakai 1 kredit. Kamu juga bisa latihan ulang soal yang salah dari halaman hasil tanpa memakai kredit dan tanpa mengubah skor.",
   },
 ] as const;
 
@@ -121,7 +121,7 @@ export const Route = createFileRoute("/tryout-cpns")({
           "@type": "Course",
           name: "Tryout Simulasi SKD CPNS 2026 Online",
           description:
-            "Simulasi ujian Seleksi Kompetensi Dasar (SKD) CPNS dengan 110 soal (30 TWK, 35 TIU, 45 TKP), timer 100 menit, passing grade 65/80/166, hasil dan rekomendasi belajar. Pembahasan detail, mode latihan ulang, dan leaderboard nasional tersedia di Paket Lengkap.",
+            "Simulasi ujian Seleksi Kompetensi Dasar (SKD) CPNS dengan 110 soal (30 TWK, 35 TIU, 45 TKP), timer 100 menit, passing grade 65/80/166, hasil dan rekomendasi belajar. Pembahasan detail, mode latihan ulang, dan leaderboard nasional tersedia di semua paket.",
           provider: {
             "@type": "Organization",
             name: "CV Pintar",
@@ -174,7 +174,7 @@ export const Route = createFileRoute("/tryout-cpns")({
           "@type": "WebPage",
           name: "Tryout CPNS SKD Online 2026",
           description:
-            "Tryout SKD CPNS 2026 di CV Pintar: 110 soal, timer 100 menit, hasil dan rekomendasi belajar, serta pembahasan detail di Paket Lengkap.",
+            "Tryout SKD CPNS 2026 di CV Pintar: 110 soal, timer 100 menit, hasil dan rekomendasi belajar, serta pembahasan detail setiap soal di semua paket.",
           url: `${SITE}/tryout-cpns`,
           inLanguage: "id-ID",
           isPartOf: {
@@ -199,7 +199,6 @@ type Feature = {
   title: string;
   desc: string;
   points: string[];
-  premium?: boolean;
 };
 
 const features: Feature[] = [
@@ -232,28 +231,24 @@ const features: Feature[] = [
       "Analisis tiap pilihan jawaban",
       "Tips & dasar hukum",
     ],
-    premium: true,
   },
   {
     icon: Dumbbell,
     title: "Mode latihan ulang",
     desc: "Kerjakan ulang soal yang salah sampai benar-benar paham.",
     points: ["Tanpa memakai kredit", "Tanpa timer & tidak mengubah skor", "Jawaban langsung dicek"],
-    premium: true,
   },
   {
     icon: Trophy,
     title: "Leaderboard nasional",
     desc: "Ukur posisimu di antara pejuang SKD se-Indonesia.",
     points: ["Peringkat nasional berdasarkan skor", "Bandingkan skormu dengan peserta lain"],
-    premium: true,
   },
   {
     icon: Flag,
     title: "Laporkan soal",
     desc: "Temukan soal atau kunci yang keliru? Laporkan langsung dari halaman pembahasan.",
     points: ["Laporan ditinjau tim kami", "Soal diperbaiki bila terbukti keliru"],
-    premium: true,
   },
 ];
 
@@ -271,7 +266,7 @@ const steps = [
   {
     icon: BookOpen,
     title: "Pelajari hasil & pembahasan",
-    desc: "Lihat skor, jarak ke passing grade, dan rekomendasi belajar. Paket Lengkap membuka pembahasan detail.",
+    desc: "Lihat skor, jarak ke passing grade, rekomendasi belajar, dan pembahasan detail setiap soal.",
   },
 ] as const;
 
@@ -366,7 +361,7 @@ function TryoutCpnsLandingPage() {
               <p className="mt-6 text-lg leading-relaxed text-gray-600">
                 110 soal mengikuti kisi-kisi BKN (30 TWK + 35 TIU + 45 TKP), timer 100 menit, dan
                 hasil instan dengan jarak ke passing grade serta rekomendasi belajar. Pembahasan
-                detail tiap soal tersedia di Paket Lengkap.
+                detail tiap soal dan leaderboard tersedia di semua paket.
               </p>
 
               <div className="mt-8 flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
@@ -436,7 +431,7 @@ function TryoutCpnsLandingPage() {
             id="fitur-heading"
             eyebrow="Fitur"
             title="Bukan cuma skor. Kamu tahu apa yang harus dipelajari."
-            desc="Semua paket sudah termasuk simulasi CAT serta hasil & analisis. Fitur bertanda Paket Lengkap terbuka setelah membeli Paket Lengkap."
+            desc="Semua fitur ini tersedia di setiap paket berbayar, termasuk Tryout Satuan. Tinggal pilih jumlah tryout yang kamu butuhkan."
           />
           <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {features.map((f) => (
@@ -448,15 +443,9 @@ function TryoutCpnsLandingPage() {
                   <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-green-700 text-white">
                     <f.icon aria-hidden="true" className="h-6 w-6" />
                   </span>
-                  {f.premium ? (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-yellow-100 px-2.5 py-1 text-xs font-bold text-yellow-900">
-                      <Star aria-hidden="true" className="h-3.5 w-3.5" /> Paket Lengkap
-                    </span>
-                  ) : (
-                    <span className="rounded-full bg-green-100 px-2.5 py-1 text-xs font-bold text-green-800">
-                      Semua paket
-                    </span>
-                  )}
+                  <span className="rounded-full bg-green-100 px-2.5 py-1 text-xs font-bold text-green-800">
+                    Semua paket
+                  </span>
                 </div>
                 <h3 className="mt-5 font-display text-lg font-bold text-gray-900">{f.title}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-gray-600">{f.desc}</p>
@@ -518,7 +507,7 @@ function TryoutCpnsLandingPage() {
             id="paket-heading"
             eyebrow="Paket tryout"
             title="Pilih paket, mulai latihan hari ini."
-            desc="Mulai dari 1x tryout sampai Paket Lengkap dengan pembahasan detail, mode latihan ulang, dan leaderboard."
+            desc="Semua paket sudah termasuk pembahasan detail, mode latihan ulang, dan leaderboard. Paket Lengkap lebih hemat untuk latihan rutin."
           />
           {packages.length > 0 ? (
             <ul className="mx-auto grid max-w-4xl gap-6 md:grid-cols-2 md:items-start">
@@ -723,7 +712,7 @@ function TryoutCpnsLandingPage() {
                 "110 soal · 100 menit",
                 "Passing grade 65 / 80 / 166",
                 "Hasil & rekomendasi belajar",
-                "Pembahasan detail (Paket Lengkap)",
+                "Pembahasan detail setiap soal",
               ].map((p) => (
                 <li key={p} className="flex items-center gap-2">
                   <CheckCircle2 aria-hidden="true" className="h-4 w-4 shrink-0 text-yellow-300" />
@@ -799,7 +788,7 @@ const showcaseTabs = [
     label: "Pembahasan",
     icon: BookOpen,
     title: "Pembahasan detail tiap soal",
-    desc: "Tersedia di Paket Lengkap. Jawabanmu dibandingkan dengan kunci, lalu dibedah langkah demi langkah.",
+    desc: "Tersedia di semua paket. Jawabanmu dibandingkan dengan kunci, lalu dibedah langkah demi langkah.",
     points: [
       "Konsep yang diuji",
       "Langkah penyelesaian",
@@ -971,7 +960,7 @@ function ExplanationVisual() {
         />
       </figure>
       <p className="mt-3 flex items-center justify-center gap-1.5 text-sm font-semibold text-gray-700">
-        <Star aria-hidden="true" className="h-4 w-4 text-yellow-600" /> Khusus Paket Lengkap
+        <Star aria-hidden="true" className="h-4 w-4 text-yellow-600" /> Tersedia di semua paket
       </p>
     </div>
   );
