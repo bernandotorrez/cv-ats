@@ -20,9 +20,11 @@ declare global {
   }
 }
 
-const BENIX_WIDGET_SCRIPT_ID = "benix-widget-sdk";
+const BENIX_WIDGET_SCRIPT_ID = "benix-cs-widget-sdk";
 // Gunakan subdomain SDK resmi widget.benixai.web.id agar URL skrip dan targetOrigin iframe widget konsisten.
-const BENIX_WIDGET_SRC = "https://widget.benixai.web.id/benix-widget.js";
+const BENIX_WIDGET_SRC = "https://widget.benixai.web.id/benix-cs-widget.js";
+const DEFAULT_BENIX_CS_WIDGET_TOKEN =
+  "bkn_cs_widget_c5721aa87da94110b2ad5b156bab42ac9f8373c92de44e888f01cadd079f78b8";
 const BENIX_WIDGET_SELECTORS = [
   '[id*="benix" i]',
   '[class*="benix" i]',
@@ -121,9 +123,9 @@ export function BenixCsWidget({ disabled = false, hidden = false }: BenixCsWidge
     if (blocked || typeof window === "undefined") return;
 
     const token =
-      import.meta.env.VITE_BENIX_WIDGET_TOKEN ||
       import.meta.env.VITE_BENIX_CS_WIDGET_TOKEN ||
-      "bkn_widget_TOKEN_ANDA";
+      import.meta.env.VITE_BENIX_WIDGET_TOKEN ||
+      DEFAULT_BENIX_CS_WIDGET_TOKEN;
 
     const hasWidgetDom = () =>
       Array.from(document.querySelectorAll(BENIX_WIDGET_SELECTORS)).some(
@@ -131,13 +133,13 @@ export function BenixCsWidget({ disabled = false, hidden = false }: BenixCsWidge
       );
 
     const initWidget = () => {
-      const widget = window.BenixWidget ?? window.BenixCSWidget;
+      const widget = window.BenixCSWidget ?? window.BenixWidget;
       if (!widget) return false;
       if (window.__benixCsWidgetReady && hasWidgetDom()) return true;
 
       try {
         widget.init({
-          token: token || "bkn_widget_TOKEN_ANDA",
+          token: token || DEFAULT_BENIX_CS_WIDGET_TOKEN,
           position: "bottom-right",
           primaryColor: "#3b82f6",
         });
