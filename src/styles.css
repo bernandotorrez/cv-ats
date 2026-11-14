@@ -368,6 +368,7 @@
   body.benix-cs-widget-hidden [id*="benix" i],
   body.benix-cs-widget-hidden [class*="benix" i],
   body.benix-cs-widget-hidden iframe[src*="benixai.web.id" i],
+  body.benix-cs-widget-hidden iframe[src*="benix-widget" i],
   body.benix-cs-widget-hidden iframe[src*="benix-cs-widget" i] {
     display: none !important;
     visibility: hidden !important;
@@ -391,6 +392,7 @@
   [id*="benix" i],
   [class*="benix" i],
   iframe[src*="benixai.web.id" i],
+  iframe[src*="benix-widget" i],
   iframe[src*="benix-cs-widget" i] {
     display: none !important;
     visibility: hidden !important;

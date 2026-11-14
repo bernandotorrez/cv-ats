@@ -2,28 +2,32 @@ import { useEffect } from "react";
 import { useRouterState } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth-context";
 
+type BenixWidgetConfig = {
+  token?: string;
+  position?: "bottom-right" | "bottom-left";
+  primaryColor?: string;
+};
+
 declare global {
   interface Window {
+    BenixWidget?: {
+      init: (config: BenixWidgetConfig) => void;
+    };
     BenixCSWidget?: {
-      init: (config: {
-        token?: string;
-        position?: "bottom-right" | "bottom-left";
-        primaryColor?: string;
-      }) => void;
+      init: (config: BenixWidgetConfig) => void;
     };
     __benixCsWidgetReady?: boolean;
   }
 }
 
-const BENIX_WIDGET_SCRIPT_ID = "benix-cs-widget-sdk";
-// Pakai domain kanonik (tanpa www). www.benixai.web.id me-redirect (308) ke sini, sedangkan
-// widget memakai origin URL skrip ini sebagai targetOrigin postMessage ke iframe-nya →
-// dari www terjadi "target origin does not match" dan widget tidak bisa berkomunikasi.
-const BENIX_WIDGET_SRC = "https://benixai.web.id/benix-cs-widget.js";
+const BENIX_WIDGET_SCRIPT_ID = "benix-widget-sdk";
+// Gunakan subdomain SDK resmi widget.benixai.web.id agar URL skrip dan targetOrigin iframe widget konsisten.
+const BENIX_WIDGET_SRC = "https://widget.benixai.web.id/benix-widget.js";
 const BENIX_WIDGET_SELECTORS = [
   '[id*="benix" i]',
   '[class*="benix" i]',
   'iframe[src*="benixai.web.id" i]',
+  'iframe[src*="benix-widget" i]',
   'iframe[src*="benix-cs-widget" i]',
 ].join(",");
 
@@ -116,7 +120,10 @@ export function BenixCsWidget({ disabled = false, hidden = false }: BenixCsWidge
   useEffect(() => {
     if (blocked || typeof window === "undefined") return;
 
-    const token = import.meta.env.VITE_BENIX_CS_WIDGET_TOKEN;
+    const token =
+      import.meta.env.VITE_BENIX_WIDGET_TOKEN ||
+      import.meta.env.VITE_BENIX_CS_WIDGET_TOKEN ||
+      "bkn_widget_TOKEN_ANDA";
 
     const hasWidgetDom = () =>
       Array.from(document.querySelectorAll(BENIX_WIDGET_SELECTORS)).some(
@@ -124,14 +131,15 @@ export function BenixCsWidget({ disabled = false, hidden = false }: BenixCsWidge
       );
 
     const initWidget = () => {
-      if (!window.BenixCSWidget) return false;
+      const widget = window.BenixWidget ?? window.BenixCSWidget;
+      if (!widget) return false;
       if (window.__benixCsWidgetReady && hasWidgetDom()) return true;
 
       try {
-        window.BenixCSWidget.init({
-          ...(token ? { token } : {}),
+        widget.init({
+          token: token || "bkn_widget_TOKEN_ANDA",
           position: "bottom-right",
-          primaryColor: "#468432",
+          primaryColor: "#3b82f6",
         });
         window.__benixCsWidgetReady = true;
         return true;
