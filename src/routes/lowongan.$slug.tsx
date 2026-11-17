@@ -1008,11 +1008,100 @@ const CITY_REGION: Record<string, string> = {
   pontianak: "Kalimantan Barat",
 };
 
+/** Kode pos pusat kota (perkiraan) — sumber lowongan jarang mencantumkan alamat lengkap. */
+const CITY_POSTAL: Record<string, string> = {
+  jakarta: "10110",
+  "jakarta pusat": "10110",
+  "central jakarta": "10110",
+  "jakarta selatan": "12110",
+  "south jakarta": "12110",
+  "jakarta utara": "14110",
+  "north jakarta": "14110",
+  "jakarta barat": "11110",
+  "west jakarta": "11110",
+  "jakarta timur": "13110",
+  "east jakarta": "13110",
+  "greater jakarta": "10110",
+  bandung: "40111",
+  bekasi: "17111",
+  bogor: "16110",
+  depok: "16411",
+  cikarang: "17530",
+  karawang: "41311",
+  cimahi: "40511",
+  cirebon: "45111",
+  sukabumi: "43111",
+  tasikmalaya: "46111",
+  tangerang: "15111",
+  "tangerang selatan": "15310",
+  serang: "42111",
+  cilegon: "42411",
+  surabaya: "60111",
+  malang: "65111",
+  sidoarjo: "61211",
+  gresik: "61111",
+  kediri: "64111",
+  pasuruan: "67111",
+  mojokerto: "61311",
+  jember: "68111",
+  semarang: "50111",
+  solo: "57111",
+  surakarta: "57111",
+  magelang: "56111",
+  kudus: "59311",
+  pekalongan: "51111",
+  tegal: "52111",
+  purwokerto: "53111",
+  yogyakarta: "55111",
+  jogja: "55111",
+  sleman: "55511",
+  bantul: "55711",
+  denpasar: "80111",
+  badung: "80351",
+  gianyar: "80511",
+  medan: "20111",
+  palembang: "30111",
+  pekanbaru: "28111",
+  batam: "29411",
+  padang: "25111",
+  "bandar lampung": "35111",
+  makassar: "90111",
+  manado: "95111",
+  balikpapan: "76111",
+  samarinda: "75111",
+  banjarmasin: "70111",
+  pontianak: "78111",
+};
+
+/** Fallback kode pos ibu kota provinsi bila kotanya tidak ada di daftar. */
+const REGION_POSTAL: Record<string, string> = {
+  "DKI Jakarta": "10110",
+  "Jawa Barat": "40111",
+  Banten: "42111",
+  "Jawa Timur": "60111",
+  "Jawa Tengah": "50111",
+  "DI Yogyakarta": "55111",
+  Bali: "80111",
+  "Sumatera Utara": "20111",
+  "Sumatera Selatan": "30111",
+  Riau: "28111",
+  "Kepulauan Riau": "29411",
+  "Sumatera Barat": "25111",
+  Lampung: "35111",
+  "Sulawesi Selatan": "90111",
+  "Sulawesi Utara": "95111",
+  "Kalimantan Timur": "75111",
+  "Kalimantan Selatan": "70111",
+  "Kalimantan Barat": "78111",
+};
+
 /**
  * "Bandung, Jawa Barat" → locality Bandung, region Jawa Barat. Kalau provinsi
  * tidak tertulis, ditebak dari daftar kota besar. "Remote"/"Indonesia" hanya negara.
+ * streetAddress & postalCode dilengkapi sebaik mungkin agar lolos Google Jobs:
+ * jalan jarang tersedia, jadi dipakai "<perusahaan>, <kota>"; kode pos = pusat kota.
  */
-function buildPostalAddress(location: string) {
+function buildPostalAddress(location: string, company: string) {
   const parts = location
     .split(",")
     .map((part) => part.trim())
@@ -1023,11 +1112,15 @@ function buildPostalAddress(location: string) {
     .replace(/^(kota|kabupaten|kab\.?)\s+/, "")
     .trim();
   const region = parts[1] || CITY_REGION[cityKey];
+  const postalCode = CITY_POSTAL[cityKey] || (region ? REGION_POSTAL[region] : undefined);
+  const streetAddress = [company, locality].filter(Boolean).join(", ");
 
   return {
     "@type": "PostalAddress",
+    ...(streetAddress ? { streetAddress } : {}),
     ...(locality ? { addressLocality: locality } : {}),
     ...(region ? { addressRegion: region } : {}),
+    ...(postalCode ? { postalCode } : {}),
     addressCountry: "ID",
   };
 }
@@ -1046,7 +1139,7 @@ function buildJobPostingJsonLd(job: Job) {
     ? `${job.deadline.slice(0, 10)}T23:59:59+07:00`
     : job.expires_at ||
       new Date(new Date(job.posted_at || job.created_at).getTime() + 60 * 86_400_000).toISOString();
-  const address = buildPostalAddress(job.location);
+  const address = buildPostalAddress(job.location, job.company);
 
   return {
     "@context": "https://schema.org",
@@ -1062,8 +1155,6 @@ function buildJobPostingJsonLd(job: Job) {
       name: job.company,
       ...(job.company_logo ? { logo: job.company_logo } : {}),
     },
-    // streetAddress & postalCode tidak diisi: sumber lowongan jarang mencantumkannya
-    // dan Google hanya menandainya sebagai rekomendasi, bukan error.
     jobLocation: {
       "@type": "Place",
       address: address,
