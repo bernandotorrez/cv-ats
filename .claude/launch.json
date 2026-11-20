@@ -1,0 +1,41 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "cv-ats-dev",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev"
+      ],
+      "port": 8080,
+      "autoPort": false
+    },
+    {
+      "name": "cv-ats-demo",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "vite",
+        "dev",
+        "--port",
+        "5177",
+        "--strictPort"
+      ],
+      "port": 5177,
+      "autoPort": false
+    },
+    {
+      "name": "cv-ats-verify",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "vite",
+        "dev",
+        "--port",
+        "5188",
+        "--strictPort"
+      ],
+      "port": 5188,
+      "autoPort": false
+    }
+  ]
+}
