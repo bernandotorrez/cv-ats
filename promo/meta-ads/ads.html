@@ -1,0 +1,160 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>CV Pintar · Kreatif Meta Ads (4:5)</title>
+<style>
+@font-face { font-family: "Jakarta"; src: url("plus-jakarta-sans-latin-wght-normal.woff2") format("woff2"); font-weight: 200 800; }
+@font-face { font-family: "Inter"; src: url("inter-latin-wght-normal.woff2") format("woff2"); font-weight: 100 900; }
+:root {
+  --g950: #052e16; --g900: #14532d; --g800: #166534; --g700: #15803d; --g600: #16a34a; --g500: #22c55e; --g400: #4ade80;
+  --g300: #86efac; --g200: #bbf7d0; --g100: #dcfce7; --g50: #f0fdf4;
+  --ink: #0f172a; --gray: #475569; --muted: #94a3b8; --y: #fde047; --cream: #fbfdf9;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 1080px; height: 1350px; overflow: hidden; background: #000; }
+#ad { position: absolute; inset: 0; overflow: hidden; font-family: "Jakarta", sans-serif; color: var(--ink); }
+.abs { position: absolute; }
+.disp { font-family: "Jakarta"; font-weight: 800; letter-spacing: -0.04em; line-height: 1.02; }
+.body { font-family: "Inter"; }
+.pill { display: inline-flex; align-items: center; gap: 14px; border-radius: 999px; white-space: nowrap; font-family: "Inter"; font-weight: 700; }
+.dots { position: absolute; inset: 0; background-image: radial-gradient(rgba(134,239,172,.11) 2px, transparent 2.5px); background-size: 54px 54px; }
+.glow { position: absolute; border-radius: 50%; }
+.shot { position: absolute; overflow: hidden; border-radius: 28px; background: #fff; box-shadow: 0 50px 90px -30px rgba(5,46,22,.45), 0 0 0 1px rgba(15,23,42,.07); }
+.shot img { position: absolute; display: block; }
+.brand { position: absolute; left: 64px; top: 56px; display: flex; align-items: center; gap: 16px; }
+.brand img { width: 56px; height: 50px; }
+.brand span { font: 800 34px Jakarta; letter-spacing: -.03em; }
+.cta { position: absolute; left: 64px; right: 64px; bottom: 92px; display: flex; align-items: center; justify-content: space-between; }
+.btn { padding: 26px 44px; border-radius: 999px; font: 800 36px Jakarta; letter-spacing: -.02em; display: inline-flex; align-items: center; gap: 14px; }
+.url { font: 600 28px Inter; }
+.legal { position: absolute; left: 64px; right: 64px; bottom: 38px; font: 500 20px Inter; }
+.ico { display: inline-block; vertical-align: middle; flex: none; }
+.chip { position: absolute; display: inline-flex; align-items: center; gap: 12px; padding: 16px 26px 16px 18px; border-radius: 22px; background: #fff; box-shadow: 0 24px 50px -22px rgba(5,46,22,.5), 0 0 0 1px rgba(21,128,61,.12); font: 800 28px Jakarta; letter-spacing: -.02em; }
+</style>
+</head>
+<body>
+<div id="ad"></div>
+<script>
+const ICONS = {
+  clock: '<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
+  check: '<path d="M20 6 9 17l-5-5"/>',
+  circlecheck: '<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>',
+  arrow: '<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>',
+  qr: '<rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M21 21v.01"/><path d="M12 7v3a2 2 0 0 1-2 2H7"/><path d="M3 12h.01"/><path d="M12 3h.01"/><path d="M12 16v.01"/><path d="M16 12h1"/><path d="M21 12v.01"/><path d="M12 21v-1"/>',
+  book: '<path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/>',
+  target: '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
+  layers: '<path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/>',
+  repeat: '<path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/>',
+  save: '<path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/><path d="m9 15 2 2 4-4"/>',
+  flag: '<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><path d="M4 22v-7"/>',
+  msg: '<path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/>',
+  calc: '<rect width="16" height="20" x="4" y="2" rx="2"/><path d="M8 6h8"/><path d="M16 14v4"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/>',
+  shapes: '<path d="M8.3 10a.7.7 0 0 1-.626-1.079L11.4 3a.7.7 0 0 1 1.198-.043L16.3 8.9a.7.7 0 0 1-.572 1.1Z"/><rect x="3" y="14" width="7" height="7" rx="1"/><circle cx="17.5" cy="17.5" r="3.5"/>',
+  users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  calendar: '<path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/>',
+  sparkles: '<path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/>',
+};
+const ico = (n, s = 24, c = 'currentColor', w = 2.4) => `<svg class="ico" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round">${ICONS[n]}</svg>`;
+
+const LEGAL_LIGHT = '<div class="legal" style="color:#94a3b8">Bukan situs resmi BKN/SSCASN. Tangkapan layar hanya contoh tampilan.</div>';
+const LEGAL_DARK = '<div class="legal" style="color:rgba(187,247,208,.55)">Bukan situs resmi BKN/SSCASN. Tangkapan layar hanya contoh tampilan.</div>';
+const brand = (c) => `<div class="brand" style="color:${c}"><img src="assets/logo-icon.png"><span><span style="color:${c === '#fff' ? '#4ade80' : '#15803d'}">CV</span> Pintar</span></div>`;
+
+const ADS = {
+  // A · harga per latihan
+  a: () => `
+    <div class="abs" style="inset:0;background:var(--g950)"></div><div class="dots"></div>
+    <div class="glow" style="left:140px;top:300px;width:800px;height:800px;background:radial-gradient(circle,rgba(34,197,94,.30),transparent 65%)"></div>
+    ${brand('#fff')}
+    <div class="abs body" style="left:64px;top:190px;font-size:38px;font-weight:700;color:var(--g300);letter-spacing:.01em">Tryout SKD CPNS, Paket Lengkap</div>
+    <div class="abs" style="left:64px;top:250px;display:flex;align-items:baseline;gap:18px">
+      <span class="body" style="font-size:64px;font-weight:800;color:var(--g300)">Rp</span>
+      <span class="disp" style="font-size:262px;color:#fff;letter-spacing:-.06em">10.000</span>
+    </div>
+    <div class="abs disp" style="left:64px;top:560px;font-size:88px;color:var(--y)">per tryout.</div>
+    <div class="abs" style="left:64px;right:64px;top:720px;border-radius:34px;padding:38px 42px;background:rgba(255,255,255,.07);box-shadow:inset 0 0 0 1.5px rgba(134,239,172,.22)">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:26px 28px">
+        ${['110 soal TWK · TIU · TKP', 'Timer 100 menit', 'Pembahasan tiap soal', 'Leaderboard nasional', 'Mode latihan ulang', 'Bayar QRIS, langsung aktif'].map(t =>
+          `<div class="body" style="display:flex;align-items:center;gap:14px;font-size:29px;font-weight:600;color:#fff;line-height:1.25">${ico('circlecheck', 34, '#4ade80')}${t}</div>`).join('')}
+      </div>
+      <div style="margin-top:32px;height:1.5px;background:rgba(255,255,255,.15)"></div>
+      <div class="body" style="margin-top:26px;font-size:30px;font-weight:600;color:var(--g200)">5x tryout hanya <b style="color:#fff">Rp50.000</b>. Coba satuan mulai Rp15.000.</div>
+    </div>
+    <div class="cta"><div class="btn" style="background:var(--y);color:var(--ink)">Mulai tryout ${ico('arrow', 36, '#0f172a', 3)}</div><div class="url" style="color:var(--g200)">cvpintar.web.id/tryout-cpns</div></div>
+    ${LEGAL_DARK}`,
+
+  // B · timer 100 menit
+  b: () => `
+    <div class="abs" style="inset:0;background:linear-gradient(170deg,#ecfdf3 0%,#fbfdf9 55%)"></div>
+    ${brand('#0f172a')}
+    <div class="abs disp" style="left:64px;top:170px;right:64px;font-size:100px">Kenalan sama<br>timer <span style="color:var(--g700)">100 menit</span><br>jangan pas hari-H.</div>
+    <div class="shot" id="bshot" style="left:64px;top:560px;width:952px;height:480px"><img id="bimg" src="shots/exam.png"></div>
+    <div class="chip" style="left:96px;top:1000px;color:var(--ink)"><span style="width:52px;height:52px;border-radius:15px;background:var(--g100);display:inline-flex;align-items:center;justify-content:center">${ico('clock', 30, '#15803d')}</span>110 soal, 100 menit</div>
+    <div class="chip" style="left:520px;top:1000px;color:var(--ink)"><span style="width:52px;height:52px;border-radius:15px;background:var(--g100);display:inline-flex;align-items:center;justify-content:center">${ico('save', 30, '#15803d')}</span>Tersimpan otomatis</div>
+    <div class="cta" style="bottom:100px"><div class="btn" style="background:var(--g700);color:#fff;box-shadow:0 22px 44px -18px rgba(21,128,61,.6)">Coba simulasinya ${ico('arrow', 36, '#fff', 3)}</div><div class="url" style="color:var(--gray)">cvpintar.web.id/tryout-cpns</div></div>
+    ${LEGAL_LIGHT}`,
+
+  // C · pembahasan
+  c: () => `
+    <div class="abs" style="inset:0;background:linear-gradient(200deg,#dcfce7 0%,#fbfdf9 50%)"></div>
+    ${brand('#0f172a')}
+    <div class="abs disp" style="left:64px;top:170px;right:64px;font-size:96px">Salah itu wajar.<br><span style="color:var(--g700)">Nggak tahu kenapa</span><br>salahnya, itu rugi.</div>
+    <div class="shot" id="cshot" style="left:64px;top:590px;width:952px;height:450px"><img id="cimg" src="shots/pembahasan.png"></div>
+    <div class="abs" style="left:64px;right:64px;top:1066px;display:flex;gap:12px">
+      ${[['target', 'Konsep yang diuji'], ['layers', 'Langkah penyelesaian'], ['repeat', 'Latihan ulang']].map(([i, t]) =>
+        `<span class="pill" style="padding:12px 20px 12px 14px;background:#fff;color:var(--g800);font-size:24px;box-shadow:0 0 0 2px var(--g200)">${ico(i, 26, '#16a34a')}${t}</span>`).join('')}
+    </div>
+    <div class="cta" style="bottom:100px"><div class="btn" style="background:var(--g700);color:#fff;box-shadow:0 22px 44px -18px rgba(21,128,61,.6)">Lihat pembahasannya ${ico('arrow', 36, '#fff', 3)}</div></div>
+    ${LEGAL_LIGHT}`,
+
+  // D · passing grade
+  d: () => `
+    <div class="abs" style="inset:0;background:var(--g950)"></div><div class="dots"></div>
+    <div class="glow" style="left:-100px;top:500px;width:800px;height:800px;background:radial-gradient(circle,rgba(34,197,94,.22),transparent 65%)"></div>
+    ${brand('#fff')}
+    <div class="abs body" style="left:64px;top:186px;font-size:34px;font-weight:700;color:var(--g300);letter-spacing:.14em">PASSING GRADE SKD</div>
+    <div class="abs" style="left:64px;right:64px;top:250px;display:flex;gap:18px">
+      ${[['TWK', 65], ['TIU', 80], ['TKP', 166]].map(([k, v]) =>
+        `<div style="flex:1;padding:22px 34px;border-radius:30px;background:rgba(255,255,255,.07);box-shadow:inset 0 0 0 1.5px rgba(134,239,172,.25);text-align:center"><div class="body" style="font-size:26px;font-weight:700;color:var(--g300);letter-spacing:.1em">${k}</div><div class="disp" style="font-size:112px;color:#fff;letter-spacing:-.05em">${v}</div></div>`).join('')}
+    </div>
+    <div class="abs disp" style="left:64px;top:560px;font-size:96px;color:#fff">Skormu sudah<br><span style="color:var(--y)">sampai mana?</span></div>
+    <div class="shot" id="dshot" style="left:64px;top:830px;width:952px;height:300px"><img id="dimg" src="shots/result.png"></div>
+    <div class="abs pill" style="left:92px;top:798px;padding:12px 24px;background:var(--y);color:var(--ink);font-size:24px">${ico('target', 26, '#0f172a')}Jarak ke passing grade tiap subtes</div>
+    <div class="cta"><div class="btn" style="background:var(--y);color:var(--ink)">Cek skormu ${ico('arrow', 36, '#0f172a', 3)}</div><div class="url" style="color:var(--g200)">cvpintar.web.id/tryout-cpns</div></div>
+    ${LEGAL_DARK}`,
+
+  // E · modul belajar gratis
+  e: () => `
+    <div class="abs" style="inset:0;background:linear-gradient(170deg,#ecfdf3 0%,#fbfdf9 55%)"></div>
+    ${brand('#0f172a')}
+    <div class="abs" style="left:64px;top:176px"><span class="pill" style="padding:12px 24px;background:var(--y);color:var(--ink);font-size:28px;font-weight:800;font-family:Jakarta">GRATIS, tanpa login</span></div>
+    <div class="abs disp" style="left:64px;top:262px;font-size:112px">8 modul<br>belajar <span style="color:var(--g700)">SKD</span>.</div>
+    <div class="abs" style="left:64px;right:64px;top:600px;display:grid;grid-template-columns:1fr 1fr;gap:18px">
+      ${[['target', 'Strategi lolos SKD'], ['flag', 'Materi TWK'], ['msg', 'TIU Verbal'], ['calc', 'TIU Numerik'], ['shapes', 'TIU Figural'], ['users', 'TKP bernilai 5'], ['clock', 'Manajemen waktu'], ['calendar', 'Jadwal belajar 30 hari']].map(([i, t]) =>
+        `<div style="display:flex;align-items:center;gap:16px;padding:18px 22px 18px 18px;border-radius:22px;background:#fff;box-shadow:0 0 0 2px #dcfce7,0 18px 36px -24px rgba(21,128,61,.45)"><span style="width:58px;height:58px;border-radius:16px;background:var(--g100);display:inline-flex;align-items:center;justify-content:center;flex:none">${ico(i, 30, '#15803d')}</span><span class="body" style="font-size:27px;font-weight:700;line-height:1.2">${t}</span></div>`).join('')}
+    </div>
+    <div class="abs body" style="left:64px;right:64px;top:1096px;font-size:30px;line-height:1.45;color:var(--gray);font-weight:500">Tiap modul ada contoh soal, pembahasan, dan trik cepat.</div>
+    <div class="cta" style="bottom:100px"><div class="btn" style="background:var(--g700);color:#fff;box-shadow:0 22px 44px -18px rgba(21,128,61,.6)">Baca gratis ${ico('arrow', 36, '#fff', 3)}</div><div class="url" style="color:var(--gray)">cvpintar.web.id/belajar-skd</div></div>
+    ${LEGAL_LIGHT}`,
+};
+
+// potongan screenshot: lebar tampilan = w px, mulai dari (sx, sy) dalam px CSS screenshot (px PNG / 2)
+function crop(imgId, boxW, cssW, sx, sy, sw) {
+  const img = document.getElementById(imgId);
+  if (!img) return;
+  const k = boxW / sw;
+  Object.assign(img.style, { width: `${cssW * k}px`, left: `${-sx * k}px`, top: `${-sy * k}px` });
+}
+
+const which = new URLSearchParams(location.search).get('ad') || 'a';
+document.getElementById('ad').innerHTML = ADS[which]();
+window.__ready = Promise.all([document.fonts.ready, ...[...document.images].map(i => i.decode().catch(() => {}))]).then(() => {
+  crop('bimg', 952, 1440, 100, 0, 1290);        // timer + soal + navigasi
+  crop('cimg', 952, 1440, 340, 322, 760);       // kartu pembahasan, bagian langkah penyelesaian
+  crop('dimg', 952, 1440, 112, 0, 1216);        // banner skor + kartu subtes
+  window.__ok = true;
+});
+</script>
+</body>
+</html>

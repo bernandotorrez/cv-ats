@@ -1,0 +1,395 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>CV Pintar · Iklan Meta Tryout SKD (9:16)</title>
+<style>
+@font-face { font-family: "Jakarta"; src: url("plus-jakarta-sans-latin-wght-normal.woff2") format("woff2"); font-weight: 200 800; }
+@font-face { font-family: "Inter"; src: url("inter-latin-wght-normal.woff2") format("woff2"); font-weight: 100 900; }
+:root {
+  --g950: #052e16; --g900: #14532d; --g800: #166534; --g700: #15803d; --g600: #16a34a; --g500: #22c55e; --g400: #4ade80;
+  --g300: #86efac; --g200: #bbf7d0; --g100: #dcfce7; --g50: #f0fdf4;
+  --ink: #0f172a; --gray: #475569; --muted: #94a3b8; --y: #fde047; --cream: #fbfdf9;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 1080px; height: 1920px; overflow: hidden; background: #000; }
+#stage { position: absolute; inset: 0; overflow: hidden; font-family: "Jakarta", sans-serif; color: var(--ink); background: var(--cream); }
+.scene { position: absolute; inset: 0; overflow: hidden; opacity: 0; will-change: opacity, transform, filter; }
+.abs { position: absolute; }
+.disp { font-family: "Jakarta"; font-weight: 800; letter-spacing: -0.04em; line-height: 1.03; }
+.body { font-family: "Inter"; }
+.pill { display: inline-flex; align-items: center; gap: 12px; border-radius: 999px; white-space: nowrap; font-family: "Inter"; font-weight: 700; }
+.kicker { font-family: "Inter"; font-weight: 700; font-size: 26px; letter-spacing: .16em; text-transform: uppercase; color: var(--g700); display: inline-flex; align-items: center; gap: 12px; }
+.dots { position: absolute; inset: -80px; background-image: radial-gradient(rgba(134,239,172,.12) 2px, transparent 2.5px); background-size: 56px 56px; }
+.glow { position: absolute; border-radius: 50%; }
+.crop { position: absolute; overflow: hidden; border-radius: 26px; background: #fff; box-shadow: 0 50px 100px -30px rgba(5,46,22,.4), 0 0 0 1px rgba(15,23,42,.07); }
+.crop img { position: absolute; display: block; }
+.chip { position: absolute; display: inline-flex; align-items: center; gap: 14px; padding: 16px 28px 16px 18px; border-radius: 24px; background: #fff; box-shadow: 0 26px 54px -22px rgba(5,46,22,.55), 0 0 0 1px rgba(21,128,61,.14); font: 800 30px Jakarta; letter-spacing: -.02em; color: var(--ink); white-space: nowrap; }
+.chip .ic { width: 54px; height: 54px; border-radius: 16px; background: var(--g100); display: inline-flex; align-items: center; justify-content: center; }
+.ico { display: inline-block; vertical-align: middle; flex: none; }
+.stat { flex: 1; text-align: center; padding: 26px 10px 22px; border-radius: 30px; background: rgba(255,255,255,.07); box-shadow: inset 0 0 0 1.5px rgba(134,239,172,.25); }
+.stat .k { font: 700 28px Inter; letter-spacing: .12em; color: var(--g300); }
+.stat .v { font: 800 130px Jakarta; letter-spacing: -.05em; color: #fff; line-height: 1.05; font-variant-numeric: tabular-nums; }
+#cap { position: absolute; left: 70px; right: 70px; top: 1330px; display: flex; justify-content: center; opacity: 0; pointer-events: none; }
+#cap span { display: inline-block; max-width: 940px; padding: 20px 36px; border-radius: 30px; background: rgba(5,46,22,.93); color: #fff; font: 800 46px/1.2 Jakarta; letter-spacing: -.02em; text-align: center; box-shadow: 0 24px 50px -22px rgba(5,46,22,.6); }
+#legal { position: absolute; left: 0; right: 0; top: 1488px; display: flex; justify-content: center; opacity: 0; pointer-events: none; }
+#legal span { padding: 9px 22px; border-radius: 999px; background: rgba(255,255,255,.92); color: #475569; font: 600 21px Inter; box-shadow: 0 0 0 1px rgba(15,23,42,.08); }
+</style>
+<script>document.write('<script src="timeline-' + (new URLSearchParams(location.search).get('hook') || 'timer') + '.js"><\/script>');</script>
+</head>
+<body>
+<div id="stage">
+
+  <!-- 1 · HOOK (diisi init() sesuai ?hook=timer|harga|pg) -->
+  <div class="scene" id="s1" style="background:var(--g950)">
+    <div class="dots" id="s1dots"></div>
+    <div class="glow" id="s1glow" style="left:90px;top:520px;width:900px;height:900px;background:radial-gradient(circle,rgba(34,197,94,.30),transparent 65%)"></div>
+    <div id="s1c"></div>
+  </div>
+
+  <!-- 2 · SIMULASI (HP) -->
+  <div class="scene" id="s2" style="background:linear-gradient(200deg,#ecfdf3 0%,#fbfdf9 60%)">
+    <div class="abs" id="s2head" style="left:70px;top:270px;width:940px">
+      <div class="kicker" data-ico="clock" data-s="28" data-c="#15803d">Simulasi ujian</div>
+      <div class="disp" style="margin-top:14px;font-size:84px">Timer 100 menit,<br><span style="color:var(--g700)">110 soal.</span></div>
+    </div>
+    <div class="abs" id="s2phone" style="left:340px;top:560px;width:400px;height:880px;border-radius:58px;background:#0b1220;padding:14px;box-shadow:0 60px 120px -30px rgba(5,46,22,.55)">
+      <div style="position:relative;width:372px;height:852px;border-radius:46px;overflow:hidden;background:#fff">
+        <img src="shots/exam-mobile.png" style="position:absolute;left:0;top:0;width:372px">
+        <div style="position:absolute;left:136px;top:10px;width:100px;height:26px;border-radius:20px;background:#0b1220"></div>
+      </div>
+    </div>
+    <div class="abs" id="s2ring" style="left:604px;top:560px;width:132px;height:62px;border-radius:999px;box-shadow:0 0 0 6px rgba(22,163,74,.9)"></div>
+    <div class="chip" id="s2c1" style="left:690px;top:470px"><span class="ic" data-ico="clock" data-s="30" data-c="#15803d"></span>Timer 100 menit</div>
+    <div class="chip" id="s2c2" style="left:40px;top:1010px"><span class="ic" data-ico="save" data-s="30" data-c="#15803d"></span>Tersimpan otomatis</div>
+  </div>
+
+  <!-- 3 · HASIL -->
+  <div class="scene" id="s3" style="background:linear-gradient(160deg,#f0fdf4 0%,#fbfdf9 55%)">
+    <div class="abs" id="s3head" style="left:70px;top:270px;width:940px">
+      <div class="kicker" data-ico="chart" data-s="28" data-c="#15803d">Hasil &amp; analisis</div>
+      <div class="disp" style="margin-top:14px;font-size:84px">Tahu jarakmu ke<br><span style="color:var(--g700)">passing grade.</span></div>
+    </div>
+    <div class="crop" id="s3crop" style="left:50px;top:560px;width:980px;height:640px"><img id="s3img" src="shots/result.png"></div>
+    <div class="abs pill" id="s3tag" style="left:80px;top:506px;padding:10px 22px;background:var(--y);color:var(--ink);font-size:24px;font-weight:800">Contoh tampilan hasil</div>
+    <div class="abs" id="s3pg" style="left:50px;right:50px;top:1224px;display:flex;gap:14px"></div>
+  </div>
+
+  <!-- 4 · PEMBAHASAN -->
+  <div class="scene" id="s4" style="background:linear-gradient(200deg,#ecfdf3 0%,#fbfdf9 60%)">
+    <div class="abs" id="s4head" style="left:70px;top:270px;width:940px">
+      <div class="kicker" data-ico="book" data-s="28" data-c="#15803d">Pembahasan detail</div>
+      <div class="disp" style="margin-top:14px;font-size:84px">Setiap soal<br><span style="color:var(--g700)">dibahas tuntas.</span></div>
+    </div>
+    <div class="crop" id="s4crop" style="left:70px;top:560px;width:940px;height:690px"><img id="s4img" src="shots/pembahasan.png"></div>
+    <div class="abs" id="s4chips" style="left:70px;right:70px;top:1262px;display:flex;gap:12px"></div>
+  </div>
+
+  <!-- 5 · TAWARAN -->
+  <div class="scene" id="s5" style="background:radial-gradient(ellipse at 50% 0%,#dcfce7 0%,#fbfdf9 55%)">
+    <div class="abs" id="s5head" style="left:0;right:0;top:270px;text-align:center">
+      <div class="kicker" data-ico="tag" data-s="28" data-c="#15803d">Harga</div>
+      <div class="disp" style="margin-top:12px;font-size:84px">Pilih paketmu</div>
+    </div>
+    <div id="s5cards"></div>
+  </div>
+
+  <!-- 6 · CTA -->
+  <div class="scene" id="s6" style="background:var(--g950)">
+    <div class="dots" id="s6dots" style="opacity:.6"></div>
+    <div class="glow" id="s6glow" style="left:90px;top:360px;width:900px;height:900px;background:radial-gradient(circle,rgba(34,197,94,.32),transparent 65%)"></div>
+    <img id="s6logo" class="abs" src="assets/logo-icon.png" style="left:410px;top:420px;width:260px;height:240px;padding:24px 28px;background:#fff;border-radius:56px;box-shadow:0 30px 70px -25px rgba(34,197,94,.55)">
+    <div class="abs disp" id="s6a" style="left:50px;right:50px;top:720px;text-align:center;font-size:100px;color:#fff">Mulai tryout<br>pertamamu <span style="color:var(--g400)">hari ini.</span></div>
+    <div class="abs" id="s6c" style="left:0;right:0;top:1060px;display:flex;justify-content:center">
+      <div class="pill" id="s6pill" style="padding:26px 40px;background:var(--y);color:var(--ink);font-size:40px;font-family:Jakarta;font-weight:800;letter-spacing:-.02em;box-shadow:0 20px 50px -15px rgba(253,224,71,.5)"><span data-ico="globe" data-s="40" data-c="#0f172a"></span>cvpintar.web.id/tryout-cpns</div>
+    </div>
+    <div class="abs" id="s6chips" style="left:50px;right:50px;top:1240px;display:flex;flex-wrap:wrap;justify-content:center;gap:14px"></div>
+  </div>
+
+  <div id="cap"><span></span></div>
+  <div id="legal"><span>Bukan situs resmi BKN/SSCASN. Tangkapan layar hanya contoh tampilan.</span></div>
+</div>
+
+<script>
+// ---------- math ----------
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const prog = (t, a, b) => clamp((t - a) / (b - a));
+const lerp = (a, b, p) => a + (b - a) * p;
+const E = {
+  outCubic: p => 1 - Math.pow(1 - p, 3),
+  outQuint: p => 1 - Math.pow(1 - p, 5),
+  outBack: p => { const c = 1.5; return 1 + (c + 1) * Math.pow(p - 1, 3) + c * Math.pow(p - 1, 2); },
+  inOutSine: p => -(Math.cos(Math.PI * p) - 1) / 2,
+  inOutCubic: p => p < .5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2,
+};
+const $ = id => document.getElementById(id);
+const $$ = sel => document.querySelectorAll(sel);
+const S = (el, o) => { for (const k in o) el.style[k] = o[k]; };
+// naik + fade (lebih cepat dari video brand: ini iklan)
+const rise = (el, t, t0, d = 0.8, dist = 30) => {
+  const p = E.outQuint(prog(t, t0, t0 + d));
+  S(el, { transform: `translateY(${(1 - p) * dist}px)`, opacity: E.inOutSine(prog(t, t0, t0 + d * .7)) });
+};
+const pop = (el, t, t0, d = 0.55) => {
+  const p = E.outBack(prog(t, t0, t0 + d));
+  S(el, { transform: `scale(${lerp(.7, 1, p)})`, opacity: E.inOutSine(prog(t, t0, t0 + d * .5)) });
+};
+
+// ---------- ikon (lucide) ----------
+const ICONS = {
+  clock: '<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
+  chart: '<path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/>',
+  book: '<path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/>',
+  tag: '<path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/>',
+  globe: '<circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/>',
+  check: '<path d="M20 6 9 17l-5-5"/>',
+  circlecheck: '<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>',
+  save: '<path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/><path d="m9 15 2 2 4-4"/>',
+  target: '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
+  layers: '<path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/>',
+  scale: '<path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/>',
+  qr: '<rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M21 21v.01"/><path d="M12 7v3a2 2 0 0 1-2 2H7"/><path d="M3 12h.01"/><path d="M12 3h.01"/><path d="M12 16v.01"/><path d="M16 12h1"/><path d="M21 12v.01"/><path d="M12 21v-1"/>',
+  sparkles: '<path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/>',
+  lock: '<rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+  trophy: '<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>',
+};
+const ico = (n, s = 24, c = 'currentColor', w = 2.4) => `<svg class="ico" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round">${ICONS[n]}</svg>`;
+
+// ---------- timeline & varian ----------
+const { DUR, XF, SC, VO } = window.TL;
+const HOOK = new URLSearchParams(location.search).get('hook') || 'timer';
+const voOf = id => VO.find(v => v[0] === id);
+
+// Subtitle: potongan teks dibagi menurut proporsi panjang karakter terhadap durasi narasi scene
+const CAP_TEXT = {
+  s2: ['Simulasi timer 100 menit,', 'jawaban tersimpan otomatis.'],
+  s3: ['Selesai, langsung tahu', 'jarak skormu ke passing grade.'],
+  s4: ['Tiap soal dibahas sampai tuntas.'],
+  s5: ['Mulai Rp15.000,', 'atau 5 tryout cuma Rp50.000.', 'Bayar via QRIS.'],
+};
+const CAPS = [];
+for (const id in CAP_TEXT) {
+  const [, v0, d] = voOf(id);
+  const parts = CAP_TEXT[id];
+  const total = parts.reduce((s, p) => s + p.length, 0);
+  let acc = 0;
+  parts.forEach((p, i) => {
+    const t0 = v0 + d * (acc / total) - (i === 0 ? 0.05 : 0.1);
+    acc += p.length;
+    const t1 = i === parts.length - 1 ? v0 + d + 0.35 : v0 + d * (acc / total) - 0.1;
+    CAPS.push({ t0, t1, text: p });
+  });
+}
+
+const PRICES = [
+  {
+    name: 'Tryout Satuan', price: '15.000', unit: '1x tryout', note: 'Coba dulu satu kali',
+    feats: ['110 soal TWK · TIU · TKP', 'Pembahasan detail & leaderboard'],
+  },
+  {
+    name: 'Paket Lengkap', price: '50.000', unit: '5x tryout', note: 'Hanya Rp10.000 per tryout', best: true,
+    feats: ['Pembahasan detail & latihan ulang', 'Pantau kenaikan skor antar tryout', 'Bayar via QRIS, langsung aktif'],
+  },
+];
+
+const chip2 = (cls, s, i = 'check', fs = 26) =>
+  `<div class="pill ${cls}" style="padding:14px 26px 14px 16px;background:#fff;color:var(--g800);font-size:${fs}px;box-shadow:0 0 0 2px var(--g200)">${ico(i, fs + 2, '#16a34a')}${s}</div>`;
+
+const HOOKS = {
+  timer: `
+    <div class="abs body" id="h1a" style="left:0;right:0;top:540px;text-align:center"><span class="pill" style="padding:14px 30px;background:rgba(255,255,255,.08);color:var(--g200);font-size:32px;box-shadow:inset 0 0 0 1.5px rgba(134,239,172,.3)">110 soal · 100 menit</span></div>
+    <div class="abs disp" id="h1cd" style="left:0;right:0;top:680px;text-align:center;font-size:330px;color:#fff;letter-spacing:-.05em;font-variant-numeric:tabular-nums">100:00</div>
+    <div class="abs disp" id="h1b" style="left:60px;right:60px;top:1110px;text-align:center;font-size:104px;color:var(--y)">Sudah pernah<br>coba?</div>`,
+  harga: `
+    <div class="abs" id="h1a" style="left:0;right:0;top:560px;text-align:center"><span class="body" style="font-size:72px;font-weight:800;color:var(--g300)">Rp</span></div>
+    <div class="abs disp" id="h1cd" style="left:0;right:0;top:630px;text-align:center;font-size:300px;color:#fff;letter-spacing:-.06em">10.000</div>
+    <div class="abs disp" id="h1b" style="left:60px;right:60px;top:970px;text-align:center;font-size:104px;color:var(--y)">per tryout SKD.</div>
+    <div class="abs disp" id="h1d" style="left:60px;right:60px;top:1130px;text-align:center;font-size:70px;color:#fff">Ini isinya:</div>
+    <div class="abs" id="h1e" style="left:50px;right:50px;top:1250px;display:flex;flex-wrap:wrap;justify-content:center;gap:14px">
+      ${['110 soal', 'Timer 100 menit', 'Pembahasan'].map(s => `<div class="pill h1chip" style="padding:14px 26px 14px 16px;background:rgba(255,255,255,.08);color:#fff;font-size:30px;box-shadow:inset 0 0 0 1.5px rgba(134,239,172,.3)">${ico('circlecheck', 32, '#4ade80')}${s}</div>`).join('')}
+    </div>`,
+  pg: `
+    <div class="abs disp" id="h1a" style="left:60px;right:60px;top:500px;text-align:center;font-size:92px;color:#fff">Skor tryout harus tembus</div>
+    <div class="abs" id="h1cd" style="left:50px;right:50px;top:780px;display:flex;gap:18px">
+      ${[['TWK', 65], ['TIU', 80], ['TKP', 166]].map(([k, v], i) => `<div class="stat h1stat"><div class="k">${k}</div><div class="v" data-v="${v}">0</div></div>`).join('')}
+    </div>
+    <div class="abs disp" id="h1b" style="left:60px;right:60px;top:1160px;text-align:center;font-size:92px;color:var(--y)">di tiap subtes.</div>`,
+};
+
+function init() {
+  $$('[data-ico]').forEach(el => { el.insertAdjacentHTML('afterbegin', ico(el.dataset.ico, +el.dataset.s, el.dataset.c)); });
+  $('s1c').innerHTML = HOOKS[HOOK] || HOOKS.timer;
+
+  $('s3pg').innerHTML = [['TWK', 'min. 65'], ['TIU', 'min. 80'], ['TKP', 'min. 166']].map(([k, v]) =>
+    `<div class="s3p" style="flex:1;display:flex;align-items:center;justify-content:center;gap:12px;padding:16px 8px;border-radius:22px;background:#fff;box-shadow:0 0 0 2px var(--g200),0 18px 36px -24px rgba(21,128,61,.45)"><span class="disp" style="font-size:34px">${k}</span><span class="body" style="font-size:28px;font-weight:700;color:var(--g700)">${v}</span></div>`).join('');
+
+  $('s4chips').innerHTML = [['target', 'Konsep'], ['layers', 'Langkah'], ['scale', 'Tiap pilihan']].map(([i, s]) =>
+    chip2('s4chip', s, i, 27).replace('padding:14px 26px 14px 16px', 'padding:14px 24px 14px 16px;flex:1;justify-content:center')).join('');
+
+  $('s5cards').innerHTML = PRICES.map((p, k) => {
+    const dark = !!p.best;
+    const top = dark ? 880 : 508;
+    const h = dark ? 440 : 350;
+    return `<div class="abs s5c" style="left:60px;top:${top}px;width:960px;height:${h}px;border-radius:36px;padding:${dark ? 40 : 34}px 46px;
+        background:${dark ? 'linear-gradient(160deg,#166534,#052e16)' : '#fff'};color:${dark ? '#fff' : 'var(--ink)'};
+        box-shadow:${dark ? '0 50px 90px -30px rgba(5,46,22,.7)' : '0 0 0 2px #dcfce7,0 40px 80px -40px rgba(5,46,22,.35)'}">
+      ${dark ? `<div class="pill" style="position:absolute;right:40px;top:40px;padding:10px 20px;background:var(--y);color:var(--ink);font-size:22px;font-weight:800">${ico('sparkles', 22, '#0f172a')}PALING HEMAT</div>` : ''}
+      <div class="disp" style="font-size:42px;letter-spacing:-.02em">${p.name}</div>
+      <div class="body" style="margin-top:6px;font-size:25px;color:${dark ? 'var(--g200)' : 'var(--gray)'};font-weight:600">${p.note}</div>
+      <div style="margin-top:12px;display:flex;align-items:baseline;gap:12px">
+        <span class="body" style="font-size:34px;font-weight:700;color:${dark ? 'var(--g300)' : 'var(--g700)'}">Rp</span>
+        <span class="disp" style="font-size:${dark ? 118 : 104}px;letter-spacing:-.045em">${p.price}</span>
+        <span class="body" style="margin-left:8px;font-size:28px;font-weight:600;color:${dark ? 'var(--g200)' : 'var(--gray)'}">/ ${p.unit}</span>
+      </div>
+      <div style="margin-top:${dark ? 18 : 14}px;height:1.5px;background:${dark ? 'rgba(255,255,255,.15)' : '#e5ece7'}"></div>
+      <div style="margin-top:${dark ? 18 : 14}px;display:grid;gap:${dark ? 12 : 10}px">
+        ${p.feats.map(f => `<div class="s5f body" style="display:flex;align-items:center;gap:14px;font-size:${dark ? 27 : 26}px;font-weight:600">${ico('circlecheck', 28, dark ? '#4ade80' : '#16a34a')}${f}</div>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
+
+  $('s6chips').innerHTML = [['qr', 'Bayar QRIS'], ['circlecheck', '110 soal'], ['book', 'Pembahasan detail']].map(([i, s]) =>
+    `<div class="pill s6chip" style="padding:13px 24px 13px 16px;background:rgba(255,255,255,.07);color:var(--g200);font-size:27px;box-shadow:inset 0 0 0 1.5px rgba(134,239,172,.25)">${ico(i, 28, '#4ade80')}${s}</div>`).join('');
+
+  cropImg('s3img', 1440, 1367, 112, 0, 1216, 980);
+  cropImg('s4img', 1440, 1593, 336, 20, 768, 940);
+}
+
+function cropImg(id, cssW, cssH, sx, sy, sw, displayW) {
+  const img = $(id);
+  const k = displayW / sw;
+  img._k = k;
+  S(img, { width: `${cssW * k}px`, left: `${-sx * k}px`, top: `${-sy * k}px` });
+}
+
+// ---------- render(t) ----------
+function sceneState(t, a, b) {
+  const pin = E.inOutSine(prog(t, a, a + XF));
+  const pout = E.inOutSine(prog(t, b - XF, b));
+  const first = a === 0, last = b >= DUR - 1e-6;
+  const alpha = (first ? 1 : pin) * (last ? 1 : 1 - pout);
+  return { alpha, pin: first ? 1 : pin, pout: last ? 0 : pout, local: t - a };
+}
+
+function render(t) {
+  for (const [id, a, b] of SC) {
+    const el = $(id);
+    const st = sceneState(t, a, b);
+    if (st.alpha <= 0.001) { el.style.display = 'none'; continue; }
+    el.style.display = 'block';
+    const sc = lerp(1.03, 1, st.pin) * lerp(1, 0.985, st.pout);
+    const blur = (1 - st.pin) * 4 + st.pout * 4;
+    S(el, { opacity: st.alpha, transform: `scale(${sc})`, filter: blur > 0.05 ? `blur(${blur.toFixed(2)}px)` : 'none' });
+    SCENES[id](st.local, b - a, t);
+  }
+  // subtitle
+  const cap = CAPS.find(c => t >= c.t0 && t < c.t1);
+  if (cap) {
+    const a = E.inOutSine(prog(t, cap.t0, cap.t0 + 0.18)) * (1 - E.inOutSine(prog(t, cap.t1 - 0.16, cap.t1)));
+    $('cap').firstChild.textContent = cap.text;
+    S($('cap'), { opacity: a, transform: `translateY(${(1 - a) * 10}px)` });
+  } else {
+    $('cap').style.opacity = 0;
+  }
+  // penafian: dari scene 2 sampai akhir
+  $('legal').style.opacity = E.inOutSine(prog(t, SC[1][1] + 0.3, SC[1][1] + 0.9));
+  // fade out di akhir
+  $('stage').style.opacity = 1 - E.inOutSine(prog(t, DUR - 0.7, DUR));
+}
+
+const fmtTime = s => { s = Math.max(0, Math.round(s)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
+
+const SCENES = {
+  s1(l, d) {
+    $('s1dots').style.transform = `translateY(${-l * 8}px)`;
+    $('s1glow').style.transform = `scale(${lerp(0.9, 1.15, E.inOutSine(prog(l, 0, d)))})`;
+    if (HOOK === 'timer') {
+      rise($('h1a'), l, 0.05, 0.5, 20);
+      S($('h1cd'), { opacity: E.inOutSine(prog(l, 0.05, 0.35)) });
+      // hitung mundur dipercepat: 100:00 → 47:12 (seperti layar ujian)
+      const p = E.inOutCubic(prog(l, 0.3, 2.6));
+      $('h1cd').textContent = `${fmtTime(lerp(6000, 2832, p))}`.replace(/^(\d+):/, (_, m) => (m.length === 1 ? '0' + m : m) + ':');
+      pop($('h1b'), l, 2.9, 0.5);
+    } else if (HOOK === 'harga') {
+      pop($('h1cd'), l, 0.0, 0.6);
+      rise($('h1a'), l, 0.05, 0.5, 14);
+      rise($('h1b'), l, 0.5, 0.7, 30);
+      rise($('h1d'), l, 3.1, 0.6, 24);
+      $$('.h1chip').forEach((c, k) => pop(c, l, 3.4 + k * 0.22, 0.5));
+    } else {
+      rise($('h1a'), l, 0.0, 0.7, 30);
+      const times = [1.9, 2.8, 3.7];
+      $$('.h1stat').forEach((c, k) => {
+        pop(c, l, times[k] - 0.4, 0.5);
+        const v = c.querySelector('.v');
+        const p = E.outCubic(prog(l, times[k] - 0.3, times[k] + 0.6));
+        v.textContent = Math.round(+v.dataset.v * p);
+      });
+      rise($('h1b'), l, 4.5, 0.6, 24);
+    }
+  },
+  s2(l, d) {
+    rise($('s2head'), l, 0.15, 0.8);
+    const p = E.inOutSine(prog(l, 0, d));
+    S($('s2phone'), { transform: `translateY(${lerp(50, -10, E.outQuint(prog(l, 0.1, 1.2)))}px) rotate(${lerp(1.2, -0.6, p)}deg)`, opacity: E.inOutSine(prog(l, 0.1, 0.6)) });
+    // cincin pulsa di sekitar timer
+    const ring = prog(l, 0.9, 3.4);
+    const pulse = 0.5 + 0.5 * Math.sin(l * 6);
+    S($('s2ring'), { opacity: ring > 0 && ring < 1 ? 1 : 0, transform: `scale(${1 + pulse * 0.12})`, boxShadow: `0 0 0 ${5 + pulse * 5}px rgba(22,163,74,${0.55 + pulse * 0.4})` });
+    rise($('s2c1'), l, 1.0, 0.7, 24);
+    rise($('s2c2'), l, 2.4, 0.7, 24);
+  },
+  s3(l, d) {
+    rise($('s3head'), l, 0.15, 0.8);
+    rise($('s3crop'), l, 0.3, 0.9, 40);
+    rise($('s3tag'), l, 0.6, 0.6, 14);
+    const p = E.inOutCubic(prog(l, 0.9, d - 0.3));
+    $('s3img').style.transform = `translateY(${-p * 120}px)`;
+    $$('.s3p').forEach((c, k) => pop(c, l, 1.4 + k * 0.25, 0.5));
+  },
+  s4(l, d) {
+    rise($('s4head'), l, 0.15, 0.8);
+    rise($('s4crop'), l, 0.3, 0.9, 40);
+    const img = $('s4img');
+    const contentH = (1593 - 20) * img._k;
+    const maxScroll = contentH - 690;
+    const p = E.inOutCubic(prog(l, 0.5, d - 0.2));
+    img.style.transform = `translateY(${-p * Math.min(maxScroll, 520)}px)`;
+    $$('.s4chip').forEach((c, k) => rise(c, l, 0.9 + k * 0.2, 0.6, 16));
+  },
+  s5(l) {
+    rise($('s5head'), l, 0.1, 0.7);
+    const st = [0.3, 1.4];
+    $$('.s5c').forEach((c, k) => rise(c, l, st[k], 0.9, 46));
+    $$('.s5c').forEach((card, k) =>
+      card.querySelectorAll('.s5f').forEach((f, j) => rise(f, l, st[k] + 0.5 + j * 0.15, 0.6, 10)));
+  },
+  s6(l, d) {
+    $('s6dots').style.transform = `translateY(${-l * 6}px)`;
+    $('s6glow').style.transform = `scale(${lerp(0.92, 1.1, E.inOutSine(prog(l, 0, d)))})`;
+    const p = E.outQuint(prog(l, 0.1, 1.0));
+    S($('s6logo'), { opacity: E.inOutSine(prog(l, 0.1, 0.6)), transform: `scale(${lerp(.88, 1, p)})` });
+    rise($('s6a'), l, 0.35, 0.8, 30);
+    rise($('s6c'), l, 1.0, 0.8, 22);
+    const br = 1 + 0.02 * Math.sin(Math.max(0, l - 1.8) * 4);
+    $('s6pill').style.transform = `scale(${br})`;
+    $$('.s6chip').forEach((c, k) => rise(c, l, 1.6 + k * 0.2, 0.7, 16));
+  },
+};
+
+window.render = render;
+window.__size = [1080, 1920];
+window.__dur = DUR;
+Promise.all([document.fonts.ready, ...[...document.images].map(i => i.decode().catch(() => {}))]).then(() => {
+  init();
+  render(0);
+  window.__ready = true;
+});
+if (!location.search.includes('render=1')) {
+  const t0 = performance.now();
+  const loop = () => { if (window.__ready) render(((performance.now() - t0) / 1000) % DUR); requestAnimationFrame(loop); };
+  requestAnimationFrame(loop);
+}
+</script>
+</body>
+</html>
