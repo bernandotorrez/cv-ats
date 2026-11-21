@@ -16,6 +16,7 @@ import {
   Highlighter,
   Languages,
   LayoutDashboard,
+  ListChecks,
   Mail,
   Maximize2,
   Mic,
@@ -75,6 +76,36 @@ type Release = {
 const changelog: Release[] = [
   {
     version: APP_VERSION,
+    date: "21 November 2026",
+    title: "Panduan CV Bagus: Progress & Checklist di Editor",
+    summary:
+      "Bingung harus mulai dari mana? Editor CV kini punya widget Panduan CV yang memandu kamu langkah demi langkah lewat progress bar dan checklist, dari target posisi, headline, dan ringkasan sampai pengalaman, keahlian, dan cek tampilan ATS.",
+    highlights: [
+      {
+        icon: ListChecks,
+        type: "Fitur baru",
+        short: "Panduan CV: progress & checklist",
+        text: 'Widget mengambang di pojok editor menampilkan progress bar dan 10 langkah untuk CV yang bagus. Checklist terisi otomatis dari isi CV-mu, jadi tidak perlu dicentang manual. Setiap langkah punya tips dan contoh, estimasi waktu, dan keterangan status seperti "2/5 keahlian" atau "Kurang: email, no. HP". Setelah semua selesai, kamu langsung diarahkan ke Review AI.',
+      },
+      {
+        icon: Crosshair,
+        type: "Peningkatan",
+        text: 'Tombol "Isi sekarang" membuka bagian yang tepat dan langsung menaruh kursor di kolom yang masih kosong. Kriterianya sejalan dengan skor ATS, misalnya ringkasan 200-800 karakter, minimal 5 keahlian, dan poin pencapaian yang diawali kata kerja serta memuat angka.',
+      },
+      {
+        icon: Smartphone,
+        type: "Peningkatan",
+        text: "Di HP, panduan tampil sebagai panel dari bawah dan menutup sendiri setelah kamu memilih langkah. Mudah diakses lewat keyboard dan pembaca layar: tombol Esc menutup panduan, dan perubahan progress diumumkan otomatis.",
+      },
+      {
+        icon: CheckCircle2,
+        type: "Perbaikan",
+        text: "Notifikasi di halaman editor kini muncul di bagian atas layar agar tidak menutupi widget panduan.",
+      },
+    ],
+  },
+  {
+    version: "v1.12.0-live",
     date: "7 November 2026",
     title: "Tryout SKD CPNS Makin Lengkap & Modul Belajar Gratis",
     summary:
