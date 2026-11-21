@@ -15,16 +15,18 @@
 //   __root.tsx is inline. Moving to a per-request nonce (router `ssr.nonce` +
 //   'strict-dynamic') is the follow-up; JSON-LD output is escaped (seo.ts) to
 //   close the known injection path in the meantime.
+// - Meta Pixel (src/lib/meta-pixel.ts): fbevents.js dari connect.facebook.net; event dikirim
+//   ke www.facebook.com/tr (img-src + connect-src). Hanya aktif bila VITE_META_PIXEL_ID diisi.
 // - style-src keeps 'unsafe-inline' for Tailwind/shadcn inline styles.
 // - The frontend never calls the AI gateway directly (all AI goes through
 //   Supabase edge functions), so it is not in connect-src.
 const CSP_DIRECTIVES = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' https://js.hcaptcha.com https://*.hcaptcha.com https://va.vercel-scripts.com https://www.googletagmanager.com https://static.cloudflareinsights.com https://benixai.web.id https://www.benixai.web.id https://widget.benixai.web.id https://*.benixai.web.id",
+  "script-src 'self' 'unsafe-inline' https://js.hcaptcha.com https://*.hcaptcha.com https://va.vercel-scripts.com https://www.googletagmanager.com https://connect.facebook.net https://static.cloudflareinsights.com https://benixai.web.id https://www.benixai.web.id https://widget.benixai.web.id https://*.benixai.web.id",
   "style-src 'self' 'unsafe-inline' https://*.hcaptcha.com",
   "font-src 'self' data:",
-  "img-src 'self' data: blob: https://*.supabase.co https://lh3.googleusercontent.com https://*.hcaptcha.com https://www.google-analytics.com https://*.google-analytics.com https://benixai.web.id https://www.benixai.web.id https://widget.benixai.web.id https://*.benixai.web.id",
-  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.hcaptcha.com https://analytics.google.com https://www.google-analytics.com https://*.google-analytics.com https://www.googletagmanager.com https://cloudflareinsights.com https://*.cloudflareinsights.com https://csp-reporting.cloudflare.com https://benixai.web.id https://www.benixai.web.id https://widget.benixai.web.id https://*.benixai.web.id wss://benixai.web.id wss://www.benixai.web.id wss://widget.benixai.web.id wss://*.benixai.web.id",
+  "img-src 'self' data: blob: https://*.supabase.co https://lh3.googleusercontent.com https://*.hcaptcha.com https://www.google-analytics.com https://*.google-analytics.com https://www.facebook.com https://benixai.web.id https://www.benixai.web.id https://widget.benixai.web.id https://*.benixai.web.id",
+  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.hcaptcha.com https://analytics.google.com https://www.google-analytics.com https://*.google-analytics.com https://www.googletagmanager.com https://www.facebook.com https://*.facebook.com https://*.facebook.net https://cloudflareinsights.com https://*.cloudflareinsights.com https://csp-reporting.cloudflare.com https://benixai.web.id https://www.benixai.web.id https://widget.benixai.web.id https://*.benixai.web.id wss://benixai.web.id wss://www.benixai.web.id wss://widget.benixai.web.id wss://*.benixai.web.id",
   "frame-src https://*.hcaptcha.com https://newassets.hcaptcha.com https://benixai.web.id https://www.benixai.web.id https://widget.benixai.web.id https://*.benixai.web.id",
   "object-src 'none'",
   "base-uri 'self'",

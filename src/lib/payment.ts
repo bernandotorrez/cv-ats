@@ -5,6 +5,11 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  flushMetaPixel,
+  getMetaTrackingContext,
+  trackMetaInitiateCheckout,
+} from "@/lib/meta-pixel";
 
 const BASE_URL = (import.meta.env.VITE_SUPABASE_URL || "") + "/functions/v1";
 
@@ -54,6 +59,9 @@ export interface CreatePaymentResult {
   amount: number;
   payment_link_url: string;
   expires_at: string;
+  /** Harga produk (tanpa biaya gateway), dihitung server. */
+  price_idr?: number;
+  product_name?: string;
 }
 
 export async function createPayment(
@@ -67,7 +75,7 @@ export async function createPayment(
   const res = await fetch(`${BASE_URL}/payment-create`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-    body: JSON.stringify({ product, quantity }),
+    body: JSON.stringify({ product, quantity, tracking: getMetaTrackingContext() }),
   });
   const json = (await res.json().catch(() => ({}))) as Partial<CreatePaymentResult> & {
     error?: string;
@@ -108,6 +116,14 @@ export function useCheckout() {
         return;
       }
       const payment = await createPayment(product, quantity);
+      trackMetaInitiateCheckout({
+        orderId: payment.order_id,
+        product,
+        productName: payment.product_name,
+        value: payment.price_idr,
+        quantity,
+      });
+      await flushMetaPixel();
       window.location.assign(payment.payment_link_url);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Gagal membuat pembayaran.");

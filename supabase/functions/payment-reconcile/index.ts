@@ -22,6 +22,7 @@
 import { corsHeaders } from "../_shared/cors.ts";
 import { getAdminClient, getUserId } from "../_shared/ai-common.ts";
 import { runInBackground, sendPaymentSuccessEmails } from "../_shared/email.ts";
+import { sendMetaPurchase } from "../_shared/meta-capi.ts";
 
 const SUMOPOD_API_URL =
   Deno.env.get("SUMOPOD_PAY_API_URL") || "https://api-pay.sumopod.com/api/v1/payments";
@@ -199,6 +200,7 @@ async function reconcileOrder(
         .update({ last_event: "reconcile: payment.completed" })
         .eq("order_id", orderId);
       runInBackground(sendPaymentSuccessEmails(admin, orderId, "reconcile"));
+      runInBackground(sendMetaPurchase(admin, orderId));
     }
     return { order_id: orderId, gateway_status: status, action: "fulfilled" };
   }

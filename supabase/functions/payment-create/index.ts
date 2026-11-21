@@ -2,7 +2,8 @@
  * payment-create — Buat payment link SumoPod untuk user yang login.
  *
  * POST /payment-create
- * Body: { product: "tier:pro" | "tier:starter" | "addon:upload_cv" | "addon:pro_photo" | "tryout:<slug>", quantity?: number }
+ * Body: { product: "tier:pro" | "tier:starter" | "addon:upload_cv" | "addon:pro_photo" | "tryout:<slug>", quantity?: number,
+ *         tracking?: { fbp, fbc, event_source_url, utm } }  // atribusi iklan, opsional (Meta Conversions API)
  *
  * Keamanan:
  * - Harga & nama produk dihitung di server (payment-products.ts / database).
@@ -84,7 +85,12 @@ Deno.serve(async (req: Request) => {
     const userId = await getUserId(req);
     const admin = getAdminClient();
 
-    const body = (await req.json().catch(() => ({}))) as { product?: unknown; quantity?: unknown };
+    const body = (await req.json().catch(() => ({}))) as {
+      product?: unknown;
+      quantity?: unknown;
+      tracking?: unknown;
+    };
+    const tracking = sanitizeTracking(body.tracking, req);
     let product;
     try {
       product = await resolveProduct(admin, body.product, body.quantity);
@@ -149,6 +155,7 @@ Deno.serve(async (req: Request) => {
       .maybeSingle();
 
     if (existing?.payment_link_url) {
+      await saveTracking(admin, existing.order_id, tracking);
       // Kirim ulang detail pembayaran bila belum pernah terkirim / sudah >30 menit
       const lastSent = existing.payment_email_sent_at
         ? new Date(existing.payment_email_sent_at).getTime()
@@ -167,6 +174,8 @@ Deno.serve(async (req: Request) => {
         amount: existing.gateway_amount_idr ?? existing.amount_idr,
         payment_link_url: existing.payment_link_url,
         expires_at: existing.expires_at,
+        price_idr: existing.amount_idr,
+        product_name: existing.product_name,
         reused: true,
       });
     }
@@ -198,6 +207,7 @@ Deno.serve(async (req: Request) => {
       gateway: "sumopod",
     });
     if (insertError) throw insertError;
+    await saveTracking(admin, orderId, tracking);
 
     const returnBase = getReturnBase(req);
     const query = `order_id=${encodeURIComponent(orderId)}`;
@@ -310,6 +320,8 @@ Deno.serve(async (req: Request) => {
       amount: chargedAmount,
       payment_link_url: payment.payment_link_url,
       expires_at: expiresAt,
+      price_idr: product.amount,
+      product_name: product.name,
       reused: false,
     });
   } catch (error) {
@@ -321,6 +333,76 @@ Deno.serve(async (req: Request) => {
     return json(req, { error: "Terjadi kesalahan. Coba lagi." }, 500);
   }
 });
+
+type OrderTracking = {
+  fbp?: string;
+  fbc?: string;
+  event_source_url?: string;
+  utm?: Record<string, string>;
+  client_ip?: string;
+  client_user_agent?: string;
+};
+
+const UTM_KEYS = ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content"];
+
+/**
+ * Atribusi iklan dari client: tidak dipercaya, divalidasi ketat dan hanya dipakai untuk
+ * event Meta (bukan untuk harga/otorisasi). IP & user agent diambil dari request ini.
+ */
+function sanitizeTracking(input: unknown, req: Request): OrderTracking | null {
+  const t = (input && typeof input === "object" ? input : {}) as Record<string, unknown>;
+  const out: OrderTracking = {};
+
+  if (typeof t.fbp === "string" && /^fb\.\d\.\d{10,15}\.\d{1,20}$/.test(t.fbp)) out.fbp = t.fbp;
+  if (typeof t.fbc === "string" && /^fb\.\d\.\d{10,15}\.[\w-]{1,300}$/.test(t.fbc)) out.fbc = t.fbc;
+
+  if (typeof t.event_source_url === "string") {
+    try {
+      const u = new URL(t.event_source_url);
+      if (RETURN_ORIGINS.has(u.origin)) out.event_source_url = `${u.origin}${u.pathname}`.slice(0, 300);
+    } catch {
+      // URL tidak valid: abaikan
+    }
+  }
+
+  if (t.utm && typeof t.utm === "object") {
+    const utm: Record<string, string> = {};
+    for (const key of UTM_KEYS) {
+      const v = (t.utm as Record<string, unknown>)[key];
+      if (typeof v === "string" && /^[\w .:/+@%~=,-]{1,100}$/.test(v)) utm[key] = v;
+    }
+    if (Object.keys(utm).length) out.utm = utm;
+  }
+
+  const ip = (
+    req.headers.get("cf-connecting-ip") ||
+    req.headers.get("x-forwarded-for")?.split(",")[0] ||
+    ""
+  ).trim();
+  if (ip && ip.length <= 45) out.client_ip = ip;
+  const ua = (req.headers.get("user-agent") || "").slice(0, 400);
+  if (ua) out.client_user_agent = ua;
+
+  // Tanpa fbp/fbc/UTM tidak ada yang bisa dicocokkan: tidak perlu disimpan
+  return out.fbp || out.fbc || out.utm ? out : null;
+}
+
+/** Simpan atribusi order (best-effort: kegagalan tidak boleh menggagalkan pembayaran). */
+async function saveTracking(
+  admin: ReturnType<typeof getAdminClient>,
+  orderId: string,
+  tracking: OrderTracking | null,
+) {
+  if (!tracking) return;
+  try {
+    const { error } = await admin
+      .from("payment_order_tracking")
+      .upsert({ order_id: orderId, ...tracking }, { onConflict: "order_id" });
+    if (error) console.warn("saveTracking failed:", error.message);
+  } catch (e) {
+    console.warn("saveTracking failed:", e);
+  }
+}
 
 /** Catat waktu email terkirim (hanya jika benar-benar terkirim). */
 async function markEmailSent(

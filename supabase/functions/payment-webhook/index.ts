@@ -15,6 +15,7 @@
 
 import { getAdminClient } from "../_shared/ai-common.ts";
 import { runInBackground, sendPaymentSuccessEmails } from "../_shared/email.ts";
+import { sendMetaPurchase } from "../_shared/meta-capi.ts";
 
 const TIMESTAMP_TOLERANCE_SEC = 5 * 60;
 
@@ -142,6 +143,7 @@ Deno.serve(async (req: Request) => {
       // Email konfirmasi (pembeli) + notifikasi CS, terpisah; hanya saat aktivasi pertama
       if (result && (result as { already_fulfilled?: boolean }).already_fulfilled === false) {
         runInBackground(sendPaymentSuccessEmails(admin, orderId, "webhook"));
+        runInBackground(sendMetaPurchase(admin, orderId));
       }
     } else if (eventType === "payment.failed" || eventType === "payment.expired") {
       const newStatus = eventType === "payment.failed" ? "failed" : "expired";

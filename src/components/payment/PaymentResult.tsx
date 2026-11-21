@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { isPaymentLinkOpen, type PaymentOrderStatus } from "@/lib/payment";
+import { trackMetaPurchaseOnce } from "@/lib/meta-pixel";
 
 type Order = {
   order_id: string;
@@ -60,6 +61,13 @@ export function PaymentResult({
   const [loading, setLoading] = useState(true);
   const [timedOut, setTimedOut] = useState(false);
   const [tryoutCredit, setTryoutCredit] = useState<TryoutCreditInfo | null>(null);
+
+  // Pembayaran terkonfirmasi (webhook): lapor ke Meta Pixel sekali per order.
+  // Server mengirim event yang sama lewat Conversions API; event_id = order_id.
+  useEffect(() => {
+    if (variant !== "success" || order?.status !== "paid") return;
+    trackMetaPurchaseOnce(order);
+  }, [variant, order]);
 
   // Order tryout yang sudah lunas: tampilkan kredit yang masuk & total tersedia
   // (RLS: hanya kredit milik user sendiri).

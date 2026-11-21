@@ -22,6 +22,7 @@ import { goBackAction } from "@/components/site/error-actions";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { BenixCsWidget } from "@/components/site/BenixCsWidget";
 import { FakeBuyerCard } from "@/components/site/FakeBuyerCard";
+import { MetaPixelTracker } from "@/components/site/MetaPixelTracker";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/lib/auth-context";
 import { Skeleton } from "@/components/ui/skeleton-loading";
@@ -452,6 +453,7 @@ function RootComponent() {
         <CanonicalUpdater />
         <ScrollToTop />
         <VisitorAnalyticsTracker />
+        <MetaPixelTracker />
         <a href="#main" className="skip-link">
           Lewati ke konten utama
         </a>
