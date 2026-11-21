@@ -51,6 +51,7 @@ import { CvFileUpload } from "@/components/cv/CvFileUpload";
 import { extractCvText, renderPdfToImages } from "@/lib/cv-text-extractor";
 
 import { PhotoUpload } from "@/components/cv/editor/PhotoUpload";
+import { CvGuideWidget } from "@/components/cv/guide/CvGuideWidget";
 
 // New editor components
 import {
@@ -704,6 +705,67 @@ function CvEditorPage() {
     [data, localScore],
   );
 
+  // Panduan CV: tampilkan form section tujuan dan siapkan entri kosong supaya ada field yang bisa difokuskan.
+  const openGuideSection = useCallback(
+    (sectionId: string | null) => {
+      setMobileTab("form");
+      setShowNav(true);
+      if (!sectionId) return;
+
+      // Sertifikat bersifat opsional dan belum tentu ada di daftar section.
+      if (sectionId === "certificate" && !sections.some((s) => s.id === "certificate")) {
+        const insertIndex = Math.max(0, sections.length - 1);
+        setSections([
+          ...sections.slice(0, insertIndex),
+          { id: "certificate", label: "Sertifikat", icon: <Award className="h-4 w-4" /> },
+          ...sections.slice(insertIndex),
+        ]);
+      }
+      setActiveSection(sectionId);
+
+      setData((d) => {
+        switch (sectionId) {
+          case "education":
+            return d.educations.length
+              ? d
+              : {
+                  ...d,
+                  educations: [{ id: uid(), school: "", degree: "", startDate: "", endDate: "" }],
+                };
+          case "experience":
+            return d.experiences.length
+              ? d
+              : {
+                  ...d,
+                  experiences: [
+                    {
+                      id: uid(),
+                      company: "",
+                      position: "",
+                      startDate: "",
+                      endDate: "",
+                      description: "",
+                    },
+                  ],
+                };
+          case "skills":
+            return d.skills.length ? d : { ...d, skills: [{ id: uid(), name: "" }] };
+          case "languages":
+            return d.languages.length
+              ? d
+              : { ...d, languages: [{ id: uid(), name: "", level: "Mahir" }] };
+          case "certificate":
+            return d.certificates.length
+              ? d
+              : { ...d, certificates: [{ id: uid(), name: "", issuer: "", date: "" }] };
+          default:
+            return d;
+        }
+      });
+    },
+    [sections],
+  );
+
   if (loading) return <EditorSkeleton />;
 
   // Ganti bahasa CV: kalau CV sudah ada isinya, tawarkan menerjemahkan isinya sekalian
@@ -784,6 +846,7 @@ function CvEditorPage() {
       </span>
       <input
         value={targetRole}
+        data-guide-field="target"
         onChange={(e) => setTargetRole(e.target.value)}
         placeholder="Mis. Product Designer, Staff Akuntansi"
         className="mt-1 h-8 w-full bg-transparent text-[15px] font-semibold text-gray-900 outline-none placeholder:font-normal placeholder:text-gray-500"
@@ -1063,6 +1126,15 @@ function CvEditorPage() {
           </button>
         ))}
       </nav>
+
+      {/* ─── PANDUAN CV (checklist + progress) ─── */}
+      <CvGuideWidget
+        cvId={id}
+        data={data}
+        targetRole={targetRole}
+        activeSection={activeSection}
+        onOpenSection={openGuideSection}
+      />
 
       {/* ─── DIALOGS ─── */}
       <Dialog open={showTemplatePicker} onOpenChange={setShowTemplatePicker}>
@@ -1566,12 +1638,14 @@ function EditorForm({
               label="Nama Lengkap"
               value={data.personal.fullName}
               onChange={(v) => updatePersonal("fullName", v)}
+              guideId="personal.fullName"
               icon={<Pencil className="h-4 w-4" />}
             />
             <Field
               label="Posisi"
               value={data.personal.headline}
               onChange={(v) => updatePersonal("headline", v)}
+              guideId="personal.headline"
               placeholder="Frontend Developer"
               extra={
                 <AiSuggestBtn
@@ -1605,12 +1679,14 @@ function EditorForm({
               type="email"
               value={data.personal.email}
               onChange={(v) => updatePersonal("email", v)}
+              guideId="personal.email"
               icon={<Mail className="h-4 w-4" />}
             />
             <Field
               label="No. HP"
               value={data.personal.phone}
               onChange={(v) => updatePersonal("phone", v)}
+              guideId="personal.phone"
               placeholder="+62..."
               icon={<Phone className="h-4 w-4" />}
             />
@@ -1621,6 +1697,7 @@ function EditorForm({
               label="Lokasi"
               value={data.personal.location}
               onChange={(v) => updatePersonal("location", v)}
+              guideId="personal.location"
               placeholder="Jakarta"
               icon={<MapPin className="h-4 w-4" />}
             />
@@ -1637,6 +1714,7 @@ function EditorForm({
             label="Ringkasan Profil"
             value={data.personal.summary}
             onChange={(v) => updatePersonal("summary", v)}
+            guideId="personal.summary"
             placeholder="2-4 kalimat ringkas tentang dirimu..."
             rows={4}
             maxLength={1000}
@@ -1707,18 +1785,21 @@ function EditorForm({
                 label="Posisi"
                 value={item.position}
                 onChange={(v) => mutate(setData, "experiences", i, "position", v)}
+                guideId="experience.position"
                 icon={<Crosshair className="h-4 w-4" />}
               />
               <Field
                 label="Perusahaan"
                 value={item.company}
                 onChange={(v) => mutate(setData, "experiences", i, "company", v)}
+                guideId="experience.company"
                 icon={<Building2 className="h-4 w-4" />}
               />
               <Field
                 label="Mulai"
                 value={item.startDate}
                 onChange={(v) => mutate(setData, "experiences", i, "startDate", v)}
+                guideId="experience.startDate"
                 icon={<Calendar className="h-4 w-4" />}
               />
               <Field
@@ -1742,6 +1823,7 @@ function EditorForm({
                   label="Deskripsi"
                   value={item.description}
                   onChange={(v) => mutate(setData, "experiences", i, "description", v)}
+                  guideId="experience.description"
                   placeholder="Deskripsikan pencapaian dengan metrik..."
                   rows={3}
                   hint="Tip: Gunakan kata kerja aktif & sertakan angka (contoh: meningkatkan penjualan 30%)"
@@ -1836,12 +1918,14 @@ function EditorForm({
                 label="Sekolah/Universitas"
                 value={item.school}
                 onChange={(v) => mutate(setData, "educations", i, "school", v)}
+                guideId="education.school"
                 icon={<Building2 className="h-4 w-4" />}
               />
               <Field
                 label="Gelar"
                 value={item.degree}
                 onChange={(v) => mutate(setData, "educations", i, "degree", v)}
+                guideId="education.degree"
                 placeholder="S1"
                 icon={<ScrollText className="h-4 w-4" />}
               />
@@ -2170,6 +2254,7 @@ function EditorForm({
                 label="Nama Skill"
                 value={item.name}
                 onChange={(v) => mutate(setData, "skills", i, "name", v)}
+                guideId="skills.name"
                 placeholder="React, SQL, Komunikasi..."
                 icon={<Zap className="h-4 w-4" />}
               />
@@ -2251,6 +2336,7 @@ function EditorForm({
                 label="Bahasa"
                 value={item.name}
                 onChange={(v) => mutate(setData, "languages", i, "name", v)}
+                guideId="languages.name"
                 icon={<Languages className="h-4 w-4" />}
               />
               <Field
@@ -2287,6 +2373,7 @@ function EditorForm({
                 label="Nama"
                 value={item.name}
                 onChange={(v) => mutate(setData, "certificates", i, "name", v)}
+                guideId="certificate.name"
                 icon={<Trophy className="h-4 w-4" />}
               />
               <Field
@@ -2307,7 +2394,15 @@ function EditorForm({
       )}
 
       {/* ATS View */}
-      {activeSection === "ats" && <AtsPreview data={data} />}
+      {activeSection === "ats" && (
+        <div
+          data-guide-field="ats.view"
+          tabIndex={-1}
+          className="rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-700"
+        >
+          <AtsPreview data={data} />
+        </div>
+      )}
     </div>
   );
 }

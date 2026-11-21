@@ -155,21 +155,21 @@ const STOPWORDS = new Set([
 ]);
 
 /** Angka yang bermakna: persen, mata uang, jumlah + satuan, atau bilangan ≥ 2 digit (bukan tahun). */
-const METRIC_REGEX =
+export const METRIC_REGEX =
   /(\d+([.,]\d+)?\s*(%|persen|x\b|kali|juta|jt|miliar|m\b|ribu|rb|k\b|orang|klien|client|clients|user|users|pengguna|proyek|project|projects|tim|team|jam|hours|hari|days|minggu|weeks|bulan|months|ms|detik|seconds|transaksi|transactions|request|requests|kueri|query|queries|outlet|cabang|toko|produk|products))|(rp\.?\s?\d)|(\$\s?\d)|(\b(?!(19|20)\d{2}\b)\d{2,}\b)/i;
 
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+(\.[^\s@]+)*$/;
+export const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+(\.[^\s@]+)*$/;
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-function asText(value: unknown): string {
+export function asText(value: unknown): string {
   if (typeof value === "string") return value;
   if (Array.isArray(value)) return value.filter((v) => typeof v === "string").join("\n");
   return "";
 }
 
 /** Pecah deskripsi jadi bullet: per baris, buang penanda bullet di awal. */
-function toBullets(description: unknown): string[] {
+export function toBullets(description: unknown): string[] {
   return asText(description)
     .split(/\r?\n/)
     .map((line) => line.replace(/^\s*([•●▪◦*\-–—]|\d+[.)])\s*/, "").trim())
@@ -188,7 +188,7 @@ function firstWord(bullet: string): string {
 }
 
 /** Kata kerja aksi di awal bullet: me-/mem-/men-/meng-/meny- (ID) atau kata kerja lampau (EN). */
-function startsWithActionVerb(bullet: string): boolean {
+export function startsWithActionVerb(bullet: string): boolean {
   const word = firstWord(bullet);
   if (!word || WEAK_OPENERS.has(word)) return false;
   if (EN_ACTION_VERBS.has(word)) return true;

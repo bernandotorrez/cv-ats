@@ -467,7 +467,8 @@ function RootComponent() {
           </main>
           {!hideSiteChrome && <SiteFooter />}
         </div>
-        <Toaster />
+        {/* Di editor CV, pojok kanan bawah dipakai widget Panduan CV. */}
+        <Toaster position={isCvBuilderPage ? "top-center" : undefined} />
         <Analytics />
         <BenixCsWidget disabled={isSharePage || isAuthenticatedRoute} hidden={isCvBuilderPage} />
         <FakeBuyerCard disabled={isSharePage || isAuthenticatedRoute} />

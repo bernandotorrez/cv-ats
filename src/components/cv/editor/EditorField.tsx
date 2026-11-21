@@ -15,6 +15,8 @@ interface FieldProps {
   disabled?: boolean;
   extra?: ReactNode;
   icon?: ReactNode;
+  /** Penanda untuk Panduan CV (`data-guide-field`) agar field ini bisa difokuskan dari checklist. */
+  guideId?: string;
 }
 
 export function Field({
@@ -27,6 +29,7 @@ export function Field({
   disabled,
   extra,
   icon,
+  guideId,
 }: FieldProps) {
   return (
     <div className={cn("space-y-2", className)}>
@@ -45,6 +48,7 @@ export function Field({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         disabled={disabled}
+        data-guide-field={guideId}
         className="h-11 rounded-xl border-border bg-background text-sm shadow-sm transition-all placeholder:text-muted-foreground/70 hover:border-primary/30 focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/15"
       />
     </div>
@@ -62,6 +66,8 @@ interface TextareaFieldProps {
   extra?: ReactNode;
   icon?: ReactNode;
   hint?: string;
+  /** Penanda untuk Panduan CV (`data-guide-field`). */
+  guideId?: string;
 }
 
 export function TextareaField({
@@ -75,6 +81,7 @@ export function TextareaField({
   extra,
   icon,
   hint,
+  guideId,
 }: TextareaFieldProps) {
   return (
     <div className={cn("space-y-2", className)}>
@@ -93,6 +100,7 @@ export function TextareaField({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
+        data-guide-field={guideId}
         className="min-h-[96px] resize-y rounded-xl border-border bg-background text-sm shadow-sm transition-all placeholder:text-muted-foreground/70 hover:border-primary/30 focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/15"
       />
       {hint && <p className="text-xs leading-relaxed text-muted-foreground">{hint}</p>}
