@@ -107,6 +107,36 @@ Deno.serve(async (req: Request) => {
     }
 
     const url = new URL(req.url);
+
+    // GET ?cvId=<uuid> — satu CV lengkap (data JSON) untuk dilihat admin.
+    const cvIdParam = url.searchParams.get("cvId");
+    if (cvIdParam !== null) {
+      if (!isUuid(cvIdParam)) throw new BadRequestError("CV ID tidak valid");
+      const { data: cv, error: cvError } = await admin
+        .from("cvs")
+        .select("id, user_id, title, template_id, language, status, data, created_at, updated_at")
+        .eq("id", cvIdParam)
+        .maybeSingle();
+      if (cvError) throw cvError;
+      if (!cv) return json(req, { error: "CV tidak ditemukan" }, 404);
+      console.log(`admin-users: admin ${requesterId} melihat CV ${cvIdParam} milik ${cv.user_id}`);
+      return json(req, { cv });
+    }
+
+    // GET ?userId=<uuid>&cvs=1 — daftar CV milik satu user (tanpa isi data).
+    if (url.searchParams.get("cvs") === "1") {
+      const targetUserId = (url.searchParams.get("userId") || "").trim();
+      if (!isUuid(targetUserId)) throw new BadRequestError("User ID tidak valid");
+      const { data: cvs, error: cvsError } = await admin
+        .from("cvs")
+        .select("id, title, template_id, language, status, created_at, updated_at")
+        .eq("user_id", targetUserId)
+        .order("updated_at", { ascending: false })
+        .limit(200);
+      if (cvsError) throw cvsError;
+      return json(req, { cvs: cvs || [] });
+    }
+
     const page = clampNumber(Number(url.searchParams.get("page") || "1"), 1, 10000);
     const perPage = clampNumber(Number(url.searchParams.get("perPage") || "10"), 1, 1000);
     const search = (url.searchParams.get("search") || "").trim().toLowerCase();

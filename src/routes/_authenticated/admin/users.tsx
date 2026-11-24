@@ -26,6 +26,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { invalidateAdminCache } from "@/lib/admin";
 import { UserTryoutPackages } from "@/components/admin/UserTryoutPackages";
+import { UserCvViewer } from "@/components/admin/UserCvViewer";
 import {
   Users,
   Search,
@@ -145,6 +146,7 @@ function AdminUsersPage() {
   const [filterTier, setFilterTier] = useState("all");
   const [sortOrder, setSortOrder] = useState("desc");
   const [editUser, setEditUser] = useState<UserRow | null>(null);
+  const [cvUser, setCvUser] = useState<UserRow | null>(null);
   const [editTier, setEditTier] = useState("");
   const [editTierEnd, setEditTierEnd] = useState("");
   const [editRole, setEditRole] = useState("");
@@ -465,14 +467,20 @@ function AdminUsersPage() {
                   <span>Daftar: {new Date(u.created_at).toLocaleDateString("id-ID")}</span>
                 </div>
               </div>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => handleEdit(u)}
-                className="shrink-0 gap-1"
-              >
-                <Pencil className="h-3.5 w-3.5" /> Edit
-              </Button>
+              <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setCvUser(u)}
+                  className="gap-1"
+                  disabled={u.cv_count === 0}
+                >
+                  <FileText className="h-3.5 w-3.5" /> Lihat CV
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => handleEdit(u)} className="gap-1">
+                  <Pencil className="h-3.5 w-3.5" /> Edit
+                </Button>
+              </div>
             </Card>
           ))
         )}
@@ -740,6 +748,8 @@ function AdminUsersPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      <UserCvViewer user={cvUser} onClose={() => setCvUser(null)} />
     </div>
   );
 }
